@@ -286,6 +286,42 @@
                             </MenuItem.Style>
                         </MenuItem>
 
+                        <!-- Part B auto-rejoin (task 5, 2026-09-29). Same Header-DataTrigger check
+                             pattern as Join via friend above — no IsCheckable, because WPF-UI's
+                             themed MenuItem only draws a glyph when IsCheckable="True", so the check
+                             state is driven through the Header text instead. Never available for the
+                             main: a second DataTrigger collapses the whole item when the row's
+                             IsMain is true, since "rejoin the main automatically" is a rule that
+                             never applies (global-constraints.md — the main is never rejoined
+                             automatically). -->
+                        <MenuItem Command="{Binding Data.ToggleAutoRejoinCommand, Source={StaticResource VmProxy}}"
+                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  ToolTip="{loc:Loc MainWindow_RejoinIfItDropsOutTip}">
+                            <MenuItem.Style>
+                                <Style TargetType="MenuItem">
+                                    <Setter Property="Header" Value="{loc:Loc MainWindow_RejoinIfItDropsOut}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.AutoRejoin, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="True">
+                                            <Setter Property="Header" Value="{loc:Loc MainWindow_RejoinIfItDropsOut_2}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.IsMain, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                        <!-- No Roblox user id: presence is never polled, so auto-rejoin
+                                             couldn't tell in game from out of it. Hidden while off;
+                                             still shown while on, so it can be turned off. -->
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding PlacementTarget.DataContext.RobloxUserId, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="{x:Null}" />
+                                                <Condition Binding="{Binding PlacementTarget.DataContext.AutoRejoin, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
+
                         <!-- Per-account Discord alert mute. Lives in the context menu rather than
                              the row's action group deliberately: the row is already dense, and a
                              mute is a set-once preference, not a per-session control. Same

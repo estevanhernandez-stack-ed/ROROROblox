@@ -590,6 +590,15 @@
   <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
     <value>Recycle — schließt diesen Client und startet ihn zurück in den Server, in dem er jetzt ist, und gewinnt verlorenen Speicher zurück.</value>
   </data>
+  <data name="MainWindow_RejoinIfItDropsOut" xml:space="preserve">
+    <value>Erneut beitreten, wenn es ausfällt</value>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOut_2" xml:space="preserve">
+    <value>Erneut beitreten, wenn es ausfällt (an)</value>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOutTip" xml:space="preserve">
+    <value>Wenn der Client dieses Kontos geöffnet, aber 3 Minuten lang nicht im Spiel ist, schließt RoRoRo ihn und tritt erneut bei. Wird nie für dein Hauptkonto verwendet.</value>
+  </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Entfernen</value>
   </data>
@@ -887,6 +896,9 @@
   <data name="SettingsPage_AssignEveryFakeNameAnd" xml:space="preserve">
     <value>Weist jedem Fake-Namen und Avatar eine neue Auswahl zu.</value>
   </data>
+  <data name="SettingsPage_AutoRejoinPausesForAnAccount" xml:space="preserve">
+    <value>Automatischer Neubeitritt pausiert für ein Konto</value>
+  </data>
   <data name="SettingsPage_AWholeNumberFrom256" xml:space="preserve">
     <value>Eine ganze Zahl von 256 bis 65536, oder leer lassen, damit RoRoRo wählt.</value>
   </data>
@@ -1111,6 +1123,18 @@
   </data>
   <data name="SettingsPage_SendATestNotificationTo" xml:space="preserve">
     <value>Eine Test-Benachrichtigung an mein Handy senden</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToMy" xml:space="preserve">
+    <value>Neubeitritt-Pause-Benachrichtigungen an meinen Discord-Kanal senden</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToMy_2" xml:space="preserve">
+    <value>Neubeitritt-Pause-Benachrichtigungen an mein Handy senden</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToThe" xml:space="preserve">
+    <value>Neubeitritt-Pause-Benachrichtigungen an den Desktop senden</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToThe_2" xml:space="preserve">
+    <value>Neubeitritt-Pause-Benachrichtigungen an den Clan-Discord-Kanal senden</value>
   </data>
   <data name="SettingsPage_SendDropOutAlertsTo" xml:space="preserve">
     <value>Ausfall-Benachrichtigungen an den Desktop senden</value>
@@ -2055,6 +2079,9 @@ Du musst dich erneut anmelden, um es wieder hinzuzufügen.</value>
   </data>
   <data name="Shell_Msg_CouldntSaveJoinViaFriend" xml:space="preserve">
     <value>Beitritt-über-Freund konnte nicht gespeichert werden: {0}</value>
+  </data>
+  <data name="Shell_Msg_CouldntSaveAutoRejoin" xml:space="preserve">
+    <value>Die Neubeitritt-Einstellung konnte nicht gespeichert werden: {0}</value>
   </data>
   <data name="Shell_Msg_SourceExpired" xml:space="preserve">
     <value>{0} hat eine abgelaufene Sitzung — authentifiziere zuerst erneut.</value>
@@ -3215,5 +3242,32 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   </data>
   <data name="MainWindow_KnownRobloxIssuesTooltip" xml:space="preserve">
     <value>Probleme in Roblox selbst und was du dagegen tun kannst</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Title" xml:space="preserve">
+    <value>Über dein Hauptkonto beitreten</value>
+  </data>
+  <data name="Shell_FlaggedLaunch_Body" xml:space="preserve">
+    <value>{0} tritt über dein Hauptkonto bei, das noch in keinem Spiel ist.</value>
+  </data>
+  <data name="Shell_FlaggedLaunch_BodyMany" xml:space="preserve">
+    <value>{0} treten über dein Hauptkonto bei, das noch in keinem Spiel ist.</value>
+  </data>
+  <data name="FlaggedLaunchWindow_FollowAnother" xml:space="preserve">
+    <value>Einem anderen Konto folgen</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Follow" xml:space="preserve">
+    <value>Folgen</value>
+  </data>
+  <data name="FlaggedLaunchWindow_NobodyJoinable" xml:space="preserve">
+    <value>Keines deiner Konten ist gerade in einem Spiel, dem du beitreten kannst.</value>
+  </data>
+  <data name="FlaggedLaunchWindow_ItsFixed" xml:space="preserve">
+    <value>Behoben, direkt beitreten</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Cancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="Shell_Msg_FlaggedLeftStopped" xml:space="preserve">
+    <value>Kein Start für {0}: Niemand, dem gefolgt werden kann, ist in einem Spiel.</value>
   </data>
 </root>

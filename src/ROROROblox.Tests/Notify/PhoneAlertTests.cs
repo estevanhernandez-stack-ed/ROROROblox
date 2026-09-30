@@ -221,6 +221,19 @@ public class PushoverSenderTests
         Assert.Contains("priority=0", Assert.Single(handler.Bodies), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task SendAsync_AutoRejoinPaused_IsPriorityOne()
+    {
+        // Same priority as AccountDroppedOut (task 10, 2026-09-29): it is the same kind of news —
+        // something stopped watching an account.
+        var handler = new StubHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
+        await Build(handler)
+            .SendAsync(UserKey, AppToken, AlertKind.AutoRejoinPaused, Payload)
+            .WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Contains("priority=1", Assert.Single(handler.Bodies), StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.BadRequest, PhoneSendResult.EndpointRejected)]
     [InlineData(HttpStatusCode.Unauthorized, PhoneSendResult.EndpointRejected)]
@@ -339,6 +352,20 @@ public class NtfySenderTests
         Assert.Equal("RoRoRo", Assert.Single(seen.Headers.GetValues("Title")));
         Assert.Equal("high", Assert.Single(seen.Headers.GetValues("Priority")));
         Assert.StartsWith("BaronBloxwell dropped out", Assert.Single(handler.Bodies), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SendAsync_AutoRejoinPaused_IsHighPriority()
+    {
+        // Same priority as AccountDroppedOut (task 10, 2026-09-29) — the same kind of news.
+        HttpRequestMessage? seen = null;
+        var handler = new StubHttpHandler(r => { seen = r; return new HttpResponseMessage(HttpStatusCode.OK); });
+
+        await Build(handler)
+            .SendAsync("https://ntfy.sh/", "rororo-topic", AlertKind.AutoRejoinPaused, Payload)
+            .WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Equal("high", Assert.Single(seen!.Headers.GetValues("Priority")));
     }
 
     [Theory]

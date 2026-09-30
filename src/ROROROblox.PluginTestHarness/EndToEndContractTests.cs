@@ -1854,12 +1854,12 @@ public class EndToEndContractTests
 
     private sealed class NoOpLauncher : IPluginLaunchInvoker
     {
-        public Task<(bool ok, string? failureReason, int processId)> RequestLaunchAsync(string accountId)
-            => Task.FromResult<(bool, string?, int)>((false, "test stub", 0));
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchAsync(string accountId)
+            => Task.FromResult<(bool, string?, int, string?)>((false, "test stub", 0, null));
 
-        public Task<(bool ok, string? failureReason, int processId)> RequestLaunchTargetAsync(
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(
             string accountId, string? shareUrl, long? followUserId)
-            => Task.FromResult<(bool, string?, int)>((false, "test stub", 0));
+            => Task.FromResult<(bool, string?, int, string?)>((false, "test stub", 0, null));
 
         public Task<CurrentServerInfo?> GetCurrentServerAsync()
             => Task.FromResult<CurrentServerInfo?>(null);

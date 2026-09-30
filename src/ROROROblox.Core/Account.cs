@@ -22,4 +22,5 @@ public sealed record Account(
     long? BrowserTrackerId = null,
     bool JoinViaFriend = false,
     string? StreamerName = null,
-    string? StreamerAvatarId = null);
+    string? StreamerAvatarId = null,
+    bool AutoRejoin = false);

@@ -39,7 +39,7 @@ public sealed class NtfySender(HttpClient client, ILogger<NtfySender> log)
             };
             request.Headers.TryAddWithoutValidation("Title", "RoRoRo");
             request.Headers.TryAddWithoutValidation("Priority",
-                kind == AlertKind.AccountDroppedOut ? "high" : "default");
+                kind is AlertKind.AccountDroppedOut or AlertKind.AutoRejoinPaused ? "high" : "default");
 
             using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
 

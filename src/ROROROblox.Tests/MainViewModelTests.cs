@@ -40,7 +40,8 @@ public class MainViewModelTests
         IBloxstrapDetector? bloxstrapDetector = null,
         FakeActivityMonitor? activityMonitor = null,
         Core.IUiDispatcher? uiDispatcher = null,
-        ISessionHistoryStore? sessionHistory = null)
+        ISessionHistoryStore? sessionHistory = null,
+        Microsoft.Extensions.Logging.ILogger<MainViewModel>? log = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -76,7 +77,8 @@ public class MainViewModelTests
             shellOpener: shellOpener ?? new NullShellOpener(),
             tray: trayService,
             idleAlertPresenter: new IdleAlertPresenter(trayService),
-            uiDispatcher: uiDispatcher);
+            uiDispatcher: uiDispatcher,
+            log: log);
 
         // MainViewModel never disposes the window decorator (App.xaml.cs's DI container owns
         // that lifetime in production); its ctor starts a real 1.5s reapply Timer that would
@@ -94,7 +96,28 @@ public class MainViewModelTests
         // above does for the decorator's timer.
         vm.StopPeriodicRefresh();
 
+        // The flagged-launch question's production default constructs and shows a modal Window. A
+        // test that reaches it without overriding the seam must fail fast and say why, not try to
+        // open a dialog on whatever thread it happens to be on.
+        vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException(
+            "FlaggedLaunchPrompt was reached but this test did not override it.");
+
         return (vm, accountStore, processTracker, path);
+    }
+
+    // M7: a test that reaches the flagged-launch question without overriding it must fail fast,
+    // not construct a real modal Window.
+    [Fact]
+    public void Build_DefaultsTheFlaggedLaunchPromptToAThrowingStub()
+    {
+        var (vm, _, _, path) = Build();
+        try
+        {
+            Assert.NotEqual(typeof(ROROROblox.App.Modals.FlaggedLaunchWindow), vm.FlaggedLaunchPrompt.Method.DeclaringType);
+            Assert.Throws<InvalidOperationException>(() =>
+                vm.FlaggedLaunchPrompt(new FlaggedLaunchAsk(["Alt"], "Main", [])));
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
@@ -907,6 +930,7 @@ public class MainViewModelTests
         public Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder) => inner.UpdateSortOrderAsync(idsInOrder);
         public Task SetSelectedAsync(Guid id, bool isSelected) => inner.SetSelectedAsync(id, isSelected);
         public Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend) => inner.SetJoinViaFriendAsync(id, joinViaFriend);
+        public Task SetAutoRejoinAsync(Guid id, bool autoRejoin) => inner.SetAutoRejoinAsync(id, autoRejoin);
         public Task SetCaptionColorAsync(Guid id, string? hex) => inner.SetCaptionColorAsync(id, hex);
         public Task SetFpsCapAsync(Guid id, int? fps) => inner.SetFpsCapAsync(id, fps);
         public Task UpdateLocalNameAsync(Guid accountId, string? localName) => inner.UpdateLocalNameAsync(accountId, localName);
@@ -921,7 +945,7 @@ public class MainViewModelTests
     /// throws — pins <see cref="MainViewModel.ToggleJoinViaFriendAsync"/>'s revert-on-persist-
     /// failure contract (Task 4, trust-aware squad launch).
     /// </summary>
-    private sealed class JoinViaFriendThrowingStore(IAccountStore inner) : IAccountStore
+    internal sealed class JoinViaFriendThrowingStore(IAccountStore inner) : IAccountStore  // internal: FlaggedLaunchTests drives the "it's fixed" save failure with it
     {
         public Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend)
             => throw new IOException("simulated persist failure");
@@ -938,6 +962,7 @@ public class MainViewModelTests
         public Task SetMainAsync(Guid id) => inner.SetMainAsync(id);
         public Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder) => inner.UpdateSortOrderAsync(idsInOrder);
         public Task SetSelectedAsync(Guid id, bool isSelected) => inner.SetSelectedAsync(id, isSelected);
+        public Task SetAutoRejoinAsync(Guid id, bool autoRejoin) => inner.SetAutoRejoinAsync(id, autoRejoin);
         public Task SetCaptionColorAsync(Guid id, string? hex) => inner.SetCaptionColorAsync(id, hex);
         public Task SetFpsCapAsync(Guid id, int? fps) => inner.SetFpsCapAsync(id, fps);
         public Task UpdateLocalNameAsync(Guid accountId, string? localName) => inner.UpdateLocalNameAsync(accountId, localName);
@@ -1005,7 +1030,7 @@ public class MainViewModelTests
     /// <see cref="FakeMemoryWatchdog"/> below throws on both (deliberately, for tests that never
     /// touch memory-watchdog behavior), so Task 8's recycle tests need a capable double instead.
     /// </summary>
-    private sealed class SpyMemoryWatchdog : IMemoryWatchdog
+    internal sealed class SpyMemoryWatchdog : IMemoryWatchdog  // internal: FlaggedLaunchTests recycles with it
     {
         public readonly List<(Guid Id, int Pid)> Resets = new();
         public MemoryPressureSnapshot Snapshot = new(0, 0, 0, false, null, []);
@@ -1630,12 +1655,16 @@ public class MainViewModelTests
         // Started/success path (e.g. the Task 8 recycle tests below).
         public Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default) => Task.CompletedTask;
         public bool AttachExisting(Guid accountId, int pid) => throw new NotImplementedException();
-        public bool IsTracking(Guid accountId) => throw new NotImplementedException();
-        public bool RequestClose(Guid accountId) => throw new NotImplementedException();
-        public bool Kill(Guid accountId) => throw new NotImplementedException();
+
+        // Task 9: ProcessTrackerAccountStopperTests' own FakeTracker plays the "in-game client"
+        // role; this one only needs to answer honestly for the ProcessTrackerAccountStopper wiring
+        // test, which stops an account already present in AttachedMap.
+        public bool IsTracking(Guid accountId) => AttachedMap.ContainsKey(accountId);
+        public bool RequestClose(Guid accountId) => true;
+        public bool Kill(Guid accountId) => true;
     }
 
-    private sealed class FakeRobloxInstanceStopper : IRobloxInstanceStopper
+    internal sealed class FakeRobloxInstanceStopper : IRobloxInstanceStopper
     {
         public readonly List<Guid> StoppedAccountIds = new();
         public int StopAll() => 0;

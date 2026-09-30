@@ -364,6 +364,7 @@ public class AlertDispatcherTests
             RecycledDestinations = [AlertDestination.Local],
             UptimeMarkDestinations = [AlertDestination.Local],
             // MetricBreachDestinations already defaults to Local.
+            AutoRejoinPausedDestinations = [AlertDestination.Local],
         });
 
         // Prove the routing before trusting anything below: one dispatch, one toast. Without this

@@ -42,6 +42,36 @@ public enum AlertKind
     /// </para>
     /// </summary>
     MetricRecovered,
+
+    /// <summary>
+    /// Auto-rejoin gave up on an account — either the monitor's own Pause action (the 4th drop in
+    /// an hour) or a pending relaunch that failed <c>MainViewModel.PendingRelaunchMaxAttempts</c>
+    /// times in a row (task 10, 2026-09-29). Routed the same as <see cref="AccountDroppedOut"/> by
+    /// default (<c>DiscordConfig.AutoRejoinPausedDestinations</c>): it is the same kind of news —
+    /// something stopped watching an account and someone should know. <see
+    /// cref="AlertTrigger.PauseReason"/> carries which of the two reasons fired, since the two
+    /// read as different sentences even though both end the same way (paused until turned back on).
+    /// APPENDED LAST, so the existing numeric values (serialized nowhere today, but kept stable on
+    /// principle with every other kind here) never shift under an older build.
+    /// </summary>
+    AutoRejoinPaused,
+}
+
+/// <summary>
+/// Which of the two things that pause auto-rejoin actually happened, carried on an
+/// <see cref="AlertTrigger"/> of <see cref="AlertKind.AutoRejoinPaused"/> so <see
+/// cref="ROROROblox.Core.Discord.WebhookPayload"/> and the desktop toast can say the true
+/// sentence instead of a single copy that is right for one case and wrong for the other.
+/// </summary>
+public enum AutoRejoinPauseReason
+{
+    /// <summary>The monitor's own Pause action: the account dropped out and was rejoined 3 times
+    /// inside an hour, and a 4th drop pauses it rather than spending a 4th rejoin.</summary>
+    RepeatedDrops,
+
+    /// <summary>A relaunch stayed pending and failed <c>MainViewModel.PendingRelaunchMaxAttempts</c>
+    /// times in a row; auto-rejoin gives up on it rather than retrying forever.</summary>
+    RelaunchFailed,
 }
 
 /// <summary>
@@ -81,6 +111,15 @@ public enum AlertKind
 /// read "ps99.diamonds at 2974993" (live test, 2026-09-15). It is also the grouping key
 /// <c>MetricBreachBatcher</c> uses. <paramref name="GameName"/> keeps carrying the metric id.
 /// </para>
+/// <para>
+/// <paramref name="PauseReason"/> is which of the two things paused auto-rejoin, for a
+/// <see cref="AlertKind.AutoRejoinPaused"/> only — trailing and optional for the same "every older
+/// construction site compiles untouched" reason as <paramref name="MetricValue"/> and
+/// <paramref name="Rule"/> (task 10, 2026-09-29). Repeated drops and a failed relaunch are the same
+/// KIND of news (auto-rejoin stopped watching this account) but different SENTENCES, and without
+/// this field the two would have to share one copy that is wrong for whichever case it wasn't
+/// written for.
+/// </para>
 /// </summary>
 public sealed record AlertTrigger(
     AlertKind Kind,
@@ -91,4 +130,5 @@ public sealed record AlertTrigger(
     long? PrivateBytes,
     DateTimeOffset OccurredAtUtc,
     double? MetricValue = null,
-    MetricRule? Rule = null);
+    MetricRule? Rule = null,
+    AutoRejoinPauseReason? PauseReason = null);

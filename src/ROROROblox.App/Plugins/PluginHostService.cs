@@ -564,12 +564,13 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
 
     public override async Task<LaunchResult> RequestLaunch(LaunchRequest request, ServerCallContext context)
     {
-        var (ok, reason, pid) = await _launcher.RequestLaunchAsync(request.AccountId).ConfigureAwait(false);
+        var (ok, reason, pid, reasonCode) = await _launcher.RequestLaunchAsync(request.AccountId).ConfigureAwait(false);
         return new LaunchResult
         {
             Ok = ok,
             FailureReason = reason ?? string.Empty,
             ProcessId = pid,
+            ReasonCode = reasonCode ?? string.Empty,
         };
     }
 
@@ -577,12 +578,13 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     {
         string? shareUrl = request.TargetCase == LaunchTargetRequest.TargetOneofCase.ShareUrl ? request.ShareUrl : null;
         long? followUserId = request.TargetCase == LaunchTargetRequest.TargetOneofCase.FollowUserId ? request.FollowUserId : null;
-        var (ok, reason, pid) = await _launcher.RequestLaunchTargetAsync(request.AccountId, shareUrl, followUserId).ConfigureAwait(false);
+        var (ok, reason, pid, reasonCode) = await _launcher.RequestLaunchTargetAsync(request.AccountId, shareUrl, followUserId).ConfigureAwait(false);
         return new LaunchResult
         {
             Ok = ok,
             FailureReason = reason ?? string.Empty,
             ProcessId = pid,
+            ReasonCode = reasonCode ?? string.Empty,
         };
     }
 

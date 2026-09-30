@@ -30,6 +30,7 @@ public class ModalDefaultButtonSafetyTests
         { "RobloxAlreadyRunningWindow.xaml", "Close Roblox for me" }, // force-closes Roblox clients
         { "StopAllConfirmWindow.xaml", "Stop all" },                  // force-closes Roblox clients
         { "LeftoverProcessesWindow.xaml", "Clean up + continue" },    // runs the stop-all teardown
+        { "FlaggedLaunchWindow.xaml", "It's fixed, join directly" }, // joins directly: the captcha the flag avoids
     };
 
     [Theory]
@@ -96,6 +97,14 @@ public class ModalDefaultButtonSafetyTests
     public void LaunchHeadroomModal_DefaultsToCancel()
         => Assert.Equal("Cancel", DefaultButtonLabel("LaunchHeadroomWindow.xaml"));
 
+    /// <summary>
+    /// A JoinViaFriend account that joins directly hits the captcha the flag exists to avoid, so
+    /// "It's fixed, join directly" is one deliberate click away and Enter cancels the launch.
+    /// </summary>
+    [Fact]
+    public void FlaggedLaunchModal_DefaultsToCancel()
+        => Assert.Equal("Cancel", DefaultButtonLabel("FlaggedLaunchWindow.xaml"));
+
     [Theory]
     [InlineData("RobloxAlreadyRunningWindow.xaml")]
     [InlineData("StopAllConfirmWindow.xaml")]
@@ -103,6 +112,7 @@ public class ModalDefaultButtonSafetyTests
     [InlineData("JoinRequestWindow.xaml")]
     [InlineData("EdgeRemediationWindow.xaml")]
     [InlineData("LaunchHeadroomWindow.xaml")]
+    [InlineData("FlaggedLaunchWindow.xaml")]
     public void EachModal_HasExactlyOneDefaultButton(string modalFile)
         => Assert.Single(Buttons(modalFile), IsDefault);
 

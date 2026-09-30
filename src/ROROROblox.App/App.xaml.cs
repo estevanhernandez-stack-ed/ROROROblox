@@ -396,6 +396,15 @@ public partial class App : Application
         // Autostart is deliberately deferred until after the gate — see StartPluginAutostart.
         StartPluginHostListener();
 
+        // Task 9 fix round 1: the pipe is reachable the moment StartPluginHostListener returns
+        // (same reasoning as the comment above it), so the OnStopping hook has to be live by
+        // then too — not after the gate's modals, which can block for as long as it takes a
+        // human to notice a dialog. Placed right here rather than down with the other Wire*
+        // calls near mainWindow. See WirePluginAccountStopper's own doc comment for why this is
+        // safe: MainViewModel is already constructed by this point as an unavoidable side effect
+        // of StartPluginHostListener's own resolution chain, so this isn't forcing anything new.
+        WirePluginAccountStopper();
+
         var startedWithoutMutex = false;
         if (verdict is StartupGateResult.SharedLock)
         {
@@ -2576,6 +2585,60 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "Plugin event bus mutex-state raise failed; ignoring.");
+        }
+    }
+
+    /// <summary>
+    /// Task 9: a plugin stop is never mistaken for a drop.
+    /// <see cref="ROROROblox.App.Plugins.Adapters.ProcessTrackerAccountStopper"/> is registered
+    /// singleton against <see cref="ROROROblox.App.Plugins.IPluginAccountStopper"/> (see the
+    /// AddSingleton call above) — <c>PluginHostService</c> resolves that same interface, so
+    /// resolving it here too and casting back to the concrete type reaches the exact instance the
+    /// plugin host calls into, not a second one. Its <c>OnStopping</c> hook fires right before a
+    /// stop it is actually going to issue; marshalling that onto <c>MainViewModel.ExpectClose</c>
+    /// through the UI dispatcher stamps the same expected-close protection a user's own Stop button
+    /// gets, so auto-rejoin, the dropped-out alert and the relaunch-pending logic all leave the
+    /// account alone during the grace window.
+    ///
+    /// <para>
+    /// FIX ROUND 1 (review finding): called right after <c>StartPluginHostListener</c>, not down
+    /// with the other <c>Wire*</c> calls near <c>mainWindow</c>. The plugin pipe binds and becomes
+    /// reachable the moment <c>StartPluginHostListener</c> returns — deliberately before the
+    /// startup gate's modals, so an agent can reach RoRoRo while a dialog waits (see that call's own
+    /// comment). The old placement left the hook null for exactly that window: a plugin could call
+    /// StopAccounts while a human was still looking at the already-running or leftover-processes
+    /// dialog, and <c>ExpectClose</c> would never fire.
+    /// </para>
+    /// <para>
+    /// This does NOT force <see cref="MainViewModel"/> into existence any earlier than it already
+    /// is. By the time <c>StartPluginHostListener</c> returns, <see cref="MainViewModel"/> is
+    /// already a constructed, cached singleton — an unavoidable side effect of resolving
+    /// <c>PluginHostStartupService</c>, whose constructor takes <c>PluginHostService</c> directly,
+    /// which takes <see cref="ROROROblox.App.Plugins.IRunningAccountsProvider"/> directly, whose
+    /// only registration (<c>MainViewModelRunningAccountsAdapter</c>) takes <see cref="MainViewModel"/>
+    /// directly — three required constructor parameters, no lazy seam anywhere in the chain.
+    /// <c>PluginAccountStopperWiringTests</c> locks that chain by constructor reflection (never by
+    /// resolving <see cref="MainViewModel"/> for real, which would hit production user-data stores).
+    /// If that chain ever grows a lazy link, resolving <see cref="MainViewModel"/> here would start
+    /// forcing real early construction instead of finding it already done — worth re-reading this
+    /// comment before "simplifying" any of those three constructors.
+    /// </para>
+    /// </summary>
+    private void WirePluginAccountStopper()
+    {
+        if (_services is null) return;
+        try
+        {
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var stopper = _services.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>()
+                as ROROROblox.App.Plugins.Adapters.ProcessTrackerAccountStopper;
+            if (stopper is null) return;
+
+            stopper.OnStopping = id => vm.UiDispatcher.Invoke(() => vm.ExpectClose(id));
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Plugin account stopper wiring threw; ignoring.");
         }
     }
 

@@ -60,7 +60,8 @@ public static class AlertStatusLine
         bool phoneRejected = false,
         bool phoneConfigured = false,
         string? phoneProviderName = null,
-        bool metricAlertsEnabled = false)
+        bool metricAlertsEnabled = false,
+        bool autoRejoinInUse = false)
     {
         ArgumentNullException.ThrowIfNull(config);
 
@@ -68,6 +69,15 @@ public static class AlertStatusLine
             .Concat(config.DestinationsFor(AlertKind.MemoryWarning))
             .Concat(config.DestinationsFor(AlertKind.Recycled))
             .Concat(config.DestinationsFor(AlertKind.UptimeMark))
+            // AutoRejoinPaused counts only when at least one saved account actually has auto-rejoin
+            // on (controller correction, 2026-09-29). Its destinations default to the desktop toast
+            // (the same shipped-on shape as MetricBreach, below) so a pause has somewhere to go the
+            // moment the user turns auto-rejoin on for anything — but folding that in
+            // UNCONDITIONALLY made every fresh install, including everyone who never touches
+            // auto-rejoin, read "Desktop only" instead of "No alerts yet." That is the same
+            // shipped-default-vs-user-choice conflation the metric gate below exists to prevent,
+            // on the account side of the app rather than the plugin side.
+            .Concat(autoRejoinInUse ? config.DestinationsFor(AlertKind.AutoRejoinPaused) : [])
             // MetricBreach counts only when the feature is switched on. Its destinations default
             // to the desktop toast so a breach has somewhere to go, which is a shipped default
             // rather than a user's choice — and this sentence reports back what the user chose.

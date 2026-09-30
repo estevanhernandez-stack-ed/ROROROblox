@@ -48,6 +48,7 @@ public class WindowChromeFenceTests
         "CaptionColorPickerWindow",
         "DpapiCorruptWindow",
         "EdgeRemediationWindow",
+        "FlaggedLaunchWindow",
         "JoinRequestWindow",
         "LaunchHeadroomWindow",
         "LeftoverProcessesWindow",

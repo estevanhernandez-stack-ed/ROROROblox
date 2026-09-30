@@ -80,6 +80,43 @@ public class DiscordConfigStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_AFileWrittenBeforeAutoRejoinPaused_StillGetsTheDesktopDefault()
+    {
+        // Same shape as the metric-alerts case above, for the same reason (controller correction,
+        // 2026-09-29): every discord.dat on disk predates AutoRejoinPausedDestinations, so if
+        // System.Text.Json left it empty on upgrade the pause alert would route nowhere for everyone
+        // who has ever opened Settings — exactly the "routed nowhere, on every install, forever" bug
+        // MetricBreachDestinations' default was added to fix. The envelope is hand-rolled because
+        // SaveAsync writes every property and cannot express "absent".
+        var beforeTheField = """{"PresenceEnabled":true,"DroppedOutDestination":2}""";
+        await File.WriteAllBytesAsync(_path, ProtectedData.Protect(
+            Encoding.UTF8.GetBytes(beforeTheField), optionalEntropy: null, DataProtectionScope.CurrentUser));
+
+        var config = await new DiscordConfigStore(_path).LoadAsync();
+
+        Assert.True(config.PresenceEnabled);
+        Assert.Equal(AlertDestination.Mine, config.DroppedOutDestination);
+        Assert.Equal(AlertDestination.Local,
+            Assert.Single(config.DestinationsFor(AlertKind.AutoRejoinPaused)));
+    }
+
+    [Fact]
+    public async Task SaveThenLoad_ExplicitEmptyAutoRejoinPausedDestinations_RoundTripsAsEmpty()
+    {
+        // The other half of that same mechanism: once Settings has saved a config at all, SaveAsync
+        // writes EVERY property, so unticking all four boxes writes a PRESENT empty list, not an
+        // absent one. System.Text.Json overwrites the initializer with that explicit value on load,
+        // the same as any other real value — it must not spring back to the shipped default, or a
+        // user who deliberately turned this alert off would find it silently back on.
+        var store = new DiscordConfigStore(_path);
+        await store.SaveAsync(new DiscordConfig { AutoRejoinPausedDestinations = [] });
+
+        var reloaded = await new DiscordConfigStore(_path).LoadAsync();
+
+        Assert.Empty(reloaded.DestinationsFor(AlertKind.AutoRejoinPaused));
+    }
+
+    [Fact]
     public async Task LoadAsync_CorruptFile_ReturnsDefaultsInsteadOfThrowing()
     {
         // A stray or wrong-user file must not break app startup. Same rule as ConsentStore.

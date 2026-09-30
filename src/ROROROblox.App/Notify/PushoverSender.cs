@@ -103,7 +103,7 @@ public sealed class PushoverSender(HttpClient client, ILogger<PushoverSender> lo
                 ["user"] = userKey,
                 ["title"] = TruncateTitleForPushover(payload.Title),
                 ["message"] = TruncateForPushover(payload.Body),
-                ["priority"] = kind == AlertKind.AccountDroppedOut ? "1" : "0",
+                ["priority"] = kind is AlertKind.AccountDroppedOut or AlertKind.AutoRejoinPaused ? "1" : "0",
             });
             using var response = await client.PostAsync(Endpoint, form, ct).ConfigureAwait(false);
 

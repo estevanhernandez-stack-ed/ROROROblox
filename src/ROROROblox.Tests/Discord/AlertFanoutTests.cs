@@ -134,6 +134,55 @@ public class AlertFanoutTests
     }
 
     [Fact]
+    public void DestinationsFor_AutoRejoinPaused_DefaultsToTheDesktopToast()
+    {
+        // Corrected same-day (controller ruling, 2026-09-29): the spec says a pause "raises a toast
+        // and the Discord alert (when alerts are on)", and the temporary toast it replaces always
+        // showed — so this follows MetricBreachDestinations' shipped-on precedent, not
+        // AccountDroppedOut's empty one. Discord stays opt-in; the toast does not.
+        Assert.Equal(
+            [AlertDestination.Local],
+            new DiscordConfig().DestinationsFor(AlertKind.AutoRejoinPaused));
+
+        var config = new DiscordConfig { AutoRejoinPausedDestinations = [AlertDestination.Phone, AlertDestination.Local] };
+        Assert.Equal(
+            [AlertDestination.Phone, AlertDestination.Local],
+            config.DestinationsFor(AlertKind.AutoRejoinPaused));
+
+        // The trap the default's doc comment calls out: an explicit, deliberate "nothing" must not
+        // spring back to the shipped default. DestinationsFor cannot see WHY the list is empty
+        // (never touched vs. explicitly emptied) — that distinction lives one layer down, in
+        // whether the JSON key is present at all (DiscordConfigStoreTests pins the load side).
+        Assert.Empty(new DiscordConfig { AutoRejoinPausedDestinations = [] }.DestinationsFor(AlertKind.AutoRejoinPaused));
+    }
+
+    [Fact]
+    public void Payload_AutoRejoinPaused_RepeatedDrops_NamesTheAccountAndSaysDropped()
+    {
+        var payload = WebhookPayload.ForAlert(AlertKind.AutoRejoinPaused,
+            [new AlertTrigger(AlertKind.AutoRejoinPaused, Guid.NewGuid(), "BaronBloxwell", "Real",
+                null, null, DateTimeOffset.UnixEpoch, PauseReason: AutoRejoinPauseReason.RepeatedDrops)]);
+
+        Assert.Equal("Auto-rejoin paused", payload.Title);
+        Assert.Contains("BaronBloxwell dropped out 4 times in an hour", payload.Body, StringComparison.Ordinal);
+        Assert.Contains("until you turn it back on", payload.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Payload_AutoRejoinPaused_RelaunchFailed_SaysRoRoRoCouldntRestartIt()
+    {
+        var payload = WebhookPayload.ForAlert(AlertKind.AutoRejoinPaused,
+            [new AlertTrigger(AlertKind.AutoRejoinPaused, Guid.NewGuid(), "BaronBloxwell", "Real",
+                null, null, DateTimeOffset.UnixEpoch, PauseReason: AutoRejoinPauseReason.RelaunchFailed)]);
+
+        // Same title as the repeated-drops case: both are "auto-rejoin paused", the account's name
+        // and the reason live in the body instead.
+        Assert.Equal("Auto-rejoin paused", payload.Title);
+        Assert.Contains("couldn't restart BaronBloxwell after 3 tries", payload.Body, StringComparison.Ordinal);
+        Assert.Contains("until you turn it back on", payload.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Payload_UptimeMark_ReadsHoursAndCount()
     {
         // The tracker's caller composes the synthetic trigger: DisplayName carries the hours,

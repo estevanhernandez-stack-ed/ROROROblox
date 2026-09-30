@@ -49,6 +49,39 @@ public sealed record DiscordConfig
     public IReadOnlyList<AlertDestination> UptimeMarkDestinations { get; init; } = [];
 
     /// <summary>
+    /// Where an <see cref="AlertKind.AutoRejoinPaused"/> goes (task 10, 2026-09-29; corrected the
+    /// same day — the first pass defaulted this empty, matching <see cref="DroppedOutDestinations"/>,
+    /// which was wrong against spec: a pause "raises a toast and the Discord alert (when alerts are
+    /// on)", and the temporary toast it replaces always showed. Silence until the user finds and
+    /// ticks a checkbox they don't know exists is not that.
+    /// <para>
+    /// Defaults to <c><see cref="AlertDestination.Local"/></c> — <see cref="MetricBreachDestinations"/>'s
+    /// precedent, not <see cref="DroppedOutDestinations"/>'s. Discord stays opt-in (the list starts
+    /// with exactly one entry, the desktop toast); the toast itself is not.
+    /// </para>
+    /// <para>
+    /// THE UPGRADE CASE, pinned the same way <see cref="MetricBreachDestinations"/>'s is: every
+    /// <c>discord.dat</c> written before this field existed has no <c>AutoRejoinPausedDestinations</c>
+    /// key at all, and System.Text.Json constructs through the parameterless constructor and leaves
+    /// an ABSENT property at its initializer — so the default survives that round trip
+    /// (<c>DiscordConfigStoreTests.LoadAsync_AFileWrittenBeforeAutoRejoinPaused_StillGetsTheDesktopDefault</c>
+    /// proves it against a hand-rolled pre-field envelope, the same way the metric one does).
+    /// </para>
+    /// <para>
+    /// THE OTHER HALF OF THAT SAME MECHANISM is what keeps an explicit user choice honest: once
+    /// Settings has saved a config at all, <c>SaveAsync</c> writes EVERY property, so a user who
+    /// unticks all four boxes writes a PRESENT, empty list — not an absent one. System.Text.Json then
+    /// overwrites the initializer with that empty list on the next load, same as it would for any
+    /// other explicit value, and <see cref="DestinationsFor"/> reads it as the real "route nowhere"
+    /// the user asked for rather than silently re-defaulting to <see cref="AlertDestination.Local"/>
+    /// (<c>DiscordConfigStoreTests.SaveThenLoad_ExplicitEmptyAutoRejoinPausedDestinations_...</c>
+    /// pins this half, which the metric kind's own test does not need — nothing ever writes an
+    /// explicit empty list for a kind with no routing checkbox).
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<AlertDestination> AutoRejoinPausedDestinations { get; init; } = [AlertDestination.Local];
+
+    /// <summary>
     /// Where a <see cref="AlertKind.MetricBreach"/> goes. The one kind that does NOT start empty,
     /// because it is the one kind with no routing checkbox: Settings paints the fan-out sets for
     /// the four older kinds only, so nothing in production ever wrote this list. Empty meant the
@@ -89,6 +122,7 @@ public sealed record DiscordConfig
             // A recovery follows its breach: anyone who wanted the bad news in a place wants the
             // good news there too, and a second settings row would be a worse question to ask.
             AlertKind.MetricRecovered => (MetricBreachDestinations, AlertDestination.None),
+            AlertKind.AutoRejoinPaused => (AutoRejoinPausedDestinations, AlertDestination.None),
             _ => ((IReadOnlyList<AlertDestination>)[], AlertDestination.None),
         };
 

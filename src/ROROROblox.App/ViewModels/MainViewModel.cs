@@ -56,6 +56,60 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly IRobloxRunningProbe _runningProbe;
     private readonly IShellOpener _shellOpener;
     private readonly AccountRecycler _accountRecycler;
+
+    /// <summary>
+    /// Auto-rejoin decisions (spec item 6). Single-threaded by contract: every call happens on the
+    /// UI thread. <see cref="RunAutoRejoinAsync"/> runs there off the ticker, and the launch path's
+    /// <c>NotifyLaunched</c> marshals through <see cref="_ui"/>.
+    /// </summary>
+    private readonly AutoRejoinMonitor _autoRejoin = new();
+
+    /// <summary>
+    /// The last target each account was launched into, captured in <see cref="LaunchAccountAsync"/>'s
+    /// <c>Started</c> case. <see cref="AccountSummary.LastLaunchTarget"/> can't serve: ApplyPresence
+    /// clears it on the very not-in-game reading that makes a rejoin due. UI thread only.
+    /// </summary>
+    private readonly Dictionary<Guid, LaunchTarget> _lastRejoinTargets = [];
+
+    /// <summary>True while a <see cref="RunAutoRejoinAsync"/> pass is running; a pass that finds it set returns at once.</summary>
+    private bool _autoRejoinRunning;
+
+    /// <summary>
+    /// Flagged accounts whose due rejoin is currently held because the main isn't joinable, so the
+    /// "retrying next tick" line is logged when the wait starts, not on every 30 s tick of it. An id
+    /// leaves the set when a pass no longer has a rejoin for it, or its rejoin goes ahead. UI thread only.
+    /// </summary>
+    private readonly HashSet<Guid> _waitingForMainLogged = [];
+
+    /// <summary>
+    /// Relaunch-pending: accounts whose client auto-rejoin STOPPED but then did not relaunch (the
+    /// main left during the exit wait, or the launch returned 0 or threw). The monitor never acts on
+    /// a closed client, so without this they would stay closed for good. Each pass retries them
+    /// (<see cref="RunPendingRelaunchesAsync"/>). This is its own small budget, separate from the
+    /// monitor's per-hour one: <see cref="PendingRelaunchMaxAttempts"/> failed launches, then the
+    /// paused alert and the entry is dropped. A flagged account waiting for its main to come back
+    /// does not spend attempts, but gives up quietly after <see cref="FlaggedPendingMaxWait"/>.
+    /// Cleared by any Started launch of the account, by any launch attempt that isn't auto-rejoin's
+    /// own (whatever its outcome, including a flagged-dialog Cancel or a refusal), by turning
+    /// auto-rejoin off, by a user stop or recycle (<see cref="ExpectClose"/>), by Stop all
+    /// (<see cref="ExpectCloseForAll"/>), and when the row is gone. UI thread only.
+    /// </summary>
+    private readonly Dictionary<Guid, PendingRelaunch> _relaunchPending = [];
+
+    /// <summary>
+    /// One relaunch-pending entry. <paramref name="Target"/> is the unflagged account's rejoin
+    /// target as it was worked out before the stop, so the retry still goes to the server presence
+    /// last saw (presence has forgotten it by now). Null for a flagged account, which re-decides
+    /// against the main on every attempt. <paramref name="Since"/> is when the entry was made (the
+    /// pass clock), which the flagged wait expires against.
+    /// </summary>
+    private readonly record struct PendingRelaunch(int Attempts, LaunchTarget? Target, DateTimeOffset Since);
+
+    /// <summary>How long a flagged relaunch-pending account waits for its main before it is dropped (logged, no alert).</summary>
+    internal static readonly TimeSpan FlaggedPendingMaxWait = TimeSpan.FromMinutes(30);
+
+    /// <summary>Failed relaunch attempts allowed for one relaunch-pending account before the paused alert.</summary>
+    internal const int PendingRelaunchMaxAttempts = 3;
     private readonly ITrayService _tray;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
 
@@ -205,6 +259,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // Capturing the method group is safe mid-constructor: the delegate isn't INVOKED until
         // later, well after construction finishes.
         _accountRecycler = new AccountRecycler(_instanceStopper, LaunchForRecycleAsync, _memoryWatchdog, _log);
+        WaitForClientExitAsync = DefaultWaitForClientExitAsync;
 
         // F-106 seam defaults — the real dialogs. Assigned here rather than at the property
         // because they capture instance state (stores, the API client, the share-URL resolver).
@@ -284,6 +339,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ResetItemNameCommand = new RelayCommand(p => _ = ResetItemNameAsync(BuildRenameTarget(p)));
         RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
         ToggleJoinViaFriendCommand = new RelayCommand(p => _ = ToggleJoinViaFriendAsync(p as AccountSummary));
+        ToggleAutoRejoinCommand = new RelayCommand(p => _ = ToggleAutoRejoinAsync(p as AccountSummary));
         ToggleAlertsMutedCommand = new RelayCommand(p =>
         {
             if (p is AccountSummary row) { _ = SetAlertsMutedAsync(row, !row.AlertsMuted); }
@@ -436,6 +492,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // when the UI culture changes. Unsubscribed in StopPeriodicRefresh so a leaked VM doesn't
         // keep refreshing after a test ends (same hazard the ticker documents).
         TranslationSource.Instance.CultureChanged += OnUiCultureChanged;
+
+        // Auto-rejoin rides the same 30 s cadence. PeriodicTick is raised from the DispatcherTimer's
+        // Tick, so on the UI thread this view model was built on, which the monitor and Accounts
+        // both require. No marshal needed.
+        PeriodicTick += OnAutoRejoinTick;
     }
 
     /// <summary>
@@ -740,6 +801,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>The rename prompt. The default resolves the owner window and answers Cancel when none exists.</summary>
     internal Func<RenameTarget, Task<RenameResult>> RenamePrompt { get; set; }
 
+    /// <summary>
+    /// The flagged-launch question: a <c>JoinViaFriend</c> account can't follow the main, so follow
+    /// someone else, clear the flag and join directly, or cancel. Runs on the UI thread; every UI
+    /// caller of <see cref="LaunchAccountAsync"/> already is.
+    /// </summary>
+    internal Func<FlaggedLaunchAsk, FlaggedLaunchChoice> FlaggedLaunchPrompt { get; set; } = Modals.FlaggedLaunchWindow.Ask;
+
     /// <summary>The WebView2-missing interruption.</summary>
     internal Action WebView2NotInstalledPrompt { get; set; } = static () =>
     {
@@ -789,6 +857,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// is the row's <see cref="AccountSummary"/>. See <see cref="ToggleJoinViaFriendAsync"/>.
     /// </summary>
     public ICommand ToggleJoinViaFriendCommand { get; }
+
+    /// <summary>
+    /// Flips an account row's <see cref="AccountSummary.AutoRejoin"/> preference and persists it —
+    /// the account row's context-menu checkbox, Part B auto-rejoin. Never available for the main;
+    /// the row's context-menu item is hidden for it, and <see cref="ToggleAutoRejoinAsync"/> refuses
+    /// to flip it even if called directly. Parameter is the row's <see cref="AccountSummary"/>.
+    /// </summary>
+    public ICommand ToggleAutoRejoinCommand { get; }
 
     /// <summary>
     /// Flips an account row's <see cref="AccountSummary.AlertsMuted"/> preference and persists it
@@ -1557,12 +1633,29 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RelayCommand.RaiseCanExecuteChanged();
     }
 
-    /// <summary>Plugin-host seam: launch a specific account into a resolved target.</summary>
+    /// <summary>
+    /// Plugin-host seam: launch a specific account into a resolved target. A plugin can't answer
+    /// the flagged-launch dialog, so this always runs in <see cref="FlaggedLaunchMode.Refuse"/> —
+    /// a flagged account either follows the main (or the caller's already-resolved follow target)
+    /// or the launch is refused outright. <see cref="FlaggedLaunchPrompt"/> is never reached from
+    /// this path.
+    /// </summary>
     internal Task LaunchAccountForPluginAsync(AccountSummary summary, LaunchTarget target)
-        => LaunchAccountAsync(summary, overrideTarget: target);
+        => LaunchAccountAsync(summary, overrideTarget: target, flaggedMode: FlaggedLaunchMode.Refuse);
 
     /// <summary>Plugin-host seam: read-only access to the saved private-server store.</summary>
     internal IPrivateServerStore PrivateServerStoreForPlugin => _privateServerStore;
+
+    /// <summary>
+    /// Plugin-host seam: the same <see cref="Core.IUiDispatcher"/> this view model marshals its own
+    /// UI mutations through (<c>_ui</c>). <see cref="Core.IUiDispatcher.Invoke"/> blocks the calling
+    /// thread until the marshaled action has actually run — unlike a raw
+    /// <c>Application.Current?.Dispatcher.InvokeAsync(...)</c>, which queues and returns immediately.
+    /// A plugin-launch adapter that needs a launch to have STARTED (so <c>IsLaunching</c> is already
+    /// true) before its own RPC returns must dispatch through here, not through
+    /// <see cref="Application.Current"/> directly. See <c>MainViewModelLaunchInvokerAdapter</c>.
+    /// </summary>
+    internal Core.IUiDispatcher UiDispatcher => _ui;
 
     /// <summary>
     /// A Discord join request landed — either the in-client Join button or the
@@ -1670,11 +1763,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// rather than making the caller reverse-engineer success from mutated <see cref="AccountSummary"/>
     /// state.
     /// </summary>
-    private async Task<int> LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null)
+    private async Task<int> LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null,
+        FlaggedLaunchMode flaggedMode = FlaggedLaunchMode.Ask, bool fromAutoRejoin = false)
     {
         if (summary is null)
         {
             return 0;
+        }
+
+        if (!fromAutoRejoin)
+        {
+            // Somebody else is launching this row (the user, a batch, a plugin). Whatever comes of
+            // it (started, failed, cancelled at the flagged dialog, refused), a relaunch auto-rejoin
+            // still owes is superseded. Marshalled: plugin and recycle launches arrive off the UI
+            // thread, and the pending set is UI-thread only.
+            var launchingId = summary.Id;
+            _ui.Invoke(() => _relaunchPending.Remove(launchingId));
         }
 
         summary.IsLaunching = true;
@@ -1685,6 +1789,53 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             summary.Id, summary.DisplayName, overrideTarget?.GetType().Name ?? "from-row");
         try
         {
+            LaunchTarget target = ResolveLaunchTarget(summary.SelectedGame, overrideTarget);
+
+            // Spec rule 1: a JoinViaFriend account never joins directly on its own. Decided BEFORE
+            // the cookie read and the appStorage defender below, so a cancelled or refused launch
+            // leaves nothing behind (a defender armed for a launch that never happens would keep
+            // stamping this account's identity for up to two minutes).
+            var decision = DecideFlaggedLaunch(summary, target);
+            switch (decision.Outcome)
+            {
+                case FlaggedLaunchOutcome.Direct:
+                    break;
+                case FlaggedLaunchOutcome.Follow:
+                    target = decision.Target;
+                    break;
+                default:
+                    if (flaggedMode == FlaggedLaunchMode.Refuse)
+                    {
+                        _log.LogInformation("Flagged-launch decision for {AccountId}: {Outcome}, refused", summary.Id, decision.Outcome);
+                        summary.StatusText = string.Empty;
+                        return 0;
+                    }
+                    var choice = FlaggedLaunchPrompt(new FlaggedLaunchAsk(
+                        [summary.RenderName], MainAccount?.RenderName, JoinableFollowTargets(summary.Id)));
+                    _log.LogInformation("Flagged-launch decision for {AccountId}: {Outcome}, chose {Choice}",
+                        summary.Id, decision.Outcome, choice.GetType().Name);
+                    switch (choice)
+                    {
+                        case FlaggedLaunchChoice.FollowAccount f:
+                            target = new LaunchTarget.FollowFriend(f.UserId);
+                            break;
+                        case FlaggedLaunchChoice.JoinDirectly:
+                            await ToggleJoinViaFriendAsync(summary); // clears the flag, persists, reverts on failure
+                            if (summary.JoinViaFriend)
+                            {
+                                summary.StatusText = string.Empty;
+                                return 0; // the save failed (StatusBanner says so); don't join directly
+                            }
+                            break;
+                        default:
+                            summary.StatusText = string.Empty;
+                            return 0;
+                    }
+                    break;
+            }
+            _log.LogInformation("Flagged-launch decision for {AccountId}: {Outcome}, target={TargetKind}",
+                summary.Id, decision.Outcome, target.GetType().Name);
+
             string cookie;
             try
             {
@@ -1742,8 +1893,6 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.DisplayName);
             }
 
-            LaunchTarget target = ResolveLaunchTarget(summary.SelectedGame, overrideTarget);
-
             // Ensure a stable per-account browserTrackerId (v1.8.1 trust hygiene — followups
             // 2026-06-30 §6): a real client keeps one btid per account, so a fresh random one
             // per launch reads as a brand-new, unfamiliar client every time. Generate once,
@@ -1775,6 +1924,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     // Task 8: remembered so a later Recycle relaunches into the SAME target
                     // rather than re-resolving from the row's (possibly since-changed) picker.
                     summary.LastLaunchTarget = target;
+                    // Auto-rejoin: remember the target where ApplyPresence can't clear it, and give
+                    // the fresh client its own first-join grace. Marshalled because recycle and
+                    // plugin launches can reach this line off the UI thread, and the monitor is
+                    // UI-thread-only by contract.
+                    var launchedTarget = target;
+                    _ui.Invoke(() =>
+                    {
+                        _lastRejoinTargets[summary.Id] = launchedTarget;
+                        _relaunchPending.Remove(summary.Id); // any launch that starts settles a pending relaunch
+                        _autoRejoin.NotifyLaunched(summary.Id, DateTimeOffset.UtcNow);
+                    });
                     _log.LogInformation("Launcher pid {Pid} for {AccountId}; tracking RobloxPlayerBeta", started.Pid, summary.Id);
                     await RecordSessionStartAsync(summary, target, started.LaunchedAtUtc);
                     // Fire-and-forget: tracker watches for the player process. UI updates flow back
@@ -1814,6 +1974,41 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(HasCompactRows));
         }
     }
+
+    /// <summary>
+    /// Project a saved row's presence fields into the <see cref="UserPresence"/> shape
+    /// <see cref="EvaluateFollow"/> and <see cref="FlaggedLaunchRule"/> read. Shared by
+    /// <see cref="DecideFlaggedLaunch"/>, <see cref="JoinableFollowTargets"/>, and the plugin-host
+    /// adapter's follow-user-id lookup, so the same account row always yields the same presence.
+    /// </summary>
+    internal static UserPresence ProjectPresence(AccountSummary account)
+        => new(account.RobloxUserId ?? 0, account.PresenceState, account.CurrentPlaceId, account.CurrentServer?.JobId, null);
+
+    /// <summary>
+    /// Apply <see cref="FlaggedLaunchRule"/> to one row against the main's current presence.
+    /// Reads <see cref="AccountsSnapshot"/>, so it is safe off the UI thread. The main's presence
+    /// is projected from its saved row exactly as <see cref="FollowAltAsync"/> projects a target's.
+    /// </summary>
+    internal FlaggedLaunchDecision DecideFlaggedLaunch(AccountSummary summary, LaunchTarget resolved)
+    {
+        var main = AccountsSnapshot.FirstOrDefault(a => a.IsMain);
+        var mainPresence = main is null ? null : ProjectPresence(main);
+        return FlaggedLaunchRule.Decide(summary.JoinViaFriend, summary.IsMain, resolved, main?.RobloxUserId, mainPresence,
+            main?.LastLaunchTarget);
+    }
+
+    /// <summary>
+    /// The saved accounts a flagged account could follow instead of the main: every row but
+    /// <paramref name="excludingAccountId"/> with a known user id whose presence passes
+    /// <see cref="EvaluateFollow"/>. A flagged row not in a game is skipped by the same test.
+    /// Reads <see cref="AccountsSnapshot"/>, so it is safe off the UI thread.
+    /// </summary>
+    internal IReadOnlyList<(string Name, long UserId)> JoinableFollowTargets(Guid excludingAccountId)
+        => AccountsSnapshot
+            .Where(a => a.Id != excludingAccountId && a.RobloxUserId is > 0)
+            .Where(a => EvaluateFollow(ProjectPresence(a), a.RenderName).CanFollow)
+            .Select(a => (a.RenderName, a.RobloxUserId!.Value))
+            .ToList();
 
     /// <summary>
     /// <see cref="AccountRecycler.LaunchDelegate"/> implementation — runs the SAME launch path
@@ -1857,6 +2052,40 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 "Recycle: {From} -> {To} for account {AccountId} (presence server {PlaceId}/{JobId}).",
                 resolved.GetType().Name, target.GetType().Name, summary.Id,
                 summary.CurrentServer?.PlaceId, summary.CurrentServer?.JobId ?? "(none)");
+        }
+
+        // Spec rule 1, decided BEFORE the recycler stops the client: the relaunch would otherwise
+        // open the flagged-launch question with the client already gone, and Cancel there would
+        // leave a running account stopped. Ask first; Cancel stops nothing.
+        var decision = DecideFlaggedLaunch(summary, target);
+        switch (decision.Outcome)
+        {
+            case FlaggedLaunchOutcome.Direct:
+                break;
+            case FlaggedLaunchOutcome.Follow:
+                target = decision.Target;
+                break;
+            default:
+                var choice = FlaggedLaunchPrompt(new FlaggedLaunchAsk(
+                    [summary.RenderName], MainAccount?.RenderName, JoinableFollowTargets(summary.Id)));
+                _log.LogInformation("Recycle: flagged-launch decision for {AccountId}: {Outcome}, chose {Choice} (before the stop)",
+                    summary.Id, decision.Outcome, choice.GetType().Name);
+                switch (choice)
+                {
+                    case FlaggedLaunchChoice.FollowAccount f:
+                        target = new LaunchTarget.FollowFriend(f.UserId);
+                        break;
+                    case FlaggedLaunchChoice.JoinDirectly:
+                        await ToggleJoinViaFriendAsync(summary).ConfigureAwait(true); // clears + persists, reverts on failure
+                        if (summary.JoinViaFriend)
+                        {
+                            return false; // the save failed (StatusBanner says so); nothing stopped
+                        }
+                        break;
+                    default:
+                        return false; // Cancel: the client keeps running
+                }
+                break;
         }
 
         // Spec log table: pre-recycle private bytes + the target being restored, never a cookie.
@@ -1920,6 +2149,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <see cref="AnchorGate.MaxWait"/>.
     /// </summary>
     internal TimeSpan SquadServerResolveMaxWait { get; set; } = AnchorGate.MaxWait;
+
+    /// <summary>
+    /// How long a batch holds its <see cref="AccountSummary.JoinViaFriend"/> accounts waiting for a
+    /// joinable anchor before asking what to do with them. Defaults to <see cref="AnchorGate.MaxWait"/>;
+    /// tests shorten it.
+    /// </summary>
+    internal TimeSpan AnchorWait { get; set; } = AnchorGate.MaxWait;
 
     /// <summary>
     /// The in-flight landing verification for the most recent server-targeted recycle, or null when
@@ -2015,7 +2251,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// the tracker time to claim each <c>RobloxPlayerBeta.exe</c> by start time before the next
     /// launch fires (otherwise FIFO matching gets murky).
     /// </summary>
-    private async Task LaunchAllAsync()
+    private Task LaunchAllAsync() => LaunchAllCoreAsync(askHeadroom: true);
+
+    /// <summary>
+    /// Test seam: <see cref="LaunchAllAsync"/> without the F-082 headroom modal. The modal call
+    /// reads <c>Application.Current.MainWindow</c>, which throws off the WPF thread whenever the
+    /// suite's real <c>App</c> exists, so a test can't reach the batch body through the command.
+    /// Everything after the modal (eligibility, dispatch, the flagged release) is the same code.
+    /// </summary>
+    internal Task LaunchAllForTestAsync() => LaunchAllCoreAsync(askHeadroom: false);
+
+    private async Task LaunchAllCoreAsync(bool askHeadroom)
     {
         if (IsBusy) return;
         IsBusy = true;
@@ -2042,7 +2288,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // Advisory: the user can go ahead. Deliberately NOT on the single-launch path, where the
             // same dialog would interrupt one-at-a-time play on a machine already near its limit.
             // That is nagging, and a nagged warning gets ignored by the time it finally matters.
-            if (targets.Count > 0
+            if (askHeadroom
+                && targets.Count > 0
                 && !Modals.LaunchHeadroomWindow.ShouldProceed(
                     _memoryWatchdog.GetSnapshot(), _memoryWatchdog.ReserveBytes, targets.Count,
                     Application.Current?.MainWindow, _memoryWatchdog.ExpectedClientMb))
@@ -2063,11 +2310,35 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
 
             StatusBanner = Loc.Plural("Shell_Msg_LaunchingSelected", targets.Count);
-            await DispatchBatchAsync(
-                targets,
-                overrideTarget: null,
-                launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_LaunchingProgress", summary.RenderName, n, total));
-            StatusBanner = result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"));
+            Func<AccountSummary, int, int, string> launchingBanner =
+                (summary, n, total) => Loc.Format("Shell_Msg_LaunchingProgress", summary.RenderName, n, total);
+
+            // Join-via-friend rows are held back: the direct rows go first exactly as before, then
+            // the flagged rows follow a landed anchor (the main first), or the user is asked once.
+            var plan = SquadLaunchPlan.Build(targets);
+            await DispatchBatchAsync(plan.Direct, overrideTarget: null, launchingBanner);
+
+            string? leftStoppedBanner = null;
+            if (plan.Flagged.Count > 0)
+            {
+                // The main is the ONLY anchor here (spec rules 1-2), whether it's in this batch or
+                // already in a game. An unflagged alt landing first is not a reason to follow it;
+                // no main, or a main that never becomes joinable, means one ask. A main that sits
+                // this batch out and isn't running or launching can't land in the next AnchorWait
+                // either, so it isn't waited on: the ask comes at once.
+                var main = MainAccount;
+                var mainCanLand = main is not null
+                    && (plan.Direct.Contains(main) || main.IsRunning || main.IsLaunching || main.InGame);
+                (_, leftStoppedBanner) = await ReleaseFlaggedAfterAnchorAsync(
+                    mainCanLand ? [main!] : [],
+                    plan.Flagged,
+                    CancellationToken.None,
+                    waitingBanner: mainCanLand ? Loc.Format("Shell_Msg_WaitingForLanding", main!.RenderName) : null,
+                    joinDirectly: cleared => plan.Direct.Count == 0
+                        ? DispatchBatchAsync(cleared, overrideTarget: null, launchingBanner)
+                        : ReleaseBatchAsync(cleared, overrideTarget: null, launchingBanner, startIndex: 0));
+            }
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"));
         }
         finally
         {
@@ -2177,7 +2448,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // Stamped BEFORE the launch so the tail resolver can tell a presence reading about the
             // client we just started from one left over from before it.
             var firstLaunchedAtUtc = DateTimeOffset.UtcNow;
-            await LaunchAccountAsync(first, overrideTarget).ConfigureAwait(true);
+            // A batch never opens a per-row flagged dialog; the batch asks once itself.
+            await LaunchAccountAsync(first, overrideTarget, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
 
             if (decision == PreWarmDecision.PreWarmThenRelease)
             {
@@ -2326,19 +2598,23 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// name="waitForLanding"/> (careful mode, v1.9.0) serializes each join behind an
     /// <see cref="AnchorGate"/>-bounded wait for that account's presence-fed InGame flag before
     /// moving on — a trust-aware throttle beyond the fixed 5s inter-launch gap.
+    /// <paramref name="flaggedMode"/> is <see cref="FlaggedLaunchMode.Refuse"/> for every batch: a
+    /// flagged row that can't follow is skipped rather than prompting per row, because the batch
+    /// itself asks once (<see cref="ReleaseFlaggedAfterAnchorAsync"/>).
     /// </summary>
     private async Task ReleaseBatchAsync(
         IReadOnlyList<AccountSummary> targets,
         LaunchTarget? overrideTarget,
         Func<AccountSummary, int, int, string> launchingBanner,
         int startIndex,
-        bool waitForLanding = false)
+        bool waitForLanding = false,
+        FlaggedLaunchMode flaggedMode = FlaggedLaunchMode.Refuse)
     {
         for (var idx = startIndex; idx < targets.Count; idx++)
         {
             var summary = targets[idx];
             StatusBanner = launchingBanner(summary, idx + 1, targets.Count);
-            await LaunchAccountAsync(summary, overrideTarget).ConfigureAwait(true);
+            await LaunchAccountAsync(summary, overrideTarget, flaggedMode).ConfigureAwait(true);
             if (waitForLanding)
             {
                 // careful mode: serialize joins
@@ -2352,6 +2628,118 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             {
                 await Task.Delay(InterLaunchThrottle).ConfigureAwait(true);
             }
+        }
+    }
+
+    /// <summary>
+    /// The shared back half of Squad Launch and Launch multiple for
+    /// <see cref="AccountSummary.JoinViaFriend"/> accounts: wait up to <see cref="AnchorWait"/> for an
+    /// anchor (<see cref="AnchorGate.PickAnchor"/>), then release every flagged row following it.
+    /// With no anchor the user is asked ONCE for the whole group; the flagged accounts never join
+    /// directly on their own (spec rule 1), and no per-row dialog opens.
+    /// </summary>
+    /// <param name="anchors">Who the flagged rows may follow, in preference order. Squad Launch
+    /// passes its direct batch (the anchor has to be in the squad's server). Launch multiple passes
+    /// the main ONLY: a flagged account follows the main, never whichever alt happened to land
+    /// first (spec rules 1-2). Empty means nobody can anchor, so the ask comes straight away.</param>
+    /// <param name="waitingBanner">Shown during the wait; defaults to the squad wording.</param>
+    /// <param name="joinDirectly">The caller's direct path, taken only after the user chose
+    /// "join directly" and the flags were cleared. Gets only the rows whose flag actually cleared.</param>
+    /// <returns>The flagged rows released, and the banner to finish on when some were left
+    /// stopped (null when none were).</returns>
+    private async Task<(IReadOnlyList<AccountSummary> Released, string? LeftStoppedBanner)> ReleaseFlaggedAfterAnchorAsync(
+        IReadOnlyList<AccountSummary> anchors,
+        IReadOnlyList<AccountSummary> flagged,
+        CancellationToken ct,
+        string? waitingBanner = null,
+        bool careful = false,
+        Func<IReadOnlyList<AccountSummary>, Task>? joinDirectly = null)
+    {
+        // The user launched these rows as part of a batch. Some may never reach LaunchAccountAsync
+        // (the ask below can be cancelled), so settle any relaunch auto-rejoin still owes them here.
+        foreach (var row in flagged)
+        {
+            _relaunchPending.Remove(row.Id);
+        }
+
+        // A row waiting to follow can't anchor. SquadLaunchPlan already keeps the main in Direct,
+        // so this is a guard, not a path.
+        IReadOnlyList<AccountSummary> candidates = anchors.Where(a => !flagged.Contains(a)).ToList();
+
+        var anchor = AnchorGate.PickAnchor(candidates);
+        if (anchor is null && candidates.Count > 0)
+        {
+            StatusBanner = waitingBanner ?? Loc.Get("Shell_Msg_WaitingSquadMember");
+            var deadline = DateTime.UtcNow + AnchorWait;
+            var poll = PreWarmPollInterval < AnchorWait ? PreWarmPollInterval : AnchorWait;
+            while (anchor is null && !ct.IsCancellationRequested && !AnchorGate.WaitExpired(DateTime.UtcNow, deadline))
+            {
+                await Task.Delay(poll).ConfigureAwait(true);
+                anchor = AnchorGate.PickAnchor(candidates);
+            }
+        }
+
+        if (anchor is { RobloxUserId: { } anchorUserId })
+        {
+            _log.LogInformation("Join-via-friend: {Count} account(s) following anchor {Anchor} (userId {UserId}).",
+                flagged.Count, anchor.DisplayName, anchorUserId);
+            await ReleaseBatchAsync(
+                flagged,
+                overrideTarget: new LaunchTarget.FollowFriend(anchorUserId),
+                launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningViaAnchorProgress", summary.RenderName, anchor.RenderName, n, total),
+                startIndex: 0,
+                waitForLanding: careful,
+                flaggedMode: FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+            return (flagged, null);
+        }
+
+        // No anchor: one ask for the whole group, never one per row and never a silent direct join.
+        var names = flagged.Select(r => r.RenderName).ToList();
+        var ask = new FlaggedLaunchAsk(names, MainAccount?.RenderName, JoinableFollowTargets(Guid.Empty));
+        var choice = FlaggedLaunchPrompt(ask);
+        _log.LogInformation("Join-via-friend: no anchor within {Cap}s ({Candidates} candidate(s)); asked once for {Count} flagged account(s), chose {Choice}.",
+            (int)AnchorWait.TotalSeconds, candidates.Count, flagged.Count, choice.GetType().Name);
+
+        switch (choice)
+        {
+            case FlaggedLaunchChoice.FollowAccount f:
+            {
+                var followName = ask.JoinableOthers.FirstOrDefault(o => o.UserId == f.UserId).Name
+                    ?? f.UserId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                await ReleaseBatchAsync(
+                    flagged,
+                    overrideTarget: new LaunchTarget.FollowFriend(f.UserId),
+                    launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningViaAnchorProgress", summary.RenderName, followName, n, total),
+                    startIndex: 0,
+                    waitForLanding: careful,
+                    flaggedMode: FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+                return (flagged, null);
+            }
+            case FlaggedLaunchChoice.JoinDirectly:
+            {
+                foreach (var row in flagged)
+                {
+                    if (row.JoinViaFriend)
+                    {
+                        await ToggleJoinViaFriendAsync(row).ConfigureAwait(true); // clears + persists, reverts on failure
+                    }
+                }
+                var cleared = flagged.Where(r => !r.JoinViaFriend).ToList();
+                var stillFlagged = flagged.Where(r => r.JoinViaFriend).Select(r => r.RenderName).ToList();
+                if (cleared.Count > 0 && joinDirectly is not null)
+                {
+                    StatusBanner = candidates.Count == 0
+                        ? Loc.Get("Shell_Msg_NoAnchorAccounts")
+                        : Loc.Get("Shell_Msg_NoSquadLanded");
+                    await joinDirectly(cleared).ConfigureAwait(true);
+                }
+                // A row whose flag didn't save is still flagged, so it must not join directly.
+                return (cleared, stillFlagged.Count == 0
+                    ? null
+                    : Loc.Format("Shell_Msg_FlaggedLeftStopped", string.Join(", ", stillFlagged)));
+            }
+            default:
+                return ([], Loc.Format("Shell_Msg_FlaggedLeftStopped", string.Join(", ", names)));
         }
     }
 
@@ -2452,76 +2840,38 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     resolveTailTarget: resolveTailTarget);
             }
 
+            // Phases 2 and 3: flagged accounts wait for a landed direct-batch anchor and follow it.
+            // No anchor means one ask for the whole group; they never join directly on their own.
+            IReadOnlyList<AccountSummary> releasedFlagged = [];
+            string? leftStoppedBanner = null;
             if (plan.Flagged.Count > 0)
             {
-                // Phase 2 — anchor: first direct-batch account that is InGame with a known userId.
-                AccountSummary? anchor = null;
-                if (plan.Direct.Count > 0)
-                {
-                    StatusBanner = Loc.Get("Shell_Msg_WaitingSquadMember");
-                    var deadline = DateTime.UtcNow + AnchorGate.MaxWait;
-                    while (anchor is null && !AnchorGate.WaitExpired(DateTime.UtcNow, deadline))
-                    {
-                        anchor = AnchorGate.PickAnchor(plan.Direct);
-                        if (anchor is null)
-                        {
-                            await Task.Delay(PreWarmPollInterval).ConfigureAwait(true);
-                        }
-                    }
-                }
-
-                if (anchor is { RobloxUserId: { } anchorUserId })
-                {
-                    // Phase 3 — flagged accounts follow the anchor into the same server.
-                    _log.LogInformation("Join-via-friend: {Count} account(s) following anchor {Anchor} (userId {UserId}).",
-                        plan.Flagged.Count, anchor.DisplayName, anchorUserId);
-                    await ReleaseBatchAsync(
-                        plan.Flagged,
-                        overrideTarget: new LaunchTarget.FollowFriend(anchorUserId),
-                        launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningViaAnchorProgress", summary.RenderName, anchor.RenderName, n, total),
-                        startIndex: 0,
-                        waitForLanding: careful);
-                }
-                else
-                {
-                    // Fallback — never strand: flagged accounts go direct with the standard throttle.
-                    _log.LogWarning("Join-via-friend: no anchor landed within {Cap}s (direct batch: {Direct}); falling back to direct joins for {Count} flagged account(s).",
-                        (int)AnchorGate.MaxWait.TotalSeconds, plan.Direct.Count, plan.Flagged.Count);
-                    StatusBanner = plan.Direct.Count == 0
-                        ? Loc.Get("Shell_Msg_NoAnchorAccounts")
-                        : Loc.Get("Shell_Msg_NoSquadLanded");
-                    if (plan.Direct.Count == 0)
-                    {
-                        // No Phase 1 ran, so no anchor was ever possible and the pre-warm gate
-                        // never fired for this squad. Route the all-flagged fallback through
-                        // DispatchBatchAsync so an install-pending update still serializes #1
-                        // instead of firing every flagged client at once via ReleaseBatchAsync.
-                        await DispatchBatchAsync(
-                            plan.Flagged,
+                (releasedFlagged, leftStoppedBanner) = await ReleaseFlaggedAfterAnchorAsync(
+                    plan.Direct,
+                    plan.Flagged,
+                    CancellationToken.None,
+                    careful: careful,
+                    joinDirectly: cleared => plan.Direct.Count == 0
+                        // No Phase 1 ran, so the pre-warm gate never fired for this squad. Route
+                        // through DispatchBatchAsync so an install-pending update still serializes
+                        // #1, and #1 defines the server the rest aim at.
+                        ? DispatchBatchAsync(
+                            cleared,
                             overrideTarget: target,
                             launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningServerFallbackProgress", summary.RenderName, n, total),
                             waitForLanding: careful,
-                            // Nothing landed before this batch, so #1 here defines the server the
-                            // rest aim at — same first-lands-then-follow shape as the direct batch.
-                            resolveTailTarget: resolveTailTarget);
-                    }
-                    else
-                    {
-                        // Anchor timed out, but Phase 1 already ran the pre-warm decision for the
-                        // direct batch — no need to re-gate here. A squad server read during phase 1
-                        // still applies: these accounts couldn't follow a friend, but they can still
-                        // be sent at the server the direct batch is in.
-                        await ReleaseBatchAsync(
-                            plan.Flagged,
+                            resolveTailTarget: resolveTailTarget)
+                        // Phase 1 already ran the pre-warm decision. A squad server read during
+                        // phase 1 still applies: aim these at the server the direct batch is in.
+                        : ReleaseBatchAsync(
+                            cleared,
                             overrideTarget: ServerInstanceTargeting.Upgrade(target, squadServer),
                             launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningServerFallbackProgress", summary.RenderName, n, total),
                             startIndex: 0,
-                            waitForLanding: careful);
-                    }
-                }
+                            waitForLanding: careful));
             }
 
-            StatusBanner = result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"));
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"));
 
             // Everyone was aimed at one specific server — check with presence who actually made it.
             // Fire-and-forget: the verdict is up to four minutes out (ServerLandingGate.MaxWait,
@@ -2529,7 +2879,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // batch is done either way.
             if (squadServer is not null)
             {
-                var dispatched = plan.Direct.Concat(plan.Flagged).ToList();
+                var dispatched = plan.Direct.Concat(releasedFlagged).ToList();
                 PendingServerVerification = VerifySquadLandingsAsync(dispatched, squadServer, DateTimeOffset.UtcNow);
             }
         }
@@ -3087,11 +3437,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
             else
             {
-                // Capture combined active state BEFORE mutating presence so we can tell whether
-                // this poll is the moment the row went fully inactive. The game name goes with it:
-                // the dropped-out alert wants to say WHICH game the account fell out of, and the
-                // lines below have already blanked it by the time that alert is built.
+                // Capture combined active state, and whether this row was actually InGame, BEFORE
+                // mutating presence so we can tell whether this poll is the moment the row went
+                // fully inactive. The game name goes with it: the dropped-out alert wants to say
+                // WHICH game the account fell out of, and the lines below have already blanked it
+                // by the time that alert is built.
                 var wasActive = summary.InGame || summary.IsRunning;
+                var wasInGame = summary.InGame;
                 var lastGameName = summary.CurrentGameName;
 
                 summary.PresenceState = e.PresenceType;
@@ -3099,17 +3451,28 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.CurrentPlaceId = null;
                 summary.CurrentServer = null;
                 summary.InGameSinceUtc = null;
-                // MINOR 1 (re-review, 2026-08-03): an account cannot join a genuinely different
-                // server — public or private — without first fully leaving whatever it was in, so
-                // presence reporting not-in-game is the deterministic point to drop a private-server
-                // LastLaunchTarget. Without this, a stale private code from an earlier launch would
-                // keep attaching itself to a later PUBLIC server of the same place (place matching
-                // alone can't catch this, and the blocking-finding fix above deliberately stopped
+                // MINOR 1 (re-review, 2026-08-03; corrected 2026-09-29 — I5): an account cannot
+                // join a genuinely different server — public or private — without first fully
+                // leaving whatever it was in, so the InGame -> not-InGame TRANSITION is the
+                // deterministic point to drop a private-server LastLaunchTarget, not merely
+                // "presence says not-in-game right now". A launching client reads not-in-game (or
+                // Offline) on every poll before its first InGame reading ever lands — PresenceService
+                // polls every 25s, and a real Roblox launch routinely takes longer than that to
+                // finish loading — so clearing unconditionally here wiped the just-recorded proof
+                // before the launched client had a chance to report InGame at all, which made a
+                // flagged alt given the SAME private-server link get refused (MainNotInThatServer)
+                // instead of following. Gating on wasInGame keeps the stale-credential guard for an
+                // actual leave: without it, a stale private code from an earlier launch would keep
+                // attaching itself to a later PUBLIC server of the same place (place matching alone
+                // can't catch this, and the blocking-finding fix above deliberately stopped
                 // requiring presence to agree on place at all). A within-session universe teleport
                 // never passes through this branch — CurrentServer just gets a fresh (place, job)
                 // while PresenceState stays InGame the whole time — so a genuinely continuous
                 // private-server session's credential survives exactly as intended.
-                summary.LastLaunchTarget = null;
+                if (wasInGame)
+                {
+                    summary.LastLaunchTarget = null;
+                }
 
                 // Presence-confirmed close: the row was active, presence now says not-in-game,
                 // and the process is also gone — both signals agree, so stamp the close. This is
@@ -3296,6 +3659,413 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal event EventHandler? PeriodicTick;
 
     /// <summary>
+    /// Seam: wait for the account's client to exit after auto-rejoin stopped it. The default polls
+    /// <see cref="AccountSummary.IsRunning"/> every 500 ms for up to 15 s and returns either way;
+    /// <see cref="RunAutoRejoinAsync"/> re-reads <c>IsRunning</c> afterwards and never launches a
+    /// second client beside one that didn't exit. Tests replace it so nothing really waits.
+    /// </summary>
+    internal Func<Guid, Task> WaitForClientExitAsync { get; set; }
+
+    private async Task DefaultWaitForClientExitAsync(Guid accountId)
+    {
+        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(15);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            var row = Accounts.FirstOrDefault(a => a.Id == accountId);
+            if (row is null || !row.IsRunning)
+            {
+                return;
+            }
+            await Task.Delay(500).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>
+    /// PeriodicTick subscriber. async void on purpose, with a catch-all: a throw anywhere in the
+    /// pass, synchronous or after an await, is logged here and never reaches the ticker.
+    /// </summary>
+    private async void OnAutoRejoinTick(object? sender, EventArgs e)
+    {
+        try
+        {
+            await RunAutoRejoinAsync(DateTimeOffset.UtcNow).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Auto-rejoin pass threw; the next tick tries again.");
+        }
+    }
+
+    /// <summary>
+    /// One auto-rejoin pass (spec item 6): offer every row to <see cref="AutoRejoinMonitor"/>, alert
+    /// on a pause, and stop-and-relaunch each account it says is due. UI thread only. Never opens
+    /// the flagged-launch prompt and never touches a client's window. A pass that starts while an
+    /// earlier one is still waiting on a client to exit returns immediately.
+    /// </summary>
+    internal async Task RunAutoRejoinAsync(DateTimeOffset now)
+    {
+        if (_autoRejoinRunning)
+        {
+            return;
+        }
+        if (IsBusy)
+        {
+            // A batch (Launch multiple, Squad Launch) is running: its launches, stops and anchor
+            // waits own the rows right now. Skip the whole pass, pending relaunches and the monitor
+            // tick alike. The monitor isn't ticked, so nothing is spent; the next pass decides.
+            return;
+        }
+        _autoRejoinRunning = true;
+        try
+        {
+            await RunPendingRelaunchesAsync(now).ConfigureAwait(true);
+
+            // Every row, every tick: the monitor reads an absent id as a removed account.
+            // PresenceKnown: a row with no user id is never polled, and a rate-limited or expired
+            // session's presence is stale (ApplySessionLimited sets Offline). Either way InGame
+            // says nothing, and the monitor holds instead of reading it as a drop.
+            var candidates = Accounts
+                .Select(r => new AutoRejoinCandidate(
+                    r.Id, r.AutoRejoin, r.IsMain, r.IsRunning, r.InGame, r.CurrentServer,
+                    StopInProgress: WasCloseExpected(r.Id, now),
+                    PresenceKnown: IsPresenceKnown(r)))
+                .ToList();
+            var actions = _autoRejoin.Tick(now, candidates);
+
+            // A flagged account's "main not joinable" wait ends when it is no longer due (back in
+            // game, closed, turned off, gone). The next wait logs its own line.
+            _waitingForMainLogged.RemoveWhere(id =>
+                !actions.Any(a => a is AutoRejoinAction.Rejoin && a.AccountId == id));
+
+            // Each action is handled on its own: a throw from one (a toast, a stop, a launch) is
+            // logged and the loop moves on, so a later Rejoin in the same batch still reaches
+            // NotifyLaunched or NotifyRejoinSkipped instead of sitting InFlight for the session.
+            foreach (var action in actions)
+            {
+                try
+                {
+                    switch (action)
+                    {
+                        case AutoRejoinAction.Pause pause:
+                            await PauseAutoRejoinAsync(pause.AccountId, AutoRejoinPauseReason.RepeatedDrops).ConfigureAwait(true);
+                            break;
+                        case AutoRejoinAction.Rejoin rejoin:
+                            await RejoinAsync(rejoin, now).ConfigureAwait(true);
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.LogWarning(ex, "Auto-rejoin {AccountId}: handling {Action} threw; carrying on with the rest of the tick.",
+                        action.AccountId, action.GetType().Name);
+                    if (action is AutoRejoinAction.Rejoin)
+                    {
+                        // Only a throw from BEFORE the stop reaches here (RejoinAsync settles its own
+                        // post-stop failures), so nothing was stopped: refund. No-op if not in flight.
+                        _autoRejoin.NotifyRejoinSkipped(action.AccountId);
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _autoRejoinRunning = false;
+        }
+    }
+
+    /// <summary>
+    /// True when this row's presence is actually read (a Roblox user id to poll with, and a session
+    /// that isn't rate-limited or expired). Auto-rejoin only trusts "not in game" when this holds.
+    /// </summary>
+    internal static bool IsPresenceKnown(AccountSummary row)
+        => row.RobloxUserId is > 0 && !row.SessionLimited && !row.SessionExpired;
+
+    /// <summary>
+    /// Retry every relaunch-pending account (see <see cref="_relaunchPending"/>). Runs at the start
+    /// of each pass. An entry is dropped when its row is gone, is the main, has auto-rejoin off, or
+    /// is running again (something else brought the client back). A row mid-launch is left alone.
+    /// </summary>
+    private async Task RunPendingRelaunchesAsync(DateTimeOffset now)
+    {
+        if (_relaunchPending.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var id in _relaunchPending.Keys.ToList())
+        {
+            if (!_relaunchPending.TryGetValue(id, out var pending))
+            {
+                continue; // cleared by an earlier launch in this same loop
+            }
+            var row = Accounts.FirstOrDefault(a => a.Id == id);
+            if (row is null || row.IsMain || !row.AutoRejoin || row.IsRunning)
+            {
+                _relaunchPending.Remove(id);
+                continue;
+            }
+            if (row.IsLaunching)
+            {
+                continue;
+            }
+            if (row.JoinViaFriend && now - pending.Since >= FlaggedPendingMaxWait)
+            {
+                // The main has been away too long; stop waiting for it. Quietly: the account was
+                // already stopped and nothing failed, so there is nothing to alert about.
+                _relaunchPending.Remove(id);
+                _log.LogInformation("Auto-rejoin {AccountId}: relaunch pending waited {Minutes} min for the main; dropped.",
+                    id, (int)FlaggedPendingMaxWait.TotalMinutes);
+                continue;
+            }
+
+            try
+            {
+                LaunchTarget target;
+                if (row.JoinViaFriend)
+                {
+                    if (DecideFlaggedFollow(row) is not { } follow)
+                    {
+                        continue; // waiting for the main costs no attempt
+                    }
+                    target = follow;
+                }
+                else
+                {
+                    target = pending.Target
+                        ?? ServerInstanceTargeting.Upgrade(
+                            _lastRejoinTargets.GetValueOrDefault(id) ?? ResolveLaunchTarget(row.SelectedGame, null),
+                            null);
+                }
+
+                _log.LogInformation("Auto-rejoin {AccountId}: relaunch pending, attempt {Attempt} -> {TargetKind}",
+                    id, pending.Attempts + 1, target.GetType().Name);
+                var pid = 0;
+                try
+                {
+                    pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse, fromAutoRejoin: true).ConfigureAwait(true);
+                }
+                catch (Exception ex)
+                {
+                    _log.LogWarning(ex, "Auto-rejoin {AccountId}: pending relaunch threw.", id);
+                }
+                if (pid != 0)
+                {
+                    _relaunchPending.Remove(id); // the Started case already did; belt and braces
+                    continue;
+                }
+                if (!_relaunchPending.ContainsKey(id))
+                {
+                    continue; // cleared while the launch was in flight (toggle off, user stop)
+                }
+
+                var attempts = pending.Attempts + 1;
+                if (attempts >= PendingRelaunchMaxAttempts)
+                {
+                    _relaunchPending.Remove(id);
+                    _log.LogWarning("Auto-rejoin {AccountId}: relaunch failed {Attempts} times; giving up until it is turned back on.", id, attempts);
+                    // Really paused, not just alerted: a later manual launch that drops out is not
+                    // auto-rejoined until the user turns it back on (ToggleAutoRejoinAsync -> Resume).
+                    await PauseAutoRejoinAsync(id, AutoRejoinPauseReason.RelaunchFailed).ConfigureAwait(true);
+                }
+                else
+                {
+                    _relaunchPending[id] = pending with { Attempts = attempts };
+                }
+            }
+            catch (Exception ex)
+            {
+                // One bad entry (a throwing toast, say) never stops the rest of the pass.
+                _log.LogWarning(ex, "Auto-rejoin {AccountId}: pending relaunch handling threw.", id);
+            }
+        }
+    }
+
+    private void MarkRelaunchPending(Guid accountId, LaunchTarget? unflaggedTarget, DateTimeOffset now)
+    {
+        if (!_relaunchPending.ContainsKey(accountId))
+        {
+            _relaunchPending[accountId] = new PendingRelaunch(0, unflaggedTarget, now);
+        }
+        _log.LogInformation("Auto-rejoin {AccountId}: client stopped but not relaunched; relaunch pending.", accountId);
+    }
+
+    /// <summary>
+    /// Pause auto-rejoin for one account, for either reason, so the pause is visible and durable:
+    /// the monitor is paused, the row's <see cref="AccountSummary.AutoRejoin"/> goes off (the menu
+    /// shows it off, and the alert's "paused" is literally true), the setting is persisted (a
+    /// restart can't silently unpause it), and the alert is raised. Turning it back on
+    /// (<see cref="ToggleAutoRejoinAsync"/> -> Resume) is the way out. A persist failure is logged
+    /// and changes nothing else: the monitor stays paused.
+    /// </summary>
+    private async Task PauseAutoRejoinAsync(Guid accountId, AutoRejoinPauseReason reason)
+    {
+        _autoRejoin.Pause(accountId);
+        _relaunchPending.Remove(accountId);
+        var row = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (row is not null && row.AutoRejoin)
+        {
+            row.AutoRejoin = false;
+            try
+            {
+                await _accountStore.SetAutoRejoinAsync(accountId, false).ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Auto-rejoin {AccountId}: paused, but saving it as off failed; it stays paused for this session.", accountId);
+            }
+        }
+        RaiseAutoRejoinPaused(accountId, reason);
+    }
+
+    /// <summary>
+    /// Task 10: routes through the same <see cref="AlertKind"/> pipeline as every other alert
+    /// (mute, cooldown, fan-out) rather than a direct tray toast. <paramref name="reason"/> tells
+    /// <see cref="WebhookPayload"/> which of the two sentences to say — the monitor's own Pause
+    /// action (4th drop in an hour) reads differently from giving up on a pending relaunch, even
+    /// though both end the account's auto-rejoin the same way.
+    /// </summary>
+    private void RaiseAutoRejoinPaused(Guid accountId, AutoRejoinPauseReason reason)
+    {
+        var row = Accounts.FirstOrDefault(a => a.Id == accountId);
+        _log.LogInformation("Auto-rejoin {AccountId}: paused; resumes when it is turned back on.", accountId);
+        RaiseAlerts([new AlertTrigger(
+            AlertKind.AutoRejoinPaused, accountId, row?.RenderName ?? string.Empty,
+            row?.DisplayName ?? string.Empty, row?.CurrentGameName, null, DateTimeOffset.UtcNow,
+            PauseReason: reason)]);
+    }
+
+    private async Task RejoinAsync(AutoRejoinAction.Rejoin action, DateTimeOffset now)
+    {
+        var id = action.AccountId;
+        var row = Accounts.FirstOrDefault(a => a.Id == id);
+        if (row is null)
+        {
+            _autoRejoin.NotifyRejoinSkipped(id);
+            return;
+        }
+
+        // A flagged account never uses a stored target: its last one is usually FollowFriend(main),
+        // which FlaggedLaunchRule passes as Direct, so the pre-check could never refuse it and a
+        // dropped alt would be stopped and relaunched into a follow that fails. It only needs the
+        // main joinable, so it always decides against the default game and follows on Follow.
+        // An unflagged account targets exactly as Recycle does: its last target (or the row's
+        // resolved one), upgraded to the server presence last saw it in.
+        LaunchTarget target;
+        if (row.JoinViaFriend)
+        {
+            if (DecideFlaggedFollow(row) is not { } follow)
+            {
+                // Before anything is stopped: the client stays, no budget is spent, next tick retries.
+                // Logged when the wait starts only; the tick repeats every 30 s while it lasts.
+                if (_waitingForMainLogged.Add(id))
+                {
+                    _log.LogInformation("Auto-rejoin {AccountId}: main not joinable, retrying next tick.", id);
+                }
+                _autoRejoin.NotifyRejoinSkipped(id);
+                return;
+            }
+            _waitingForMainLogged.Remove(id);
+            target = follow;
+        }
+        else
+        {
+            // A failed join never reached a server, so there's no server to go back to: upgrade
+            // with null, which degrades a remembered GameJob (possibly the dead one that just
+            // failed) to its Place instead of aiming at it again.
+            target = ServerInstanceTargeting.Upgrade(
+                _lastRejoinTargets.GetValueOrDefault(id) ?? ResolveLaunchTarget(row.SelectedGame, null),
+                action.FailedJoin ? null : action.LastServer);
+        }
+
+        var reason = action.FailedJoin ? "failed join" : "dropped out";
+        var unflaggedTarget = row.JoinViaFriend ? null : target;
+        ExpectClose(id);
+        var ownCloseRequest = _closeRequests.GetValueOrDefault(id);
+        _instanceStopper.StopAccount(id);
+
+        // From here on the client has been stopped, so this cycle COUNTS against the hourly budget:
+        // every way out clears in-flight (ClearInFlight) and none refunds (NotifyRejoinSkipped is
+        // only for a rejoin that stopped nothing). Without that, a relaunch that lands later via
+        // relaunch-pending would let drop, stop and relaunch repeat without limit inside the hour.
+        try
+        {
+            await WaitForClientExitAsync(id).ConfigureAwait(true);
+
+            // The world can move during the wait. Each of these ends the cycle: no launch, and no
+            // relaunch-pending (nothing is owed to a row that is gone, is now the main, or is
+            // already being launched by someone else).
+            if (!Accounts.Contains(row) || row.IsMain || row.IsLaunching)
+            {
+                _log.LogInformation("Auto-rejoin {AccountId}: during the exit wait the row was {What}; not relaunching.", id,
+                    !Accounts.Contains(row) ? "removed" : row.IsMain ? "made the main" : "launched by someone else");
+                _autoRejoin.ClearInFlight(id);
+                return;
+            }
+
+            if (row.IsRunning)
+            {
+                // Never launch a second client beside one that didn't exit. The stop was issued, so
+                // it counts; the next due tick decides again from fresh state.
+                _log.LogWarning("Auto-rejoin {AccountId}: {Reason}, but the client didn't exit after the stop; retrying next tick.", id, reason);
+                _autoRejoin.ClearInFlight(id);
+                return;
+            }
+
+            // The user may have acted during the wait. A Stop (or Stop all, or Recycle) of their own
+            // is a newer close request than ours; turning auto-rejoin off is just as clear. Either
+            // way: no launch and no relaunch-pending.
+            if (_closeRequests.GetValueOrDefault(id) != ownCloseRequest || !row.AutoRejoin)
+            {
+                _log.LogInformation("Auto-rejoin {AccountId}: the user stopped it or turned auto-rejoin off during the exit wait; not relaunching.", id);
+                _autoRejoin.ClearInFlight(id);
+                return;
+            }
+
+            if (row.JoinViaFriend)
+            {
+                // The main can leave its game during the up-to-15 s wait. Decide again.
+                if (DecideFlaggedFollow(row) is not { } follow)
+                {
+                    // The client is already stopped; relaunch-pending brings it back once the main is.
+                    _log.LogInformation("Auto-rejoin {AccountId}: main stopped being joinable while the client exited.", id);
+                    _autoRejoin.ClearInFlight(id);
+                    MarkRelaunchPending(id, null, now);
+                    return;
+                }
+                target = follow;
+            }
+
+            _log.LogInformation("Auto-rejoin {AccountId}: {Reason} -> {TargetKind}", id, reason, target.GetType().Name);
+            var pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse, fromAutoRejoin: true).ConfigureAwait(true);
+            if (pid == 0)
+            {
+                _log.LogInformation("Auto-rejoin {AccountId}: the relaunch didn't start.", id);
+                _autoRejoin.ClearInFlight(id);
+                MarkRelaunchPending(id, unflaggedTarget, now);
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Auto-rejoin {AccountId}: failed after the stop.", id);
+            _autoRejoin.ClearInFlight(id); // no-op once the launch has landed
+            if (!row.IsRunning && row.AutoRejoin && _closeRequests.GetValueOrDefault(id) == ownCloseRequest)
+            {
+                MarkRelaunchPending(id, unflaggedTarget, now);
+            }
+        }
+    }
+
+    /// <summary>
+    /// A flagged row's rejoin target: follow the main, decided against the default game. Null for
+    /// any other outcome (the main isn't joinable), which auto-rejoin treats as "don't launch".
+    /// </summary>
+    private LaunchTarget? DecideFlaggedFollow(AccountSummary row)
+    {
+        var decision = DecideFlaggedLaunch(row, new LaunchTarget.DefaultGame());
+        return decision.Outcome == FlaggedLaunchOutcome.Follow ? decision.Target : null;
+    }
+
+    /// <summary>
     /// Accounts the user just closed on purpose, and when. A dropped-out alert exists to report a
     /// client dying when nobody asked — a crash, a kick, a session dropping while the user is out.
     /// Clicking Stop and then being told the thing you clicked Stop on stopped is noise.
@@ -3329,15 +4099,33 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex) { _log.LogDebug(ex, "Reading window placement failed; using the default."); return null; }
     }
 
-    internal void ExpectClose(Guid accountId) => _expectedCloses[accountId] = DateTimeOffset.UtcNow;
+    /// <summary>
+    /// How many times a close has been requested for each account (every <see cref="ExpectClose"/>
+    /// and <see cref="ExpectCloseForAll"/>). Auto-rejoin reads it before and after its exit wait:
+    /// a change means someone else asked for a stop in between. A counter rather than the
+    /// <see cref="_expectedCloses"/> stamp, because presence confirmation removes that stamp.
+    /// </summary>
+    private readonly Dictionary<Guid, long> _closeRequests = [];
 
-    /// <summary>Mark every running account as expected — app shutdown closes them all at once.</summary>
+    internal void ExpectClose(Guid accountId)
+    {
+        _expectedCloses[accountId] = DateTimeOffset.UtcNow;
+        _closeRequests[accountId] = _closeRequests.GetValueOrDefault(accountId) + 1;
+        // A stop the user (or Recycle) asked for supersedes a relaunch auto-rejoin still owes.
+        // Auto-rejoin's own stop calls this too, before it could ever mark the account pending.
+        _relaunchPending.Remove(accountId);
+    }
+
+    /// <summary>Mark every running account as expected — app shutdown closes them all at once.
+    /// Stop all also means "leave them stopped": every relaunch auto-rejoin still owes is dropped.</summary>
     internal void ExpectCloseForAll()
     {
         foreach (var row in AccountsSnapshot)
         {
             _expectedCloses[row.Id] = DateTimeOffset.UtcNow;
+            _closeRequests[row.Id] = _closeRequests.GetValueOrDefault(row.Id) + 1;
         }
+        _relaunchPending.Clear();
     }
 
     private bool WasCloseExpected(Guid accountId, DateTimeOffset atUtc) =>
@@ -3704,6 +4492,55 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             summary.JoinViaFriend = !next; // revert on persist failure
             StatusBanner = Loc.Format("Shell_Msg_CouldntSaveJoinViaFriend", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Flip an account row's auto-rejoin preference (Part B — an opted-in alt whose client drops
+    /// out of the game gets stopped and relaunched) and persist it. Refuses and does nothing for
+    /// the main: the main is never rejoined automatically, and this method is the one place that
+    /// rule can't slip past a UI slip-up (context menu hidden, but this holds even if something
+    /// else calls it directly). Optimistic like <see cref="ToggleJoinViaFriendAsync"/>: the row
+    /// flips immediately, and on persist failure the flip is reverted and the failure surfaces via
+    /// <see cref="StatusBanner"/> rather than leaving the UI silently out of sync with disk.
+    /// Tasks 6-7 read <see cref="AccountSummary.AutoRejoin"/>; task 7 calls
+    /// <c>_autoRejoin.Resume(id)</c> here when the flip turns it on.
+    /// </summary>
+    internal async Task ToggleAutoRejoinAsync(AccountSummary? summary)
+    {
+        if (summary is null || summary.IsMain)
+        {
+            return;
+        }
+
+        var next = !summary.AutoRejoin;
+        if (next && summary.RobloxUserId is not > 0)
+        {
+            // No user id means presence is never polled for this row, so auto-rejoin could never
+            // tell in game from out of it. The menu hides the item for such rows; this holds even
+            // if something calls it directly. Turning it OFF stays allowed.
+            _log.LogInformation("Auto-rejoin for {AccountId} not turned on: no Roblox user id, so presence can't be read.", summary.Id);
+            return;
+        }
+        summary.AutoRejoin = next;
+        try
+        {
+            await _accountStore.SetAutoRejoinAsync(summary.Id, next);
+            if (next)
+            {
+                // Turning it back on is how a paused account resumes: fresh budget, no pause.
+                _autoRejoin.Resume(summary.Id);
+            }
+            else
+            {
+                // Off means off: a relaunch still pending from before must not fire later.
+                _relaunchPending.Remove(summary.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            summary.AutoRejoin = !next; // revert on persist failure
+            StatusBanner = Loc.Format("Shell_Msg_CouldntSaveAutoRejoin", ex.Message);
         }
     }
 

@@ -39,6 +39,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private string? _memoryText;
     private bool _memoryWarning;
     private bool _joinViaFriend;
+    private bool _autoRejoin;
     private bool _alertsMuted;
     private IStreamerIdentityProvider? _identity;
 
@@ -53,6 +54,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _captionColorHex = account.CaptionColorHex;
         _fpsCap = account.FpsCap;
         _joinViaFriend = account.JoinViaFriend;
+        _autoRejoin = account.AutoRejoin;
         _localName = account.LocalName;
         RobloxUserId = account.RobloxUserId;
         BrowserTrackerId = account.BrowserTrackerId;
@@ -574,6 +576,20 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _joinViaFriend;
         set => SetField(ref _joinViaFriend, value);
+    }
+
+    /// <summary>
+    /// Whether this account's client gets stopped and relaunched when it drops out of the game it
+    /// was in — Part B auto-rejoin. Defaults to false. Never available for the main — the row's
+    /// context menu hides the toggle for it, and <see cref="MainViewModel.ToggleAutoRejoinAsync"/>
+    /// refuses to flip it even if called directly. Seeded from <see cref="Account.AutoRejoin"/> at
+    /// construction; flipped + persisted via <see cref="MainViewModel.ToggleAutoRejoinCommand"/>
+    /// (the account row's context menu). Task 5, 2026-09-29.
+    /// </summary>
+    public bool AutoRejoin
+    {
+        get => _autoRejoin;
+        set => SetField(ref _autoRejoin, value);
     }
 
     /// <summary>

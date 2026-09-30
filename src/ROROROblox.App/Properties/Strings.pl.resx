@@ -590,6 +590,15 @@
   <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
     <value>Recycle — zamknij i uruchom ponownie tego klienta z powrotem na serwerze, na którym jest teraz, i odzyskaj utraconą pamięć.</value>
   </data>
+  <data name="MainWindow_RejoinIfItDropsOut" xml:space="preserve">
+    <value>Dołącz ponownie, jeśli wypadnie</value>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOut_2" xml:space="preserve">
+    <value>Dołącz ponownie, jeśli wypadnie (włączone)</value>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOutTip" xml:space="preserve">
+    <value>Gdy klient tego konta jest otwarty, ale przez 3 minuty jest poza grą, RoRoRo zamyka go i dołącza ponownie. Nigdy nie dotyczy głównego konta.</value>
+  </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Usuń</value>
   </data>
@@ -887,6 +896,9 @@
   <data name="SettingsPage_AssignEveryFakeNameAnd" xml:space="preserve">
     <value>Przypisz każdej fałszywej nazwie i awatarowi nowy wybór.</value>
   </data>
+  <data name="SettingsPage_AutoRejoinPausesForAnAccount" xml:space="preserve">
+    <value>Automatyczne ponowne dołączanie konta wstrzymane</value>
+  </data>
   <data name="SettingsPage_AWholeNumberFrom256" xml:space="preserve">
     <value>Liczba całkowita od 256 do 65536 lub puste, aby RoRoRo wybrało.</value>
   </data>
@@ -1111,6 +1123,18 @@
   </data>
   <data name="SettingsPage_SendATestNotificationTo" xml:space="preserve">
     <value>Wyślij testowe powiadomienie na mój telefon</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToMy" xml:space="preserve">
+    <value>Wysyłaj alerty o wstrzymaniu ponownego dołączania na mój kanał Discord</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToMy_2" xml:space="preserve">
+    <value>Wysyłaj alerty o wstrzymaniu ponownego dołączania na mój telefon</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToThe" xml:space="preserve">
+    <value>Wysyłaj alerty o wstrzymaniu ponownego dołączania na pulpit</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToThe_2" xml:space="preserve">
+    <value>Wysyłaj alerty o wstrzymaniu ponownego dołączania na kanał Discord klanu</value>
   </data>
   <data name="SettingsPage_SendDropOutAlertsTo" xml:space="preserve">
     <value>Wysyłaj alerty o wypadnięciu na pulpit</value>
@@ -2055,6 +2079,9 @@ Aby dodać je z powrotem, musisz zalogować się ponownie.</value>
   </data>
   <data name="Shell_Msg_CouldntSaveJoinViaFriend" xml:space="preserve">
     <value>Nie udało się zapisać dołączania przez znajomego: {0}</value>
+  </data>
+  <data name="Shell_Msg_CouldntSaveAutoRejoin" xml:space="preserve">
+    <value>Nie udało się zapisać ustawienia ponownego dołączania: {0}</value>
   </data>
   <data name="Shell_Msg_SourceExpired" xml:space="preserve">
     <value>{0} ma wygasłą sesję — najpierw uwierzytelnij ponownie.</value>
@@ -3215,5 +3242,32 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   </data>
   <data name="MainWindow_KnownRobloxIssuesTooltip" xml:space="preserve">
     <value>Problemy w samym Roblox i co z nimi zrobić</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Title" xml:space="preserve">
+    <value>Dołącz przez główne konto</value>
+  </data>
+  <data name="Shell_FlaggedLaunch_Body" xml:space="preserve">
+    <value>{0} dołącza przez Twoje główne konto, które nie jest jeszcze w grze.</value>
+  </data>
+  <data name="Shell_FlaggedLaunch_BodyMany" xml:space="preserve">
+    <value>{0} dołączają przez Twoje główne konto, które nie jest jeszcze w grze.</value>
+  </data>
+  <data name="FlaggedLaunchWindow_FollowAnother" xml:space="preserve">
+    <value>Dołącz do innego konta</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Follow" xml:space="preserve">
+    <value>Dołącz</value>
+  </data>
+  <data name="FlaggedLaunchWindow_NobodyJoinable" xml:space="preserve">
+    <value>Żadne z Twoich kont nie jest teraz w grze, do której można dołączyć.</value>
+  </data>
+  <data name="FlaggedLaunchWindow_ItsFixed" xml:space="preserve">
+    <value>Naprawione, dołącz bezpośrednio</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="Shell_Msg_FlaggedLeftStopped" xml:space="preserve">
+    <value>{0}: nie uruchomiono, bo nikt, do kogo można dołączyć, nie jest w grze.</value>
   </data>
 </root>
