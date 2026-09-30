@@ -23,8 +23,9 @@
 >
 > Product nouns stay English throughout: RoRoRo, Roblox.
 >
-> **Verifier run: NOT YET DONE.** Dataset `whats-new-1.32.0.0.translations.json` is written with
-> `sourceCommit` pending; the run needs the dataset at a pushed commit. Do not paste unverified.
+> **Verifier run: DONE at `f5815c2`, both shapes, 12 pairs.** All 12 drew the same rule-3 false
+> positive (keep UI labels in English), overruled because the interface is localized; no other
+> finding. Details in `submission-packet-1.32.0.0.md` section 3.
 >
 > Sources: `docs/store/release-notes-1.32.0.0.md`, the 2026-09-29 entry in `docs/decisions.md`,
 > PR #223.

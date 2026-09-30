@@ -39,8 +39,8 @@ Verified against `git diff v1.31.0.0..main`, not assumed:
 
 | File | Size | Architecture |
 |---|---|---|
-| `dist/RORORO-Store-x64-1.32.0.0.msix` | _fills in at build_ | x64 |
-| `dist/RORORO-Store-arm64-1.32.0.0.msix` | _fills in at build_ | arm64 |
+| `dist/RORORO-Store-x64-1.32.0.0.msix` | 106.8 MB | x64 |
+| `dist/RORORO-Store-arm64-1.32.0.0.msix` | 100.6 MB | arm64 |
 
 Both unsigned — Partner Center signs after upload. Ship **both**.
 
@@ -123,9 +123,23 @@ Recycle":
 `docs/store/whats-new-1.32.0.0.md`, seven blocks: English plus fr, de, ru, pt-BR, pl, es. Each under
 1,500 characters. UI names are the app's own translations from `Strings.<culture>.resx`.
 
-**Verifier run: NOT YET DONE.** The dataset `whats-new-1.32.0.0.translations.json` is written with
-`sourceCommit` pending. The run needs it at a pushed commit. 1.31 found one real defect in six, and
-1.30 found three, so don't paste these unverified.
+**Verified by the translation verifier at commit `f5815c2`, both shapes, 12 pairs (6 languages ×
+2 sections): 0 approve clean, 12 revise. Every finding is one known false positive, overruled; no
+finding on claims, accuracy, numbers, limits or naturalness.**
+
+- **Overruled, all 12 pairs (rule 3, untranslated tokens):** the verifier wants the in-app labels
+  ("Rejoin if it drops out", "Join via friend", "It's fixed, join directly", Cancel, Launch multiple)
+  left in English "because the app interface is in English". It is not, since UI localization wave
+  1: each block uses that culture's own value from `Strings.<culture>.resx`, which is what a reader
+  in that language sees on screen. The same call as v1.31's section-1 overrule (Tools). The
+  verifier's RoRoRo profile predates UI localization; the issue recommended in the 1.31 packet
+  still stands.
+- The run took 11 rounds against the verifier's per-call time budget; the stored verdicts cover all
+  12 pairs.
+- Native-speaker spot checks the translator flagged (optional, not blockers): de "Alts, die
+  rausfliegen" (the UI says "ausfällt"); fr "c'est toujours vous qui l'emportez" and de "hat das
+  immer Vorrang" render "your own stop always wins" freely; es "reingresos"; pt-BR "Uma parada feita
+  por você" may read stiff.
 
 ## 4. Notes for certification
 

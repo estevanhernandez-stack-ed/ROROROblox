@@ -10,7 +10,7 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "PENDING",
+  "sourceCommit": "f5815c2289b293af5747f4af9e6f9205c1805576",
   "generatedUtc": "2026-09-29T00:00:00Z",
   "sourceOfTruth": "docs/store/whats-new-1.32.0.0.md",
   "fields": [
