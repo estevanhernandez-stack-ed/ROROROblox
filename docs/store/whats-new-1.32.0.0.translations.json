@@ -1,0 +1,42 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "PENDING",
+  "generatedUtc": "2026-09-29T00:00:00Z",
+  "sourceOfTruth": "docs/store/whats-new-1.32.0.0.md",
+  "fields": [
+    {
+      "field": "whatsNew.section1",
+      "en": "Alts that drop out come back on their own\n• Right-click an account and turn on \"Rejoin if it drops out\".\n  If its Roblox window is open but it has been out of the game\n  for 3 minutes, RoRoRo closes it and joins again. Never\n  offered for your main.\n• Idle kicks, failed joins and Roblox's verification page are\n  all covered. RoRoRo never touches that page: it closes the\n  window and joins again.\n• At most 3 rejoins an hour per account. After that it turns\n  itself off for that account and tells you. Your own stop\n  always wins.",
+      "translations": {
+        "fr": "Les alts qui décrochent reviennent tout seuls\n• Faites un clic droit sur un compte et activez « Rejoindre à\n  nouveau s'il décroche ». Si sa fenêtre Roblox est ouverte\n  mais que le compte est hors du jeu depuis 3 minutes, RoRoRo\n  la ferme et rejoint à nouveau. Jamais proposé pour votre\n  compte principal.\n• Cela couvre les expulsions pour inactivité, les connexions\n  échouées et la page de vérification de Roblox. RoRoRo ne\n  touche jamais à cette page : il ferme la fenêtre et rejoint\n  à nouveau.\n• Au plus 3 reconnexions par heure et par compte. Au-delà,\n  l'option se désactive pour ce compte et vous prévient. Quand\n  vous arrêtez vous-même, c'est toujours vous qui l'emportez.",
+        "de": "Alts, die rausfliegen, kommen von selbst zurück\n• Klick mit der rechten Maustaste auf ein Konto und schalte\n  „Erneut beitreten, wenn es ausfällt“ ein. Ist sein\n  Roblox-Fenster offen, das Konto aber seit 3 Minuten nicht im\n  Spiel, schließt RoRoRo das Fenster und tritt erneut bei. Wird\n  für dein Hauptkonto nie angeboten.\n• Kicks wegen Inaktivität, fehlgeschlagene Beitritte und die\n  Verifizierungsseite von Roblox sind alle abgedeckt. RoRoRo\n  rührt diese Seite nie an: Es schließt das Fenster und tritt\n  erneut bei.\n• Höchstens 3 Neubeitritte pro Stunde und Konto. Danach\n  schaltet sich die Option für dieses Konto selbst ab und sagt\n  dir Bescheid. Wenn du selbst stoppst, hat das immer Vorrang.",
+        "ru": "Вылетевшие альты возвращаются сами\n• Щёлкните по аккаунту правой кнопкой и включите\n  «Перезаходить, если отвалится». Если его окно Roblox\n  открыто, но аккаунт уже 3 минуты вне игры, RoRoRo закрывает\n  окно и заходит снова. Для основного аккаунта это никогда не\n  предлагается.\n• Кик за бездействие, неудачный вход, страница проверки\n  Roblox — срабатывает во всех этих случаях. RoRoRo никогда\n  не трогает эту страницу: он закрывает окно и заходит снова.\n• Не больше 3 перезаходов в час на аккаунт. После этого опция\n  сама отключается для этого аккаунта и сообщает вам. Если вы\n  остановили аккаунт сами, это всегда в приоритете.",
+        "pt-br": "Alts que caem voltam sozinhos\n• Clique com o botão direito em uma conta e ative \"Entrar de\n  novo se cair\". Se a janela do Roblox dela estiver aberta,\n  mas a conta estiver fora do jogo há 3 minutos, o RoRoRo fecha\n  a janela e entra de novo. Nunca é oferecido para a sua conta\n  principal.\n• Isso cobre expulsões por inatividade, entradas que falharam\n  e a página de verificação do Roblox. O RoRoRo nunca mexe\n  nessa página: ele fecha a janela e entra de novo.\n• No máximo 3 reentradas por hora por conta. Depois disso, a\n  opção se desliga sozinha para essa conta e avisa você. Uma\n  parada feita por você sempre tem prioridade.",
+        "pl": "Konta, które wypadną, wracają same\n• Kliknij konto prawym przyciskiem i włącz „Dołącz ponownie,\n  jeśli wypadnie”. Jeśli jego okno Roblox jest otwarte, ale\n  konto od 3 minut jest poza grą, RoRoRo zamyka okno i dołącza\n  ponownie. Opcja nigdy nie jest proponowana dla twojego\n  głównego konta.\n• Obejmuje to wyrzucenie za bezczynność, nieudane dołączenie\n  i stronę weryfikacji Roblox. RoRoRo nigdy nie dotyka tej\n  strony: zamyka okno i dołącza ponownie.\n• Najwyżej 3 ponowne dołączenia na godzinę na konto. Potem\n  opcja sama wyłącza się dla tego konta i daje ci znać. Twoje\n  własne zatrzymanie zawsze ma pierwszeństwo.",
+        "es": "Las alts que se desconectan vuelven solas\n• Haz clic derecho en una cuenta y activa \"Volver a unirse si\n  se desconecta\". Si su ventana de Roblox está abierta pero la\n  cuenta lleva 3 minutos fuera del juego, RoRoRo la cierra y\n  vuelve a unirse. Nunca se ofrece para tu cuenta principal.\n• Cubre las expulsiones por inactividad, los intentos fallidos\n  de unirse y la página de verificación de Roblox. RoRoRo nunca\n  toca esa página: cierra la ventana y vuelve a unirse.\n• Como máximo 3 reingresos por hora y por cuenta. Después, la\n  opción se desactiva sola para esa cuenta y te avisa. Si\n  detienes la cuenta tú, eso siempre tiene prioridad."
+      }
+    },
+    {
+      "field": "whatsNew.section2",
+      "en": "Join via friend now works everywhere\n• An account with Join via friend ticked follows your main on\n  every launch, not only in Squad Launch.\n• If your main isn't in a game, RoRoRo asks: follow another\n  account, \"It's fixed, join directly\", or Cancel.\n• Launch multiple and Squad Launch ask once for the whole\n  batch instead of joining those accounts directly.",
+      "translations": {
+        "fr": "« Rejoindre via un ami » fonctionne désormais partout\n• Un compte où « Rejoindre via un ami » est coché suit votre\n  compte principal à chaque lancement, pas seulement dans\n  Squad Launch.\n• Si votre compte principal n'est pas en jeu, RoRoRo vous\n  demande : suivre un autre compte, « C'est réglé, rejoindre\n  directement » ou Annuler.\n• « Lancer plusieurs » et Squad Launch posent la question une\n  seule fois pour tout le lot, au lieu de faire rejoindre ces\n  comptes directement.",
+        "de": "„Über Freund beitreten“ funktioniert jetzt überall\n• Ein Konto mit Häkchen bei „Über Freund beitreten“ folgt bei\n  jedem Start deinem Hauptkonto, nicht nur in Squad Launch.\n• Ist dein Hauptkonto in keinem Spiel, fragt RoRoRo: einem\n  anderen Konto folgen, „Behoben, direkt beitreten“ oder\n  Abbrechen.\n• „Mehrere starten“ und Squad Launch fragen einmal für die\n  ganze Gruppe, statt diese Konten direkt beitreten zu lassen.",
+        "ru": "«Присоединяться через друга» теперь работает везде\n• Аккаунт с включённой опцией «Присоединяться через друга»\n  при каждом запуске следует за вашим основным аккаунтом, а\n  не только в Squad Launch.\n• Если ваш основной аккаунт не в игре, RoRoRo спрашивает:\n  присоединиться к другому аккаунту, «Исправлено,\n  присоединиться напрямую» или «Отмена».\n• «Запустить несколько» и Squad Launch спрашивают один раз\n  для всей группы, а не присоединяют эти аккаунты напрямую.",
+        "pt-br": "\"Entrar via amigo\" agora funciona em todo lugar\n• Uma conta com \"Entrar via amigo\" marcado segue a sua conta\n  principal a cada inicialização, não só no Squad Launch.\n• Se a sua conta principal não estiver em um jogo, o RoRoRo\n  pergunta: seguir outra conta, \"Resolvido, entrar direto\" ou\n  Cancelar.\n• \"Iniciar vários\" e o Squad Launch perguntam uma vez só para\n  o lote inteiro, em vez de fazer essas contas entrarem\n  direto.",
+        "pl": "„Dołącz przez znajomego” działa teraz wszędzie\n• Konto z zaznaczonym „Dołącz przez znajomego” podąża za\n  twoim głównym kontem przy każdym uruchomieniu, nie tylko w\n  Squad Launch.\n• Jeśli twoje główne konto nie jest w grze, RoRoRo pyta:\n  dołącz do innego konta, „Naprawione, dołącz bezpośrednio”\n  albo Anuluj.\n• „Uruchom wiele” i Squad Launch pytają raz o całą grupę,\n  zamiast dołączać te konta bezpośrednio.",
+        "es": "\"Unirse mediante un amigo\" ahora funciona en todas partes\n• Una cuenta con \"Unirse mediante un amigo\" marcado sigue a tu\n  cuenta principal en cada inicio, no solo en Squad Launch.\n• Si tu cuenta principal no está en un juego, RoRoRo te\n  pregunta: seguir a otra cuenta, \"Solucionado, unirse\n  directamente\" o Cancelar.\n• \"Iniciar varias\" y Squad Launch preguntan una sola vez por\n  todo el lote, en lugar de que esas cuentas se unan\n  directamente."
+      }
+    }
+  ]
+}

@@ -140,9 +140,21 @@ Here is exactly what that involves:
 - **What it does not read.** RoRoRo does **not** read the contents of the Roblox client's memory. It does not attach a debugger, inject code, hook the client, or call any memory-reading API. It reads one number per process. The source is open — the entire memory-reading surface is a single line in [`ProcessMemoryProbe.cs`](https://github.com/estevanhernandez-stack-ed/ROROROblox/blob/main/src/ROROROblox.Core/Diagnostics/ProcessMemoryProbe.cs).
 - **Where it goes.** On screen, and into your local log file — one line every 15 minutes recording what each client was using. That log stays on your PC like every other log. **Nothing about your memory use is transmitted anywhere.** There is no endpoint to send it to.
 - **Why the log line exists.** When someone reports "my windows closed on their own," that line is what lets us tell whether the machine ran out of memory. It's the difference between diagnosing a report in minutes and guessing.
-- **What it can do about it.** Nothing on its own. RoRoRo warns you; *you* click Recycle to close and reopen a client. It never closes a client with an open game window without asking.
+- **What it can do about it.** Nothing on its own. RoRoRo warns you; *you* click Recycle to close and reopen a client. The memory watchdog never closes a client by itself. (Since v1.32 one thing can close a client without a click: **auto-rejoin**, which you turn on per account, and which only closes a client that has already dropped out of its game. See [Auto-rejoin](#auto-rejoin-v132-and-later) below.)
 
 If a plugin asks for the memory-pressure capability, it receives these same figures — account identifier and memory numbers, no credentials — and only after you grant that capability on the consent sheet, like every other capability.
+
+---
+
+## Auto-rejoin (v1.32 and later)
+
+An option on each account's right-click menu, **off until you turn it on**, and never offered for your main account.
+
+- **What it reads.** Whether that account is in a game, from the Roblox presence check RoRoRo already makes for every saved account (see the network table above), and whether that account's Roblox client is still running on your PC. Nothing new is read and no new address is contacted. It does not read the screen.
+- **What it does.** If the client is still open but the account has been out of the game for 3 minutes, RoRoRo ends that client and launches the account again, the same launch your Launch button makes. At most 3 times an hour per account; after that it turns itself off for that account and tells you.
+- **What it never does.** It never reads, clicks, types into or answers anything inside the Roblox window, including Roblox's verification page.
+- **What it sends.** Nothing. The only message it can produce is the "auto-rejoin paused" alert, which goes where your other alerts go: a Windows notification by default, or the Discord webhook or phone push service you set up yourself.
+- **Where it's stored.** The on/off choice lives in your encrypted accounts file on this PC. It is not included in an account export.
 
 ---
 
@@ -162,7 +174,7 @@ There are two halves and they are independent — you can use either, both, or n
 
 ### Alerts
 
-- **What triggers one.** Two things only: an account dropping out of a game unexpectedly, and a client crossing the memory warning threshold. Closes you asked for — Stop, Recycle, quitting RoRoRo — deliberately do not alert.
+- **What triggers one.** An account dropping out of a game unexpectedly, a client crossing the memory warning threshold, a Recycle finishing, a two-hour uptime mark, a threshold rule you wrote for a number a plugin reports, and auto-rejoin pausing itself for an account (v1.32). Closes you asked for — Stop, Recycle, quitting RoRoRo — deliberately do not raise a dropped-out alert. (This line said "two things only" until v1.32; it had been out of date since v1.25.)
 - **Where they go.** A Windows notification, and/or a Discord channel of your choosing. The channel is reached with a **webhook URL that you create and paste in.** RoRoRo cannot see, discover, or reach any Discord channel you have not explicitly given it a webhook for.
 - **What an alert says.** The account name and the game name; for a memory warning, that client's memory figure. Nothing else.
 - **What an alert can never contain.** A private-server link, invite, or access code. This is enforced by the shape of the type that carries the message — it has two text fields and no field a link could occupy — and a test fails the build if anyone adds one. A Discord Join reaches only people who can see your Join button; a channel post is read by everyone in that channel, now and in future, so the two are held to different rules.
