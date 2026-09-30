@@ -68,36 +68,33 @@ Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welch
 Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
-## What's new in this version (v1.31.0.0, ≤1500 chars)
+## What's new in this version (v1.32.0.0, ≤1500 chars)
 
 ```
-v1.31.0.0
+v1.32.0.0
 
-Bekannte Roblox-Probleme
-• Eine neue Seite listet Probleme in Roblox selbst: was
-  passiert, was du tun kannst und welche RoRoRo-Funktion
-  hilft, mit einer Schaltfläche, die dich direkt hinführt.
-  Öffne sie über das Menü Werkzeuge oder drück Strg+7 im
-  Werkzeugfenster.
-• Die ersten zwei: das Roblox-Fenster, das beim Verschieben
-  oder bei einer Größenänderung einfriert, und Roblox, das mit
-  der Zeit immer mehr Arbeitsspeicher braucht.
+Alts, die rausfliegen, kommen von selbst zurück
+• Klick mit der rechten Maustaste auf ein Konto und schalte
+  „Erneut beitreten, wenn es ausfällt“ ein. Ist sein
+  Roblox-Fenster offen, das Konto aber seit 3 Minuten nicht im
+  Spiel, schließt RoRoRo das Fenster und tritt erneut bei. Wird
+  für dein Hauptkonto nie angeboten.
+• Kicks wegen Inaktivität, fehlgeschlagene Beitritte und die
+  Verifizierungsseite von Roblox sind alle abgedeckt. RoRoRo
+  rührt diese Seite nie an: Es schließt das Fenster und tritt
+  erneut bei.
+• Höchstens 3 Neubeitritte pro Stunde und Konto. Danach
+  schaltet sich die Option für dieses Konto selbst ab und sagt
+  dir Bescheid. Wenn du selbst stoppst, hat das immer Vorrang.
 
-Ein Hinweis für die ernsten Fälle
-• Ein ernstes Problem zeigt einen einzigen Hinweis oben im
-  Hauptfenster. Schließ ihn, und er bleibt zu; nur ein neues
-  Problem bringt ihn zurück.
-• Beim ersten Öffnen dieser Version siehst du einen, zum
-  einfrierenden Fenster. Das ist die Funktion bei der Arbeit,
-  kein neues Problem.
-
-Die Liste bleibt von selbst aktuell
-• RoRoRo sucht beim Start und alle vier Stunden nach einer
-  neuen Liste, am selben Ort, von dem es schon seine
-  Roblox-Kompatibilitätseinstellungen holt. Die Liste ist
-  signiert, und nichts über dich wird gesendet.
-• Die Seite ist in deiner Sprache; die Problembeschreibungen
-  sind vorerst auf Englisch.
+„Über Freund beitreten“ funktioniert jetzt überall
+• Ein Konto mit Häkchen bei „Über Freund beitreten“ folgt bei
+  jedem Start deinem Hauptkonto, nicht nur in Squad Launch.
+• Ist dein Hauptkonto in keinem Spiel, fragt RoRoRo: einem
+  anderen Konto folgen, „Behoben, direkt beitreten“ oder
+  Abbrechen.
+• „Mehrere starten“ und Squad Launch fragen einmal für die
+  ganze Gruppe, statt diese Konten direkt beitreten zu lassen.
 ```
 
 ## Copyright (single line)

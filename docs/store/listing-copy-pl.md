@@ -67,35 +67,33 @@ Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
-## What's new in this version (v1.31.0.0, ≤1500 chars)
+## What's new in this version (v1.32.0.0, ≤1500 chars)
 
 ```
-v1.31.0.0
+v1.32.0.0
 
-Znane problemy Roblox
-• Nowa strona wymienia problemy samego Roblox: co się dzieje,
-  co zrobić i która funkcja RoRoRo pomaga, z przyciskiem,
-  który do niej prowadzi. Otwórz ją z menu Narzędzia albo
-  naciśnij Ctrl+7 w oknie narzędzi.
-• Pierwsze dwa: okno Roblox, które zawiesza się przy
-  przeciąganiu lub zmianie rozmiaru, oraz Roblox zużywający
-  coraz więcej pamięci, im dłużej działa.
+Konta, które wypadną, wracają same
+• Kliknij konto prawym przyciskiem i włącz „Dołącz ponownie,
+  jeśli wypadnie”. Jeśli jego okno Roblox jest otwarte, ale
+  konto od 3 minut jest poza grą, RoRoRo zamyka okno i dołącza
+  ponownie. Opcja nigdy nie jest proponowana dla twojego
+  głównego konta.
+• Obejmuje to wyrzucenie za bezczynność, nieudane dołączenie
+  i stronę weryfikacji Roblox. RoRoRo nigdy nie dotyka tej
+  strony: zamyka okno i dołącza ponownie.
+• Najwyżej 3 ponowne dołączenia na godzinę na konto. Potem
+  opcja sama wyłącza się dla tego konta i daje ci znać. Twoje
+  własne zatrzymanie zawsze ma pierwszeństwo.
 
-Powiadomienie o poważnych problemach
-• Poważny problem pokazuje jedno powiadomienie u góry
-  głównego okna. Zamknij je, a zostanie zamknięte; wróci
-  tylko przy nowym problemie.
-• Przy pierwszym otwarciu tej wersji zobaczysz jedno, o
-  zawieszającym się oknie. To działa ta funkcja, a nie
-  nowy problem.
-
-Lista aktualizuje się sama
-• RoRoRo sprawdza nową listę przy starcie i co cztery
-  godziny, z tego samego miejsca, z którego już pobiera
-  ustawienia zgodności z Roblox. Lista jest podpisana i nic
-  o tobie nie jest wysyłane.
-• Strona jest w twoim języku; opisy problemów są na razie
-  po angielsku.
+„Dołącz przez znajomego” działa teraz wszędzie
+• Konto z zaznaczonym „Dołącz przez znajomego” podąża za
+  twoim głównym kontem przy każdym uruchomieniu, nie tylko w
+  Squad Launch.
+• Jeśli twoje główne konto nie jest w grze, RoRoRo pyta:
+  dołącz do innego konta, „Naprawione, dołącz bezpośrednio”
+  albo Anuluj.
+• „Uruchom wiele” i Squad Launch pytają raz o całą grupę,
+  zamiast dołączać te konta bezpośrednio.
 ```
 
 ## Copyright (single line)

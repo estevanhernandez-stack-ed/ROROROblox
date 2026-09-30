@@ -68,36 +68,35 @@ Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonc
 Rejoindre à nouveau s'il décroche — un alt expulsé ou coincé hors du jeu est fermé et rejoint à nouveau tout seul, jamais votre compte principal
 ```
 
-## What's new in this version (v1.31.0.0, ≤1500 chars)
+## What's new in this version (v1.32.0.0, ≤1500 chars)
 
 ```
-v1.31.0.0
+v1.32.0.0
 
-Problèmes Roblox connus
-• Une nouvelle page liste les problèmes de Roblox lui-même :
-  ce qui se passe, quoi faire, et la fonction de RoRoRo qui
-  aide, avec un bouton qui vous y emmène. Ouvrez-la depuis le
-  menu Outils, ou appuyez sur Ctrl+7 dans la fenêtre des
-  outils.
-• Les deux premiers : la fenêtre Roblox qui se fige quand vous
-  la déplacez ou la redimensionnez, et Roblox qui consomme de
-  plus en plus de mémoire au fil des heures.
+Les alts qui décrochent reviennent tout seuls
+• Faites un clic droit sur un compte et activez « Rejoindre à
+  nouveau s'il décroche ». Si sa fenêtre Roblox est ouverte
+  mais que le compte est hors du jeu depuis 3 minutes, RoRoRo
+  la ferme et rejoint à nouveau. Jamais proposé pour votre
+  compte principal.
+• Cela couvre les expulsions pour inactivité, les connexions
+  échouées et la page de vérification de Roblox. RoRoRo ne
+  touche jamais à cette page : il ferme la fenêtre et rejoint
+  à nouveau.
+• Au plus 3 reconnexions par heure et par compte. Au-delà,
+  l'option se désactive pour ce compte et vous prévient. Quand
+  vous arrêtez vous-même, c'est toujours vous qui l'emportez.
 
-Un avis pour les problèmes sérieux
-• Un problème sérieux affiche un seul avis en haut de la
-  fenêtre principale. Fermez-le et il reste fermé ; seul un
-  nouveau problème le fait revenir.
-• Attendez-vous à en voir un à la première ouverture de cette
-  version, au sujet de la fenêtre qui se fige. C'est la
-  fonction qui marche, pas un nouveau problème.
-
-La liste se met à jour toute seule
-• RoRoRo cherche une nouvelle liste au démarrage puis toutes
-  les quatre heures, au même endroit que ses réglages de
-  compatibilité Roblox. La liste est signée, et rien sur vous
-  n'est envoyé.
-• La page est dans votre langue ; les descriptions des
-  problèmes sont en anglais pour l'instant.
+« Rejoindre via un ami » fonctionne désormais partout
+• Un compte où « Rejoindre via un ami » est coché suit votre
+  compte principal à chaque lancement, pas seulement dans
+  Squad Launch.
+• Si votre compte principal n'est pas en jeu, RoRoRo vous
+  demande : suivre un autre compte, « C'est réglé, rejoindre
+  directement » ou Annuler.
+• « Lancer plusieurs » et Squad Launch posent la question une
+  seule fois pour tout le lot, au lieu de faire rejoindre ces
+  comptes directement.
 ```
 
 ## Copyright (single line)

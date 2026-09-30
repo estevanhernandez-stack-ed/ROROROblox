@@ -68,35 +68,32 @@ Problemas conocidos de Roblox — problemas del lado de Roblox, qué hacer y la 
 Volver a unirse si se desconecta: un alt expulsado o atascado fuera del juego se cierra y vuelve a unirse solo, nunca tu cuenta principal
 ```
 
-## What's new in this version (v1.31.0.0, ≤1500 chars)
+## What's new in this version (v1.32.0.0, ≤1500 chars)
 
 ```
-v1.31.0.0
+v1.32.0.0
 
-Problemas conocidos de Roblox
-• Una página nueva enumera problemas del propio Roblox: qué
-  pasa, qué hacer y la función de RoRoRo que ayuda, con un
-  botón que te lleva a ella. Ábrela desde el menú
-  Herramientas o pulsa Ctrl+7 en la ventana de herramientas.
-• Los dos primeros: la ventana de Roblox que se congela al
-  arrastrarla o cambiar su tamaño, y Roblox usando cada vez
-  más memoria cuanto más tiempo lleva abierto.
+Los alts que se desconectan vuelven solos
+• Haz clic derecho en una cuenta y activa "Volver a unirse si
+  se desconecta". Si su ventana de Roblox está abierta pero la
+  cuenta lleva 3 minutos fuera del juego, RoRoRo la cierra y
+  vuelve a unirse. Nunca se ofrece para tu cuenta principal.
+• Cubre las expulsiones por inactividad, los intentos fallidos
+  de unirse y la página de verificación de Roblox. RoRoRo nunca
+  toca esa página: cierra la ventana y vuelve a unirse.
+• Como máximo 3 reingresos por hora y por cuenta. Después, la
+  opción se desactiva sola para esa cuenta y te avisa. Si
+  detienes la cuenta tú, eso siempre tiene prioridad.
 
-Un aviso para los casos serios
-• Un problema serio muestra un solo aviso arriba de la
-  ventana principal. Ciérralo y se queda cerrado; solo un
-  problema nuevo lo trae de vuelta.
-• La primera vez que abras esta versión verás uno, sobre la
-  ventana que se congela. Es la función haciendo su trabajo,
-  no un problema nuevo.
-
-La lista se mantiene al día sola
-• RoRoRo busca una lista nueva al arrancar y cada cuatro
-  horas, en el mismo sitio del que ya obtiene sus ajustes de
-  compatibilidad con Roblox. La lista está firmada y no se
-  envía nada sobre ti.
-• La página está en tu idioma; las descripciones de los
-  problemas están en inglés de momento.
+"Unirse mediante un amigo" ahora funciona en todas partes
+• Una cuenta con "Unirse mediante un amigo" marcado sigue a tu
+  cuenta principal en cada inicio, no solo en Squad Launch.
+• Si tu cuenta principal no está en un juego, RoRoRo te
+  pregunta: seguir a otra cuenta, "Solucionado, unirse
+  directamente" o Cancelar.
+• "Iniciar varias" y Squad Launch preguntan una sola vez por
+  todo el lote, en lugar de que esas cuentas se unan
+  directamente.
 ```
 
 ## Copyright (single line)

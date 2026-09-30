@@ -68,35 +68,33 @@ Problemas conhecidos do Roblox — problemas do lado do Roblox, o que fazer e o 
 Entrar de novo se cair — um alt expulso ou preso fora do jogo é fechado e entra de novo sozinho, nunca a sua conta principal
 ```
 
-## What's new in this version (v1.31.0.0, ≤1500 chars)
+## What's new in this version (v1.32.0.0, ≤1500 chars)
 
 ```
-v1.31.0.0
+v1.32.0.0
 
-Problemas conhecidos do Roblox
-• Uma nova página lista problemas do próprio Roblox: o que
-  acontece, o que fazer e o recurso do RoRoRo que ajuda, com
-  um botão que leva você até ele. Abra pelo menu Ferramentas
-  ou aperte Ctrl+7 na janela de ferramentas.
-• Os dois primeiros: a janela do Roblox que trava quando você
-  arrasta ou redimensiona, e o Roblox usando cada vez mais
-  memória quanto mais tempo fica aberto.
+Alts que caem voltam sozinhos
+• Clique com o botão direito em uma conta e ative "Entrar de
+  novo se cair". Se a janela do Roblox dela estiver aberta,
+  mas a conta estiver fora do jogo há 3 minutos, o RoRoRo fecha
+  a janela e entra de novo. Nunca é oferecido para a sua conta
+  principal.
+• Isso cobre expulsões por inatividade, entradas que falharam
+  e a página de verificação do Roblox. O RoRoRo nunca mexe
+  nessa página: ele fecha a janela e entra de novo.
+• No máximo 3 reentradas por hora por conta. Depois disso, a
+  opção se desliga sozinha para essa conta e avisa você. Uma
+  parada feita por você sempre tem prioridade.
 
-Um aviso para os casos sérios
-• Um problema sério mostra um único aviso no topo da janela
-  principal. Feche e ele continua fechado; só um problema
-  novo faz ele voltar.
-• Na primeira vez que você abrir esta versão vai aparecer
-  um, sobre a janela que trava. É o recurso funcionando, não
-  um problema novo.
-
-A lista se atualiza sozinha
-• O RoRoRo procura uma lista nova ao iniciar e a cada quatro
-  horas, no mesmo lugar de onde já pega as configurações de
-  compatibilidade com o Roblox. A lista é assinada, e nada
-  sobre você é enviado.
-• A página está no seu idioma; as descrições dos problemas
-  ainda estão em inglês.
+"Entrar via amigo" agora funciona em todo lugar
+• Uma conta com "Entrar via amigo" marcado segue a sua conta
+  principal a cada inicialização, não só no Squad Launch.
+• Se a sua conta principal não estiver em um jogo, o RoRoRo
+  pergunta: seguir outra conta, "Resolvido, entrar direto" ou
+  Cancelar.
+• "Iniciar vários" e o Squad Launch perguntam uma vez só para
+  o lote inteiro, em vez de fazer essas contas entrarem
+  direto.
 ```
 
 ## Copyright (single line)
