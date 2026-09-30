@@ -25,7 +25,8 @@
 >
 > **Verifier run: DONE at `f5815c2`, both shapes, 12 pairs.** All 12 drew the same rule-3 false
 > positive (keep UI labels in English), overruled because the interface is localized; no other
-> finding. Details in `submission-packet-1.32.0.0.md` section 3.
+> finding. Spanish re-verified at `1d6a86d` after its title fix, same outcome. Details in
+> `submission-packet-1.32.0.0.md` section 3.
 >
 > Sources: `docs/store/release-notes-1.32.0.0.md`, the 2026-09-29 entry in `docs/decisions.md`,
 > PR #223.

@@ -162,6 +162,10 @@ finding on claims, accuracy, numbers, limits or naturalness.**
   still stands.
 - The run took 11 rounds against the verifier's per-call time budget; the stored verdicts cover all
   12 pairs.
+- **Spanish re-verified at `1d6a86d`** after section 1's title changed ("Las alts … solas" → "Los
+  alts … solos", to match the listing sheet's "un alt"). Both Spanish pairs drew only the same
+  rule-3 UI-label finding, overruled; the new title drew nothing. Every block as it ships has now
+  been through the verifier.
 - Native-speaker spot checks the translator flagged (optional, not blockers): de "Alts, die
   rausfliegen" (the UI says "ausfällt"); fr "c'est toujours vous qui l'emportez" and de "hat das
   immer Vorrang" render "your own stop always wins" freely; es "reingresos"; pt-BR "Uma parada feita
