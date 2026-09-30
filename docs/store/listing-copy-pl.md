@@ -1,6 +1,6 @@
 # Store listing — Polski (pl)
 
-> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
 > Friend Follow, Pushover, ntfy); the app UI is now localized to Polish (v1.26.0.0). Register: ty (norma dla gier).
 
@@ -23,6 +23,7 @@ Co dostajesz:
 • Status każdego konta na żywo. Widzisz, które konto jest w której grze, kto stoi bezczynnie i jak długo, a limit FPS ustawiasz osobno dla każdego konta — i on się trzyma.
 • Squad Launch + Friend Follow. Wyślij wszystkie zaznaczone konta na ten sam prywatny serwer, dołącz za znajomym na jego serwer albo wyląduj kontami razem na jednym publicznym.
 • Strażnik pamięci + Recycle. RoRoRo uczy się, ile RAM-u klient Roblox naprawdę kosztuje na twojej maszynie, i ostrzega, zanim jej zabraknie. Jedno kliknięcie zamyka ciężkiego klienta i odsyła go na ten sam serwer.
+• Dołącz ponownie, jeśli wypadnie. Włączasz to osobno dla każdego konta, a alt, którego okno Roblox jest wciąż otwarte, ale który wypadł z gry (wyrzucenie za bezczynność, nieudane dołączenie), jest zamykany i sam dołącza ponownie. Najwyżej trzy razy na godzinę, nigdy twoje główne konto, a twoje własne „Zatrzymaj” zawsze ma pierwszeństwo.
 • Jedno okno narzędzi. Gry, ustawienia, historia, diagnostyka, pluginy, Znane problemy Roblox i O programie to strony jednego okna obok listy kont — ze skrótami klawiszowymi wszędzie; F1 pokazuje listę.
 • Motywy. Cztery wbudowane, w tym jeden, który nigdy nie przekazuje znaczenia samym kolorem, plus edytor własnych motywów z dziesięciu kolorów, z udostępnianiem w pliku.
 • Alerty opcjonalne — pulpit, Discord albo telefon. Skieruj każdy alert w dowolną kombinację: powiadomienia na pulpicie, utworzony przez ciebie webhook Discorda albo telefon przez Pushover lub ntfy. Wylogowania altów, ostrzeżenia o pamięci, zakończenia Recycle i sygnał „wszystko gra" co dwie godziny. Świeża instalacja nie wykonuje żadnych wywołań alertów — nic nie wychodzi, dopóki sam czegoś nie skonfigurujesz.
@@ -59,11 +60,11 @@ System pluginów ze zgodą na każdą zdolność i izolacją w osobnych procesac
 Automatyczne aktualizacje odporne na zmiany po stronie Roblox
 Start z Windows, jeśli chcesz — jeden przełącznik, a lista Autostartu Windows ma ostatnie słowo
 Discord Join uruchamia RoRoRo nawet zamknięte — i zawsze pyta, zanim cokolwiek wystartuje
-Alerty na telefon przez Pushover lub ntfy — alt wypada i telefon wibruje, nawet bez Discorda
+Alerty na telefon przez Pushover lub ntfy oraz na pulpit i kanały Discord w dowolnej kombinacji, na każdy alert — alt wypada i telefon wibruje
 Sygnał „wszystko gra" co dwie godziny, póki konta działają — cisza znaczy, że coś jest nie tak
-Alerty wachlarzem — pulpit, kanały Discord i telefon w dowolnej kombinacji, na każdy alert
 Sześć języków — cała aplikacja, ekrany i komunikaty: francuski, niemiecki, rosyjski, portugalski (brazylijski), polski, hiszpański. Natychmiastowa zmiana, wg Windows lub twojego wyboru
 Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja RoRoRo pomaga, aktualne bez aktualizacji aplikacji
+Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
 ## What's new in this version (v1.31.0.0, ≤1500 chars)

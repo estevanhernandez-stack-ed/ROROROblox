@@ -102,6 +102,7 @@ What you get:
 • Live status for every account. See which account is in which game, who is idle and for how long, and per-account frame-rate caps that stick.
 • Squad Launch + Friend Follow. Send every selected account into the same private server, follow a friend into theirs, or land your accounts together in one public server.
 • Memory watchdog + Recycle. RoRoRo learns what a Roblox client actually costs in RAM on your machine and warns before you run out. One click closes a heavy client and puts it back in the same server it was in.
+• Rejoin if it drops out. Turn it on per account, and an alt whose Roblox window is still open but has fallen out of the game (an idle kick, a failed join) is closed and joined again on its own. At most three times an hour, never your main, and your own Stop always wins.
 • One tools window. Games, Settings, History, Diagnostics, Plugins, Known Roblox issues and About are pages of one window that sits beside your accounts. Keyboard shortcuts throughout — F1 shows the list.
 • Themes. Four built-in, including one that carries no meaning in colour alone, plus a builder to make your own from ten colours and share it as a file.
 • Optional alerts — desktop, Discord, or your phone. Route each alert to any mix of desktop notifications, a Discord webhook you create, and your phone through Pushover or ntfy. Drops, memory warnings, recycle completions, and an every-two-hours all-good mark while your accounts run. A fresh install makes no alert calls at all — nothing fires until you set a destination up.
@@ -122,6 +123,10 @@ A 626 Labs product.
 
 ## Product features (paste each as one feature; Partner Center accepts up to 20, ≤200 chars each)
 
+> **2026-09-29 (v1.32.0.0), owner's ruling:** the phone-alert and alert fan-out entries are merged
+> into one, freeing the slot for "Rejoin if it drops out". Still 20/20. The long description gains a
+> Rejoin bullet after Memory watchdog + Recycle. All seven sheets carry the same change.
+>
 > One entry added 2026-09-23 (v1.31.0.0): Known Roblox issues. **20/20 entries used — the
 > field is full.** A new entry now means merging or retiring one (the alert fan-out and phone
 > alert entries are the obvious pair). The same pass translated the frame-rate entry below into
@@ -178,11 +183,11 @@ Plugin system with per-capability consent and out-of-process isolation
 Auto-update that keeps working when Roblox changes underneath
 Start with Windows if you want — one toggle, and Windows' own Startup list stays in control
 Discord Join starts RoRoRo even when it's closed, and always asks before launching anything
-Phone alerts through Pushover or ntfy — an alt drops and your phone buzzes, even with Discord closed
+Alerts on your phone through Pushover or ntfy, and to desktop and Discord channels in any mix per alert — an alt drops and your phone buzzes
 Uptime marks — an all-good buzz every two hours while your accounts run, so silence means something's wrong
-Alerts fan out — desktop, Discord channels, and your phone in any mix, per alert
 Available in six languages — the whole app, screens and messages alike, in French, German, Russian, Portuguese (Brazil), Polish, or Spanish, switching instantly, following Windows or your pick
 Known Roblox issues — Roblox-side problems, what to do, and the RoRoRo feature that helps, kept current without an app update
+Rejoin if it drops out — an alt that's kicked or stuck outside the game is closed and joined again on its own, never your main
 ```
 
 ## Copyright (single line)

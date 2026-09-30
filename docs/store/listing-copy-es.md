@@ -1,7 +1,7 @@
 # Store listing — Español (es)
 
 > Paste-ready para Partner Center → Store listings → **Español** (neutral — un solo texto para
-> España y Latinoamérica). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from `listing-copy.md` (v1.25.0.0 state).
+> España y Latinoamérica). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from `listing-copy.md` (v1.25.0.0 state).
 > Product nouns stay in English (RoRoRo, Squad Launch, Friend Follow, Pushover, ntfy); the
 > app UI is now localized to Spanish (v1.26.0.0). Register: tú.
 
@@ -24,6 +24,7 @@ Lo que obtienes:
 • Estado en vivo de cada cuenta. Ve qué cuenta está en qué juego, quién lleva cuánto tiempo inactivo, y fija límites de FPS por cuenta que se mantienen.
 • Squad Launch + Friend Follow. Manda todas las cuentas seleccionadas al mismo servidor privado, sigue a un amigo hasta el suyo o junta tus cuentas en un servidor público.
 • Vigilante de memoria + Recycle. RoRoRo aprende cuánta RAM cuesta de verdad un cliente de Roblox en tu máquina y avisa antes de que se agote. Un clic cierra un cliente pesado y lo devuelve al mismo servidor donde estaba.
+• Volver a unirse si se desconecta. Actívalo por cuenta, y un alt cuya ventana de Roblox sigue abierta pero que ha quedado fuera del juego (una expulsión por inactividad, un intento fallido de unirse) se cierra y vuelve a unirse solo. Como máximo tres veces por hora, nunca tu cuenta principal, y tu propio "Detener" siempre tiene prioridad.
 • Una sola ventana de herramientas. Juegos, ajustes, historial, diagnóstico, plugins, Problemas conocidos de Roblox y Acerca de son páginas de una misma ventana junto a tus cuentas, con atajos de teclado en todas partes — F1 muestra la lista.
 • Temas. Cuatro integrados, incluido uno que nunca transmite significado solo con color, más un editor para crear el tuyo a partir de diez colores y compartirlo como archivo.
 • Alertas opcionales: escritorio, Discord o móvil. Dirige cada alerta a cualquier combinación: notificaciones de escritorio, un webhook de Discord que tú creas, o tu móvil mediante Pushover o ntfy. Desconexiones, avisos de memoria, finales de Recycle y una señal de "todo bien" cada dos horas mientras tus cuentas corren. Una instalación nueva no hace ninguna llamada de alertas: nada sale hasta que tú lo configuras.
@@ -60,11 +61,11 @@ Sistema de plugins con consentimiento por capacidad y aislamiento fuera de proce
 Actualización automática que sigue funcionando cuando Roblox cambia por debajo
 Iniciar con Windows si quieres: un solo interruptor, y la lista de Inicio de Windows manda
 Discord Join arranca RoRoRo aunque esté cerrado, y siempre pregunta antes de lanzar nada
-Alertas al móvil vía Pushover o ntfy: un alt se cae y tu móvil vibra, aun con Discord cerrado
+Alertas al móvil vía Pushover o ntfy, y al escritorio y a canales de Discord en cualquier combinación, por alerta: un alt se cae y tu móvil vibra
 Señales de "todo bien" cada dos horas mientras tus cuentas corren: el silencio significa problema
-Las alertas se reparten: escritorio, canales de Discord y móvil en cualquier combinación, por alerta
 Disponible en seis idiomas — toda la app, pantallas y mensajes, en francés, alemán, ruso, portugués (Brasil), polaco o español, cambio inmediato, según Windows o tu elección
 Problemas conocidos de Roblox — problemas del lado de Roblox, qué hacer y la función de RoRoRo que ayuda, al día sin actualizar la app
+Volver a unirse si se desconecta: un alt expulsado o atascado fuera del juego se cierra y vuelve a unirse solo, nunca tu cuenta principal
 ```
 
 ## What's new in this version (v1.31.0.0, ≤1500 chars)

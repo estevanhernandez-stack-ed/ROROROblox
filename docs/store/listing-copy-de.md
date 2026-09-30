@@ -1,6 +1,6 @@
 # Store listing — Deutsch (de)
 
-> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md`, refreshed for v1.26.0.0. Product nouns stay in English (RoRoRo, Squad
 > Launch, Friend Follow, Pushover, ntfy); the interface is now localized to six languages, so
 > the old English-only caveat is gone. Register: du (Gaming-Store-Norm).
@@ -24,6 +24,7 @@ Was du bekommst:
 • Live-Status für jedes Konto. Sieh, welches Konto in welchem Spiel ist, wer wie lange inaktiv ist, und setze FPS-Limits pro Konto, die halten.
 • Squad Launch + Friend Follow. Schicke alle ausgewählten Konten in denselben privaten Server, folge einem Freund in seinen, oder lande mit deinen Konten gemeinsam auf einem öffentlichen Server.
 • RAM-Wächter + Recycle. RoRoRo lernt, was ein Roblox-Client auf deiner Maschine wirklich an RAM kostet, und warnt, bevor er ausgeht. Ein Klick schließt einen schweren Client und bringt ihn zurück in denselben Server.
+• Erneut beitreten, wenn es ausfällt. Schalte es je Konto ein, und ein Alt, dessen Roblox-Fenster noch offen ist, der aber aus dem Spiel gefallen ist (ein Kick wegen Inaktivität, ein fehlgeschlagener Beitritt), wird geschlossen und tritt von selbst erneut bei. Höchstens dreimal pro Stunde, nie dein Hauptkonto, und dein eigenes „Stoppen“ hat immer Vorrang.
 • Ein Werkzeugfenster. Spiele, Einstellungen, Verlauf, Diagnose, Plugins, Bekannte Roblox-Probleme und Über sind Seiten eines Fensters neben deinen Konten — mit Tastenkürzeln überall; F1 zeigt die Liste.
 • Themes. Vier eingebaute, darunter eines, das Bedeutung nie allein über Farbe transportiert, plus ein Editor für eigene Themes aus zehn Farben, teilbar als Datei.
 • Optionale Alarme — Desktop, Discord oder Handy. Leite jeden Alarm an jede Kombination: Desktop-Benachrichtigungen, einen selbst erstellten Discord-Webhook oder dein Handy über Pushover oder ntfy. Verbindungsabbrüche, RAM-Warnungen, Recycle-Abschlüsse und ein „Alles gut“-Zeichen alle zwei Stunden. Eine frische Installation macht keinerlei Alarm-Aufrufe — nichts sendet, bevor du etwas einrichtest.
@@ -60,11 +61,11 @@ Plugin-System mit Zustimmung je Berechtigung und Isolation in eigenen Prozessen
 Auto-Update, das weiterläuft, wenn Roblox sich darunter ändert
 Start mit Windows, wenn du willst — ein Schalter, und Windows' eigene Autostart-Liste behält die Kontrolle
 Discord Join startet RoRoRo auch geschlossen — und fragt immer, bevor irgendetwas startet
-Handy-Alarme über Pushover oder ntfy — ein Alt fliegt raus und dein Handy vibriert, auch wenn Discord geschlossen ist
+Handy-Alarme über Pushover oder ntfy, dazu Desktop und Discord-Kanäle in jeder Kombination, je Alarm — ein Alt fliegt raus und dein Handy vibriert
 Lebenszeichen — alle zwei Stunden ein „Alles gut“, solange deine Konten laufen, also heißt Stille: etwas stimmt nicht
-Alarme fächern auf — Desktop, Discord-Kanäle und Handy in jeder Kombination, je Alarm
 In sechs Sprachen — die ganze App, Bildschirme wie Meldungen: Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch, Spanisch. Sofortiger Wechsel, gemäß Windows oder deiner Wahl
 Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welche RoRoRo-Funktion hilft, aktuell gehalten ohne App-Update
+Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
 ## What's new in this version (v1.31.0.0, ≤1500 chars)

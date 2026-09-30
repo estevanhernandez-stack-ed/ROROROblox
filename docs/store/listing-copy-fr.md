@@ -1,6 +1,6 @@
 # Store listing — Français (fr)
 
-> Paste-ready pour Partner Center → Store listings → **Français**. Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready pour Partner Center → Store listings → **Français**. Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
 > Friend Follow, Pushover, ntfy). The interface is now localized to six languages, so the
 > earlier English-interface caveat is gone. Register: vous (Store norm).
@@ -24,6 +24,7 @@ Ce que vous obtenez :
 • Statut en direct pour chaque compte. Voyez quel compte est dans quel jeu, qui est inactif et depuis combien de temps, avec une limite de FPS par compte qui tient.
 • Squad Launch + Friend Follow. Envoyez tous les comptes sélectionnés dans le même serveur privé, suivez un ami dans le sien, ou réunissez vos comptes dans un serveur public.
 • Surveillance mémoire + Recycle. RoRoRo apprend ce qu'un client Roblox coûte réellement en RAM sur votre machine et prévient avant la saturation. Un clic ferme un client trop lourd et le renvoie dans le serveur où il était.
+• Rejoindre à nouveau s'il décroche. Activez-le compte par compte : un alt dont la fenêtre Roblox est toujours ouverte mais qui est sorti du jeu (une expulsion pour inactivité, une connexion échouée) est fermé et rejoint à nouveau tout seul. Au plus trois fois par heure, jamais votre compte principal, et un « Arrêter » de votre part l'emporte toujours.
 • Une seule fenêtre d'outils. Jeux, réglages, historique, diagnostics, plugins, Problèmes Roblox connus et À propos sont les pages d'une même fenêtre, à côté de vos comptes, avec raccourcis clavier partout — F1 affiche la liste.
 • Thèmes. Quatre intégrés, dont un qui ne repose jamais sur la couleur seule, plus un éditeur pour créer le vôtre à partir de dix couleurs et le partager en fichier.
 • Alertes en option — bureau, Discord ou téléphone. Routez chaque alerte vers n'importe quelle combinaison : notifications bureau, un webhook Discord que vous créez, ou votre téléphone via Pushover ou ntfy. Déconnexions, alertes mémoire, fin de Recycle, et un signal « tout va bien » toutes les deux heures. Une installation neuve n'émet aucun appel d'alerte — rien ne part tant que vous n'avez rien configuré.
@@ -60,11 +61,11 @@ Système de plugins avec consentement par capacité et isolation hors processus
 Mise à jour automatique qui résiste aux changements côté Roblox
 Démarrage avec Windows si vous voulez — un seul réglage, et la liste Démarrage de Windows garde la main
 Discord Join démarre RoRoRo même fermé, et demande toujours avant de lancer quoi que ce soit
-Alertes téléphone via Pushover ou ntfy — un alt se déconnecte et votre téléphone vibre, même sans Discord
+Alertes téléphone via Pushover ou ntfy, et vers le bureau et les salons Discord dans n'importe quelle combinaison, par alerte — un alt se déconnecte et votre téléphone vibre
 Signaux de bon fonctionnement toutes les deux heures — un signal manquant veut dire qu'il faut vérifier
-Les alertes se diffusent — bureau, salons Discord et téléphone, dans n'importe quelle combinaison
 Disponible en six langues — toute l'app, écrans et messages, en français, allemand, russe, portugais (Brésil), polonais ou espagnol, changement immédiat, selon Windows ou votre choix
 Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonction RoRoRo qui aide, tenus à jour sans mise à jour de l'app
+Rejoindre à nouveau s'il décroche — un alt expulsé ou coincé hors du jeu est fermé et rejoint à nouveau tout seul, jamais votre compte principal
 ```
 
 ## What's new in this version (v1.31.0.0, ≤1500 chars)

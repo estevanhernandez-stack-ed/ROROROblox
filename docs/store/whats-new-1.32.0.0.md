@@ -210,7 +210,7 @@ Konta, które wypadną, wracają same
 ```
 v1.32.0.0
 
-Las alts que se desconectan vuelven solas
+Los alts que se desconectan vuelven solos
 • Haz clic derecho en una cuenta y activa "Volver a unirse si
   se desconecta". Si su ventana de Roblox está abierta pero la
   cuenta lleva 3 minutos fuera del juego, RoRoRo la cierra y
