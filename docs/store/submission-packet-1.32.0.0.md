@@ -51,8 +51,34 @@ Identity: `626LabsLLC.RoRoRoBlox`, publisher `CN=177BCE59-0966-4975-9962-10E3665
 
 **Audited 2026-09-29 against the fresh release notes, all four surfaces. Outcome: ONE FEATURE
 ENTRY EARNED, which needs a merge because the field is full; ONE LONG-DESCRIPTION BULLET PROPOSED;
-nothing made false. Nothing applied here** — `listing-copy.md` and `docs/index.md` are the
-owner's to edit; the exact text is below.
+nothing made false.**
+
+### Owner's rulings, 2026-09-29, and what was applied
+
+Applied to all seven sheets (`ba94873`): the phone-alert and fan-out feature entries merged as
+drafted below; "Rejoin if it drops out" added as feature 20; the Rejoin bullet added to the long
+description after Memory watchdog + Recycle. The hub bullet was not applied (not a Store surface; the
+1.31 hub bullet was declined). Still 20 features in every language, longest 192 (en).
+
+**Listing verifier, at `ba94873`** (both shapes, short description + long description + features,
+six languages). **No finding on any 1.32 text.** The run re-read the live text and surfaced real
+defects already published, fixed in the next commit:
+
+- **"while your accounts run" was missing** from the uptime-mark claim in fr, de, ru, pt-BR and pl
+  (Spanish was fixed for exactly this in 1.31). A condition on a claim; restored in all five.
+- **Spanish trademark sentence** said "El término se usa…", dropping "trademarked" from "The
+  trademarked term is used solely…". Zero-tolerance field; now "El término de marca registrada…".
+- **French short description** dropped "themes". Restored; "surveillance mémoire" became "veille
+  mémoire" to stay under the cap (198/200).
+
+**Overruled:** "double-click main launch" read as launching the main *account* (fr, de, pt-BR, pl,
+es) — it does launch the main account, verified in 1.31 (`App.ActivateMainFromTray` →
+`StartMainCommand`); the Russian short description "over 200" (it is exactly 200). **Left as minor,
+as in 1.31:** "now" dropped from "now in 6 languages" (pt-BR, es), the Uptime marks heading (ru,
+pt-BR), "by name" and the tray heading (es). Wording, not claims; the verifier also flagged the same
+kind of point inconsistently across passes in 1.31.
+
+The proposals as drafted before the ruling:
 
 **Short description — unchanged.** 197/200, no room. Auto-rejoin would not survive a trade against
 anything already there, and "multi-launcher" is still the reason anyone installs.

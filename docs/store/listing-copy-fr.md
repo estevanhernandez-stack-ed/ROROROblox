@@ -8,7 +8,7 @@
 ## Short description (≤200 chars)
 
 ```
-Multi-lanceur Windows, désormais en 6 langues. Plusieurs clients Roblox côte à côte, chacun sur son compte. Coffre chiffré, Squad Launch, surveillance mémoire, alertes téléphone, statut en direct.
+Multi-lanceur Windows, désormais en 6 langues. Plusieurs clients Roblox côte à côte, chacun sur son compte. Coffre chiffré, Squad Launch, veille mémoire, alertes téléphone, statut en direct, thèmes.
 ```
 
 ## Long description
@@ -27,7 +27,7 @@ Ce que vous obtenez :
 • Rejoindre à nouveau s'il décroche. Activez-le compte par compte : un alt dont la fenêtre Roblox est toujours ouverte mais qui est sorti du jeu (une expulsion pour inactivité, une connexion échouée) est fermé et rejoint à nouveau tout seul. Au plus trois fois par heure, jamais votre compte principal, et un « Arrêter » de votre part l'emporte toujours.
 • Une seule fenêtre d'outils. Jeux, réglages, historique, diagnostics, plugins, Problèmes Roblox connus et À propos sont les pages d'une même fenêtre, à côté de vos comptes, avec raccourcis clavier partout — F1 affiche la liste.
 • Thèmes. Quatre intégrés, dont un qui ne repose jamais sur la couleur seule, plus un éditeur pour créer le vôtre à partir de dix couleurs et le partager en fichier.
-• Alertes en option — bureau, Discord ou téléphone. Routez chaque alerte vers n'importe quelle combinaison : notifications bureau, un webhook Discord que vous créez, ou votre téléphone via Pushover ou ntfy. Déconnexions, alertes mémoire, fin de Recycle, et un signal « tout va bien » toutes les deux heures. Une installation neuve n'émet aucun appel d'alerte — rien ne part tant que vous n'avez rien configuré.
+• Alertes en option — bureau, Discord ou téléphone. Routez chaque alerte vers n'importe quelle combinaison : notifications bureau, un webhook Discord que vous créez, ou votre téléphone via Pushover ou ntfy. Déconnexions, alertes mémoire, fin de Recycle, et un signal « tout va bien » toutes les deux heures pendant que vos comptes tournent. Une installation neuve n'émet aucun appel d'alerte — rien ne part tant que vous n'avez rien configuré.
 • Icône de zone de notification colorée selon l'état — l'état multi-instance en un coup d'œil ; double-clic pour lancer le compte principal.
 • Système de plugins. Des plugins optionnels tournent dans des processus séparés et n'ont aucune permission tant que vous ne les accordez pas un par un.
 • Mise à jour automatique via Velopack. Une configuration distante suit la version et le nom de mutex Roblox connus, pour qu'un changement côté Roblox ne vous bloque pas longtemps.
