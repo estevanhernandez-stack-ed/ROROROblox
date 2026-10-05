@@ -131,10 +131,24 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
         _timer ??= new Timer(_ => SafeSample(), null, SampleInterval, SampleInterval);
     }
 
+    /// <summary>
+    /// Stops sampling and retracts the last snapshot.
+    /// <para>
+    /// The retraction is the load-bearing half. <c>MainViewModel</c>'s 30s ticker keeps evaluating
+    /// <see cref="MemoryPressureEvaluator.IsClear"/> against <see cref="GetSnapshot"/> after this
+    /// returns, and it is the only thing that ever clears the tray badge and the memory chips. Stop
+    /// while below reserve and leave the snapshot behind, and that reader sees "in trouble" with
+    /// nothing left to ever contradict it — a warning pinned on screen for the rest of the session,
+    /// at the exact moment the user said to stop watching (<see cref="MemoryWatchdogGate"/>,
+    /// 2026-10-05). Same seeded value as the field initializer above, for the same null-Accounts
+    /// reason.
+    /// </para>
+    /// </summary>
     public void Stop()
     {
         _timer?.Dispose();
         _timer = null;
+        _last = new MemoryPressureSnapshot(0, 0, 0, false, null, []);
     }
 
     private void SafeSample()

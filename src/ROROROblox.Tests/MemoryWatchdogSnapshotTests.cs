@@ -55,4 +55,57 @@ public class MemoryWatchdogSnapshotTests
         Assert.Empty(snapshot.Accounts);
         Assert.False(snapshot.HasProjection);
     }
+
+    private sealed class ReadableProcessMemory : IProcessMemoryProbe
+    {
+        public long Bytes;
+        public bool TryReadPrivateBytes(int pid, out long privateBytes)
+        {
+            privateBytes = Bytes;
+            return true;
+        }
+    }
+
+    private sealed class ReadableSystemMemory : ISystemMemoryProbe
+    {
+        public long Total = 32L * 1024 * 1024 * 1024;
+        public long Available = 20L * 1024 * 1024 * 1024;
+        public bool TryRead(out long total, out long available)
+        {
+            total = Total;
+            available = Available;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Stopping the watchdog has to retract its last opinion, because nothing will refresh it.
+    /// <para>
+    /// The badge and the memory chips are cleared by <c>MainViewModel</c>'s 30s ticker evaluating
+    /// <see cref="MemoryPressureEvaluator.IsClear"/> against the latest snapshot — a reader that
+    /// keeps running after the watchdog stops. So a sampler halted while below reserve would leave
+    /// a snapshot that says "in trouble" with nothing left to ever say otherwise, pinning a warning
+    /// on screen for the rest of the session. Turning memory watching off is exactly when that
+    /// happens (<c>MemoryWatchdogGate</c>, 2026-10-05), which is why the retraction lives in
+    /// <see cref="MemoryWatchdog.Stop"/> rather than at one caller.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Stop_RetractsAWarningSnapshotNothingWillRefresh()
+    {
+        const long gb = 1024L * 1024 * 1024;
+        var proc = new ReadableProcessMemory { Bytes = 2 * gb };
+        var sys = new ReadableSystemMemory { Available = 1 * gb };
+        var wd = new MemoryWatchdog(proc, sys, new FakeClock()) { ReserveBytes = 8 * gb };
+        wd.OnAccountLaunched(Guid.NewGuid(), 10);
+        wd.Sample();
+        Assert.False(MemoryPressureEvaluator.IsClear(wd.GetSnapshot(), 120),
+            "the sampled state really is below reserve, or this test proves nothing.");
+
+        wd.Stop();
+
+        Assert.True(MemoryPressureEvaluator.IsClear(wd.GetSnapshot(), 120),
+            "a stopped watchdog holds no opinion; a stale one would pin the badge on forever.");
+        Assert.Empty(wd.GetSnapshot().Accounts);
+    }
 }
