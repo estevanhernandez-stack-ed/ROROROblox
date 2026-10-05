@@ -171,8 +171,21 @@ Three routes:
 
 ## 6. Also noticed
 
-- The watchdog heartbeat logged `0 client(s)` all morning while three accounts were in game
-  (`rororoblox-20261005.log`, 09:32/09:47/10:03). If that is not expected, memory watching is blind
-  in Este's normal configuration and the toggle argument is moot for him.
+- **The tray balloon answers to nothing** (measured in the 2026-10-05 smoke).
+  `App.WireMemoryWarningTray` subscribes to `PressureCrossed` and calls `ShowMemoryWarning` with no
+  destination check and no mute check, so a memory crossing always raises a Windows balloon, with the
+  stock notification sound, whether or not "Desktop" is ticked for that row and whether or not the
+  five-minute cooldown has elapsed. At 15:21:57 the dispatcher logged "routed nowhere" under the
+  cooldown while the tray path fired regardless. Memory warnings route to Discord "Mine" alone on
+  Este's install, so every desktop balloon he has seen for memory came from a path with no switch and
+  no throttle. This is the sound complaint and the cadence complaint in one line of wiring: the thing
+  he sees and hears most often is the one nothing governs. Both §1 and §4 depend on fixing it.
+- **Nothing logs when the memory gate flips.** "Off" has to be inferred from the absence of
+  crossings. One Information line on open/close would make a live check a single grep.
+- **The `0 client(s)` heartbeat is explained, and is not a bug.** This machine had zero
+  `RobloxPlayerBeta` processes while three accounts read `InGame`: those clients are on Este's other
+  computer. Presence is remote truth; the watchdog counts local clients. The two disagreeing is
+  correct behaviour, though it does mean the memory feature says nothing at all about a session
+  running on another machine.
 - The running build is Store **1.31.0.0**, though 1.32 shipped on 09-30. The Store has not pushed
   the update to this machine.
