@@ -84,7 +84,7 @@ Discord "Mine" only on this install, so one alert reached that channel.
 | 1b. Confound control | Re-armed (cap 20000), then cap 1000 again at 15:21:54 | **Pass.** Crossed at 15:21:57. Proves a low cap reliably crosses in ≤30 s while watching is on, so run 2's silence means the gate and not a stuck latch. |
 | 2. Off means off | Re-armed, set `memoryWatchdogEnabled: false` at 15:23:37, then cap 1000 at 15:24:48 | **Pass.** Zero crossings in 150 s, against ≤30 s twice while on. Silent on all three axes for the whole 15:23:37-15:27:41 window. |
 | 3. On means on | Set `memoryWatchdogEnabled: true` at 15:27:41 | **Pass.** Cap crossed at 15:28:27, projection at 15:28:57. No restart anywhere in the run. |
-| 4. Toggle beats the tick | Not run | Needs the UI. The hand-edit path exercises `RefreshMemoryWatchdogAsync`; the nudge and its race need Este clicking the box. |
+| 4. The UI toggle saves and nudges | Clicked the checkbox for real, both ways, 15:58-16:01 | **Pass.** Untick wrote `memoryWatchdogEnabled: false`; re-tick wrote `true`. Driven through UI Automation to open Settings and scroll the control into view, then a synthesized mouse click on the control itself. The fast-flip race is left to the unit test; two clicks 30 s apart cannot distinguish a nudge from the tick that follows it. |
 
 The session log carries no `[ERR]`, no `Couldn't refresh the memory watchdog settings`, and no
 `re-read dropped`. The only warnings are the four deliberate crossings and an unrelated orphaned-plugin
@@ -107,3 +107,20 @@ tested, but whether the chips and the tray badge visibly clear needs eyes on the
 2. **Nothing logs when the gate flips.** "Off" had to be inferred from the absence of crossings. One
    Information line when the gate opens or closes would make this smoke, and any future support
    question, a single grep.
+3. **F-102 is alive again in the memory checkbox.** `MemoryWatchdogEnabledToggle` is wired to
+   `Click`, and `TogglePattern.Toggle()` — the only pattern a CheckBox exposes, and the one every
+   assistive technology, voice access and automation path uses — raises `Checked`/`Unchecked` and
+   never `Click`. Measured: a UIA toggle flipped the box to Off and reported Off to automation while
+   `settings.json` still read `true`, so nothing saved and the gate never moved. A real mouse click
+   on the same control saved correctly. This is exactly the defect F-102 fixed for the streamer-mode
+   toggle (which was moved to two-way binding for this reason, `SettingsPage.xaml.cs` ~line 130); the
+   memory toggle never got the same treatment, and on the evidence of this page's markup neither did
+   the other `Click`-wired checkboxes. A screen-reader user turning memory watching off is told it is
+   off while it keeps running. **Fix belongs in the v1.33 cycle, with a fence test so the next
+   `Click`-wired toggle cannot ship.**
+
+Two smaller notes from driving the UI. The control's left padding does not hit-test — a click 11 px
+left of the tick did nothing, which is a WPF template root with no `Background` and worth knowing
+before anyone writes a UI test. And there is no visible way back to the accounts page once a nav page
+is open: Escape walks Settings → Games and stops, and the nav list has no home entry. That may be an
+affordance I failed to find rather than a missing one, but it is worth a look during consolidation.
