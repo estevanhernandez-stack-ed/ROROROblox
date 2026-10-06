@@ -1557,3 +1557,39 @@ twenty minutes to exactly that. Writing it into the item is cheaper than learnin
 at `/spec`, and this was translation plus one measurement that reshaped it.
 
 **Handoff:** `/build`. Autonomous, halting at C1 (after item 4) and C2 (after item 6).
+
+## /scope — the alerts cycle (v1.33, opened 2026-10-05)
+
+Cart cycle #5. Written to `docs/cycles/2026-10-05-alerts/scope.md`, not `docs/scope.md`: that path
+holds the retired v1.18/v1.21 snapshot CLAUDE.md lists as history, and clobbering it to satisfy a
+tool's default path would destroy the thing the convention exists to protect. Downstream Cart
+commands take the path explicitly.
+
+**No interview, and the profile says that is correct.** Builder mode, brisk pacing, fully-autonomous,
+"deepening rounds: zero when the recon is clean." The recon here is a measured audit with file:line
+evidence across four complaints, plus two defects confirmed against the running app hours earlier,
+plus three design calls Este had already made (sound route, cadence model, sequencing). He opened the
+cycle with "I can't think of any new features, they stay locked in my brain until we hit publish" —
+a brain-dump prompt would have been a form to fill in with nothing to put in it.
+
+**What the conversation actually produced** came from driving the app rather than talking about it.
+Two of the cycle's load-bearing facts were invisible from the source: that the tray balloon fires
+with no destination check, no mute check and no cooldown (caught because the dispatcher logged
+"routed nowhere" at 15:21:57 while a balloon went out anyway), and that F-102 is alive in the memory
+checkbox (caught by toggling through UIA and watching the setting not move). Both reshaped the scope.
+The first one turned "give me a sound option" into "the desktop has to become a real destination
+first", which is now the structural heart of the cycle rather than a nice-to-have.
+
+**Four forks are carried as assumptions with recommendations**, per the fully-autonomous contract,
+rather than as questions in a queue: whether the balloon becomes fully routable (yes, with the badge
+staying unconditional as the non-interrupting signal), whether idle alerts join the grid (yes), the
+cadence granularity (global plus per-kind override, Este's own pick), and the default sound (a
+bundled chime, not silence). Each is one sentence to overturn.
+
+**Cuts that took the most thought:** real Windows toasts, because they are the obviously "right"
+modern answer and still wrong here — the direct-download build would need an AUMID shortcut and a COM
+activator, which is the two-build-shapes class of bug that cost v1.23 its Join-by-URI and
+run-on-login. The custom balloon solves the sound complaint without that. Quiet hours was cut for
+being a second feature wearing the first one's clothes.
+
+**Handoff:** `/prd`, against `docs/cycles/2026-10-05-alerts/scope.md`.
