@@ -57,12 +57,12 @@
       "field": "accounts_vo",
       "en": "Save all your alts and manage your accounts. One click each, with live status and the game each one is actually in.",
       "translations": {
-        "fr": "Enregistrez tous vos alts, gérez vos comptes. Un clic par compte, statut en direct et le jeu de chacun.",
+        "fr": "Enregistrez tous vos alts, gérez vos comptes. Un clic par compte, statut en direct et le jeu où chacun se trouve.",
         "de": "Speichere alle Alts und verwalte deine Accounts. Je ein Klick, mit Live-Status und dem Spiel, in dem jeder steckt.",
-        "ru": "Сохраните все альты, управляйте аккаунтами. Один клик на аккаунт, онлайн-статус и игра каждого из них.",
-        "pt-br": "Salve todos os alts e gerencie as contas. Um clique por conta, status ao vivo e o jogo de cada uma.",
-        "pl": "Zapisz wszystkie alty i zarządzaj kontami. Jeden klik na konto, status na żywo i gra na każdym koncie.",
-        "es": "Guarda todos tus alts y gestiona tus cuentas. Un clic por cuenta, estado en vivo y el juego de cada una."
+        "ru": "Сохраните все альты, управляйте аккаунтами. Один клик на аккаунт, онлайн-статус и игра, где сейчас каждый из них.",
+        "pt-br": "Salve todos os alts e gerencie as contas. Um clique por conta, status ao vivo e o jogo em que cada uma está.",
+        "pl": "Zapisz wszystkie alty i zarządzaj kontami. Jeden klik na konto, status na żywo i gra, w której jest każde z nich.",
+        "es": "Guarda todos tus alts y gestiona tus cuentas. Un clic por cuenta, estado en vivo y el juego en el que está cada una."
       },
       "charCap": 600
     },
