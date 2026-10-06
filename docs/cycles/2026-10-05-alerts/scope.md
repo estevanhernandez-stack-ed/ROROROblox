@@ -190,10 +190,12 @@ use it to mask a `LinearGradientBrush`, and keep the existing drop shadow for th
 then come from theme brushes instead of being frozen into the image, so the egg follows the theme and
 one asset serves all four.
 
-**One decision this forces.** `AboutPage_Koii4Eva` is currently localized in all six cultures. As a
-drawn mark it stops being per-culture — which is consistent with this project's own rule that product
-nouns stay English, since a clan's name is a proper noun and not prose. The six resx entries then need
-retiring deliberately rather than left orphaned.
+**Decided: one mark, not seven** (Este, 2026-10-06). `AboutPage_Koii4Eva` carries a resx entry in all
+six cultures plus the neutral, and **all seven values are byte-identical: `Koii 4 eva`** — the
+catalog pipeline's `PRODUCT_NOUNS` guard did its job and no translator touched a clan's name. So the
+localization was seven rows that only ever said one thing, and retiring them costs nothing: a drawn
+mark says it once, in Este's hand, for everyone. Retire the entries deliberately in the same commit
+that lands the asset rather than leaving them orphaned, and the guard stays as it is — it was right.
 
 ### Constraints the build still has to honour
 
