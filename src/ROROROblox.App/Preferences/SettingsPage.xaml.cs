@@ -31,6 +31,10 @@ namespace ROROROblox.App.Preferences;
 internal partial class SettingsPage : UserControl, IDisposable
 {
     private readonly IAppSettings _settings;
+
+    // Nudged the moment the memory toggle saves, so "off" stops the sampling in this session rather
+    // than at next launch. See MemoryWatchdogGate for the race this instance arbitrates.
+    private readonly MemoryWatchdogGate _memoryWatchdogGate;
     private readonly IStartupRegistration _startupRegistration;
     private readonly IThemeStore _themeStore;
     private readonly ThemeService _themeService;
@@ -109,8 +113,10 @@ internal partial class SettingsPage : UserControl, IDisposable
         WebhookProbe webhookProbe,
         ROROROblox.Core.Notify.PhoneNotifyConfigService phoneNotifyService,
         ROROROblox.App.Notify.PhoneAlertSender phoneAlertSender,
-        ISystemMemoryProbe systemMemoryProbe)
+        ISystemMemoryProbe systemMemoryProbe,
+        MemoryWatchdogGate memoryWatchdogGate)
     {
+        _memoryWatchdogGate = memoryWatchdogGate;
         _automaticMemory = new AutomaticMemorySummary(systemMemoryProbe);
         _alertDispatcher = alertDispatcher;
         _webhookSender = webhookSender;
@@ -2494,6 +2500,12 @@ internal partial class SettingsPage : UserControl, IDisposable
         try
         {
             await _settings.SetMemoryWatchdogEnabledAsync(MemoryWatchdogEnabledToggle.IsChecked == true);
+            // NUDGE FROM THE CONTROL AS IT STANDS NOW, not from a value captured before the await —
+            // the reasoning OnMetricAlertsEnabledToggle records: two quick clicks put two of these
+            // in flight, the writes serialize behind the settings semaphore, but the continuations
+            // can resume in either order and a captured value would let the first one land last and
+            // leave the gate believing the opposite of the file.
+            _memoryWatchdogGate.Apply(MemoryWatchdogEnabledToggle.IsChecked == true);
             ClearMemoryWarning();
         }
         catch (Exception ex)

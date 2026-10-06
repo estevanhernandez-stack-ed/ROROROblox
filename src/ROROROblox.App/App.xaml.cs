@@ -1041,6 +1041,11 @@ public partial class App : Application
         services.AddSingleton<ISystemMemoryProbe, SystemMemoryProbe>();
         services.AddSingleton<IMemoryWatchdog, MemoryWatchdog>();
 
+        // Owns whether that watchdog is sampling, so the Settings toggle means this session. Must
+        // be the same singleton the Settings page nudges and RefreshMemoryWatchdogAsync commits to,
+        // or the two writers would each hold their own idea of "on".
+        services.AddSingleton<MemoryWatchdogGate>();
+
         // Runtime contested-mutex watcher (Task 8) — polls only while we don't hold the mutex,
         // surfacing when the tray-resident Roblox releases it so the runtime banner can offer
         // in-place recovery without a restart. Registered here so its lifetime matches the other
@@ -1735,9 +1740,21 @@ public partial class App : Application
     /// decorator uses — this method only owns settings + <see cref="IMemoryWatchdog.Start"/>.
     /// </para>
     /// <para>
-    /// <c>MemoryWatchdogEnabled == false</c> returns before <c>Start()</c> — no timer, no sampling,
-    /// no cost. Wrapped defensively like every other Wire*/Initialize* startup step: a watchdog
-    /// wiring failure must never block a user from launching Roblox.
+    /// <c>MemoryWatchdogEnabled == false</c> means no timer, no sampling, no cost — but as of
+    /// 2026-10-05 that decision is no longer taken once and frozen. The flag goes through
+    /// <see cref="MemoryWatchdogGate"/>, the Settings toggle nudges it the moment it saves, and the
+    /// view model's 30s tick re-reads it so a hand-edited settings.json still counts. Before that,
+    /// unticking the box mid-session persisted the value and changed nothing until the next launch:
+    /// Este had the box clear on his second machine and a memory warning arrived anyway.
+    /// </para>
+    /// <para>
+    /// The reserve/cap/projection numbers ride the same refresh, so editing one takes effect within
+    /// a tick instead of at next launch. They are pushed before the gate is applied: a stopped
+    /// watchdog taking new numbers is free, and a starting one must not sample on stale ones.
+    /// </para>
+    /// <para>
+    /// Wrapped defensively like every other Wire*/Initialize* startup step: a watchdog wiring
+    /// failure must never block a user from launching Roblox.
     /// </para>
     /// </summary>
     private async Task WireMemoryWatchdogAsync()
@@ -1746,10 +1763,55 @@ public partial class App : Application
         try
         {
             var settings = _services.GetRequiredService<IAppSettings>();
-            if (!await settings.GetMemoryWatchdogEnabledAsync().ConfigureAwait(true))
-            {
-                return;
-            }
+            await RefreshMemoryWatchdogAsync(settings).ConfigureAwait(true);
+
+            // Piggybacks the existing 30s tick, this app's habit for exactly this kind of re-read
+            // (the idle chips, the memory repaint, the uptime mark and the metric-alert gate all
+            // ride it rather than stand up a timer of their own).
+            var vm = _services.GetRequiredService<MainViewModel>();
+            vm.PeriodicTick += (_, _) => _ = RefreshMemoryWatchdogAsync(settings);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Memory watchdog wiring failed; continuing without it.");
+        }
+    }
+
+    /// <summary>
+    /// Pushes the memory settings into the live watchdog and opens or closes
+    /// <see cref="MemoryWatchdogGate"/> to match the opt-in.
+    /// <para>
+    /// <b>Derive ONCE, never re-derive over an explicit value.</b> <c>MemoryReserveMb</c>/
+    /// <c>MemoryCapMb</c> are <c>int?</c>: <see langword="null"/> means the user never touched the
+    /// setting (derive from installed RAM via <see cref="MemoryDefaults"/>), any value — including
+    /// <c>0</c> for the cap — is a deliberate user choice that must be honoured verbatim (<c>0</c>
+    /// disables the cap trigger; see <see cref="MemoryDefaults.CapMb"/> doc). The pattern is
+    /// <c>settings.Value ?? MemoryDefaults.XMb(total)</c>, converted MB -&gt; bytes with
+    /// <c>* 1024L * 1024L</c>.
+    /// </para>
+    /// <para>
+    /// <see cref="IMemoryWatchdog.OnAccountLaunched"/>/<c>OnAccountExited</c> bookkeeping is wired
+    /// separately, in <see cref="WireRobloxWindowDecorator"/>, at the same
+    /// <see cref="IRobloxProcessTracker.ProcessAttached"/>/<c>ProcessExited</c> call sites the
+    /// decorator uses — this method only owns settings plus start/stop.
+    /// </para>
+    /// <para>
+    /// <b>The generation is captured before the first read, not after.</b> Everything between that
+    /// capture and the commit is the window in which a Settings nudge outranks this read. Without
+    /// it, a tick that picked up <c>true</c> a moment before the user unticked the box would
+    /// restart the watchdog seconds after an explicit opt-out — the interleaving
+    /// <c>MetricAlertsGateTests</c> records for the metric opt-in, which this mirrors.
+    /// </para>
+    /// </summary>
+    private async Task RefreshMemoryWatchdogAsync(IAppSettings settings)
+    {
+        if (_services is null) return;
+        try
+        {
+            var gate = _services.GetRequiredService<MemoryWatchdogGate>();
+            var generation = gate.BeginRead();
+
+            var enabled = await settings.GetMemoryWatchdogEnabledAsync().ConfigureAwait(true);
 
             var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
             var systemProbe = _services.GetRequiredService<ISystemMemoryProbe>();
@@ -1761,11 +1823,14 @@ public partial class App : Application
             watchdog.CapBytes = (capMb ?? MemoryDefaults.CapMb(totalPhysicalBytes)) * 1024L * 1024L;
             watchdog.ProjectionWarnMinutes = await settings.GetProjectionWarnMinutesAsync().ConfigureAwait(true);
 
-            watchdog.Start();
+            if (!gate.TryCommit(generation, enabled))
+            {
+                _log?.LogDebug("Memory watchdog re-read dropped: the toggle moved while it was in flight.");
+            }
         }
         catch (Exception ex)
         {
-            _log?.LogWarning(ex, "Memory watchdog wiring failed; continuing without it.");
+            _log?.LogWarning(ex, "Couldn't refresh the memory watchdog settings; it keeps its current state.");
         }
     }
 
@@ -2255,7 +2320,10 @@ public partial class App : Application
             // machine, and it resolves it through the same MemoryDefaults calls
             // WireMemoryWatchdogAsync uses. Same registration (:717), same singleton, so the
             // figure on screen and the figure the watchdog runs with cannot come apart.
-            _services.GetRequiredService<ISystemMemoryProbe>());
+            _services.GetRequiredService<ISystemMemoryProbe>(),
+            // Same singleton RefreshMemoryWatchdogAsync commits to: the toggle has to move the
+            // watchdog this session, not just the file.
+            _services.GetRequiredService<MemoryWatchdogGate>());
     }
 
     /// <summary>
