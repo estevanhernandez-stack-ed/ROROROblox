@@ -151,10 +151,19 @@ Small, visual, and unrelated to alerts; recorded here rather than folded in sile
    words, in his hand" — never UI labels, buttons or body copy — and the wordmark is that rule's own
    stated exception, because "626Labs" in the hand *is* the company's signature. It belongs on the
    About box of a 626 Labs product.
-2. **An Easter egg behind the About nav item.** Tap it six times and a short line in Este's voice
-   appears, in his hand, signed. The joke is the tap count: it is the Android developer-options
-   gesture (seven taps on the build number) pointed at About. **Six rather than seven**, so the
-   number is 626 rather than Android's.
+2. **An Easter egg behind the About nav item.** Tap it **six or seven times** and a short line in
+   Este's voice appears, in his hand, signed.
+
+**The tap count IS the joke, and it is not arbitrary.** "6-7" is the meme the Pet Sim 99 audience
+chants constantly — kids say it at each other all day — and the gag is that nobody can pin down
+whether it is six or seven. So the egg fires on the sixth tap **and** on the seventh: both work, and
+which one you landed on is unanswerable, which is the whole bit. Do not round it to one number.
+
+A correction worth keeping, because it shows the failure mode: the first pass at this read the gesture
+as Android's developer-options Easter egg (seven taps on the build number) and proposed six "so the
+number is 626, not Android's". That is a tidy brand joke for an adult who has flashed a phone, and it
+is deaf to the actual audience. This is a tool for a Roblox clan. **The audience's joke beats the
+brand's joke**, and anyone building this should resist making the number mean something.
 
 **Why an egg and not a theme.** The ask started as an Easter egg *theme*. A theme is the one shape
 that cannot work: it would render UI labels in the hand, which is exactly what the single rule
