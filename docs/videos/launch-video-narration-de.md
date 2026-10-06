@@ -22,7 +22,7 @@ stays as digits in any OVERLAY.
 
 ### accounts (slide 2)
 - OVERLAY: `einmal speichern. starte als.`
-- VO: `Speichere alle Alts und verwalte deine Accounts. Ein Klick pro Stück, mit Live-Status und dem Spiel, in dem jeder steckt.`
+- VO: `Speichere alle Alts und verwalte deine Accounts. Je ein Klick, mit Live-Status und dem Spiel, in dem jeder steckt.`
 
 ### squad (slide 3)
 - OVERLAY: `gleicher Privatserver. alle.`
@@ -38,7 +38,7 @@ stays as digits in any OVERLAY.
 
 ### trust (slide 6)
 - OVERLAY: `dein Passwort bleibt draußen`
-- VO: `Dein Passwort gelangt nie in die App, niemals. Und obendrauf gibt's jede Menge Komfort. Lies einfach die Liste!`
+- VO: `Dein Passwort gelangt nie in die App, niemals. Und obendrauf gibt's jede Menge Komfort. Schau dir die Liste an!`
 
 ### cta (slide 7)
 - OVERLAY: `scannen, am Rechner öffnen`

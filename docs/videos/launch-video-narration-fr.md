@@ -18,7 +18,7 @@ stays as digits in any OVERLAY.
 
 ### accounts (slide 2)
 - OVERLAY: `enregistrez une fois. lancez.`
-- VO: `Enregistrez tous vos alts et gérez vos comptes. Un clic chacun, avec le statut en direct et le jeu où chacun se trouve.`
+- VO: `Enregistrez tous vos alts, gérez vos comptes. Un clic par compte, statut en direct et le jeu où il se trouve.`
 
 ### squad (slide 3)
 - OVERLAY: `même serveur privé. tous.`
@@ -34,7 +34,7 @@ stays as digits in any OVERLAY.
 
 ### trust (slide 6)
 - OVERLAY: `votre mot de passe n'y passe pas`
-- VO: `Votre mot de passe ne touche jamais l'appli, jamais. Et en plus, plein d'améliorations de confort. Lisez la liste !`
+- VO: `Votre mot de passe ne touche jamais l'appli, jamais. En plus, plein d'améliorations de confort. Jetez un œil à la liste !`
 
 ### cta (slide 7)
 - OVERLAY: `scannez, ouvrez sur ordi`

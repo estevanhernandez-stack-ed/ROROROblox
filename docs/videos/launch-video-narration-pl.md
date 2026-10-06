@@ -22,7 +22,7 @@ stays as digits in any OVERLAY.
 
 ### accounts (slide 2)
 - OVERLAY: `zapisz raz. uruchamiaj jako.`
-- VO: `Zapisz wszystkie alty i zarządzaj kontami. Jedno kliknięcie na każdy, status na żywo i gra każdego.`
+- VO: `Zapisz wszystkie alty i zarządzaj kontami. Jeden klik na konto, status na żywo i gra, w której siedzi.`
 
 ### squad (slide 3)
 - OVERLAY: `ten sam priv. wszystkie.`
@@ -38,7 +38,7 @@ stays as digits in any OVERLAY.
 
 ### trust (slide 6)
 - OVERLAY: `hasło nigdy do niej nie trafia`
-- VO: `Hasło nigdy nie trafia do apki, przenigdy. A do tego mnóstwo udogodnień. Po prostu przeczytaj listę!`
+- VO: `Hasło nigdy nie trafia do apki, przenigdy. A do tego mnóstwo udogodnień. Zerknij na listę!`
 
 ### cta (slide 7)
 - OVERLAY: `zeskanuj, otwórz na komputerze`

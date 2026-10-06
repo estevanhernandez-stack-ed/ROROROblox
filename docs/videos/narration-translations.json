@@ -10,7 +10,7 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "2f1bb3d",
+  "sourceCommit": "slides-02-06-r2",
   "generatedUtc": "2026-10-06T16:16:13+00:00",
   "sourceOfTruth": "docs/videos/launch-video-narration-*.md — corrections are edits there",
   "fields": [
@@ -57,12 +57,12 @@
       "field": "accounts_vo",
       "en": "Save all your alts and manage your accounts. One click each, with live status and the game each one is actually in.",
       "translations": {
-        "fr": "Enregistrez tous vos alts et gérez vos comptes. Un clic chacun, avec le statut en direct et le jeu où chacun se trouve.",
-        "de": "Speichere alle Alts und verwalte deine Accounts. Ein Klick pro Stück, mit Live-Status und dem Spiel, in dem jeder steckt.",
-        "ru": "Сохраните все альты и управляйте аккаунтами. Клик на каждый, статус вживую и игра каждого.",
-        "pt-br": "Salve todos os alts e gerencie as contas. Um clique cada, com status ao vivo e o jogo de cada um.",
-        "pl": "Zapisz wszystkie alty i zarządzaj kontami. Jedno kliknięcie na każdy, status na żywo i gra każdego.",
-        "es": "Guarda todos tus alts y gestiona tus cuentas. Un clic cada uno, estado en vivo y el juego de cada uno."
+        "fr": "Enregistrez tous vos alts, gérez vos comptes. Un clic par compte, statut en direct et le jeu où il se trouve.",
+        "de": "Speichere alle Alts und verwalte deine Accounts. Je ein Klick, mit Live-Status und dem Spiel, in dem jeder steckt.",
+        "ru": "Сохраните все альты, управляйте аккаунтами. Каждый в один клик, живой статус и игра, где он сейчас.",
+        "pt-br": "Salve todos os alts e gerencie as contas. Um clique por conta, status ao vivo e o jogo em que ela está.",
+        "pl": "Zapisz wszystkie alty i zarządzaj kontami. Jeden klik na konto, status na żywo i gra, w której siedzi.",
+        "es": "Guarda todos tus alts y gestiona tus cuentas. Un clic por cuenta, estado en vivo y el juego en el que está."
       },
       "charCap": 600
     },
@@ -161,12 +161,12 @@
       "field": "trust_vo",
       "en": "Your password never touches the app, ever. And there's a pile of quality of life on top. Just read the list!",
       "translations": {
-        "fr": "Votre mot de passe ne touche jamais l'appli, jamais. Et en plus, plein d'améliorations de confort. Lisez la liste !",
-        "de": "Dein Passwort gelangt nie in die App, niemals. Und obendrauf gibt's jede Menge Komfort. Lies einfach die Liste!",
-        "ru": "Пароль никогда не попадает в приложение, вообще. А сверху ещё куча удобств. Просто прочитайте список!",
-        "pt-br": "Sua senha nunca toca no app, nunca mesmo. E ainda tem um monte de melhorias. É só ler a lista!",
-        "pl": "Hasło nigdy nie trafia do apki, przenigdy. A do tego mnóstwo udogodnień. Po prostu przeczytaj listę!",
-        "es": "Tu contraseña nunca toca la app, nunca. Y encima, un montón de mejoras. ¡Solo lee la lista!"
+        "fr": "Votre mot de passe ne touche jamais l'appli, jamais. En plus, plein d'améliorations de confort. Jetez un œil à la liste !",
+        "de": "Dein Passwort gelangt nie in die App, niemals. Und obendrauf gibt's jede Menge Komfort. Schau dir die Liste an!",
+        "ru": "Пароль никогда не попадает в приложение. Никогда. А сверху куча удобств. Загляните в список!",
+        "pt-br": "Sua senha nunca toca no app, nunca mesmo. E tem um monte de melhorias. Dá uma olhada na lista!",
+        "pl": "Hasło nigdy nie trafia do apki, przenigdy. A do tego mnóstwo udogodnień. Zerknij na listę!",
+        "es": "Tu contraseña nunca toca la app, nunca. Y además, un montón de mejoras. ¡Échale un vistazo a la lista!"
       },
       "charCap": 600
     },

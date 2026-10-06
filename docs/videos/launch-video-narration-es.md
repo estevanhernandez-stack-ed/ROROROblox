@@ -18,7 +18,7 @@ stays as digits in any OVERLAY.
 
 ### accounts (slide 2)
 - OVERLAY: `guarda una vez. lanza como.`
-- VO: `Guarda todos tus alts y gestiona tus cuentas. Un clic cada uno, estado en vivo y el juego de cada uno.`
+- VO: `Guarda todos tus alts y gestiona tus cuentas. Un clic por cuenta, estado en vivo y el juego en el que está.`
 
 ### squad (slide 3)
 - OVERLAY: `mismo servidor privado. todas.`
@@ -34,7 +34,7 @@ stays as digits in any OVERLAY.
 
 ### trust (slide 6)
 - OVERLAY: `tu contraseña nunca la toca`
-- VO: `Tu contraseña nunca toca la app, nunca. Y encima, un montón de mejoras. ¡Solo lee la lista!`
+- VO: `Tu contraseña nunca toca la app, nunca. Y además, un montón de mejoras. ¡Échale un vistazo a la lista!`
 
 > **Over budget: 115% of the English syllable count (53 vs 46).** This is the densest line in the script — it carries four
 > separate claims (password never touches the app, vault encrypted, memory watchdog,
