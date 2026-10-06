@@ -1593,3 +1593,37 @@ run-on-login. The custom balloon solves the sound complaint without that. Quiet 
 being a second feature wearing the first one's clothes.
 
 **Handoff:** `/prd`, against `docs/cycles/2026-10-05-alerts/scope.md`.
+
+## /prd — the alerts cycle (v1.33)
+
+Written to `docs/cycles/2026-10-05-alerts/prd.md`, same reason as the scope: `docs/prd.md` holds the
+retired v1.18/v1.21 snapshot.
+
+**No interview again, and the artifacts carried it.** Fully-autonomous, brisk, zero deepening rounds
+when the recon is clean. Every fork `/scope` left open had been answered by Este in conversation
+before this ran — the balloon becomes routable with the badge staying free, idle alerts join the grid,
+cadence is global plus per-kind, the default sound is a chime rather than silence — so the PRD's job
+was to turn answers into acceptance criteria, not to find them.
+
+**The epic order IS the argument.** "Desktop is a destination like any other" leads because nothing
+else in the cycle is true until it lands: a cadence picker over a balloon that ignores cadence is a
+lie in a settings page, and a nicer sound on an unroutable notification is a nicer interruption. The
+sound complaint is what Este asked for first and it is fourth here, deliberately.
+
+**Acceptance criteria are written to be checkable by eye or by log**, because three of the four
+complaints are about what the machine does to a person and none of it shows up in a green suite. The
+measured evidence is carried into the criteria rather than left in the audit: the 23:33:03 alert that
+vanished at the cadence boundary, the balloon that fired while the dispatcher logged "routed nowhere",
+the UIA toggle that reported Off while the watchdog ran.
+
+**One criterion exists to protect a user from the cycle itself:** with every destination unticked for
+memory warnings, the badge and the chips still show pressure. Making the desktop routable means
+someone can now silence the one alert that says the machine is about to choke, and the badge is the
+answer — free, visible, never an interruption.
+
+**Four open questions, two of which gate `/spec`:** the chime asset (design work), and the colour-emoji
+strategy, which decides whether that rider is a small change or its own cycle — WPF's text stack does
+not render colour glyph fonts, so there is no setting to flip. The other two can be answered in spec
+and build.
+
+**Handoff:** `/spec`, against `docs/cycles/2026-10-05-alerts/prd.md`.
