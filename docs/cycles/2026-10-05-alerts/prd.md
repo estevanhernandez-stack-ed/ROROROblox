@@ -173,13 +173,22 @@ Must-have, in build order. The first is load-bearing for the second and fourth.
 
 ## Open Questions
 
-- **The chime itself.** Needs an actual audio asset — short, quiet, not a ding. Design work, before
-  the sound task builds. **Needed before /spec finishes that section.**
+- **The chime itself.** Needs an actual audio asset — short, quiet, not a ding. Synthesising one is
+  feasible rather than licensing or recording it, which also keeps it ours and keeps the file tiny.
+  **Needed before the sound task is called done, not before /spec.**
 - **Does a per-kind cadence override belong on every row, or only where it earns one?** Six overrides
   is six more controls on a page we are trying to simplify. **Can wait for /spec.**
-- **Colour emoji rendering strategy.** WPF's text stack does not render colour glyph fonts; the honest
-  options are a custom run renderer or splitting emoji into inline images. **Needed before /spec
-  writes that section** — it decides whether this rider is small or its own cycle.
+- **Colour emoji rendering strategy — ANSWERED 2026-10-06, and it is small.** Confirmed by search:
+  WPF has no native colour-glyph rendering in any version, .NET 10 included; UWP's
+  `IsColorFontEnabled` has no WPF counterpart. But two maintained libraries provide drop-in
+  `TextBlock`/`RichTextBox` replacements that render colour emoji from the **system** Segoe UI Emoji
+  font — [Emoji.Wpf](https://www.nuget.org/packages/Emoji.Wpf/) and
+  [iNKORE.UI.WPF.Emojis](https://github.com/iNKORE-NET/UI.WPF.Emojis) — with no bundled images and no
+  embedded font, which was the expensive part of every approach considered before. So this rider is a
+  dependency evaluation plus targeted swaps at the handful of places a game title is drawn, not its
+  own cycle. **What `/spec` must settle:** licence and supply-chain fit for a Store binary, whether
+  the replacement honours `DynamicResource` theming and the accessible-name fences, and the fallback
+  if it does not — which is to drop the rider, not to hand-roll a glyph renderer.
 - **Does the themed balloon survive a fullscreen Roblox client?** A WPF popup may not paint over an
   exclusive-fullscreen game, which is where these users are. The current shell balloon may have the
   same limit; nobody has measured either. **Measure during build, before the sound task is called
