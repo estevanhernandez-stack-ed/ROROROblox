@@ -183,6 +183,102 @@ public class AlertFanoutTests
     }
 
     [Fact]
+    public void DestinationsFor_AccountIdle_DefaultsToTheDesktopToast()
+    {
+        // Idle alerts have put a tray toast on screen since v1.8 (IdleAlertPresenter), so the
+        // default here is not a new interruption — it is the one that already exists, now routed
+        // like every other kind. Empty would have been an upgrade that silently removed a
+        // notification, which is why this follows MetricBreach/AutoRejoinPaused's Local default
+        // rather than AccountDroppedOut's empty one.
+        Assert.Equal(
+            [AlertDestination.Local],
+            new DiscordConfig().DestinationsFor(AlertKind.AccountIdle));
+
+        var config = new DiscordConfig { IdleDestinations = [AlertDestination.Phone, AlertDestination.Local] };
+        Assert.Equal(
+            [AlertDestination.Phone, AlertDestination.Local],
+            config.DestinationsFor(AlertKind.AccountIdle));
+
+        // An explicit, deliberate "nothing" must not spring back to the default — and for this
+        // kind that list is written by the MuteIdleAlerts migration, not only by a checkbox.
+        Assert.Empty(new DiscordConfig { IdleDestinations = [] }.DestinationsFor(AlertKind.AccountIdle));
+    }
+
+    [Fact]
+    public void AlertKind_IsAppendOnly_EveryShippedKindKeepsItsPosition()
+    {
+        // The rule the enum's own doc comment states, made executable. Reordering AlertKind
+        // compiles green and breaks nothing visible on this machine, so nothing but a pin catches
+        // it: the positions are the identity every destination list, cooldown key and per-kind
+        // cadence override is keyed on, and a new kind that lands anywhere but the end
+        // renumbers the ones after it.
+        Assert.Equal(0, (int)AlertKind.AccountDroppedOut);
+        Assert.Equal(1, (int)AlertKind.MemoryWarning);
+        Assert.Equal(2, (int)AlertKind.Recycled);
+        Assert.Equal(3, (int)AlertKind.UptimeMark);
+        Assert.Equal(4, (int)AlertKind.MetricBreach);
+        Assert.Equal(5, (int)AlertKind.MetricRecovered);
+        Assert.Equal(6, (int)AlertKind.AutoRejoinPaused);
+        Assert.Equal(7, (int)AlertKind.AccountIdle);
+
+        // The newest kind is last, so the next append cannot be slipped into the middle without
+        // this failing. Stated as the invariant rather than a count, so appending a kind moves
+        // one line above instead of two.
+        Assert.Equal(
+            AlertKind.AccountIdle,
+            Enum.GetValues<AlertKind>().OrderBy(k => (int)k).Last());
+    }
+
+    [Fact]
+    public void Payload_AccountIdle_SaysItWentIdleAndWhereItIsSitting()
+    {
+        var payload = WebhookPayload.ForAlert(AlertKind.AccountIdle,
+            [new AlertTrigger(AlertKind.AccountIdle, Guid.NewGuid(), "BaronBloxwell", "Real",
+                "Pet Simulator 99!", null, DateTimeOffset.UnixEpoch)]);
+
+        // A sentence, not a label: "BaronBloxwell — idle" says the same words and reads as a
+        // status chip. The consequence is the half the toast never carried — an idle client gets
+        // kicked by Roblox on its own (docs/decisions.md, 2026-09-29: "up to 20 minutes after its
+        // last real input"), which is the whole reason the 15-minute warn threshold exists.
+        Assert.Equal("BaronBloxwell went idle", payload.Title);
+        Assert.Equal(
+            "• BaronBloxwell — idle in Pet Simulator 99! · Roblox kicks an idle account",
+            payload.Body);
+    }
+
+    [Fact]
+    public void Payload_AccountIdle_WithNoGame_StillNamesTheAccountAndTheConsequence()
+    {
+        // The game is optional on the trigger — an account can go idle sitting at Roblox home, or
+        // with presence unknown — and a missing one must not leave a dangling "idle in ".
+        var payload = WebhookPayload.ForAlert(AlertKind.AccountIdle,
+            [new AlertTrigger(AlertKind.AccountIdle, Guid.NewGuid(), "BaronBloxwell", "Real",
+                null, null, DateTimeOffset.UnixEpoch)]);
+
+        Assert.Equal("BaronBloxwell went idle", payload.Title);
+        Assert.Equal("• BaronBloxwell — idle · Roblox kicks an idle account", payload.Body);
+    }
+
+    [Fact]
+    public void Payload_AccountIdle_Grouped_CountsThemInTheTitleAndNamesEachBelow()
+    {
+        // The crossing arrives coalesced from ActivityMonitor — one list, N accounts — so the
+        // grouped shape is the common case here, not the edge.
+        var payload = WebhookPayload.ForAlert(AlertKind.AccountIdle, [
+            Idle("A"), Idle("B"), Idle("C"),
+        ]);
+
+        Assert.Equal("3 accounts went idle", payload.Title);
+        Assert.Equal(3, payload.Body.Split('\n').Length);
+        Assert.Contains("• A — idle", payload.Body, StringComparison.Ordinal);
+        Assert.Contains("• C — idle", payload.Body, StringComparison.Ordinal);
+    }
+
+    private static AlertTrigger Idle(string name) =>
+        new(AlertKind.AccountIdle, Guid.NewGuid(), name, $"real_{name}", null, null,
+            DateTimeOffset.UnixEpoch);
+
+    [Fact]
     public void Payload_UptimeMark_ReadsHoursAndCount()
     {
         // The tracker's caller composes the synthetic trigger: DisplayName carries the hours,

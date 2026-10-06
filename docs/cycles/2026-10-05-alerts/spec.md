@@ -41,8 +41,18 @@ is deleted; `IdleAlertPresenterTests` is rewritten against the trigger shape. Th
 idle", which is a different question from "may we speak", and conflating them is how the memory
 cap/cooldown confusion started.
 
-**`AlertKind` gains `AccountIdle`** (`Core/Discord/AlertTrigger.cs:11`). Append only — the enum is
-serialized into `discord.dat` by position in the destination lists.
+**`AlertKind` gains `AccountIdle`** (`Core/Discord/AlertTrigger.cs:11`). Append only — **though not
+for the reason this spec first gave.** The original line claimed the enum is serialized into
+`discord.dat` by position. It is not: `discord.dat` holds `DiscordConfig`, which carries one *named*
+property per kind, and the numbers inside those lists are `AlertDestination` values — that enum's own
+doc comment correctly calls itself a wire format. `AlertKind` is persisted nowhere today, and
+`AlertTrigger.cs` already says so ("serialized nowhere today, but kept stable on principle"). Caught
+by the item 1 build agent, which grepped instead of inheriting the claim.
+
+The rule stands, with the honest reason: it is stable on principle, and **item 2's
+`AlertCadenceOverridesJson` is the first thing that will genuinely persist a kind** — by name, so
+member *names* become load-bearing where order is not. `AlertKindIsAppendOnly` pins all positions
+regardless, which costs nothing and catches an insert.
 
 **`DiscordConfig` gains `IdleDestinations`** with the same migration shape as
 `AutoRejoinPausedDestinations` (`DiscordConfig.cs:58-70`): a config written before the field existed

@@ -106,6 +106,39 @@ public sealed record DiscordConfig
     /// </summary>
     public IReadOnlyList<AlertDestination> MetricBreachDestinations { get; init; } = [AlertDestination.Local];
 
+    /// <summary>
+    /// Where an <see cref="AlertKind.AccountIdle"/> goes (v1.33 item 1). Same migration shape as
+    /// <see cref="AutoRejoinPausedDestinations"/>, and the third kind to need it, but the first
+    /// where getting it wrong would TAKE SOMETHING AWAY rather than fail to add it: idle alerts
+    /// have put a tray toast on screen since v1.8, through <c>IdleAlertPresenter</c>, which read
+    /// one mute flag and no destinations at all. Routing them through the dispatcher must not be
+    /// the upgrade that silences them.
+    /// <para>
+    /// So the default is <c><see cref="AlertDestination.Local"/></c> — the notification that
+    /// already exists, now routed like every other kind. Discord and phone stay opt-in (the list
+    /// starts with exactly one entry, the desktop toast).
+    /// </para>
+    /// <para>
+    /// THE UPGRADE CASE: every <c>discord.dat</c> on disk was written before this field existed, so
+    /// it has no <c>IdleDestinations</c> key at all. System.Text.Json constructs through the
+    /// parameterless constructor and leaves an ABSENT property at its initializer, so the default
+    /// survives that round trip
+    /// (<c>DiscordConfigStoreTests.LoadAsync_AFileWrittenBeforeIdleDestinations_StillGetsTheDesktopDefault</c>
+    /// proves it against a hand-rolled pre-field envelope, the same way the pause and metric ones do).
+    /// </para>
+    /// <para>
+    /// THE OTHER HALF matters more for this kind than for either of the other two, because
+    /// something besides a checkbox writes it: the one-time <c>MuteIdleAlerts</c> migration turns an
+    /// existing <c>true</c> into an explicitly empty list here. <c>SaveAsync</c> writes EVERY
+    /// property, so that empty list is PRESENT rather than absent, System.Text.Json overwrites the
+    /// initializer with it, and <see cref="DestinationsFor"/> reads it as the real "route nowhere"
+    /// the user already asked for. Were it to spring back to <see cref="AlertDestination.Local"/>,
+    /// everyone who had muted idle alerts would get them back once per restart, forever
+    /// (<c>DiscordConfigStoreTests.SaveThenLoad_ExplicitEmptyIdleDestinations_RoundTripsAsEmpty</c>).
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<AlertDestination> IdleDestinations { get; init; } = [AlertDestination.Local];
+
     public IReadOnlyList<Guid> MutedAccountIds { get; init; } = [];
 
     /// <summary>The effective destination set for a kind — the list when present, else the
@@ -123,6 +156,7 @@ public sealed record DiscordConfig
             // good news there too, and a second settings row would be a worse question to ask.
             AlertKind.MetricRecovered => (MetricBreachDestinations, AlertDestination.None),
             AlertKind.AutoRejoinPaused => (AutoRejoinPausedDestinations, AlertDestination.None),
+            AlertKind.AccountIdle => (IdleDestinations, AlertDestination.None),
             _ => ((IReadOnlyList<AlertDestination>)[], AlertDestination.None),
         };
 

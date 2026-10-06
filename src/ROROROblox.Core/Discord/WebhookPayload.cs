@@ -79,6 +79,9 @@ public sealed record WebhookPayload(string Title, string Body)
             // below), and both reasons share the same title — repeated drops and a failed relaunch
             // are the same headline, just a different sentence underneath it.
             AlertKind.AutoRejoinPaused => ("Auto-rejoin paused", ""),
+            // "{noun} — idle" would be the same words as the row chip and would read as a status
+            // label; this says what happened. The noun leads so the name shortens last, as everywhere.
+            AlertKind.AccountIdle => (noun, " went idle"),
             _ => (noun, ""),
         };
 
@@ -107,6 +110,15 @@ public sealed record WebhookPayload(string Title, string Body)
                 $"• RoRoRo couldn't restart {Name(t)} after 3 tries. Auto-rejoin is paused for it until you turn it back on.",
             AlertKind.AutoRejoinPaused =>
                 $"• {Name(t)} dropped out 4 times in an hour. Auto-rejoin is paused for it until you turn it back on.",
+            // The consequence, not just the state — it is the whole reason a 15-minute warn
+            // threshold exists: Roblox kicks an idle client on its own, up to 20 minutes after its
+            // last real input (measured, docs/decisions.md 2026-09-29). The game is optional on
+            // the trigger (an account can go idle at Roblox home, or with presence unknown), so
+            // the second arm exists to avoid a dangling "idle in ".
+            AlertKind.AccountIdle when t.GameName is { Length: > 0 } game =>
+                $"• {Name(t)} — idle in {game} · Roblox kicks an idle account",
+            AlertKind.AccountIdle =>
+                $"• {Name(t)} — idle · Roblox kicks an idle account",
             _ => $"• {Name(t)}{(t.GameName is null ? "" : $" — {t.GameName}")}",
         }).ToList();
 

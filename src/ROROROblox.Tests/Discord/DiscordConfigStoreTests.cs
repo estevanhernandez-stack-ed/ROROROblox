@@ -117,6 +117,44 @@ public class DiscordConfigStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_AFileWrittenBeforeIdleDestinations_StillGetsTheDesktopDefault()
+    {
+        // The third instance of the same shape, and the one with a user-visible regression behind
+        // it (v1.33 item 1): idle alerts have shown a desktop toast since v1.8, through a presenter
+        // that read one mute flag and no destinations at all. Moving them onto the router means
+        // every discord.dat on disk predates IdleDestinations, so an absent key defaulting to empty
+        // would silence a notification the user already has — an upgrade taking a feature away.
+        // The envelope is hand-rolled because SaveAsync writes every property and cannot express
+        // "absent".
+        var beforeTheField = """{"PresenceEnabled":true,"DroppedOutDestination":2}""";
+        await File.WriteAllBytesAsync(_path, ProtectedData.Protect(
+            Encoding.UTF8.GetBytes(beforeTheField), optionalEntropy: null, DataProtectionScope.CurrentUser));
+
+        var config = await new DiscordConfigStore(_path).LoadAsync();
+
+        Assert.True(config.PresenceEnabled);
+        Assert.Equal(AlertDestination.Mine, config.DroppedOutDestination);
+        Assert.Equal(AlertDestination.Local,
+            Assert.Single(config.DestinationsFor(AlertKind.AccountIdle)));
+    }
+
+    [Fact]
+    public async Task SaveThenLoad_ExplicitEmptyIdleDestinations_RoundTripsAsEmpty()
+    {
+        // This half matters more here than it does for the pause kind, because something other
+        // than a checkbox writes it: the one-time MuteIdleAlerts migration (item 3) turns an
+        // existing `true` into an explicitly empty IdleDestinations. If an empty list sprang back
+        // to the shipped default on the next load, every user who had muted idle alerts would get
+        // them back, once per restart, forever.
+        var store = new DiscordConfigStore(_path);
+        await store.SaveAsync(new DiscordConfig { IdleDestinations = [] });
+
+        var reloaded = await new DiscordConfigStore(_path).LoadAsync();
+
+        Assert.Empty(reloaded.DestinationsFor(AlertKind.AccountIdle));
+    }
+
+    [Fact]
     public async Task LoadAsync_CorruptFile_ReturnsDefaultsInsteadOfThrowing()
     {
         // A stray or wrong-user file must not break app startup. Same rule as ConsentStore.

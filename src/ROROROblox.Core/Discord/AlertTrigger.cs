@@ -55,6 +55,27 @@ public enum AlertKind
     /// principle with every other kind here) never shift under an older build.
     /// </summary>
     AutoRejoinPaused,
+
+    /// <summary>
+    /// An account crossed the idle-warn threshold — nobody has given it input while its window was
+    /// in front for <c>settings:idleWarnThresholdMinutes</c> (15 by default). The coalesced,
+    /// edge-triggered crossing <c>ActivityMonitor</c> has raised since v1.8, which until v1.33
+    /// reached the screen through <c>IdleAlertPresenter</c>: its own path, honouring one mute flag,
+    /// no destinations, no cadence, no per-account mute. Promoting it to a kind deletes that third
+    /// path (spec §1) rather than teaching it the routing rules a second time.
+    /// <para>
+    /// The latch stays where it is. <c>ActivityMonitor</c>'s per-account <c>WarnLatched</c> answers
+    /// "has this account NEWLY gone idle", which is a different question from "may we speak about
+    /// it" — the first is the event, the second is <see cref="AlertRouter"/>'s to answer. Conflating
+    /// the two is how the memory cap and the alert cooldown got confused with each other.
+    /// </para>
+    /// <para>
+    /// APPENDED LAST, same as <see cref="AutoRejoinPaused"/> and for the same reason: these values
+    /// are the identity every destination list, cooldown key and per-kind cadence override is keyed
+    /// on, so a kind landing anywhere but the end renumbers the ones after it.
+    /// </para>
+    /// </summary>
+    AccountIdle,
 }
 
 /// <summary>
