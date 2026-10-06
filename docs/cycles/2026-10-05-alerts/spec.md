@@ -133,6 +133,28 @@ chrome and plays no OS sound. The balloon content is a small themed `UserControl
 behaviour becomes ours (today's balloon does not honour Focus Assist in any way we control). Both are
 recorded in the PRD's non-goals.
 
+### Click-to-focus, which item 3 broke and this item must restore better
+
+**The gap this spec missed, found by the item 3 build agent rather than by review.** Today
+`WireMemoryWarningTray` calls `ShowMemoryWarning(…, targetId)`, which stamps
+`_lastMemoryWarningAccountId`, and a balloon click replays it through `RequestFocusAccount`. After the
+collapse every balloon arrives through `AlertDispatcher` → `AlertDestination.Local` → `ShowToast`,
+which **clears** that field by design (`TrayService.cs:70`) so a click on an unrelated toast cannot
+replay a stale account. So from item 3 until this item lands, clicking a memory warning does nothing.
+It is invisible: no test fails, and the C1 script does not look for it.
+
+**Decision: generalise it rather than restore it.** `ShowToast` gains an optional trailing account id
+that the dispatcher supplies when a coalesced group resolves to exactly one account; the drawn balloon
+carries it and a click focuses that row. The rejected alternative was giving the new balloon a private
+memory-only path, which would rebuild the special case this cycle exists to delete.
+
+The result is strictly better than what item 3 broke: **click-to-focus stops being a memory-warning
+privilege and works for every single-account kind** — a drop, a recycle, an idle crossing, a metric
+breach. A group of three accounts carries no id and stays unclickable, which is honest, because there
+is no single row to jump to.
+
+**No user ever sees the broken interim**: items 3 and 4 ship in the same release off the same branch.
+
 ### The sound
 
 New setting `AlertSound` (`Silent | Chime | WindowsDefault`, default `Chime`). Played from the

@@ -1,4 +1,3 @@
-using ROROROblox.App.Notifications;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
@@ -98,17 +97,30 @@ public class MainViewModelMarshalledHandlerTests
     }
 
     [Fact]
-    public void AnIdleCrossingReachesTheTray()
+    public void AnIdleCrossingRaisesAnAlertAndNoToastOfItsOwn()
     {
+        // Was AnIdleCrossingReachesTheTray until 2026-10-06. v1.33 item 3 took the view model's
+        // direct line to the tray away: the crossing raises an AlertKind.AccountIdle trigger and
+        // AlertDispatcher decides whether anything is shown, so a toast arriving from HERE would
+        // mean the third path to the screen came back. What this file is for is unchanged — the
+        // marshalled handler body executes, proven through the real event rather than the internal
+        // apply-method. IdleAlertTriggerTests holds the trigger's shape.
         var tray = new RecordingTray();
         var monitor = new MainViewModelTests.FakeActivityMonitor();
         var (vm, _, _, path) = MainViewModelTests.Build(tray: tray, activityMonitor: monitor);
         try
         {
-            monitor.RaiseWarnCrossed([Guid.NewGuid()]);
+            var id = Guid.NewGuid();
+            vm.Accounts.Add(Row(id));
 
-            var toast = Assert.Single(tray.Toasts);
-            Assert.Contains("idle", toast.Message, StringComparison.OrdinalIgnoreCase);
+            IReadOnlyList<AlertTrigger>? raised = null;
+            vm.AlertsRaised += (_, triggers) => raised = triggers;
+
+            monitor.RaiseWarnCrossed([id]);
+
+            Assert.NotNull(raised);
+            Assert.Equal(AlertKind.AccountIdle, Assert.Single(raised!).Kind);
+            Assert.Empty(tray.Toasts);
         }
         finally { File.Delete(path); }
     }

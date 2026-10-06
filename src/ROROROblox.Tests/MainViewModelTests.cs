@@ -1,5 +1,4 @@
 ﻿using ROROROblox.App.Friends;
-using ROROROblox.App.Notifications;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
 using ROROROblox.App.Tray;
@@ -76,7 +75,6 @@ public class MainViewModelTests
             runningProbe: runningProbe ?? new NoRobloxRunningProbe(),
             shellOpener: shellOpener ?? new NullShellOpener(),
             tray: trayService,
-            idleAlertPresenter: new IdleAlertPresenter(trayService),
             uiDispatcher: uiDispatcher,
             log: log);
 

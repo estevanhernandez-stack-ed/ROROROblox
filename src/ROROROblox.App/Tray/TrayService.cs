@@ -69,6 +69,10 @@ internal sealed class TrayService : ITrayService
         // Balloon click -> RequestFocusAccount, but only when the balloon on screen was a memory
         // warning (ShowToast clears _lastMemoryWarningAccountId, so a click on an idle-alert toast
         // is correctly a no-op here).
+        //
+        // INERT AS OF 2026-10-06 (v1.33 item 3): ShowMemoryWarning is the only writer of
+        // _lastMemoryWarningAccountId and it no longer has a caller, so this is a no-op for every
+        // balloon. Item 4 owns restoring it — see ShowMemoryWarning's own note for the two options.
         _taskbarIcon.TrayBalloonTipClicked += (_, _) =>
         {
             if (_lastMemoryWarningAccountId is { } accountId)
@@ -159,7 +163,31 @@ internal sealed class TrayService : ITrayService
         });
     }
 
-    /// <summary>See <see cref="SetMemoryWarning"/>'s thread-safety note — same marshaling reason.</summary>
+    /// <summary>
+    /// See <see cref="SetMemoryWarning"/>'s thread-safety note — same marshaling reason.
+    /// <para>
+    /// <b>NO CALLER AS OF 2026-10-06 (v1.33 item 3).</b> <c>App.WireMemoryWarningTray</c> was the
+    /// only one, and it was the second path to the screen: it balloon'd on every memory crossing
+    /// while knowing nothing about alert destinations, the per-account mute or the quiet period.
+    /// Memory warnings now reach a screen through <c>AlertDispatcher</c>, which routes
+    /// <see cref="ROROROblox.Core.Discord.AlertDestination.Local"/> to <see cref="ShowToast"/>.
+    /// </para>
+    /// <para>
+    /// KEPT, DELIBERATELY, FOR ONE ITEM, because deleting it deletes the only click-to-focus path
+    /// in the app: <c>_lastMemoryWarningAccountId</c> is set here and nowhere else, and it is what
+    /// <c>TrayBalloonTipClicked</c> replays on <see cref="RequestFocusAccount"/>. v1.33 item 4's own
+    /// acceptance criterion is "clicking it still focuses the account the way the current balloon
+    /// does", and it names this machinery by file and line. So item 3 leaves it standing and item 4
+    /// decides: either the drawn balloon carries the account itself, or <see cref="ShowToast"/>
+    /// grows an optional account id and this method goes with the shell balloon it wraps.
+    /// </para>
+    /// <para>
+    /// <b>The regression in the gap, stated rather than discovered later:</b> until item 4 lands,
+    /// clicking a memory-warning notification does nothing. Every balloon now comes through
+    /// <see cref="ShowToast"/>, which clears <c>_lastMemoryWarningAccountId</c>, so the click
+    /// handler finds null every time.
+    /// </para>
+    /// </summary>
     public void ShowMemoryWarning(string title, string message, Guid accountId)
     {
         Application.Current?.Dispatcher.Invoke(() =>

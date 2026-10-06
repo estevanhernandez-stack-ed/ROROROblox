@@ -561,6 +561,12 @@ public partial class App : Application
         // Alerts, wired separately and unconditionally — see the AlertDispatcher registration for
         // why they must not ride on the Discord app id. Presence needs a Discord pipe; a desktop
         // notification needs nothing at all.
+        //
+        // The migration goes first: WireAlertsAsync is where DiscordConfigService.InitializeAsync
+        // runs and where the dispatcher starts reading destinations, and this carries a v1.8
+        // MuteIdleAlerts=true across the upgrade as an explicitly empty IdleDestinations, exactly
+        // once (v1.33 item 3).
+        await MigrateIdleMuteAsync();
         await WireAlertsAsync();
 
         _log.LogInformation(
@@ -1015,10 +1021,10 @@ public partial class App : Application
             sp.GetRequiredService<IForegroundAccountResolver>(),
             sp.GetRequiredService<IClock>()));
 
-        // v1.8 idle-alert toast presenter — turns a coalesced warn-threshold crossing into one
-        // mutable tray toast. Stateless beyond ITrayService; singleton for consistency with the
-        // rest of the notification-adjacent services.
-        services.AddSingleton<Notifications.IdleAlertPresenter>();
+        // v1.8's IdleAlertPresenter was registered here until 2026-10-06. v1.33 item 3 deleted it:
+        // an idle crossing now raises an AlertKind.AccountIdle trigger from MainViewModel and
+        // routes through AlertDispatcher like every other kind, so there is nothing left for a
+        // presenter that knew one mute flag and no destinations to do.
 
         // v1.5.0 presence poller (the ghost fix). Singleton — one poll loop for the process.
         // The snapshot-provider delegate reads live accounts from MainViewModel at POLL time,
@@ -1854,22 +1860,41 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Bridges <see cref="IMemoryWatchdog.PressureCrossed"/> to the tray warning badge + balloon
-    /// (Task 8). Deliberately its own Wire* method — <see cref="WireMemoryWatchdogAsync"/> only
-    /// owns settings + <see cref="IMemoryWatchdog.Start"/>, matching that method's own doc note
-    /// that <c>OnAccountLaunched</c>/<c>OnAccountExited</c> bookkeeping lives elsewhere too.
+    /// Bridges <see cref="IMemoryWatchdog.PressureCrossed"/> to the tray warning badge, and to
+    /// nothing else (Task 8; narrowed to the badge alone on 2026-10-06 by v1.33 item 3).
+    /// Deliberately its own Wire* method — <see cref="WireMemoryWatchdogAsync"/> only owns settings
+    /// + <see cref="IMemoryWatchdog.Start"/>, matching that method's own doc note that
+    /// <c>OnAccountLaunched</c>/<c>OnAccountExited</c> bookkeeping lives elsewhere too.
+    /// <para>
+    /// THE BALLOON USED TO BE HERE, and it was the defect. This method called
+    /// <c>ITrayService.ShowMemoryWarning</c> on every crossing while knowing nothing about alert
+    /// destinations, the per-account mute or the quiet period — so the measured outcome on
+    /// 2026-10-05 was <c>AlertDispatcher</c> logging "routed nowhere" under the cooldown while the
+    /// balloon went out anyway. The <see cref="AlertKind.MemoryWarning"/> trigger
+    /// <c>MainViewModel.BuildMemoryAlerts</c> already raises off the same crossing is now the only
+    /// thing that reaches a screen, and it routes like every other kind.
+    /// <c>OnePathToTheScreenFenceTests</c> in the test project is what keeps a second
+    /// producer from coming back; the alternative — teaching this method the routing rules — would
+    /// mean two places that know them, and the one most likely to be edited in a hurry is the one
+    /// that cannot be reached from a test (spec §1, "Why not gate the tray path instead").
+    /// </para>
+    /// <para>
+    /// THE BADGE STAYS, unconditional and uncadenced. It is a colour change, not an interruption,
+    /// so there is nothing for a quiet period to protect — and it is what keeps memory pressure
+    /// visible to a user who has turned every destination off (PRD, "still find out").
+    /// </para>
     /// <para>
     /// <see cref="IMemoryWatchdog.PressureCrossed"/> fires from <c>MemoryWatchdog.Sample()</c>,
     /// which runs on the watchdog's own <see cref="System.Threading.Timer"/> callback — NOT the UI
-    /// thread. <see cref="TrayService.SetMemoryWarning"/>/<see cref="TrayService.ShowMemoryWarning"/>
-    /// marshal internally, so this handler doesn't need to; it still wraps in try/catch because an
-    /// unhandled exception on a threadpool timer callback takes the whole process down, and this is
-    /// the one code path that only runs when a user is already in trouble.
+    /// thread. <see cref="TrayService.SetMemoryWarning"/> marshals internally, so this handler
+    /// doesn't need to; it still wraps in try/catch because an unhandled exception on a threadpool
+    /// timer callback takes the whole process down, and this is the one code path that only runs
+    /// when a user is already in trouble.
     /// </para>
     /// <para>
     /// Only ever calls <c>SetMemoryWarning(true)</c> here — edge-triggered, once per latched
-    /// crossing, matching <c>ShowMemoryWarning</c>'s own contract. Clearing back to <c>false</c> is
-    /// NOT this method's job: <see cref="MainViewModel"/>'s existing 30s ticker re-evaluates
+    /// crossing. Clearing back to <c>false</c> is NOT this method's job:
+    /// <see cref="MainViewModel"/>'s existing 30s ticker re-evaluates
     /// <see cref="MemoryPressureEvaluator.IsClear"/> against the watchdog's latest snapshot and
     /// clears the badge once the warning condition actually recedes.
     /// </para>
@@ -1881,44 +1906,55 @@ public partial class App : Application
         {
             var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
             var tray = _services.GetRequiredService<ITrayService>();
-            var vm = _services.GetRequiredService<MainViewModel>();
 
-            watchdog.PressureCrossed += (_, snap) =>
+            watchdog.PressureCrossed += (_, _) =>
             {
                 try
                 {
                     tray.SetMemoryWarning(true);
-
-                    if (snap.TargetAccountId is not { } targetId)
-                    {
-                        // Shouldn't happen alongside a crossing -- Sample() only crosses an
-                        // account it could actually read a byte count for -- but degrade to
-                        // "badge only, no balloon" rather than guess at an account to name.
-                        _log?.LogDebug("PressureCrossed fired with no TargetAccountId; badge set, balloon skipped.");
-                        return;
-                    }
-
-                    // AccountsSnapshot: this handler runs on the watchdog's timer thread.
-                    var name = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == targetId)?.RenderName ?? "An account";
-                    tray.ShowMemoryWarning(
-                        "RoRoRo — memory warning",
-                        $"{name} is using a lot of memory. Click to jump to it, then hit Recycle to close and relaunch into the same game.",
-                        targetId);
                 }
                 catch (Exception ex)
                 {
-                    _log?.LogWarning(ex, "Memory-warning tray bridge threw; the warning may not have surfaced for this crossing.");
+                    _log?.LogWarning(ex, "Memory-warning tray bridge threw; the badge may not have coloured for this crossing.");
                 }
             };
         }
         catch (Exception ex)
         {
-            _log?.LogWarning(ex, "Memory-warning tray wiring failed; the tray badge/balloon won't fire this session.");
+            _log?.LogWarning(ex, "Memory-warning tray wiring failed; the tray badge won't colour this session.");
         }
     }
 
     /// <summary>
-    /// Pushes the cached idle-warn threshold + mute flag from <see cref="IAppSettings"/> into
+    /// Runs the one-time <c>MuteIdleAlerts</c> migration (v1.33 item 3): a v1.8 user who ticked
+    /// "mute idle alerts" gets <c>IdleDestinations = []</c>, and the flag is cleared so this never
+    /// runs again. Guarded like every other startup step — a failed migration must not block
+    /// startup, and it is self-healing: the flag is only cleared after the destinations are
+    /// written, so a failure here retries on the next launch rather than losing the user's answer.
+    /// </summary>
+    private async Task MigrateIdleMuteAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            var migrated = await ROROROblox.Core.Discord.IdleMuteMigration.RunAsync(
+                _services.GetRequiredService<IAppSettings>(),
+                _services.GetRequiredService<DiscordConfigService>()).ConfigureAwait(true);
+
+            if (migrated)
+            {
+                _log?.LogInformation(
+                    "Carried the v1.8 \"mute idle alerts\" preference forward as an empty idle destination list; the setting is now a routing row.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "The idle-mute migration failed; it will be retried on the next launch.");
+        }
+    }
+
+    /// <summary>
+    /// Pushes the cached idle-warn threshold from <see cref="IAppSettings"/> into
     /// <see cref="MainViewModel"/> (which forwards the threshold into
     /// <see cref="IActivityMonitor.WarnThreshold"/>). Called once at startup after
     /// <see cref="WireActivityMonitor"/> has started the monitor; after that, the Settings page

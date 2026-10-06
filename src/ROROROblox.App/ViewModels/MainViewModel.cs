@@ -111,7 +111,6 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>Failed relaunch attempts allowed for one relaunch-pending account before the paused alert.</summary>
     internal const int PendingRelaunchMaxAttempts = 3;
     private readonly ITrayService _tray;
-    private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
 
     /// <summary>
     /// Marshals onto the UI thread (F-100). Was <c>Application.Current?.Dispatcher.Invoke</c> at
@@ -186,7 +185,6 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private int _liveProcessCount;
     private string _idleSummaryText = string.Empty;
     private int _idleWarnThresholdMinutes = 15;
-    private bool _muteIdleAlerts;
 
     public MainViewModel(
         ICookieCapture cookieCapture,
@@ -214,7 +212,6 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IRobloxRunningProbe runningProbe,
         IShellOpener shellOpener,
         ITrayService tray,
-        Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.IUiDispatcher? uiDispatcher = null,
         IGlobalBasicSettingsWriter? globalBasicSettings = null,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
@@ -246,7 +243,6 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _runningProbe = runningProbe;
         _shellOpener = shellOpener;
         _tray = tray;
-        _idleAlertPresenter = idleAlertPresenter;
         _ui = uiDispatcher ?? new Threading.WpfUiDispatcher();
         _globalBasicSettings = globalBasicSettings;
         _streamerIdentity = streamerIdentity;
@@ -366,9 +362,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _presenceService.AccountSessionExpired += OnAccountSessionExpired;
         _presenceService.AccountSessionLimited += OnAccountSessionLimited;
 
-        // v1.8 idle awareness — coalesced, edge-triggered toast when accounts newly cross the
+        // v1.8 idle awareness — coalesced, edge-triggered crossing when accounts newly pass the
         // warn threshold. The monitor itself (Task 5) already runs its own sample timer; this
         // VM only reacts to the crossing event + refreshes the passive row/banner display below.
+        // ("toast" here went stale on 2026-10-06, v1.33 item 3: the crossing now raises an
+        // AccountIdle trigger and the dispatcher decides whether anything is shown at all.)
         _activityMonitor.WarnThresholdCrossed += OnActivityWarnCrossed;
 
         // Memory watchdog (v1.11, Task 7) — a coalesced, edge-triggered crossing (cap or
@@ -3581,17 +3579,52 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// Coalesced, edge-triggered idle-warn crossing from <see cref="IActivityMonitor"/> (v1.8).
-    /// Marshalled to the dispatcher because the monitor's sample timer raises this off its own
-    /// timer thread, mirroring <see cref="OnAccountSessionLimited"/>. The presenter itself owns
-    /// the muted check + message shape; this handler only forwards the coalesced count + the
-    /// cached threshold/mute settings loaded by <see cref="InitializeIdleSettingsAsync"/>.
+    /// Marshalled to the UI thread because the monitor's sample timer raises this off its own
+    /// timer thread, mirroring <see cref="OnAccountSessionLimited"/>.
     /// </summary>
     private void OnActivityWarnCrossed(object? sender, IReadOnlyList<Guid> crossed)
+        => _ui.Invoke(() => ApplyActivityWarnCrossed(crossed));
+
+    /// <summary>
+    /// UI-thread body of the idle-crossing handler (internal for tests — same seam shape as
+    /// <see cref="ApplySessionLimited"/> and <see cref="ApplyPresence"/>, for the same reason:
+    /// off a real WPF host a test calling the raw event handler would exercise this body anyway,
+    /// but naming it makes the trigger shape assertable without a fake monitor).
+    /// <para>
+    /// v1.33 item 3. Until now this called <c>IdleAlertPresenter.Notify</c>, which took the COUNT
+    /// of crossed accounts, checked one <c>MuteIdleAlerts</c> flag, and went straight to the tray —
+    /// the third of three code paths that could put something on a user's screen, and the only one
+    /// that knew nothing about destinations, the per-account mute or the quiet period. It now
+    /// raises an <see cref="AlertKind.AccountIdle"/> trigger per account and routes like every
+    /// other kind.
+    /// </para>
+    /// <para>
+    /// THE GAME NAME IS LOOKED UP, not carried: <see cref="IActivityMonitor.WarnThresholdCrossed"/>
+    /// hands over account ids and nothing else. Without the lookup every idle alert takes
+    /// <c>WebhookPayload</c>'s no-game arm, and the one fact that makes the alert actionable —
+    /// which game the account is about to be kicked out of — never reaches the screen.
+    /// </para>
+    /// <para>
+    /// A crossing for an account with no row is dropped, <see cref="BuildMemoryAlerts"/>'s
+    /// precedent: there is no name to say and no game to name, and "An account went idle" is worse
+    /// than silence. Both names travel, the same contract every other kind follows —
+    /// <c>RenderName</c> is what every destination shows, <c>DisplayName</c> is the real one and
+    /// only the clan channel may use it (see <see cref="AlertTrigger"/>).
+    /// </para>
+    /// </summary>
+    internal void ApplyActivityWarnCrossed(IReadOnlyList<Guid> crossed)
     {
-        _ui.Invoke(() =>
-        {
-            _idleAlertPresenter.Notify(crossed.Count, _idleWarnThresholdMinutes, _muteIdleAlerts);
-        });
+        if (crossed is null || crossed.Count == 0) return;
+
+        var nowUtc = DateTimeOffset.UtcNow;
+
+        RaiseAlerts(crossed
+            .Select(id => Accounts.FirstOrDefault(a => a.Id == id))
+            .Where(row => row is not null)
+            .Select(row => new AlertTrigger(
+                AlertKind.AccountIdle, row!.Id, row.RenderName, row.DisplayName,
+                row.CurrentGameName, PrivateBytes: null, nowUtc))
+            .ToList());
     }
 
     /// <summary>
@@ -4289,15 +4322,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Loads the cached idle-awareness settings (mute + warn-threshold minutes) and pushes the
-    /// threshold into <see cref="IActivityMonitor.WarnThreshold"/>. Called once by the composition
-    /// root after the VM is built, and again whenever the Preferences dialog saves a change so the
-    /// monitor + toast copy pick up the new values without a restart. v1.8.
+    /// Loads the cached idle-warn threshold and pushes it into
+    /// <see cref="IActivityMonitor.WarnThreshold"/>. Called once by the composition root after the
+    /// VM is built, and again whenever the Preferences dialog saves a change so the monitor and the
+    /// idle summary pick up the new value without a restart. v1.8.
+    /// <para>
+    /// It read <c>MuteIdleAlerts</c> too until 2026-10-06. v1.33 item 3 made that setting a
+    /// one-time migration to <c>DiscordConfig.IdleDestinations</c> (<c>IdleMuteMigration</c>), so
+    /// whether an idle alert speaks is <c>AlertRouter</c>'s answer now and this view model has no
+    /// reason to cache it.
+    /// </para>
     /// </summary>
     public async Task InitializeIdleSettingsAsync(IAppSettings settings)
     {
         _idleWarnThresholdMinutes = await settings.GetIdleWarnThresholdMinutesAsync().ConfigureAwait(false);
-        _muteIdleAlerts = await settings.GetMuteIdleAlertsAsync().ConfigureAwait(false);
         _activityMonitor.WarnThreshold = TimeSpan.FromMinutes(_idleWarnThresholdMinutes);
     }
 

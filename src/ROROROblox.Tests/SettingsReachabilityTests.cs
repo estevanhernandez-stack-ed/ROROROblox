@@ -164,6 +164,34 @@ public class SettingsReachabilityTests
             + "whichever way that lands, the key stops being unreachable in item 6 and this entry "
             + "retires with it."),
 
+        // MuteIdleAlerts is the one entry here that is a RETIREMENT rather than a wait. v1.33 item 3
+        // turned the setting from a control into a one-time migration: an existing `true` becomes
+        // DiscordConfig.IdleDestinations = [] on first run after upgrade (IdleMuteMigration), and
+        // after that the key is never read again. Idle alerts route through the per-kind
+        // destinations grid like every other alert kind, where "muted" is expressible properly and
+        // per account rather than as one bool across the whole roster.
+        //
+        // The key STAYS on the record. Removing a property changes what an older settings.json
+        // deserializes into, and the saving is one bool — not a trade worth making for a blob every
+        // shipped version has written.
+        //
+        // HONEST ABOUT ITS TIMING: as of item 3's commit the old checkbox is still on the page
+        // (MuteIdleAlertsToggle in SettingsPage.xaml, writing through SetMuteIdleAlertsAsync), so
+        // this entry is inert — the matcher would find the setting reachable without it. It is
+        // written NOW, with item 3, because item 3 is where the DECISION is made and where the
+        // reason is legible; item 6 deletes that control, and on that commit this entry becomes the
+        // only thing keeping the fence green. The alternative was adding it in item 6 and hoping
+        // the reasoning survived three items of distance, which is the same bet this file has
+        // watched fail twice in the other direction (DefaultPlaceUrl, MetricAlertsEnabled).
+        new("MuteIdleAlerts",
+            "v1.33 item 3 retired it as a control: an existing `true` migrates once to "
+            + "DiscordConfig.IdleDestinations = [] (IdleMuteMigration) and the key is then ignored "
+            + "forever. Idle alerts route through the per-kind destinations grid, which expresses "
+            + "mute per account instead of one flag for the whole roster. Kept on the record "
+            + "because removing a property changes what an older settings.json deserializes into, "
+            + "for a saving of one bool. Its checkbox comes off the page in item 6; until that "
+            + "commit this entry is inert and SettingsPage.xaml would satisfy the matcher anyway."),
+
         // MetricAlertsEnabled's entry was RETIRED 2026-09-11 by the metric-alert routing plan,
         // which gave the setting the Settings section the entry said it was waiting for:
         // MetricAlertsEnabledToggle in SettingsPage.xaml, writing through
@@ -338,7 +366,13 @@ public class SettingsReachabilityTests
     /// being a twenty-line test.
     /// </para>
     /// </summary>
-    private static string[] WithoutComments(string relativePath, string[] lines)
+    /// <remarks>
+    /// <c>internal</c> rather than private since 2026-10-06: <c>OnePathToTheScreenFenceTests</c>
+    /// needs the same strip for the same reason, and a second copy of a comment stripper is a
+    /// second copy that drifts. <see cref="ProseAboutASettingDoesNotMakeItReachable"/> is the test
+    /// that holds this helper honest for both callers.
+    /// </remarks>
+    internal static string[] WithoutComments(string relativePath, string[] lines)
     {
         var isXaml = relativePath.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase);
         var open = isXaml ? "<!--" : "/*";

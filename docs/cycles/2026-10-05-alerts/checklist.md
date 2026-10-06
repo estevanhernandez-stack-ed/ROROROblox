@@ -77,7 +77,14 @@ cadence at 1 minute and at every-time. Write it up as it runs.
 - [ ] No OS sound plays from the balloon itself.
 - [ ] Title and body still obey `PayloadLimits`' desktop envelope (63/255) or the limits move
       deliberately with the tests that hold them.
-- [ ] Clicking it still focuses the account the way the current balloon does (`TrayService.cs:43`).
+- [ ] **Click-to-focus is restored and generalised — item 3 broke it, invisibly.** `ShowToast` gains
+      an optional trailing account id; the dispatcher supplies it when a coalesced group resolves to
+      exactly one account; the drawn balloon carries it and a click focuses that row. It then works
+      for every single-account kind, not just memory warnings. A three-account group carries no id
+      and is honestly unclickable.
+- [ ] `TrayService.ShowMemoryWarning` and `_lastMemoryWarningAccountId` are removed with the rest of
+      the chain once the new path works — item 3 left them standing precisely because deleting them
+      would have made this criterion unimplementable, and said so.
 - [ ] A new window/control goes in the fence lists it belongs to (`WindowChromeFenceTests` if it is a
       window — it should not be).
 

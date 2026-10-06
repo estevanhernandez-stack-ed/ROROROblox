@@ -1,5 +1,4 @@
-﻿using ROROROblox.App.Notifications;
-using ROROROblox.App.Startup;
+﻿using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
 using ROROROblox.App.Tray;
 using ROROROblox.App.ViewModels;
@@ -65,7 +64,6 @@ internal static class DiscordTestHarness
             runningProbe: new FakeRobloxRunningProbe(),
             shellOpener: new FakeShellOpener(),
             tray: trayService,
-            idleAlertPresenter: new IdleAlertPresenter(trayService),
             streamerIdentity: streamerIdentity);
 
         // Same leak-avoidance reasoning as MainViewModelTests.Build(): nothing here calls
@@ -232,7 +230,6 @@ internal static class DiscordTestHarness
             runningProbe: new FakeRobloxRunningProbe(),
             shellOpener: new FakeShellOpener(),
             tray: trayService,
-            idleAlertPresenter: new IdleAlertPresenter(trayService),
             streamerIdentity: new FakeStreamerIdentityProvider(string.Empty));
 
     /// <summary>
