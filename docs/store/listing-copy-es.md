@@ -68,32 +68,27 @@ Problemas conocidos de Roblox — problemas del lado de Roblox, qué hacer y la 
 Volver a unirse si se desconecta: un alt expulsado o atascado fuera del juego se cierra y vuelve a unirse solo, nunca tu cuenta principal
 ```
 
-## What's new in this version (v1.32.0.0, ≤1500 chars)
+## What's new in this version (v1.32.1.0, ≤1500 chars)
 
 ```
-v1.32.0.0
+v1.32.1.0
 
-Los alts que se desconectan vuelven solos
-• Haz clic derecho en una cuenta y activa "Volver a unirse si
-  se desconecta". Si su ventana de Roblox está abierta pero la
-  cuenta lleva 3 minutos fuera del juego, RoRoRo la cierra y
-  vuelve a unirse. Nunca se ofrece para tu cuenta principal.
-• Cubre las expulsiones por inactividad, los intentos fallidos
-  de unirse y la página de verificación de Roblox. RoRoRo nunca
-  toca esa página: cierra la ventana y vuelve a unirse.
-• Como máximo 3 reingresos por hora y por cuenta. Después, la
-  opción se desactiva sola para esa cuenta y te avisa. Si
-  detienes la cuenta tú, eso siempre tiene prioridad.
+La vigilancia de memoria responde al momento
 
-"Unirse mediante un amigo" ahora funciona en todas partes
-• Una cuenta con "Unirse mediante un amigo" marcado sigue a tu
-  cuenta principal en cada inicio, no solo en Squad Launch.
-• Si tu cuenta principal no está en un juego, RoRoRo te
-  pregunta: seguir a otra cuenta, "Solucionado, unirse
-  directamente" o Cancelar.
-• "Iniciar varias" y Squad Launch preguntan una sola vez por
-  todo el lote, en lugar de que esas cuentas se unan
-  directamente.
+• Desmarca "Vigilar la memoria mientras las cuentas están en
+  ejecución." y RoRoRo deja de vigilar al instante. Vuelve a
+  marcarla y empieza otra vez. Ninguna de las dos cosas espera
+  a que reinicies.
+• Los números de debajo también se aplican al momento. Cambia
+  "Memoria que mantener libre (MB)", "Avisar cuando una cuenta
+  supere estos megabytes" o "Avisar con esta antelación
+  (minutos)" y la siguiente comprobación ya usa el valor nuevo.
+• Al desactivar la vigilancia, los indicadores de memoria y el
+  aviso del área de notificación se limpian en lugar de
+  quedarse con lo último que vieron.
+
+No ha cambiado nada más. Cuentas, temas, plugins, alertas,
+historial y ajustes se mantienen igual.
 ```
 
 ## Copyright (single line)

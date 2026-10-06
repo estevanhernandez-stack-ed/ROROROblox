@@ -68,35 +68,28 @@ Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonc
 Rejoindre à nouveau s'il décroche — un alt expulsé ou coincé hors du jeu est fermé et rejoint à nouveau tout seul, jamais votre compte principal
 ```
 
-## What's new in this version (v1.32.0.0, ≤1500 chars)
+## What's new in this version (v1.32.1.0, ≤1500 chars)
 
 ```
-v1.32.0.0
+v1.32.1.0
 
-Les alts qui décrochent reviennent tout seuls
-• Faites un clic droit sur un compte et activez « Rejoindre à
-  nouveau s'il décroche ». Si sa fenêtre Roblox est ouverte
-  mais que le compte est hors du jeu depuis 3 minutes, RoRoRo
-  la ferme et rejoint à nouveau. Jamais proposé pour votre
-  compte principal.
-• Cela couvre les expulsions pour inactivité, les connexions
-  échouées et la page de vérification de Roblox. RoRoRo ne
-  touche jamais à cette page : il ferme la fenêtre et rejoint
-  à nouveau.
-• Au plus 3 reconnexions par heure et par compte. Au-delà,
-  l'option se désactive pour ce compte et vous prévient. Quand
-  vous arrêtez vous-même, c'est toujours vous qui l'emportez.
+La surveillance de la mémoire réagit immédiatement
 
-« Rejoindre via un ami » fonctionne désormais partout
-• Un compte où « Rejoindre via un ami » est coché suit votre
-  compte principal à chaque lancement, pas seulement dans
-  Squad Launch.
-• Si votre compte principal n'est pas en jeu, RoRoRo vous
-  demande : suivre un autre compte, « C'est réglé, rejoindre
-  directement » ou Annuler.
-• « Lancer plusieurs » et Squad Launch posent la question une
-  seule fois pour tout le lot, au lieu de faire rejoindre ces
-  comptes directement.
+• Décochez « Surveiller la mémoire pendant que les comptes sont
+  en cours d'exécution. » et RoRoRo arrête aussitôt de
+  surveiller. Recochez-la et il recommence. Aucun redémarrage
+  dans un sens comme dans l'autre.
+• Les valeurs en dessous s'appliquent aussi tout de suite.
+  Modifiez « Mémoire à garder libre (Mo) », « Avertir quand un
+  compte dépasse ce nombre de mégaoctets » ou « Avertir ce laps
+  de temps à l'avance (minutes) » : la vérification suivante
+  utilise déjà la nouvelle valeur.
+• Quand vous désactivez la surveillance, les indicateurs de
+  mémoire et l'avertissement dans la zone de notification
+  s'effacent au lieu de rester figés sur leur dernier état.
+
+Rien d'autre n'a bougé. Comptes, thèmes, plugins, alertes,
+historique et paramètres sont conservés tels quels.
 ```
 
 ## Copyright (single line)

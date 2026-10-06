@@ -67,33 +67,28 @@ Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
-## What's new in this version (v1.32.0.0, ≤1500 chars)
+## What's new in this version (v1.32.1.0, ≤1500 chars)
 
 ```
-v1.32.0.0
+v1.32.1.0
 
-Konta, które wypadną, wracają same
-• Kliknij konto prawym przyciskiem i włącz „Dołącz ponownie,
-  jeśli wypadnie”. Jeśli jego okno Roblox jest otwarte, ale
-  konto od 3 minut jest poza grą, RoRoRo zamyka okno i dołącza
-  ponownie. Opcja nigdy nie jest proponowana dla twojego
-  głównego konta.
-• Obejmuje to wyrzucenie za bezczynność, nieudane dołączenie
-  i stronę weryfikacji Roblox. RoRoRo nigdy nie dotyka tej
-  strony: zamyka okno i dołącza ponownie.
-• Najwyżej 3 ponowne dołączenia na godzinę na konto. Potem
-  opcja sama wyłącza się dla tego konta i daje ci znać. Twoje
-  własne zatrzymanie zawsze ma pierwszeństwo.
+Obserwowanie pamięci działa od razu
 
-„Dołącz przez znajomego” działa teraz wszędzie
-• Konto z zaznaczonym „Dołącz przez znajomego” podąża za
-  twoim głównym kontem przy każdym uruchomieniu, nie tylko w
-  Squad Launch.
-• Jeśli twoje główne konto nie jest w grze, RoRoRo pyta:
-  dołącz do innego konta, „Naprawione, dołącz bezpośrednio”
-  albo Anuluj.
-• „Uruchom wiele” i Squad Launch pytają raz o całą grupę,
-  zamiast dołączać te konta bezpośrednio.
+• Wyłącz „Obserwuj pamięć, gdy konta są uruchomione.”, a RoRoRo
+  natychmiast przestaje obserwować. Włącz z powrotem — i znowu
+  obserwuje. W żadną stronę nie trzeba uruchamiać aplikacji
+  ponownie.
+• Liczby poniżej też działają od razu. Zmień „Pamięć do
+  zachowania wolnej (MB)”, „Ostrzegaj, gdy jedno konto
+  przekroczy tyle megabajtów” albo „Ostrzegaj z tym
+  wyprzedzeniem (minuty)” — już następne sprawdzenie użyje nowej
+  wartości.
+• Po wyłączeniu obserwowania wskaźniki pamięci i ostrzeżenie w
+  zasobniku są czyszczone, zamiast zostawać z ostatnim
+  odczytem.
+
+Nic poza tym się nie zmieniło. Konta, motywy, wtyczki, alerty,
+historia i ustawienia pozostają bez zmian.
 ```
 
 ## Copyright (single line)

@@ -68,33 +68,27 @@ Problemas conhecidos do Roblox — problemas do lado do Roblox, o que fazer e o 
 Entrar de novo se cair — um alt expulso ou preso fora do jogo é fechado e entra de novo sozinho, nunca a sua conta principal
 ```
 
-## What's new in this version (v1.32.0.0, ≤1500 chars)
+## What's new in this version (v1.32.1.0, ≤1500 chars)
 
 ```
-v1.32.0.0
+v1.32.1.0
 
-Alts que caem voltam sozinhos
-• Clique com o botão direito em uma conta e ative "Entrar de
-  novo se cair". Se a janela do Roblox dela estiver aberta,
-  mas a conta estiver fora do jogo há 3 minutos, o RoRoRo fecha
-  a janela e entra de novo. Nunca é oferecido para a sua conta
-  principal.
-• Isso cobre expulsões por inatividade, entradas que falharam
-  e a página de verificação do Roblox. O RoRoRo nunca mexe
-  nessa página: ele fecha a janela e entra de novo.
-• No máximo 3 reentradas por hora por conta. Depois disso, a
-  opção se desliga sozinha para essa conta e avisa você. Uma
-  parada feita por você sempre tem prioridade.
+O monitoramento de memória responde na hora
 
-"Entrar via amigo" agora funciona em todo lugar
-• Uma conta com "Entrar via amigo" marcado segue a sua conta
-  principal a cada inicialização, não só no Squad Launch.
-• Se a sua conta principal não estiver em um jogo, o RoRoRo
-  pergunta: seguir outra conta, "Resolvido, entrar direto" ou
-  Cancelar.
-• "Iniciar vários" e o Squad Launch perguntam uma vez só para
-  o lote inteiro, em vez de fazer essas contas entrarem
-  direto.
+• Desmarque "Monitorar a memória enquanto as contas estão em
+  execução." e o RoRoRo para de monitorar na mesma hora. Marque
+  de novo e ele volta a monitorar. Nenhum dos dois espera você
+  reiniciar o app.
+• Os números abaixo também valem na hora. Mude "Memória a
+  manter livre (MB)", "Avisar quando uma conta passar desta
+  quantidade de megabytes" ou "Avisar com esta antecedência
+  (minutos)" e a próxima verificação já usa o valor novo.
+• Ao desligar o monitoramento, os indicadores de memória e o
+  aviso na área de notificação são limpos, em vez de ficarem
+  parados no último estado.
+
+Nada mais mudou. Contas, temas, plugins, alertas, histórico e
+configurações continuam iguais.
 ```
 
 ## Copyright (single line)

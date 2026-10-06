@@ -68,33 +68,27 @@ Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welch
 Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
-## What's new in this version (v1.32.0.0, ≤1500 chars)
+## What's new in this version (v1.32.1.0, ≤1500 chars)
 
 ```
-v1.32.0.0
+v1.32.1.0
 
-Alts, die rausfliegen, kommen von selbst zurück
-• Klick mit der rechten Maustaste auf ein Konto und schalte
-  „Erneut beitreten, wenn es ausfällt“ ein. Ist sein
-  Roblox-Fenster offen, das Konto aber seit 3 Minuten nicht im
-  Spiel, schließt RoRoRo das Fenster und tritt erneut bei. Wird
-  für dein Hauptkonto nie angeboten.
-• Kicks wegen Inaktivität, fehlgeschlagene Beitritte und die
-  Verifizierungsseite von Roblox sind alle abgedeckt. RoRoRo
-  rührt diese Seite nie an: Es schließt das Fenster und tritt
-  erneut bei.
-• Höchstens 3 Neubeitritte pro Stunde und Konto. Danach
-  schaltet sich die Option für dieses Konto selbst ab und sagt
-  dir Bescheid. Wenn du selbst stoppst, hat das immer Vorrang.
+Die Speicherüberwachung reagiert sofort
 
-„Über Freund beitreten“ funktioniert jetzt überall
-• Ein Konto mit Häkchen bei „Über Freund beitreten“ folgt bei
-  jedem Start deinem Hauptkonto, nicht nur in Squad Launch.
-• Ist dein Hauptkonto in keinem Spiel, fragt RoRoRo: einem
-  anderen Konto folgen, „Behoben, direkt beitreten“ oder
-  Abbrechen.
-• „Mehrere starten“ und Squad Launch fragen einmal für die
-  ganze Gruppe, statt diese Konten direkt beitreten zu lassen.
+• Schalte „Speicher überwachen, während Konten laufen.“ aus,
+  und RoRoRo hört sofort auf zu überwachen. Schalte es wieder
+  ein, und es überwacht wieder. Kein Neustart nötig.
+• Die Zahlen darunter gelten ebenfalls sofort. Ändere
+  „Freizuhaltender Speicher (MB)“, „Warnen, wenn ein Konto so
+  viele Megabyte überschreitet“ oder „So weit im Voraus warnen
+  (Minuten)“, und schon die nächste Prüfung nutzt den neuen
+  Wert.
+• Schaltest du die Überwachung aus, werden die Speicheranzeigen
+  und die Warnung im Infobereich zurückgesetzt, statt mit ihrem
+  letzten Stand stehen zu bleiben.
+
+Sonst hat sich nichts geändert. Konten, Themes, Plugins,
+Alarme, Verlauf und Einstellungen bleiben unverändert.
 ```
 
 ## Copyright (single line)
