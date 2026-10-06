@@ -140,6 +140,49 @@ Carried by **v1.33**. A plugin that does not read the variable is unaffected, an
 absence as "open the window", so it works against today's RoRoRo too. `contractVersion` does not move;
 nothing in the gRPC surface changes.
 
+## Rider: the hand on the About page, and the tap
+
+Added 2026-10-06 at Este's request, after reading the brand kit in `LabShare/626labs-assets/fonts`.
+Small, visual, and unrelated to alerts; recorded here rather than folded in silently.
+
+**Two pieces, and only the first is always on.**
+
+1. **The 626Labs wordmark in EsteFont Pro, on the About page.** The hand's one rule is "Este's own
+   words, in his hand" — never UI labels, buttons or body copy — and the wordmark is that rule's own
+   stated exception, because "626Labs" in the hand *is* the company's signature. It belongs on the
+   About box of a 626 Labs product.
+2. **An Easter egg behind the About nav item.** Tap it six times and a short line in Este's voice
+   appears, in his hand, signed. The joke is the tap count: it is the Android developer-options
+   gesture (seven taps on the build number) pointed at About. **Six rather than seven**, so the
+   number is 626 rather than Android's.
+
+**Why an egg and not a theme.** The ask started as an Easter egg *theme*. A theme is the one shape
+that cannot work: it would render UI labels in the hand, which is exactly what the single rule
+forbids, and mechanically this app's themes are ten colours in a JSON file with no font axis. An egg
+that reveals Este's words is the use the brand actually sanctions, and the hand appearing *because
+someone went looking* is a better joke than the hand as a skin.
+
+**Constraints the build has to honour.**
+
+- **The font ships as TTF** (`EsteFontPro-Regular.ttf` 34 KB, `-Bold.ttf` 31 KB). WPF cannot use the
+  woff2. Embed as a `Resource` and reference by pack URI.
+- **No `FontFamily` literal in markup.** `TypeLadderFenceTests` forbids them, so the hand enters the
+  type ladder as a token beside the existing display/body/mono families, and the fence's counts move
+  in the same commit.
+- **Never below 24px, upright, never italic or letter-spaced.** The slant and spacing are drawn into
+  the glyphs. The hand's x-height is 0.45em, so it needs roughly 1.2x the size the surrounding type
+  would use — which means a ladder size token, against a `DistinctRawSizeCeiling` of 3.
+- **Subset the font to the glyphs actually used.** Shipping the full hand inside a public MSIX means
+  anyone can extract Este's handwriting, which is 626Labs-owned and marked for 626 Labs work only.
+  The wordmark plus one fixed line needs a few dozen glyphs; subsetting takes it to a few KB and
+  makes extraction worthless. This is the only part of the rider with a real downside if skipped.
+- **The line does not localise.** A handwritten paragraph would be English for all six languages,
+  against this app's own posture. A signature and one short line are fine; a paragraph is not, and
+  the egg's copy should stay short enough that this stays true.
+
+**Blocked on one thing only: the line itself.** It has to be Este's own words — that is the whole
+rule — so it cannot be drafted here. One or two sentences, plus how he wants it signed.
+
 ## Loose Implementation Notes
 
 Non-binding; `/spec` decides.
