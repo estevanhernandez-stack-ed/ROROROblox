@@ -22,7 +22,7 @@ stays as digits in any OVERLAY.
 
 ### accounts (slide 2)
 - OVERLAY: `zapisz raz. uruchamiaj jako.`
-- VO: `Zapisz wszystkie alty i zarządzaj kontami. Jeden klik na konto, status na żywo i gra, w której siedzi.`
+- VO: `Zapisz wszystkie alty i zarządzaj kontami. Jeden klik na konto, status na żywo i gra na każdym koncie.`
 
 ### squad (slide 3)
 - OVERLAY: `ten sam priv. wszystkie.`

@@ -18,7 +18,7 @@ stays as digits in any OVERLAY.
 
 ### accounts (slide 2)
 - OVERLAY: `salve uma vez. inicie como.`
-- VO: `Salve todos os alts e gerencie as contas. Um clique por conta, status ao vivo e o jogo em que ela está.`
+- VO: `Salve todos os alts e gerencie as contas. Um clique por conta, status ao vivo e o jogo de cada uma.`
 
 ### squad (slide 3)
 - OVERLAY: `mesmo servidor privado. todos.`
