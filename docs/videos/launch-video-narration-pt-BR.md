@@ -18,7 +18,7 @@ stays as digits in any OVERLAY.
 
 ### accounts (slide 2)
 - OVERLAY: `salve uma vez. inicie como.`
-- VO: `Esse é o RoRoRo! Salve cada alt uma vez, depois é um clique. Status ao vivo, o jogo de cada um, até a RAM que consome.`
+- VO: `Salve todos os alts e gerencie as contas. Um clique cada, com status ao vivo e o jogo de cada um.`
 
 ### squad (slide 3)
 - OVERLAY: `mesmo servidor privado. todos.`
@@ -34,7 +34,7 @@ stays as digits in any OVERLAY.
 
 ### trust (slide 6)
 - OVERLAY: `sua senha nunca passa por ele`
-- VO: `Sua senha nunca toca no app, o cofre é criptografado, e o vigia de memória recicla o cliente antes do vazamento derrubar. E tem atalhos de teclado.`
+- VO: `Sua senha nunca toca no app, nunca mesmo. E ainda tem um monte de melhorias. É só ler a lista!`
 
 > **Over budget: 111% of the English syllable count (51 vs 46).** This is the densest line in the script — it carries four
 > separate claims (password never touches the app, vault encrypted, memory watchdog,

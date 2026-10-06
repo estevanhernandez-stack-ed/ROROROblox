@@ -11,8 +11,8 @@
     "es"
   ],
   "sourceCommit": "2f1bb3d",
-  "generatedUtc": "2026-09-09T03:33:51+00:00",
-  "sourceOfTruth": "docs/videos/launch-video-narration-*.md on feat/localized-taglines — corrections are edits there",
+  "generatedUtc": "2026-10-06T16:16:13+00:00",
+  "sourceOfTruth": "docs/videos/launch-video-narration-*.md — corrections are edits there",
   "fields": [
     {
       "field": "hook_overlay",
@@ -55,14 +55,14 @@
     },
     {
       "field": "accounts_vo",
-      "en": "This is RoRoRo! Save every alt once, and it's one click each. Live status, the game each one is actually in, even the RAM each client is eating.",
+      "en": "Save all your alts and manage your accounts. One click each, with live status and the game each one is actually in.",
       "translations": {
-        "fr": "Voici RoRoRo ! Enregistrez chaque alt une fois, ensuite c'est un clic chacun. Statut en direct, le jeu où chacun se trouve, même la RAM que chaque client consomme.",
-        "de": "Das ist RoRoRo! Jeden Alt einmal speichern, danach ein Klick pro Stück. Live-Status, das Spiel, in dem jeder gerade steckt, sogar der RAM, den jeder Client frisst.",
-        "ru": "Это RoRoRo! Сохраните каждый альт один раз — дальше один клик на каждый. Статус в реальном времени, игра, где каждый сейчас, даже сколько RAM ест каждый клиент.",
-        "pt-br": "Esse é o RoRoRo! Salve cada alt uma vez, depois é um clique. Status ao vivo, o jogo de cada um, até a RAM que consome.",
-        "pl": "To jest RoRoRo! Zapisz każdy alt raz, potem jedno kliknięcie na każdy. Status na żywo, w co kto gra, nawet ile RAM-u zjada każdy klient.",
-        "es": "¡Esto es RoRoRo! Guarda cada alt una vez, luego es un clic. Estado en vivo, el juego de cada uno, y la RAM que consume."
+        "fr": "Enregistrez tous vos alts et gérez vos comptes. Un clic chacun, avec le statut en direct et le jeu où chacun se trouve.",
+        "de": "Speichere alle Alts und verwalte deine Accounts. Ein Klick pro Stück, mit Live-Status und dem Spiel, in dem jeder steckt.",
+        "ru": "Сохраните все альты и управляйте аккаунтами. Клик на каждый, статус вживую и игра каждого.",
+        "pt-br": "Salve todos os alts e gerencie as contas. Um clique cada, com status ao vivo e o jogo de cada um.",
+        "pl": "Zapisz wszystkie alty i zarządzaj kontami. Jedno kliknięcie na każdy, status na żywo i gra każdego.",
+        "es": "Guarda todos tus alts y gestiona tus cuentas. Un clic cada uno, estado en vivo y el juego de cada uno."
       },
       "charCap": 600
     },
@@ -159,14 +159,14 @@
     },
     {
       "field": "trust_vo",
-      "en": "Your password never touches the app, the vault is encrypted, and a memory watchdog recycles a client before a leak crashes it. There are even keyboard shortcuts now.",
+      "en": "Your password never touches the app, ever. And there's a pile of quality of life on top. Just read the list!",
       "translations": {
-        "fr": "Votre mot de passe ne touche jamais l'appli, le coffre est chiffré, et une surveillance mémoire recycle un client avant qu'une fuite le plante. Et il y a maintenant des raccourcis clavier.",
-        "de": "Dein Passwort gelangt nie in die App, der Tresor ist verschlüsselt, und ein Speicher-Wächter recycelt einen Client, bevor ein Leck ihn abstürzen lässt. Es gibt jetzt sogar Tastenkürzel.",
-        "ru": "Пароль никогда не попадает в приложение, хранилище зашифровано, а контроль памяти перезапускает клиент раньше, чем утечка его уронит. Есть и горячие клавиши.",
-        "pt-br": "Sua senha nunca toca no app, o cofre é criptografado, e o vigia de memória recicla o cliente antes do vazamento derrubar. E tem atalhos de teclado.",
-        "pl": "Hasło nigdy nie trafia do apki, sejf jest zaszyfrowany, a strażnik pamięci restartuje klienta, zanim wyciek go położy. Są nawet skróty klawiszowe.",
-        "es": "Tu contraseña nunca toca la app, la bóveda va cifrada, y el vigía de memoria recicla el cliente antes de que una fuga lo tumbe. Y hay atajos de teclado."
+        "fr": "Votre mot de passe ne touche jamais l'appli, jamais. Et en plus, plein d'améliorations de confort. Lisez la liste !",
+        "de": "Dein Passwort gelangt nie in die App, niemals. Und obendrauf gibt's jede Menge Komfort. Lies einfach die Liste!",
+        "ru": "Пароль никогда не попадает в приложение, вообще. А сверху ещё куча удобств. Просто прочитайте список!",
+        "pt-br": "Sua senha nunca toca no app, nunca mesmo. E ainda tem um monte de melhorias. É só ler a lista!",
+        "pl": "Hasło nigdy nie trafia do apki, przenigdy. A do tego mnóstwo udogodnień. Po prostu przeczytaj listę!",
+        "es": "Tu contraseña nunca toca la app, nunca. Y encima, un montón de mejoras. ¡Solo lee la lista!"
       },
       "charCap": 600
     },

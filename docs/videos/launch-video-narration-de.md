@@ -22,7 +22,7 @@ stays as digits in any OVERLAY.
 
 ### accounts (slide 2)
 - OVERLAY: `einmal speichern. starte als.`
-- VO: `Das ist RoRoRo! Jeden Alt einmal speichern, danach ein Klick pro Stück. Live-Status, das Spiel, in dem jeder gerade steckt, sogar der RAM, den jeder Client frisst.`
+- VO: `Speichere alle Alts und verwalte deine Accounts. Ein Klick pro Stück, mit Live-Status und dem Spiel, in dem jeder steckt.`
 
 ### squad (slide 3)
 - OVERLAY: `gleicher Privatserver. alle.`
@@ -38,7 +38,7 @@ stays as digits in any OVERLAY.
 
 ### trust (slide 6)
 - OVERLAY: `dein Passwort bleibt draußen`
-- VO: `Dein Passwort gelangt nie in die App, der Tresor ist verschlüsselt, und ein Speicher-Wächter recycelt einen Client, bevor ein Leck ihn abstürzen lässt. Es gibt jetzt sogar Tastenkürzel.`
+- VO: `Dein Passwort gelangt nie in die App, niemals. Und obendrauf gibt's jede Menge Komfort. Lies einfach die Liste!`
 
 ### cta (slide 7)
 - OVERLAY: `scannen, am Rechner öffnen`
