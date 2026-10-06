@@ -1627,3 +1627,40 @@ not render colour glyph fonts, so there is no setting to flip. The other two can
 and build.
 
 **Handoff:** `/spec`, against `docs/cycles/2026-10-05-alerts/prd.md`.
+
+## /spec — the alerts cycle (v1.33)
+
+Written to `docs/cycles/2026-10-05-alerts/spec.md`.
+
+**The spec's whole argument is in its first paragraph:** three code paths can currently put something
+on a user's screen, and only one of them honours any of the rules. Everything else in the cycle is
+either downstream of collapsing that to one path, or an independent rider. Writing that paragraph
+first made the ordering obvious and killed a design I had half-drafted — teaching
+`WireMemoryWarningTray` to read destinations — because it would leave two places knowing the routing
+rules, and the one most likely to be edited in a hurry is the one with no test.
+
+**Two decisions worth more than they look.**
+
+The per-kind cadence overrides ride as one JSON map rather than seven `IAppSettings` keys. Seven keys
+means seven members, seven fakes across four test files and seven reachability entries, for rows that
+are generated from one table anyway. The house rule for a new setting is heavy on purpose, and the
+right response is fewer settings, not resentment of the rule.
+
+`MuteIdleAlerts` migrates once and then stops being a control, but stays in `SettingsBlob` with an
+allow-list entry explaining why. Deleting a persisted key to tidy a page is how an older blob stops
+loading, and the reachability fence exists to catch exactly the orphan this would otherwise create.
+
+**The boundary fix is one character and it is the most user-visible line in the spec.** `>` to `>=` in
+`AlertRouter.cs:92`. That character is why an alert vanished at 23:33:03 and another fired at
+23:34:03, which reads as randomness to anyone watching. Measured in Este's own log, not theorised.
+
+**Fences are listed with their current constants and why each moves**, so the build does not discover
+them one red run at a time. `ToggleWiringFenceTests` is new and is itself a deliverable: the F-102 fix
+without a fence is one release from regressing, which is exactly what happened between the streamer
+toggle's fix and the memory toggle.
+
+**Zero deepening rounds**, consistent with builder-mode habit — the thinking happened in the audit and
+the PRD, and this was translation plus two reads of the tree to pin types (`AlertKind`,
+`AlertDestination`, `DiscordConfig`'s destination lists and their migration shape).
+
+**Handoff:** `/checklist`, against `docs/cycles/2026-10-05-alerts/spec.md`.
