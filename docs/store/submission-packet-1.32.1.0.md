@@ -116,11 +116,16 @@ evidenced rather than asserted.
 **Known gaps in the run:** four pairs were still unjudged when the run stopped — `longDescription`
 and `features` for some languages, which this release does not touch and which were already pending
 before it. The verifier's origin also returned a timeout and then a 502 near the end; the six pairs
-that matter were already judged by then. Worth filing upstream (dogfood issues go to
-`estevanhernandez-stack-ed/translation-verification`): **rule 3 has now produced a false positive on
-every pair of two consecutive releases**, because the rubric has no way to know the product's own UI
-is localized. That is a rubric bug, not a copy bug, and it costs a manual overrule every release
-until it is fixed.
+that matter were already judged by then. **Filed upstream as
+[translation-verification#27](https://github.com/estevanhernandez-stack-ed/translation-verification/issues/27)**:
+rule 3 has now produced a false positive on every pair of two consecutive releases, because the
+rubric has no way to know the product's own UI is localized. That is a rubric bug, not a copy bug,
+and it costs a manual overrule every release until it is fixed. The issue proposes a per-profile
+`uiLocalization` field that inverts the rule for cultures the product ships — an English label quoted
+in a localized listing becomes the defect, because it names something the user cannot see on screen.
+The cross-language split was added to
+[#6](https://github.com/estevanhernandez-stack-ed/translation-verification/issues/6), which until now
+only recorded the opposite direction.
 
 ## 4. Notes for certification
 
