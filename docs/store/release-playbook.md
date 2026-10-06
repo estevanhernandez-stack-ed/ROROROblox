@@ -64,6 +64,14 @@ Create `docs/store/release-notes-X.Y.Z.0.md`. Tone: clan-facing, builder-to-buil
 
 The block between `---` markers in the file gets pasted directly into the GitHub Release body in Phase 6.
 
+**Write the reviewer letter in this phase too.** `docs/store/reviewer-letter-X.Y.Z.0.md` plus its
+`.paste.txt`, modelled on the previous release's. It is a per-release artifact going back to v1.7 and
+this phase list never named it, which is exactly how the v1.32.1.0 cut reached the Partner Center
+screen without one — the owner asked for it mid-submission. Every claim in it gets verified against
+`git diff <prev-tag>..HEAD`, not carried forward: the manifest line, the `.proto` diff, the
+input-synthesis grep and the new-URL grep. Partner Center only — `submit_write.py` never sends
+`notesForCertification`.
+
 **Then audit the listing surfaces against what shipped** (standing rule per Este, 2026-09-05): with the fresh release notes beside you, re-read `listing-copy.md`'s **short description**, **long description**, and **product features** blocks — and the **hub page** (`docs/index.md`, the GitHub Pages front door), whose "What you get" list drifts the same way. A shipped feature that earns a listing claim gets a feature entry (cap 20, ≤200 chars each); a change that makes an existing public claim incomplete gets the description edited — the motivating case is v1.25, where the long description's privacy paragraph said nothing leaves your machine except Roblox calls and your webhook until phone alerts made that incomplete. Record the outcome either way in the submission packet's listing section: what changed, or "listing audited, unchanged."
 
 ---
