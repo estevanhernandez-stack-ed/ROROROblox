@@ -156,8 +156,19 @@ Small, visual, and unrelated to alerts; recorded here rather than folded in sile
 
 **The tap count IS the joke, and it is not arbitrary.** "6-7" is the meme the Pet Sim 99 audience
 chants constantly — kids say it at each other all day — and the gag is that nobody can pin down
-whether it is six or seven. So the egg fires on the sixth tap **and** on the seventh: both work, and
-which one you landed on is unanswerable, which is the whole bit. Do not round it to one number.
+whether it is six or seven.
+
+**The threshold is chosen at random, six or seven, each time the counter starts.** Not fixed, and not
+"fires on both" — Este caught that one: if it fires on six and on seven, six always wins and seven
+never happens, so "6 or 7" would be a label on a spec that always means six. Randomising is the only
+version where the ambiguity is real. Sometimes it pops on the sixth tap, sometimes it asks for one
+more, and two kids who compare notes disagree honestly. That disagreement is the meme's social life
+and the reason the egg is worth building at all.
+
+Pick the threshold when the counter starts rather than per tap, so a single attempt stays coherent —
+the sixth tap doing nothing and the seventh doing something is correct; the sixth tap doing nothing
+*sometimes mid-attempt* is a bug. The source of randomness is injected, not `new Random()` at the call
+site, so a test can pin it to six and to seven and assert both paths.
 
 A correction worth keeping, because it shows the failure mode: the first pass at this read the gesture
 as Android's developer-options Easter egg (seven taps on the build number) and proposed six "so the
