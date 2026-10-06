@@ -91,7 +91,7 @@ and [`docs/smoke-2026-10-05-memory-watch-live-toggle.md`](../../smoke-2026-10-05
 These are design calls the artifacts cannot answer. Each carries the assumption I will build on
 unless Este says otherwise.
 
-1. **Does the desktop balloon become fully routable?** *Assumed yes* — it obeys the grid and the
+1. **Does the desktop balloon become fully routable?** **Answered yes by Este, 2026-10-05 23:02** — it obeys the grid and the
    cadence, so unticking Desktop means silence. The risk: memory pressure is the one alert that says
    "your machine is about to choke", and a user who unticks Desktop and never looks at Discord has
    silenced it. Mitigation: the tray **badge** stays unconditional and free — it is a colour change,
@@ -104,6 +104,41 @@ unless Este says otherwise.
    to "follow the global".
 4. **The default sound.** *Assumed* a short bundled chime, not silence — an alert that makes no
    sound is a log entry. Silence stays one click away.
+
+## Rider: tell a plugin why it was started
+
+Added 2026-10-05 at Este's request, relayed through the Ur Score session. Not an alerts change — it
+rides this cycle because it is additive, roughly ten lines plus tests, and Ur Score's tray mode is
+waiting on it.
+
+**The ask:** Ur Score should start in the tray and keep score when RoRoRo opens, without opening its
+window. Today `DefaultPluginProcessStarter.Start(pluginId, exePath)` passes no arguments and no
+environment, with `UseShellExecute = false`, and all four launch paths — autostart, the Launch click,
+post-install, and the update relaunch at `PluginsViewModel.cs:293` — funnel through one
+`PluginProcessSupervisor.Start(plugin)`. So a plugin cannot tell them apart.
+
+**The decision: an environment variable, `RORORO_LAUNCH_REASON`, not a command-line flag.** Values:
+`autostart`, `manual`, `install`, `update`.
+
+Why not the proposed `--autostart` argument: an unknown argv entry is not inert. A WPF plugin that
+treats arguments as file paths, or anything that validates argv, can break on a flag it never asked
+for — and these are third-party executables we do not control. An environment variable is invisible
+to every plugin that is not looking for it, which makes it the only version of this that is safe to
+roll out to an existing plugin population without asking each one first. `UseShellExecute = false` is
+already set, which is precisely the condition under which `ProcessStartInfo.Environment` works.
+
+Why not the manifest field plus a "Start in tray" toggle on the Plugins list: the choice is the
+plugin's, not the host's. Ur Score already has settings; "when RoRoRo starts me, do X" belongs there,
+beside the other things Ur Score does on its own behalf. A host-side toggle would also need a
+manifest field, a contract bump, docs, and a row of UI to express something the host does not act on.
+
+Why a reason rather than a boolean: `update` is a real fourth case the ask did not name — on an
+update relaunch a plugin should return to the mode it was in, not force a window — and a vocabulary
+costs the same as a flag today while a flag costs a second flag later.
+
+Carried by **v1.33**. A plugin that does not read the variable is unaffected, and Ur Score treats its
+absence as "open the window", so it works against today's RoRoRo too. `contractVersion` does not move;
+nothing in the gRPC surface changes.
 
 ## Loose Implementation Notes
 
