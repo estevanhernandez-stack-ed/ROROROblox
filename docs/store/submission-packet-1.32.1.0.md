@@ -163,3 +163,27 @@ this release's re-upload does not revert the live catalog to 0.6.3.
   VM available. The live verification above covers the behaviour this release changes but not a
   fresh install on an untouched machine. Stated so the owner can decide whether it blocks the submit
   click.
+
+## 8. Shipped
+
+**Published 2026-10-06 15:12:38 local**, submission `1152921505702059211`. Commit → Certification →
+Release → Published in roughly 36 minutes, with no reviewer question and nothing cancelled.
+
+`inspect` against the published submission confirms the Store and this repo agree: ten listings, the
+German `releaseNotes` reading `v1.32.1.0 … Die Speicherüberwachung reagiert sofort` at 750
+characters — the exact length the plan predicted and the exact block in `whats-new-1.32.1.0.md` —
+alongside 20 features, 7 keywords, 14 images and the 5,254-character description, none of which this
+release touched.
+
+The GitHub release published the same session and is the repository's Latest, which is what the
+updater, the compat feed, the known-issues feed and the plugin catalog all read. The clan post waits
+on the Store listing visibly flipping to 1.32.1, per its own standing rule.
+
+**On the loop's "archive the shipped copy" step.** `store-listing-console/docs/release-loop.md` step 7
+ends by asking for the shipped copy to be archived as `docs/store/listing-copy-<version>.md`. That has
+never been done in this repo, across every release, and it should not start now: this app's console
+entry pins a **ref** (`eb51617` for this release, recorded in `apps/rororo-live/config.toml` with its
+reasoning), and a ref is a stricter archive than a copy — it is the exact tree the text was read from,
+cannot drift, and costs nothing to keep. A copy would add a seventh near-identical `listing-copy-*`
+file that every future reader has to disambiguate from the six per-language sheets. Raised in the
+console repo rather than silently skipped.
