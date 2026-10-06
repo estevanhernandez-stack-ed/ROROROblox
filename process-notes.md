@@ -1664,3 +1664,32 @@ the PRD, and this was translation plus two reads of the tree to pin types (`Aler
 `AlertDestination`, `DiscordConfig`'s destination lists and their migration shape).
 
 **Handoff:** `/checklist`, against `docs/cycles/2026-10-05-alerts/spec.md`.
+
+## /checklist — the alerts cycle (v1.33)
+
+Written to `docs/cycles/2026-10-05-alerts/checklist.md`. Twelve items, two halts.
+
+**Order is dependency order, and it inverts the order the complaints arrived in.** Este asked about
+cadence, consolidation and the sound; the plan opens with an enum value and a settings key, and the
+sound is item 5. Nothing about the page or the sound is true until the three screen-writing paths are
+one path, so items 1-3 buy the rest of the cycle its meaning. Stated at the top of the checklist so
+the sequence does not read as the plan ignoring what was asked for.
+
+**The two halts are where a person has to look, not where the work is hard.** C1 after the routing
+collapse, because "exactly one balloon, not two" and "unticking Desktop means silence" cannot be
+proven by a green suite. C2 after the page, because a built page is the only thing worth comparing
+against the intent. Both produce something written as they run rather than afterwards.
+
+**Item 9 is marked droppable in its own acceptance criteria.** The colour-emoji rider depends on a
+third-party control honouring our theming and naming fences, and if it does not, the written answer
+is to drop it and say so — not to hand-roll a glyph renderer mid-cycle. Writing the retreat into the
+plan now is cheaper than arguing for it later with half a renderer built.
+
+**Item 12 names the two failures from the last release**, because a checklist that does not inherit
+its predecessor's misses is decoration: the feature ledger's own maintenance rule (unfollowed for four
+releases until 2026-10-06), and the reviewer letter (missing at the Partner Center screen on 1.32.1,
+and now named in the playbook's Phase 2).
+
+**Zero deepening rounds.** The spec carried the thinking; this was translation plus sequencing.
+
+**Handoff:** superpowers `subagent-driven-development`, per-task review, halting at C1 and C2.
