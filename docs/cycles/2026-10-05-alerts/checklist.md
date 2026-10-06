@@ -110,6 +110,19 @@ the memory numbers beside the memory row and idle in the grid.
 - [ ] No raw font sizes added (`DistinctRawSizeCeiling = 3`).
 - [ ] The section says, where destinations are chosen, that the tray badge is always on.
 
+**Two debts item 2 handed forward. Both are this item's to pay.**
+
+- [ ] **Delete both `SettingsReachabilityTests` allow-list entries** for `AlertCadenceMinutes` and
+      `AlertCadenceOverridesJson`. They exist only because the keys shipped one commit ahead of the
+      controls that edit them, and each says so in its own text. This file has twice caught an
+      exemption outliving its reason (`DefaultPlaceUrl`, `MetricAlertsEnabled`) — both a cycle late.
+- [ ] **Add the generation counter to the cadence cache when this item adds the nudge.**
+      `App.AlertCadenceSetting` is a `volatile` immutable refreshed on the 30 s tick, with no lock,
+      which is correct while the tick is the only writer. The moment the page nudges it on save there
+      are two writers, and that is exactly the race `MetricAlertsGateTests` documents: a tick that
+      read before the user's change commits its stale value after it. Mirror
+      `SetMetricAlertsGate` / `BeginMetricAlertsGateRead` / `TryCommitMetricAlertsGate`.
+
 **C2 — eyes on it.** Screenshot every theme, compare against the approved shape, and walk the page
 with a keyboard only.
 

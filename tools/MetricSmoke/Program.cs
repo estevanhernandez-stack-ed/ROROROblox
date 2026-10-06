@@ -194,7 +194,7 @@ internal static class Program
             Console.WriteLine();
             Console.WriteLine($"Running {ScenarioTable.All.Count} scenarios. Negative rows sit through "
                 + $"{SmokeTimings.AlertWindow.TotalSeconds:0}s each (a tenth of the "
-                + $"{AlertRouter.Cooldown.TotalMinutes:0}-minute alert cooldown).");
+                + $"{AlertCadence.DefaultQuietPeriod.TotalMinutes:0}-minute alert cooldown).");
             Console.WriteLine();
 
             var faultsSeen = catcher.RequestFaults.Count;

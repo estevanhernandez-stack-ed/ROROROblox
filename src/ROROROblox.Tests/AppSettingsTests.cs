@@ -39,6 +39,73 @@ public class AppSettingsTests : IDisposable
     }
 
     [Fact]
+    public async Task AlertCadence_OnASettingsFileWrittenBeforeV133_ReadsTheShippedFiveMinutes()
+    {
+        // The no-migration contract, and the one that matters most for this setting: a blob with
+        // neither key must resolve to exactly the pace AlertRouter.Cooldown held through v1.32, or
+        // the upgrade retunes everyone's alerts without asking.
+        File.WriteAllText(_filePath, """
+            {
+              "version": 1,
+              "activeThemeId": "midnight",
+              "metricAlertsEnabled": true
+            }
+            """);
+
+        using var settings = new AppSettings(_filePath);
+
+        Assert.Equal(5, await settings.GetAlertCadenceMinutesAsync());
+        Assert.Equal(string.Empty, await settings.GetAlertCadenceOverridesJsonAsync());
+        Assert.Equal(
+            ROROROblox.Core.Discord.AlertCadence.DefaultQuietPeriod,
+            ROROROblox.Core.Discord.AlertCadence.FromSettings(
+                await settings.GetAlertCadenceMinutesAsync(),
+                await settings.GetAlertCadenceOverridesJsonAsync()).Global);
+    }
+
+    [Fact]
+    public async Task AlertCadence_RoundTripsBothKeys_IncludingZero()
+    {
+        var first = new AppSettings(_filePath);
+        await first.SetAlertCadenceMinutesAsync(0);
+        await first.SetAlertCadenceOverridesJsonAsync("""{"MemoryWarning":30}""");
+        first.Dispose();
+
+        using var second = new AppSettings(_filePath);
+
+        // Zero survives the round trip as zero, not as "unset" — it is a real choice here.
+        Assert.Equal(0, await second.GetAlertCadenceMinutesAsync());
+        Assert.Equal("""{"MemoryWarning":30}""", await second.GetAlertCadenceOverridesJsonAsync());
+    }
+
+    [Fact]
+    public async Task AlertCadenceOverridesJson_ExplicitNullInTheFile_ReadsAsEmpty()
+    {
+        // System.Text.Json does not enforce the record's non-nullable string, so a hand-edited or
+        // older-tool-written null lands in the blob. The accessor absorbs it rather than pushing a
+        // null check into every reader.
+        File.WriteAllText(_filePath, """
+            { "version": 1, "alertCadenceOverridesJson": null }
+            """);
+
+        using var settings = new AppSettings(_filePath);
+
+        Assert.Equal(string.Empty, await settings.GetAlertCadenceOverridesJsonAsync());
+    }
+
+    [Fact]
+    public async Task AlertCadenceOverridesJson_BlankInput_NormalisesToEmpty()
+    {
+        using var settings = new AppSettings(_filePath);
+
+        await settings.SetAlertCadenceOverridesJsonAsync("   ");
+        Assert.Equal(string.Empty, await settings.GetAlertCadenceOverridesJsonAsync());
+
+        await settings.SetAlertCadenceOverridesJsonAsync(null);
+        Assert.Equal(string.Empty, await settings.GetAlertCadenceOverridesJsonAsync());
+    }
+
+    [Fact]
     public async Task TamperedJson_ReturnsNullDefault()
     {
         File.WriteAllText(_filePath, "{ this is not valid JSON");

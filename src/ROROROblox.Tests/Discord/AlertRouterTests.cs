@@ -97,13 +97,47 @@ public class AlertRouterTests
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
         var lastSent = new Dictionary<AlertCooldownKey, DateTimeOffset>
         {
-            [AlertCooldownKey.For(Trigger(AlertKind.AccountDroppedOut, AccountA, "A"))] = Now - AlertRouter.Cooldown.Add(TimeSpan.FromSeconds(1)),
+            [AlertCooldownKey.For(Trigger(AlertKind.AccountDroppedOut, AccountA, "A"))] = Now - AlertCadence.DefaultQuietPeriod.Add(TimeSpan.FromSeconds(1)),
         };
 
         var routed = AlertRouter.Route(
             [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, lastSent, Now);
 
         Assert.Single(routed);
+    }
+
+    [Fact]
+    public void Route_ARepeatLandingAtExactlyTheCadence_Fires()
+    {
+        // Measured, 2026-10-04. A crossing at 23:33:03 produced no alert and the next one at
+        // 23:34:03 did, and the reason was not the minute — it was that the first landed exactly
+        // the cadence after the previous send, to the second, and `>` dropped it. "At most once
+        // every five minutes" has to mean the five-minute repeat is the one that speaks, or the
+        // interval a user sets is silently the interval plus one tick of whatever samples it.
+        var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
+        var lastSent = new Dictionary<AlertCooldownKey, DateTimeOffset>
+        {
+            [AlertCooldownKey.For(Trigger(AlertKind.AccountDroppedOut, AccountA, "A"))] = Now - AlertCadence.DefaultQuietPeriod,
+        };
+
+        Assert.Single(AlertRouter.Route(
+            [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, lastSent, Now));
+    }
+
+    [Fact]
+    public void Route_ARepeatOneSecondBeforeTheCadence_IsStillSuppressed()
+    {
+        // The other side of the same boundary, pinned so the `>=` above cannot be "fixed" into a
+        // cadence that is one sample short of what the user asked for.
+        var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
+        var lastSent = new Dictionary<AlertCooldownKey, DateTimeOffset>
+        {
+            [AlertCooldownKey.For(Trigger(AlertKind.AccountDroppedOut, AccountA, "A"))] =
+                Now - AlertCadence.DefaultQuietPeriod + TimeSpan.FromSeconds(1),
+        };
+
+        Assert.Empty(AlertRouter.Route(
+            [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, lastSent, Now));
     }
 
     [Fact]

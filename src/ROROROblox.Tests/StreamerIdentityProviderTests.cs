@@ -205,6 +205,10 @@ public class StreamerIdentityProviderTests
         public Task SetUiLanguageAsync(string? cultureName) => throw new NotImplementedException();
         public Task<bool> GetMetricAlertsEnabledAsync() => throw new NotImplementedException();
         public Task SetMetricAlertsEnabledAsync(bool enabled) => throw new NotImplementedException();
+        public Task<int> GetAlertCadenceMinutesAsync() => throw new NotImplementedException();
+        public Task SetAlertCadenceMinutesAsync(int minutes) => throw new NotImplementedException();
+        public Task<string> GetAlertCadenceOverridesJsonAsync() => throw new NotImplementedException();
+        public Task SetAlertCadenceOverridesJsonAsync(string? overridesJson) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryIdentityStore : IStreamerIdentityStore

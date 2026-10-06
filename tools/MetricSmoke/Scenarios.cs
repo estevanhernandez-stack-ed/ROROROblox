@@ -64,7 +64,7 @@ public static class SmokeTimings
     /// to prevent.
     /// </para>
     /// <para>
-    /// <b>Keyed to <see cref="AlertRouter.Cooldown"/>, not chosen.</b> The cooldown is the app's own
+    /// <b>Keyed to <see cref="AlertCadence.DefaultQuietPeriod"/>, not chosen.</b> The cooldown is the app's own
     /// statement of the timescale alerting decisions happen on, and it is the only production
     /// constant on this path that says anything about time at all. A tenth of it, so that retuning
     /// the cooldown moves the harness's patience with it in the right direction, and so the number
@@ -87,7 +87,7 @@ public static class SmokeTimings
     /// the same as not having it.
     /// </para>
     /// </summary>
-    public static readonly TimeSpan AlertWindow = AlertRouter.Cooldown / 10;
+    public static readonly TimeSpan AlertWindow = AlertCadence.DefaultQuietPeriod / 10;
 
     /// <summary>
     /// The app's own routine tick — <c>MainViewModel</c>'s <c>DispatcherTimer</c>, 30 seconds, which
@@ -943,7 +943,7 @@ public static class ScenarioTable
                 $"a condition that stayed true across three reports produced {locals} 'Alert → Local' "
                 + $"line(s), not one. Two things have to fail for that: the evaluator's crossing rule "
                 + $"(reports two and three are the same state, so not breaches at all) and the "
-                + $"{AlertRouter.Cooldown.TotalMinutes:0}-minute cooldown behind it.");
+                + $"{AlertCadence.DefaultQuietPeriod.TotalMinutes:0}-minute cooldown behind it.");
     }
 
     /// <summary>

@@ -50,14 +50,14 @@ public sealed class LogTailTests : IDisposable
         "2026-09-11 14:22:03.512 -07:00 [INF] v1.25.0.0 ROROROblox.App.Discord.AlertDispatcher "
         + "Alert → Mine: BaronBloxwell dropped out (1 account(s)).";
 
-    // Derived from AlertRouter.Cooldown rather than restated as a literal number: this line has to
+    // Derived from AlertCadence.DefaultQuietPeriod rather than restated as a literal number: this line has to
     // stay true to what AlertDispatcher.DispatchAsync actually renders, and a hand-typed number
     // here would go stale silently the moment that constant changes (it already had — this used to
     // hardcode "15-minute" against a 5-minute constant).
     private static readonly string RoutedNowhereLine =
         "2026-09-11 14:22:05.777 -07:00 [INF] v1.25.0.0 ROROROblox.App.Discord.AlertDispatcher "
         + "Alert raised for 2 account(s) but routed nowhere — check the destination, the "
-        + $"per-account mute, and the {AlertRouter.Cooldown.TotalMinutes}-minute cooldown.";
+        + $"per-account mute, and the {AlertCadence.DefaultQuietPeriod.TotalMinutes}-minute cooldown.";
 
     // AlertDispatcher.DispatchAsync's catch-all. Serilog renders the message and then puts the
     // exception on the lines after it, which is what the second line here stands in for.

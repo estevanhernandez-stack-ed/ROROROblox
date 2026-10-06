@@ -73,6 +73,24 @@ public partial class App : Application
     private static volatile bool MetricAlertsEnabled;
 
     /// <summary>
+    /// The resolved alert cadence (v1.33), cached for the same reason
+    /// <see cref="MetricAlertsEnabled"/> is: the dispatcher reads it on every dispatch, and some of
+    /// those dispatches arrive on a thread-pool timer thread that must not wait on a settings file.
+    ///
+    /// <para><c>volatile</c> on a reference, and <see cref="Discord.AlertCadence"/> is immutable, so
+    /// a reader sees either the old cadence or the new one and never a half-built map. There is no
+    /// generation lock here, unlike the metric gate: this value has ONE writer (the refresh below),
+    /// no nudge path, and the cost of a lost race is at most 30 seconds on a pace the user just
+    /// chose — not alerts continuing after an explicit opt-out, which is what bought the gate its
+    /// lock. The page that will nudge it lands with the Settings section (item 6).</para>
+    ///
+    /// <para>Defaults to the shipped five minutes rather than to nothing, so an alert raised during
+    /// startup — before the first read completes — is paced exactly as it was through v1.32.</para>
+    /// </summary>
+    private static volatile ROROROblox.Core.Discord.AlertCadence AlertCadenceSetting =
+        ROROROblox.Core.Discord.AlertCadence.Default;
+
+    /// <summary>
     /// Serialises the two writers of <see cref="MetricAlertsEnabled"/> against each other, and
     /// nothing else.
     ///
@@ -1151,7 +1169,8 @@ public partial class App : Application
             TimeProvider.System,
             sp.GetRequiredService<ILogger<AlertDispatcher>>(),
             sp.GetRequiredService<Notify.PhoneAlertSender>(),
-            () => sp.GetRequiredService<ROROROblox.Core.Notify.PhoneNotifyConfigService>().Current));
+            () => sp.GetRequiredService<ROROROblox.Core.Notify.PhoneNotifyConfigService>().Current,
+            () => AlertCadenceSetting));
 
         services.AddSingleton<IDiagnosticsCollector>(sp => new DiagnosticsCollector(
             sp.GetRequiredService<IAccountStore>(),
@@ -2026,6 +2045,13 @@ public partial class App : Application
             var settings = _services.GetRequiredService<IAppSettings>();
             await RefreshMetricAlertsGateAsync(settings).ConfigureAwait(true);
             vm.PeriodicTick += (_, _) => _ = RefreshMetricAlertsGateAsync(settings);
+
+            // Same seed-then-ride-the-tick shape, and for the same reason: IAppSettings broadcasts
+            // nothing, so there is no change hook to use. Unlike the metric gate this one has no
+            // file-existence shortcut — the cadence applies to every kind on every install, so
+            // there is nothing to skip.
+            await RefreshAlertCadenceAsync(settings).ConfigureAwait(true);
+            vm.PeriodicTick += (_, _) => _ = RefreshAlertCadenceAsync(settings);
         }
         catch (Exception ex)
         {
@@ -2089,6 +2115,31 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "Metric-alert opt-in re-read threw; the gate keeps its last value.");
+        }
+    }
+
+    /// <summary>
+    /// Re-reads the two cadence keys into <see cref="AlertCadenceSetting"/>.
+    ///
+    /// <para>A failed read lands on the shipped five minutes rather than keeping the last value, and
+    /// that is the same deliberate direction <see cref="RefreshMetricAlertsGateAsync"/> documents:
+    /// <c>AppSettings.LoadAsync</c> never throws — a locked file, a zero-length read mid-save and a
+    /// corrupt blob all return a DEFAULT <c>SettingsBlob</c>, whose <c>AlertCadenceMinutes</c> is 5.
+    /// So the likeliest failure writes the default over a user's choice for at most 30 seconds,
+    /// self-healing, and in the quieter direction. Only a genuinely exceptional throw reaches the
+    /// catch below, which leaves the cadence at its previous value.</para>
+    /// </summary>
+    private async Task RefreshAlertCadenceAsync(IAppSettings settings)
+    {
+        try
+        {
+            var minutes = await settings.GetAlertCadenceMinutesAsync().ConfigureAwait(false);
+            var overrides = await settings.GetAlertCadenceOverridesJsonAsync().ConfigureAwait(false);
+            AlertCadenceSetting = ROROROblox.Core.Discord.AlertCadence.FromSettings(minutes, overrides);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Alert-cadence re-read threw; the cadence keeps its last value.");
         }
     }
 

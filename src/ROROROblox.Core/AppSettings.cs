@@ -335,6 +335,56 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<int> GetAlertCadenceMinutesAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).AlertCadenceMinutes; }
+        finally { _gate.Release(); }
+    }
+
+    /// <summary>
+    /// Stored as given, negatives and all. Clamping here would make the file and the behaviour
+    /// disagree, and the degrade already lives in one place —
+    /// <see cref="Discord.AlertCadence.FromSettings"/>, which every reader goes through. Two
+    /// guards for one rule is how they drift.
+    /// </summary>
+    public async Task SetAlertCadenceMinutesAsync(int minutes)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { AlertCadenceMinutes = minutes }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
+    /// <summary>
+    /// Never null to a caller: a blob written with an explicit <c>null</c> for this key decodes as
+    /// null despite the non-nullable record type (System.Text.Json does not enforce it), and
+    /// handing that out would push the same null check into every reader.
+    /// </summary>
+    public async Task<string> GetAlertCadenceOverridesJsonAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).AlertCadenceOverridesJson ?? string.Empty; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetAlertCadenceOverridesJsonAsync(string? overridesJson)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            // Normalise blank to "" ("no overrides"), the same way UiLanguage normalises blank to
+            // null: a whitespace blob is an accident on the way to a choice, not a choice.
+            var value = string.IsNullOrWhiteSpace(overridesJson) ? string.Empty : overridesJson.Trim();
+            await SaveAsync(s with { AlertCadenceOverridesJson = value }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task<bool> GetStreamerModeAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -603,6 +653,16 @@ public sealed class AppSettings : IAppSettings, IDisposable
     // (if degenerate) signature. EdgeRemediationAnswers defaults to null ("nobody has been asked
     // about any theme"), which is what every settings.json written before v1.16 looks like — the
     // absent key is exactly the state the remediation prompt is designed to handle.
+    //
+    // AlertCadenceMinutes and AlertCadenceOverridesJson (v1.33) are the same no-migration deal:
+    // every settings.json written before this cycle has neither key, so both load at their
+    // defaults, and the default global is 5 — the exact number AlertRouter.Cooldown held as a
+    // static readonly from v1.0 to v1.32. An upgrade therefore changes nobody's alert pace. 0 is a
+    // REAL choice here ("every time", MemoryCapMb's idiom in this same record) rather than a
+    // sentinel, which is why neither is nullable: absent and zero never need telling apart, since
+    // absent resolves to 5 and zero resolves to zero. The overrides blob defaults to "" rather
+    // than null for the same reason an empty culture name does not — there is no third state to
+    // express, and AlertCadence.FromSettings treats null, blank and "{}" identically anyway.
     private sealed record SettingsBlob(
         int Version,
         bool LaunchMainOnStartup = false,
@@ -628,5 +688,7 @@ public sealed class AppSettings : IAppSettings, IDisposable
         double? MainWindowHeight = null,
         bool MainWindowMaximized = false,
         Dictionary<string, bool>? EdgeRemediationAnswers = null,
-        bool MetricAlertsEnabled = false);
+        bool MetricAlertsEnabled = false,
+        int AlertCadenceMinutes = 5,
+        string AlertCadenceOverridesJson = "");
 }

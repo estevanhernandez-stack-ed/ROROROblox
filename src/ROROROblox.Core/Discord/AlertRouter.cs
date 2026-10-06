@@ -53,12 +53,18 @@ public readonly record struct AlertCooldownKey
 /// </summary>
 public static class AlertRouter
 {
-    /// <summary>Per-account quiet period. A client that flaps must not page someone repeatedly.</summary>
-    public static readonly TimeSpan Cooldown = TimeSpan.FromMinutes(5);
-
     /// <summary>
+    /// <paramref name="cadence"/> is the quiet period per kind, and it arrives as an argument
+    /// because it is a user setting as of v1.33 — <c>AlertCadenceMinutes</c> and
+    /// <c>AlertCadenceOverridesJson</c> on <c>IAppSettings</c>. It was a <c>static readonly
+    /// TimeSpan Cooldown</c> here from v1.0 to v1.32, which is why
+    /// <see cref="AlertCadence.DefaultQuietPeriod"/> is still five minutes: an upgrade must change
+    /// nobody's pace. <c>null</c> means <see cref="AlertCadence.Default"/>, which is what every
+    /// caller that does not care about cadence passes.
+    /// <para>
     /// <paramref name="lastSentPerAccount"/> is keyed by <see cref="AlertCooldownKey"/>: (account,
     /// KIND), not by account alone, and for a metric breach (account, metric id).
+    /// </para>
     /// <para>
     /// Measured live on 2026-08-04: a memory warning at 00:13:55 stamped the cooldown for two
     /// accounts, and a genuine client close at 00:14:21 was swallowed because it fell inside that
@@ -79,17 +85,25 @@ public static class AlertRouter
         DiscordConfig config,
         IReadOnlyDictionary<AlertCooldownKey, DateTimeOffset> lastSentPerAccount,
         DateTimeOffset nowUtc,
-        bool phoneConfigured = false)
+        bool phoneConfigured = false,
+        AlertCadence? cadence = null)
     {
         ArgumentNullException.ThrowIfNull(pending);
         ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(lastSentPerAccount);
 
         var muted = config.MutedAccountIds.ToHashSet();
+        var pace = cadence ?? AlertCadence.Default;
 
         return pending
             .Where(t => !muted.Contains(t.AccountId))
-            .Where(t => !lastSentPerAccount.TryGetValue(AlertCooldownKey.For(t), out var last) || nowUtc - last > Cooldown)
+            // ONCE PER EVENT, BEFORE THE FAN-OUT. This clause runs per trigger and the GroupBy
+            // below it is what multiplies a kind out across its destinations, so a kind going to
+            // Discord AND the phone AND the desktop consults one cooldown slot once. Moving this
+            // check inside the SelectMany would read the same and mean something else — three
+            // destinations would each ask, and a refactor that did it would be green everywhere
+            // except the test that counts the consults (AlertCadenceTests).
+            .Where(t => MaySpeak(t, lastSentPerAccount, nowUtc, pace.For(t.Kind)))
             .GroupBy(t => t.Kind)
             .SelectMany(group =>
             {
@@ -101,6 +115,34 @@ public static class AlertRouter
                     .Select(destination => new RoutedAlert(destination, group.Key, triggers));
             })
             .ToList();
+    }
+
+    /// <summary>
+    /// Whether this trigger's slot has gone quiet long enough to speak again.
+    /// <para>
+    /// The comparison is <c>&gt;=</c>, not <c>&gt;</c>, and that is a fix rather than a taste
+    /// (v1.33). Measured 2026-10-04: a crossing at 23:33:03 produced nothing and the next at
+    /// 23:34:03 produced an alert, because the first landed exactly five minutes after the previous
+    /// send — to the second — and <c>&gt;</c> dropped it. Whatever samples the condition does so on
+    /// a fixed tick, so "exactly the cadence" is not a rare coincidence here; it is the common case
+    /// for anything the 30-second routine tick drives. A cadence of N must mean the repeat at N
+    /// speaks, or the interval a user picks is quietly N plus one tick.
+    /// </para>
+    /// <para>
+    /// A quiet period of zero is "every time" — the codebase's existing idiom for a deliberate off
+    /// (<c>MemoryCapMb</c>), and it short-circuits rather than relying on <c>now - last &gt;= 0</c>,
+    /// which would also have to trust the clock not to run backwards.
+    /// </para>
+    /// </summary>
+    private static bool MaySpeak(
+        AlertTrigger trigger,
+        IReadOnlyDictionary<AlertCooldownKey, DateTimeOffset> lastSentPerAccount,
+        DateTimeOffset nowUtc,
+        TimeSpan quietPeriod)
+    {
+        if (quietPeriod <= TimeSpan.Zero) return true;
+        return !lastSentPerAccount.TryGetValue(AlertCooldownKey.For(trigger), out var last)
+            || nowUtc - last >= quietPeriod;
     }
 
     private static IReadOnlyList<AlertDestination> Resolve(AlertKind kind, DiscordConfig config, bool phoneConfigured)

@@ -84,10 +84,10 @@ public class MetricRoutingTests
         };
 
         Assert.Empty(AlertRouter.Route([Breach(id)], config, last,
-            DateTimeOffset.UnixEpoch + AlertRouter.Cooldown - TimeSpan.FromSeconds(1)));
+            DateTimeOffset.UnixEpoch + AlertCadence.DefaultQuietPeriod - TimeSpan.FromSeconds(1)));
 
         Assert.Single(AlertRouter.Route([Breach(id)], config, last,
-            DateTimeOffset.UnixEpoch + AlertRouter.Cooldown + TimeSpan.FromSeconds(1)));
+            DateTimeOffset.UnixEpoch + AlertCadence.DefaultQuietPeriod + TimeSpan.FromSeconds(1)));
     }
 
     [Fact]

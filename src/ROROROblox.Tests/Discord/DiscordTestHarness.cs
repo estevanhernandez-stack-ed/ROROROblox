@@ -374,6 +374,20 @@ internal static class DiscordTestHarness
         public Task SetUiLanguageAsync(string? cultureName) => Task.CompletedTask;
         public Task<bool> GetMetricAlertsEnabledAsync() => Task.FromResult(false);
         public Task SetMetricAlertsEnabledAsync(bool enabled) => Task.CompletedTask;
+
+        /// <summary>The shipped five minutes, so a harness-built dispatcher paces exactly as it
+        /// did before cadence became a setting.</summary>
+        public int AlertCadenceMinutes { get; set; } = 5;
+        public Task<int> GetAlertCadenceMinutesAsync() => Task.FromResult(AlertCadenceMinutes);
+        public Task SetAlertCadenceMinutesAsync(int minutes) { AlertCadenceMinutes = minutes; return Task.CompletedTask; }
+
+        public string AlertCadenceOverridesJson { get; set; } = string.Empty;
+        public Task<string> GetAlertCadenceOverridesJsonAsync() => Task.FromResult(AlertCadenceOverridesJson);
+        public Task SetAlertCadenceOverridesJsonAsync(string? overridesJson)
+        {
+            AlertCadenceOverridesJson = overridesJson ?? string.Empty;
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore

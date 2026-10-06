@@ -137,6 +137,33 @@ public class SettingsReachabilityTests
             + "edits the whole map would be a settings editor, which is the thing this cycle is "
             + "arguing against."),
 
+        // THESE TWO ARE TEMPORARY AND SAY SO. v1.33's checklist splits the cadence setting (item 2)
+        // from the page that edits it (item 6), in that order, because the routing collapse has to
+        // land before the section is worth drawing. Between the two commits the keys persist with
+        // no control, which is exactly the state this fence exists to refuse — so they are listed
+        // rather than allowed to fail the suite, and the listing carries its own expiry.
+        //
+        // RETIRE BOTH IN ITEM 6, in the commit that adds the per-kind table. The checklist line
+        // "New settings keys are reachable from a control or allow-listed with a reason" is item
+        // 6's, and the honest reading of it is that these entries come OUT. An exemption outliving
+        // its reason is the failure mode this file has caught twice (DefaultPlaceUrl, and
+        // MetricAlertsEnabled below), both times after a cycle rather than within one.
+        //
+        // Not exempt because they are read at startup: App.xaml.cs reads both into the dispatcher's
+        // cadence provider, and App.xaml.cs is the composition root this fence deliberately
+        // excludes. A setting read there is being obeyed, not offered — see CompositionRoot.
+        new("AlertCadenceMinutes",
+            "v1.33 item 2 adds the key; v1.33 item 6 adds the control. Resolved through "
+            + "AlertCadence.FromSettings and consumed by AlertRouter.Route; the only reader today "
+            + "is the composition root, which this fence does not count. Retire this entry in item "
+            + "6's commit."),
+        new("AlertCadenceOverridesJson",
+            "Same split as AlertCadenceMinutes above — the per-kind override map ships one commit "
+            + "ahead of the table that edits it. Spec §8 leaves open whether every kind gets an "
+            + "override control or only the noisy ones, to be decided against the built page; "
+            + "whichever way that lands, the key stops being unreachable in item 6 and this entry "
+            + "retires with it."),
+
         // MetricAlertsEnabled's entry was RETIRED 2026-09-11 by the metric-alert routing plan,
         // which gave the setting the Settings section the entry said it was waiting for:
         // MetricAlertsEnabledToggle in SettingsPage.xaml, writing through

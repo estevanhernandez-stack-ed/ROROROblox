@@ -142,7 +142,7 @@ public class ScenarioTableTests
         // someone replaces it with a literal, or retunes the cooldown in a direction that makes the
         // window shorter than the app's own coarsest cadence, a negative row starts being able to pass
         // before the app could have fired — which is the false green this harness exists to prevent.
-        Assert.Equal(AlertRouter.Cooldown / 10, SmokeTimings.AlertWindow);
+        Assert.Equal(AlertCadence.DefaultQuietPeriod / 10, SmokeTimings.AlertWindow);
         Assert.True(SmokeTimings.AlertWindow >= SmokeTimings.AppRoutineTick,
             $"The alert window ({SmokeTimings.AlertWindow}) is shorter than the app's own routine tick "
             + $"({SmokeTimings.AppRoutineTick}), so a negative row could pass before the app looked.");

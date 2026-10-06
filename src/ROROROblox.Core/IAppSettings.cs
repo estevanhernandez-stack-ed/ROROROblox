@@ -215,4 +215,41 @@ public interface IAppSettings
     /// </summary>
     Task<bool> GetMetricAlertsEnabledAsync();
     Task SetMetricAlertsEnabledAsync(bool enabled);
+
+    /// <summary>
+    /// How many minutes one alert slot — (account, kind), plus the metric id for a metric breach —
+    /// stays quiet after it speaks. Defaults to 5, which is what
+    /// <c>AlertRouter.Cooldown</c> held as a <c>static readonly</c> from v1.0 to v1.32, so an
+    /// upgrade changes nobody's pace (v1.33).
+    /// <para>
+    /// <c>0</c> means every time, with no throttle at all. A real choice rather than a sentinel —
+    /// the same idiom <see cref="GetMemoryCapMbAsync"/> uses for a deliberate off, which is why
+    /// this is a plain <c>int</c> and not nullable. A negative value is a corrupt file rather than
+    /// a choice and <see cref="ROROROblox.Core.Discord.AlertCadence.FromSettings"/> reads it as the
+    /// shipped 5: the fallback has to be quieter than the corruption, not louder.
+    /// </para>
+    /// </summary>
+    Task<int> GetAlertCadenceMinutesAsync();
+    Task SetAlertCadenceMinutesAsync(int minutes);
+
+    /// <summary>
+    /// Per-kind cadence overrides as a small JSON map of <see cref="ROROROblox.Core.Discord.AlertKind"/>
+    /// NAME to minutes — <c>{"MemoryWarning":30}</c>. An absent or unusable entry means that kind
+    /// follows <see cref="GetAlertCadenceMinutesAsync"/>. Empty by default, so an untouched install
+    /// has one pace for everything.
+    /// <para>
+    /// One JSON key rather than one setting per kind: seven kinds would be seven members here,
+    /// seven fakes across four test files and seven reachability entries, for a feature whose UI is
+    /// one generated table (spec §2).
+    /// </para>
+    /// <para>
+    /// Keyed by NAME, which is the first thing in the app to persist an <c>AlertKind</c> at all —
+    /// so member names become load-bearing where their numeric order is not. Parsing is defensive
+    /// and per entry (see <see cref="ROROROblox.Core.Discord.AlertCadence.FromSettings"/>): a blob
+    /// that is not JSON, or one bad row beside a good one, degrades to the global and never throws.
+    /// A settings file nobody can parse must not be able to stop alerting.
+    /// </para>
+    /// </summary>
+    Task<string> GetAlertCadenceOverridesJsonAsync();
+    Task SetAlertCadenceOverridesJsonAsync(string? overridesJson);
 }

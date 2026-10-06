@@ -1614,6 +1614,18 @@ public class MainViewModelTests
         public bool MetricAlertsEnabled { get; set; }
         public Task<bool> GetMetricAlertsEnabledAsync() => Task.FromResult(MetricAlertsEnabled);
         public Task SetMetricAlertsEnabledAsync(bool enabled) { MetricAlertsEnabled = enabled; return Task.CompletedTask; }
+
+        public int AlertCadenceMinutes { get; set; } = 5;
+        public Task<int> GetAlertCadenceMinutesAsync() => Task.FromResult(AlertCadenceMinutes);
+        public Task SetAlertCadenceMinutesAsync(int minutes) { AlertCadenceMinutes = minutes; return Task.CompletedTask; }
+
+        public string AlertCadenceOverridesJson { get; set; } = string.Empty;
+        public Task<string> GetAlertCadenceOverridesJsonAsync() => Task.FromResult(AlertCadenceOverridesJson);
+        public Task SetAlertCadenceOverridesJsonAsync(string? overridesJson)
+        {
+            AlertCadenceOverridesJson = overridesJson ?? string.Empty;
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore

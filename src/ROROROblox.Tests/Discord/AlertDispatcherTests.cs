@@ -183,7 +183,7 @@ public class AlertDispatcherTests
         var id = Guid.NewGuid();
 
         await dispatcher.DispatchAsync([Dropped(id, "A")]).WaitAsync(TimeSpan.FromSeconds(5));
-        time.Advance(AlertRouter.Cooldown.Add(TimeSpan.FromSeconds(1)));
+        time.Advance(AlertCadence.DefaultQuietPeriod.Add(TimeSpan.FromSeconds(1)));
         await dispatcher.DispatchAsync([Dropped(id, "A")]).WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Equal(2, tray.Toasts.Count);

@@ -27,7 +27,8 @@ public sealed class AlertDispatcher(
     TimeProvider time,
     ILogger<AlertDispatcher> log,
     ROROROblox.App.Notify.PhoneAlertSender? phoneSender = null,
-    Func<ROROROblox.Core.Notify.PhoneNotifyConfig>? phoneConfig = null)
+    Func<ROROROblox.Core.Notify.PhoneNotifyConfig>? phoneConfig = null,
+    Func<AlertCadence>? cadence = null)
 {
     /// <summary>
     /// Keyed by <see cref="AlertCooldownKey"/> — (account, KIND), plus the metric id for a metric
@@ -107,7 +108,11 @@ public sealed class AlertDispatcher(
             var now = time.GetUtcNow();
             var phone = phoneConfig?.Invoke() ?? new ROROROblox.Core.Notify.PhoneNotifyConfig();
             var phoneReady = phoneSender is not null && !PhoneRejected && phone.IsConfigured;
-            var routed = AlertRouter.Route(triggers, current, _lastSent, now, phoneReady);
+            // Read per dispatch, like the Discord config beside it, so a cadence change takes
+            // effect on the next alert rather than on the next launch. A null provider means the
+            // shipped five minutes (AlertCadence.Default) — every test construction site.
+            var pace = cadence?.Invoke() ?? AlertCadence.Default;
+            var routed = AlertRouter.Route(triggers, current, _lastSent, now, phoneReady, pace);
 
             // Same diagnostic gap that cost three sessions on the presence side: without this, a
             // delivered alert and a swallowed one look identical in the log (both silent). The
@@ -117,7 +122,7 @@ public sealed class AlertDispatcher(
             {
                 log.LogInformation(
                     "Alert raised for {Count} account(s) but routed nowhere — check the destination, the per-account mute, and the {Cooldown}-minute cooldown.",
-                    triggers.Count, AlertRouter.Cooldown.TotalMinutes);
+                    triggers.Count, pace.Global.TotalMinutes);
                 return;
             }
 
