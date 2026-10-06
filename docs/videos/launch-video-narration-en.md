@@ -51,7 +51,7 @@ come back as *speakable* text, not listing copy.
 
 ### accounts (slide 2)
 - OVERLAY: `save once. launch as.`
-- VO: `This is RoRoRo! Save every alt once, and it's one click each. Live status, the game each one is actually in, even the RAM each client is eating.`
+- VO: `Save all your alts and manage your accounts. One click each, with live status and the game each one is actually in.`
 
 ### squad (slide 3)
 - OVERLAY: `same private server. all of them.`
@@ -67,7 +67,7 @@ come back as *speakable* text, not listing copy.
 
 ### trust (slide 6)
 - OVERLAY: `your password never touches it`
-- VO: `Your password never touches the app, the vault is encrypted, and a memory watchdog recycles a client before a leak crashes it. There are even keyboard shortcuts now.`
+- VO: `Your password never touches the app, ever. And there's a pile of quality of life on top. Just read the list!`
 
 ### cta (slide 7)
 - OVERLAY: `scan it, open on desktop`
