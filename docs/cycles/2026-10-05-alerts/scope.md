@@ -140,68 +140,58 @@ Carried by **v1.33**. A plugin that does not read the variable is unaffected, an
 absence as "open the window", so it works against today's RoRoRo too. `contractVersion` does not move;
 nothing in the gRPC surface changes.
 
-## Rider: the hand on the About page, and the tap
+## Rider: the hand on the About page, and the egg that already exists
 
-Added 2026-10-06 at Este's request, after reading the brand kit in `LabShare/626labs-assets/fonts`.
-Small, visual, and unrelated to alerts; recorded here rather than folded in silently.
+Added 2026-10-06 at Este's request. Small, visual, unrelated to alerts; recorded here rather than
+folded in silently.
 
-**Two pieces, and only the first is always on.**
+**Correction first, because it changes the whole rider.** The first two passes at this specced an
+Easter egg from scratch — tap count, randomisation, testability — without reading the tree. **The egg
+already ships.** `About/AboutPage.xaml.cs:21-26` reveals "Koii 4 eva" after clicking the VERSION
+NUMBER (not the nav item), and `_eggTarget = Random.Shared.Next(6, 8)` already randomises six-or-seven
+per shell lifetime. Este's "won't it always fire on six?" was answered in the code before either of us
+looked, and the "randomise it" insight written here as a proposal was describing shipped behaviour.
+The lesson is the cheap one: read the tree before designing, especially when the owner says "right
+now it has X" — that was him telling me it exists.
 
-1. **The 626Labs wordmark in EsteFont Pro, on the About page.** The hand's one rule is "Este's own
-   words, in his hand" — never UI labels, buttons or body copy — and the wordmark is that rule's own
-   stated exception, because "626Labs" in the hand *is* the company's signature. It belongs on the
-   About box of a 626 Labs product.
-2. **An Easter egg behind the About nav item.** Tap it **six or seven times** and a short line in
-   Este's voice appears, in his hand, signed.
+### What is actually already there
 
-**The tap count IS the joke, and it is not arbitrary.** "6-7" is the meme the Pet Sim 99 audience
-chants constantly — kids say it at each other all day — and the gag is that nobody can pin down
-whether it is six or seven.
+- Reveal text `AboutPage.xaml:103-112`, bound to `AboutPage_Koii4Eva`, localized in all six cultures.
+- Magenta (`MagentaBrush`) at `HeadingFontSize`, SemiBold.
+- **It already glows:** a `DropShadowEffect`, colour `#F22F89`, blur 14, no offset, opacity 0.85.
+- Hidden until fired (`Visibility="Collapsed"`, `Opacity="0"`).
+- Target randomised per shell, so the egg survives navigating away and back.
 
-**The threshold is chosen at random, six or seven, each time the counter starts.** Not fixed, and not
-"fires on both" — Este caught that one: if it fires on six and on seven, six always wins and seven
-never happens, so "6 or 7" would be a label on a spec that always means six. Randomising is the only
-version where the ambiguity is real. Sometimes it pops on the sixth tap, sometimes it asks for one
-more, and two kids who compare notes disagree honestly. That disagreement is the meme's social life
-and the reason the egg is worth building at all.
+### What this rider actually adds
 
-Pick the threshold when the counter starts rather than per tap, so a single attempt stays coherent —
-the sixth tap doing nothing and the seventh doing something is correct; the sixth tap doing nothing
-*sometimes mid-attempt* is a bug. The source of randomness is injected, not `new Random()` at the call
-site, so a test can pin it to six and to seven and assert both paths.
+1. **Put "Koii 4 eva" in Este's hand.** EsteFont Pro, which the reveal does not use today. Este's own
+   words for his clan, in his hand, is the one use the brand sanctions — and at that length the two
+   caveats raised earlier both evaporate: a dozen glyphs is nothing to subset, and the string is
+   short enough that leaving it unlocalised is honest rather than lazy. (It IS currently localised;
+   whether the hand version stays per-culture or becomes one fixed string is a decision for the
+   build.)
+2. **The 626Labs wordmark at the bottom of the About page.** "626Labs" in EsteFont Pro Bold with
+   "LLC" in Space Grotesk 600 — the lockup is defined in the brand kit's `assets/Logos/README.md`,
+   40px tall minimum, and **ships as SVG** (`626labs-wordmark-{dark,light,duo}.svg`), so this half may
+   need no font embedding at all.
+3. **Make it ridiculous.** It glows already; the ask is a gradient on top. This is the one place in
+   the app where over-the-top is correct — it is an egg, for kids, that you had to work to find.
 
-A correction worth keeping, because it shows the failure mode: the first pass at this read the gesture
-as Android's developer-options Easter egg (seven taps on the build number) and proposed six "so the
-number is 626, not Android's". That is a tidy brand joke for an adult who has flashed a phone, and it
-is deaf to the actual audience. This is a tool for a Roblox clan. **The audience's joke beats the
-brand's joke**, and anyone building this should resist making the number mean something.
+### Constraints the build still has to honour
 
-**Why an egg and not a theme.** The ask started as an Easter egg *theme*. A theme is the one shape
-that cannot work: it would render UI labels in the hand, which is exactly what the single rule
-forbids, and mechanically this app's themes are ten colours in a JSON file with no font axis. An egg
-that reveals Este's words is the use the brand actually sanctions, and the hand appearing *because
-someone went looking* is a better joke than the hand as a skin.
-
-**Constraints the build has to honour.**
-
-- **The font ships as TTF** (`EsteFontPro-Regular.ttf` 34 KB, `-Bold.ttf` 31 KB). WPF cannot use the
-  woff2. Embed as a `Resource` and reference by pack URI.
-- **No `FontFamily` literal in markup.** `TypeLadderFenceTests` forbids them, so the hand enters the
-  type ladder as a token beside the existing display/body/mono families, and the fence's counts move
-  in the same commit.
-- **Never below 24px, upright, never italic or letter-spaced.** The slant and spacing are drawn into
-  the glyphs. The hand's x-height is 0.45em, so it needs roughly 1.2x the size the surrounding type
-  would use — which means a ladder size token, against a `DistinctRawSizeCeiling` of 3.
-- **Subset the font to the glyphs actually used.** Shipping the full hand inside a public MSIX means
-  anyone can extract Este's handwriting, which is 626Labs-owned and marked for 626 Labs work only.
-  The wordmark plus one fixed line needs a few dozen glyphs; subsetting takes it to a few KB and
-  makes extraction worthless. This is the only part of the rider with a real downside if skipped.
-- **The line does not localise.** A handwritten paragraph would be English for all six languages,
-  against this app's own posture. A signature and one short line are fine; a paragraph is not, and
-  the egg's copy should stay short enough that this stays true.
-
-**Blocked on one thing only: the line itself.** It has to be Este's own words — that is the whole
-rule — so it cannot be drafted here. One or two sentences, plus how he wants it signed.
+- **The font ships as TTF** (`EsteFontPro-Regular.ttf` 34 KB, `-Bold.ttf` 31 KB, in
+  `LabShare/626labs-assets/fonts` and in the design skill). WPF cannot use the woff2.
+- **No `FontFamily` literal in markup** — `TypeLadderFenceTests` forbids them, so the hand enters the
+  type ladder as a token and the fence's counts move in the same commit.
+- **Never below 24px, upright, never italic or letter-spaced**; the slant and spacing are drawn into
+  the glyphs. The hand's x-height is 0.45em, so it wants ~1.2x the surrounding size.
+- **Subset before shipping the hand in a public MSIX.** Less pressing if the wordmark comes in as SVG
+  and the only live text is a dozen glyphs, but a full handwriting font inside a public package is
+  extractable and it is 626Labs-owned.
+- **Nothing tests the egg today** (`grep` for `EasterEgg|eggTarget|Koii4Eva` across the test project
+  finds only build artefacts). `Random.Shared` at the field initialiser cannot be pinned, so neither
+  branch is assertable. Making the source injectable is a small change and the only way the egg does
+  not silently break.
 
 ## Loose Implementation Notes
 
