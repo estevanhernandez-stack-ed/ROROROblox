@@ -164,18 +164,36 @@ now it has X" — that was him telling me it exists.
 
 ### What this rider actually adds
 
-1. **Put "Koii 4 eva" in Este's hand.** EsteFont Pro, which the reveal does not use today. Este's own
-   words for his clan, in his hand, is the one use the brand sanctions — and at that length the two
-   caveats raised earlier both evaporate: a dozen glyphs is nothing to subset, and the string is
-   short enough that leaving it unlocalised is honest rather than lazy. (It IS currently localised;
-   whether the hand version stays per-culture or becomes one fixed string is a decision for the
-   build.)
-2. **The 626Labs wordmark at the bottom of the About page.** "626Labs" in EsteFont Pro Bold with
-   "LLC" in Space Grotesk 600 — the lockup is defined in the brand kit's `assets/Logos/README.md`,
-   40px tall minimum, and **ships as SVG** (`626labs-wordmark-{dark,light,duo}.svg`), so this half may
-   need no font embedding at all.
-3. **Make it ridiculous.** It glows already; the ask is a gradient on top. This is the one place in
-   the app where over-the-top is correct — it is an egg, for kids, that you had to work to find.
+**Both marks are wordmarks, not styled text** (Este, 2026-10-06). That one decision removes most of
+the work this rider originally carried.
+
+1. **"Koii 4 eva" becomes a wordmark in Este's hand.** His own words for his clan, drawn rather than
+   set — the one use of the hand the brand sanctions.
+2. **The 626Labs wordmark WITH "LLC" at the bottom of the About page.** Not the signature: the
+   brand kit reserves the full lockup for "where the legal entity is meant", and an app's attribution
+   line is exactly that. "626Labs" in EsteFont Pro Bold, "LLC" in Space Grotesk 600 at about a third
+   of the hand's size, baseline-aligned, 40px tall minimum. Ships as
+   `626labs-wordmark-{dark,light,duo}.svg`.
+3. **Gradient over the glow it already has.** The reveal already carries a magenta `DropShadowEffect`;
+   the ask is to make it ridiculous, and this is the one screen in the app where that is correct.
+
+**No font embedding.** As assets, neither mark needs EsteFont Pro inside the binary, which deletes
+three constraints at once: no TTF in the package, no subsetting to stop the handwriting being
+extracted from a public MSIX, and no new `FontFamily` token fighting `TypeLadderFenceTests`.
+
+**Follow the avatar pattern, which this repo already has.** `StreamerMode/Avatars/sources/*.svg` are
+kept as sources with the consumed `*.png` committed beside them; WPF has no SVG renderer, so this is
+the established answer here rather than a new one. Export at the scales the splash screen uses.
+
+**The gradient wants an `OpacityMask`, not a baked asset.** Export the wordmark as a transparent PNG,
+use it to mask a `LinearGradientBrush`, and keep the existing drop shadow for the glow. The colours
+then come from theme brushes instead of being frozen into the image, so the egg follows the theme and
+one asset serves all four.
+
+**One decision this forces.** `AboutPage_Koii4Eva` is currently localized in all six cultures. As a
+drawn mark it stops being per-culture — which is consistent with this project's own rule that product
+nouns stay English, since a clan's name is a proper noun and not prose. The six resx entries then need
+retiring deliberately rather than left orphaned.
 
 ### Constraints the build still has to honour
 
