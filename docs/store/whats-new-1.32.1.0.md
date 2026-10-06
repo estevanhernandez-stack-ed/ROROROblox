@@ -21,12 +21,21 @@
 > Register follows each existing sheet: **vous** in French, **вы** in Russian, **du** in German,
 > informal elsewhere. Product nouns stay English: RoRoRo, Roblox.
 >
-> **Verifier run: NOT RUN.** The translation-verifier MCP was not connected in the session that
-> drafted these (2026-10-06), so the usual voice review did not happen. The blocks are shorter and
-> structurally simpler than any previous release's — one heading, three bullets, one closing line,
-> with every UI label lifted verbatim from the shipped resources rather than translated here. That
-> lowers the risk but does not remove it. Recorded in `submission-packet-1.32.1.0.md` so the gap is
-> visible at submission time rather than discovered later.
+> **Verifier run: DONE at `442b521`, both shapes, all six pairs judged.** Three approve (fr, de,
+> pt-br) and three revise (ru, pl, es) — and all three revisions are **the same rule-3 false positive
+> v1.32 drew twelve times**: "in-app UI strings must remain untranslated in English". The rule
+> assumes an English-only interface. RoRoRo's interface has been localized into exactly these six
+> languages since v1.26, so a Spanish listing that quotes "Memory to keep free (MB)" would name a
+> label no Spanish user can find, while "Memoria que mantener libre (MB)" is what their app actually
+> says. **Overruled on the same ground as v1.32, and the suggested fixes are deliberately not
+> applied.**
+>
+> The split is itself evidence it is an artifact rather than a finding: the identical construction
+> was approved in French, German and Portuguese and flagged in Russian, Polish and Spanish. A real
+> rule violation would not land on half the set.
+>
+> **No other issue was raised in any language** — no mistranslation, no register slip, no cap
+> problem. Details in `submission-packet-1.32.1.0.md` section 3.
 >
 > Sources: `docs/store/release-notes-1.32.1.0.md`, PR #225.
 

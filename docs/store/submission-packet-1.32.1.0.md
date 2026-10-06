@@ -85,19 +85,42 @@ six sheets announce 1.32.1.0.
 Every block is well inside the 1500-character limit: English 667, German 751, French 851, Russian
 746, Portuguese 744, Polish 724, Spanish 762.
 
-**Verifier run: NOT RUN, and this is the open item on this submission.** The translation-verifier MCP
-was not connected in the drafting session, so the usual voice review did not happen. What stands in
-for it:
+**Verifier run: DONE 2026-10-06 at `442b521`, both shapes.** All six `whatsNew` pairs judged.
 
-- Every UI label inside the blocks is lifted verbatim from the shipped `Strings.<culture>.resx`
-  rather than translated here, so the names a user reads in the app and in the listing cannot
-  disagree.
-- Each block follows its sheet's established register — vous in French, вы in Russian, du in German,
-  informal in the rest — checked against the existing v1.32 block in each file.
-- The copy is structurally the simplest of any release: one heading, three bullets, one closing line.
+| Language | Verdict | Issue |
+|---|---|---|
+| fr | approve | none |
+| de | approve | none |
+| pt-br | approve | none |
+| ru | revise | blocker — rule 3, "in-app UI strings must remain untranslated" |
+| pl | revise | blocker — rule 3, same |
+| es | revise | blocker — rule 3, same |
 
-That lowers the risk; it does not remove it. **If the owner wants the gate honoured, reconnect the
-verifier and run it before submitting** — the blocks are ready to feed it as they are.
+**All three blockers are one false positive, and it is overruled.** Rule 3 assumes the application's
+interface is English. RoRoRo's interface has been localized into exactly these six languages since
+v1.26, and the labels quoted in each block are lifted verbatim from the shipped
+`Strings.<culture>.resx`. Applying the suggested fixes would put "Memory to keep free (MB)" into the
+Spanish listing, naming a label no Spanish user can find in their own app — it would make the listing
+less accurate, not more. v1.32 drew this same false positive twelve times out of twelve and overruled
+it on identical grounds.
+
+**The split is the tell.** The same construction was approved in French, German and Portuguese and
+flagged in Russian, Polish and Spanish. A genuine rule violation would not land on half the set;
+model variance does.
+
+**No other issue was raised, in any language** — no mistranslation, no register slip, no cap
+violation, nothing on content. For copy whose only prose is one heading, three bullets and a closing
+line, with every UI label taken from the shipped resources, that is the expected result and it is now
+evidenced rather than asserted.
+
+**Known gaps in the run:** four pairs were still unjudged when the run stopped — `longDescription`
+and `features` for some languages, which this release does not touch and which were already pending
+before it. The verifier's origin also returned a timeout and then a 502 near the end; the six pairs
+that matter were already judged by then. Worth filing upstream (dogfood issues go to
+`estevanhernandez-stack-ed/translation-verification`): **rule 3 has now produced a false positive on
+every pair of two consecutive releases**, because the rubric has no way to know the product's own UI
+is localized. That is a rubric bug, not a copy bug, and it costs a manual overrule every release
+until it is fixed.
 
 ## 4. Notes for certification
 
