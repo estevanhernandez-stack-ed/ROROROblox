@@ -18,13 +18,16 @@ internal partial class AboutPage : UserControl
     private const string RepoUrl = "https://github.com/estevanhernandez-stack-ed/ROROROblox";
     private const string IssuesUrl = "https://github.com/estevanhernandez-stack-ed/ROROROblox/issues";
 
-    // Easter egg: clicking the version number 6 OR 7 times reveals "Koii 4 eva". The exact
-    // target is randomized per construction so the click count is non-deterministic. A page is
-    // constructed once per shell lifetime, so "per construction" now means per shell — the egg
-    // survives navigating away and back, which suits an egg.
-    private readonly int _eggTarget = Random.Shared.Next(6, 8);
-    private int _eggClicks;
-    private bool _eggFired;
+    // Easter egg: clicking the version number 6 OR 7 times reveals "Koii 4 eva". The exact target
+    // is randomized per construction so the click count is non-deterministic. A page is constructed
+    // once per shell lifetime, so "per construction" means per shell — the egg survives navigating
+    // away and back, which suits an egg.
+    //
+    // The counting moved to EasterEggCounter (2026-10-06) so it can be tested: the target used to be
+    // Random.Shared at a field initialiser here, which no test could pin, leaving the exclusive
+    // upper bound in Next(6, 8) — the whole of the 6-7 joke — guarded by nothing. What stays here is
+    // the half a test cannot see: the fade and the visibility flip.
+    private readonly EasterEggCounter _egg = EasterEggCounter.CreateRandom();
 
     public AboutPage()
     {
@@ -68,11 +71,8 @@ internal partial class AboutPage : UserControl
 
     private void OnVersionClicked(object sender, MouseButtonEventArgs e)
     {
-        if (_eggFired) return;
-        _eggClicks++;
-        if (_eggClicks < _eggTarget) return;
+        if (!_egg.Click()) return;
 
-        _eggFired = true;
         EasterEggText.Visibility = Visibility.Visible;
         var fade = new DoubleAnimation
         {
