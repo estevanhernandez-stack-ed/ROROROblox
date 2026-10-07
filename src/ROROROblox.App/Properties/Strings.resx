@@ -3008,7 +3008,7 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
     <value>The tray icon colours whatever you untick here, so you can always find out at the PC. Unticking Desktop drops the notification and its sound, never the badge.</value>
   </data>
   <data name="SettingsPage_AnAccountGoesIdle" xml:space="preserve">
-    <value>An account goes idle</value>
+    <value>An account goes idle in a game</value>
   </data>
   <data name="SettingsPage_SendIdleAlertsToThe" xml:space="preserve">
     <value>Send idle alerts to the desktop</value>
@@ -3023,7 +3023,7 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
     <value>Send idle alerts to my phone</value>
   </data>
   <data name="SettingsPage_NobodyHasTouchedTheAccount" xml:space="preserve">
-    <value>How long an account sits with no input from you before it counts as idle. The row chip appears at the same moment, whatever this alert is set to.</value>
+    <value>How long an account sits with no input from you before it counts as idle. Only accounts actually in a game raise this alert, since only they can be kicked for it. The row chip appears at the same moment either way, whatever this alert is set to.</value>
   </data>
   <data name="SettingsPage_HowOftenDropOutAlertsMay" xml:space="preserve">
     <value>How often drop-out alerts may repeat at most</value>

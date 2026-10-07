@@ -113,6 +113,12 @@ public class MainViewModelMarshalledHandlerTests
             var id = Guid.NewGuid();
             vm.Accounts.Add(Row(id));
 
+            // Idle means IN-GAME idle (Este's ruling 2026-10-07), so the row has to actually be in
+            // a game or the crossing is correctly dropped and this test proves nothing.
+            vm.ApplyPresence(new AccountPresenceEventArgs(
+                id, UserPresenceType.InGame, placeId: 8737899170, gameName: "Pet Simulator 99!",
+                occurredAtUtc: DateTimeOffset.UtcNow, server: null));
+
             IReadOnlyList<AlertTrigger>? raised = null;
             vm.AlertsRaised += (_, triggers) => raised = triggers;
 

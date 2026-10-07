@@ -26,6 +26,31 @@ a config written before the field existed reads `[Local]`, not `[]`.
 - [ ] Append-only: no existing kind's position in any destination list moves.
 - [ ] `WebhookPayload` renders the new kind with wording that reads as a sentence, not a label.
 
+**Amended 2026-10-07, after this item had already shipped.** Este's ruling on the open question
+this item left behind: *"an account that isn't in a game should not be getting an idle alert. That's
+crazy. It needs to be in game idle."* The alert's value is that Roblox is about to kick the account
+out of a game it is earning in; an account on the website, in Studio or offline has nothing to be
+kicked out of.
+
+- [x] `ApplyActivityWarnCrossed` drops any crossing whose row is not `InGame`. The gate is at the
+      trigger, not in `ActivityMonitor` — `WarnLatched` answers "newly gone quiet", which stays true
+      and useful regardless of presence and feeds more than alerts.
+- [x] `Invisible` (the presence privacy filter) is dropped too: we cannot see that the account is in
+      a game, so we do not claim it is. **Consequence, named not hidden:** a user whose presence
+      privacy is on gets no idle alerts at all, and nothing on screen says why. Candidate for a
+      later cycle, not this one.
+- [x] Per-account inside a coalesced event, not a veto on the event — a mixed roster raises for the
+      players and drops the parked.
+- [x] The copy stops understating it: the row reads "An account goes idle in a game" and the hint
+      says only in-game accounts raise the alert while the chip still appears either way. Both keys
+      were already among the 32 English-only ones, so no translation was made false.
+- [x] **Three fixtures had to be fixed, which is why this shipped wrong green.**
+      `IdleAlertTriggerTests` (×2) and `MainViewModelMarshalledHandlerTests` (×1) added rows
+      straight to `vm.Accounts`, where presence defaults to `Offline` — so the suite could not tell
+      in-game from parked. A private `InGame(vm, id)` helper now drives presence through
+      `ApplyPresence`, and the five new gate tests have an in-game anchor so they cannot be
+      satisfied by raising nothing ever.
+
 ## 2. Cadence becomes a setting
 
 **Depends on:** nothing (parallel with 1). **Effort:** M.

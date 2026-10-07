@@ -3605,6 +3605,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// which game the account is about to be kicked out of — never reaches the screen.
     /// </para>
     /// <para>
+    /// IDLE MEANS IN-GAME IDLE. A crossing for an account that presence does not report as
+    /// <see cref="UserPresenceType.InGame"/> is dropped. Este's ruling 2026-10-07, correcting what
+    /// item 1 shipped: the alert's whole value is that Roblox is about to kick the account out of a
+    /// game it is earning in, and an account on the website, in Studio, or offline has nothing to
+    /// be kicked out of. <see cref="UserPresenceType.Invisible"/> (the privacy filter) is dropped
+    /// for the same reason read the other way — we cannot see that it is in a game, so we do not
+    /// claim it is. The consequence, named rather than hidden: a user whose presence privacy keeps
+    /// RoRoRo from reading their accounts gets no idle alerts at all, and nothing on screen says
+    /// why.
+    /// </para>
+    /// <para>
+    /// The gate is here and NOT in <see cref="IActivityMonitor"/>: <c>WarnLatched</c> answers "has
+    /// this account newly gone quiet", which is true and useful regardless of presence and feeds
+    /// more than alerts. This method is where "may we speak about it" is already decided.
+    /// </para>
+    /// <para>
     /// A crossing for an account with no row is dropped, <see cref="BuildMemoryAlerts"/>'s
     /// precedent: there is no name to say and no game to name, and "An account went idle" is worse
     /// than silence. Both names travel, the same contract every other kind follows —
@@ -3621,6 +3637,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RaiseAlerts(crossed
             .Select(id => Accounts.FirstOrDefault(a => a.Id == id))
             .Where(row => row is not null)
+            .Where(row => row!.InGame)
             .Select(row => new AlertTrigger(
                 AlertKind.AccountIdle, row!.Id, row.RenderName, row.DisplayName,
                 row.CurrentGameName, PrivateBytes: null, nowUtc))

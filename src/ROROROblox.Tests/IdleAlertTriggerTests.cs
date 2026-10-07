@@ -1,6 +1,7 @@
 using System.IO;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Diagnostics;
 using ROROROblox.Core.Discord;
 
 namespace ROROROblox.Tests;
@@ -36,6 +37,17 @@ public class IdleAlertTriggerTests
     private static readonly IReadOnlyDictionary<AlertCooldownKey, DateTimeOffset> NothingSentYet =
         new Dictionary<AlertCooldownKey, DateTimeOffset>();
 
+    /// <summary>
+    /// Drives a row in-game through the production seam. Required before any idle crossing, because
+    /// idle means IN-GAME idle (Este's ruling 2026-10-07) and a row added straight to
+    /// <c>vm.Accounts</c> starts at <see cref="UserPresenceType.Offline"/>. Two tests here used to
+    /// pass without it, which is the only reason the wrong behaviour shipped green.
+    /// </summary>
+    private static void InGame(MainViewModel vm, Guid accountId) =>
+        vm.ApplyPresence(new AccountPresenceEventArgs(
+            accountId, UserPresenceType.InGame, placeId: 8737899170,
+            gameName: "Pet Simulator 99!", occurredAtUtc: DateTimeOffset.UtcNow, server: null));
+
     private static AlertTrigger Idle(Guid accountId, string name = "BaronBloxwell") =>
         new(AlertKind.AccountIdle, accountId, name, $"real_{name}", "Pet Simulator 99!",
             PrivateBytes: null, DateTimeOffset.UtcNow);
@@ -55,6 +67,7 @@ public class IdleAlertTriggerTests
         {
             var added = await store.AddAsync("IdleOne", "", "cookie");
             vm.Accounts.Add(new AccountSummary(added));
+            InGame(vm, added.Id);
 
             var raised = new List<AlertTrigger>();
             vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
@@ -83,7 +96,11 @@ public class IdleAlertTriggerTests
             var a = await store.AddAsync("One", "", "cookie");
             var b = await store.AddAsync("Two", "", "cookie");
             var c = await store.AddAsync("Three", "", "cookie");
-            foreach (var account in new[] { a, b, c }) vm.Accounts.Add(new AccountSummary(account));
+            foreach (var account in new[] { a, b, c })
+            {
+                vm.Accounts.Add(new AccountSummary(account));
+                InGame(vm, account.Id);
+            }
 
             var events = new List<IReadOnlyList<AlertTrigger>>();
             vm.AlertsRaised += (_, triggers) => events.Add(triggers);
@@ -178,6 +195,84 @@ public class IdleAlertTriggerTests
             Assert.Empty(raised);
         }
         finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    // ---- Idle means IN-GAME idle -------------------------------------------------------------
+    //
+    // Este's ruling, 2026-10-07, on a question item 1 shipped the wrong way: "an account that isn't
+    // in a game should not be getting an idle alert. It needs to be in game idle."
+    //
+    // The alert's whole value is that Roblox is about to kick the account out of a game it is
+    // earning in. An account sitting on the website, or in Studio, or whose presence we cannot read
+    // at all, has nothing to be kicked out of — the alert would be noise at best, and at worst it
+    // says "went idle" about an account the user deliberately parked.
+    //
+    // ActivityMonitor is the wrong place to gate it: WarnLatched answers "has this account NEWLY
+    // gone quiet", which is true and useful regardless of presence, and the latch feeds more than
+    // alerts. The gate belongs at the trigger, where "may we speak about this" is already decided.
+
+    [Theory]
+    [InlineData(UserPresenceType.OnlineWebsite)] // logged in, not playing
+    [InlineData(UserPresenceType.InStudio)]      // building, not playing
+    [InlineData(UserPresenceType.Offline)]       // not online anywhere
+    [InlineData(UserPresenceType.Invisible)]     // privacy filter: we cannot tell, so we do not claim
+    public void AnIdleCrossingForAnAccountThatIsNotInAGameRaisesNothing(UserPresenceType presence)
+    {
+        var (vm, row) = Discord.DiscordTestHarness.VmWithOneInGameAccount(
+            realName: "este_real", maskedName: "CaptainNoodle");
+
+        // Starts in-game from the harness, then leaves. Driven through ApplyPresence, the same seam
+        // production uses, so this exercises the real transition rather than a poked field.
+        vm.ApplyPresence(new AccountPresenceEventArgs(
+            row.Id, presence, placeId: null, gameName: null,
+            occurredAtUtc: DateTimeOffset.UtcNow, server: null));
+
+        var raised = new List<AlertTrigger>();
+        vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
+
+        vm.ApplyActivityWarnCrossed([row.Id]);
+
+        Assert.Empty(raised);
+    }
+
+    [Fact]
+    public void AnIdleCrossingForAnInGameAccountStillRaises()
+    {
+        // The anchor for the gate above: it must not be satisfiable by raising nothing ever.
+        var (vm, row) = Discord.DiscordTestHarness.VmWithOneInGameAccount(
+            realName: "este_real", maskedName: "CaptainNoodle");
+        var raised = new List<AlertTrigger>();
+        vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
+
+        vm.ApplyActivityWarnCrossed([row.Id]);
+
+        Assert.Single(raised);
+        Assert.True(row.InGame);
+    }
+
+    [Fact]
+    public void AMixedCrossingRaisesOnlyForTheInGameAccounts()
+    {
+        // The coalescing case. ActivityMonitor hands over every account that crossed in one event,
+        // and a real roster is mixed — some playing, some parked on the website. The gate is
+        // per-account inside the event, not a veto on the whole event.
+        var (vm, inGame) = Discord.DiscordTestHarness.VmWithOneInGameAccount(
+            realName: "playing_real", maskedName: "StillPlaying");
+
+        var parked = new AccountSummary(new Account(
+            Guid.NewGuid(), "parked_real", "", DateTimeOffset.UtcNow, LastLaunchedAt: null));
+        vm.Accounts.Add(parked);
+        vm.ApplyPresence(new AccountPresenceEventArgs(
+            parked.Id, UserPresenceType.OnlineWebsite, placeId: null, gameName: null,
+            occurredAtUtc: DateTimeOffset.UtcNow, server: null));
+
+        var raised = new List<AlertTrigger>();
+        vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
+
+        vm.ApplyActivityWarnCrossed([inGame.Id, parked.Id]);
+
+        var trigger = Assert.Single(raised);
+        Assert.Equal(inGame.Id, trigger.AccountId);
     }
 
     // ---- The router is the only thing that decides whether it reaches a screen ----------------
