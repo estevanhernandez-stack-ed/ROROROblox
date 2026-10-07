@@ -99,6 +99,56 @@ public class TogglePatternReachesTheHandlerTests
         Assert.True(landed, "a two-way binding must carry an automation toggle through to its source");
     }
 
+    [Fact]
+    public void ACheckBoxToggledThroughAutomationRaisesCheckedOrUncheckedExactlyOnce()
+    {
+        // The other half of the framework fact above, and the one v1.33 item 7's conversion rests
+        // on. The file previously pinned only that Toggle() does NOT raise Click, which says what
+        // is broken without saying what works — so the fix's premise ("wire Checked/Unchecked
+        // instead") was still unmeasured here. EXACTLY once matters as much as at least once: one
+        // shared handler on both events is the shape the Settings page uses, and a toggle that
+        // raised both would save twice per user action.
+        var result = WindowRenderHost.Run<(int Checked, int Unchecked, int Shared)>(() =>
+        {
+            var box = new CheckBox { IsChecked = false };
+            int onChecked = 0, onUnchecked = 0, shared = 0;
+            box.Checked += (_, _) => { onChecked++; shared++; };
+            box.Unchecked += (_, _) => { onUnchecked++; shared++; };
+
+            var peer = new CheckBoxAutomationPeer(box);
+            ((IToggleProvider)peer).Toggle();   // false -> true
+            ((IToggleProvider)peer).Toggle();   // true -> false
+
+            return (onChecked, onUnchecked, shared);
+        }, "checkbox toggled twice through its automation peer");
+
+        Assert.Equal(1, result.Checked);
+        Assert.Equal(1, result.Unchecked);
+        Assert.Equal(2, result.Shared);
+    }
+
+    [Fact]
+    public void AProgrammaticIsCheckedWriteAlsoRaisesChecked()
+    {
+        // Why item 7's conversion needed guards rather than just a rewire. While these toggles were
+        // Click-wired, an IsChecked assignment raised nothing, so painting the initial state and
+        // rolling a failed save back were both free. Checked/Unchecked makes every programmatic
+        // write indistinguishable from a user action — including the rollback a handler performs
+        // from inside itself, which re-enters that same handler. SettingsPage.SetToggle and its
+        // sibling in SquadLaunchWindow exist for exactly this, and this test is the fact they
+        // answer to.
+        var raised = WindowRenderHost.Run<int>(() =>
+        {
+            var box = new CheckBox { IsChecked = false };
+            var seen = 0;
+            box.Checked += (_, _) => seen++;
+            box.IsChecked = true;   // no click, no automation, no user
+            return seen;
+        }, "checkbox assigned programmatically");
+
+        Assert.Equal(1, raised);
+    }
+
     private sealed class BindableFlag : System.ComponentModel.INotifyPropertyChanged
     {
         private bool _on;

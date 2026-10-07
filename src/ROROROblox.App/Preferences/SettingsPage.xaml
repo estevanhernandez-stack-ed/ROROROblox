@@ -85,7 +85,7 @@
                                           Foreground="{DynamicResource WhiteBrush}"
                                           FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
-                                          Click="OnRunOnLoginToggle">
+                                          Checked="OnRunOnLoginToggle" Unchecked="OnRunOnLoginToggle">
                                     <TextBlock Text="{loc:Loc SettingsPage_StartRororoWhenWindowsStarts}" />
                                 </CheckBox>
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
@@ -104,7 +104,7 @@
                                           Foreground="{DynamicResource WhiteBrush}"
                                           FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
-                                          Click="OnLaunchMainToggle">
+                                          Checked="OnLaunchMainToggle" Unchecked="OnLaunchMainToggle">
                                     <TextBlock Text="{loc:Loc SettingsPage_LaunchYourMainAccountWhen}" />
                                 </CheckBox>
                                 <TextBlock x:Name="LaunchMainHint"
@@ -137,7 +137,7 @@
                                           FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
                                           AutomationProperties.Name="{loc:Loc SettingsPage_LaunchASquadOneAccount}"
-                                          Click="OnCarefulSquadLaunchToggle">
+                                          Checked="OnCarefulSquadLaunchToggle" Unchecked="OnCarefulSquadLaunchToggle">
                                     <TextBlock Text="{loc:Loc SettingsPage_LaunchASquadOneAccount_2}" TextWrapping="Wrap" />
                                 </CheckBox>
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
@@ -153,7 +153,7 @@
                                           FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
                                           AutomationProperties.Name="{loc:Loc SettingsPage_KeepRobloxWindowed}"
-                                          Click="OnLaunchWindowedToggle">
+                                          Checked="OnLaunchWindowedToggle" Unchecked="OnLaunchWindowedToggle">
                                     <TextBlock Text="{loc:Loc SettingsPage_KeepRobloxWindowed_2}" TextWrapping="Wrap" />
                                 </CheckBox>
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
@@ -212,7 +212,7 @@
                                           Foreground="{DynamicResource WhiteBrush}"
                                           FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
-                                          Click="OnAlwaysShowRecycleToggle">
+                                          Checked="OnAlwaysShowRecycleToggle" Unchecked="OnAlwaysShowRecycleToggle">
                                     <TextBlock Text="{loc:Loc SettingsPage_AlwaysShowRecycleOnRunning}" TextWrapping="Wrap" />
                                 </CheckBox>
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
@@ -232,7 +232,7 @@
                                           Foreground="{DynamicResource WhiteBrush}"
                                           FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
-                                          Click="OnAutoForceStopToggle">
+                                          Checked="OnAutoForceStopToggle" Unchecked="OnAutoForceStopToggle">
                                     <TextBlock Text="{loc:Loc SettingsPage_StopClientsImmediatelyWithoutWaiting}" TextWrapping="Wrap" />
                                 </CheckBox>
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
@@ -629,7 +629,7 @@
                                           FontSize="{DynamicResource BodyFontSize}"
                                           FontWeight="SemiBold"
                                           AutomationProperties.Name="{loc:Loc SettingsPage_WatchMemoryWhileAccountsAre}"
-                                          Click="OnMemoryWatchdogEnabledToggle">
+                                          Checked="OnMemoryWatchdogEnabledToggle" Unchecked="OnMemoryWatchdogEnabledToggle">
                                     <TextBlock Text="{loc:Loc SettingsPage_WatchMemoryWhileAccountsAre_2}" TextWrapping="Wrap" />
                                 </CheckBox>
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
@@ -1349,7 +1349,7 @@
                         <StackPanel>
                             <CheckBox x:Name="DiscordPresenceToggle"
                                       Foreground="{DynamicResource WhiteBrush}" FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
-                                      Click="OnDiscordPresenceToggle">
+                                      Checked="OnDiscordPresenceToggle" Unchecked="OnDiscordPresenceToggle">
                                 <TextBlock Text="{loc:Loc SettingsPage_ShowWhatYouRePlaying}" TextWrapping="Wrap" />
                             </CheckBox>
                             <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
@@ -1365,7 +1365,7 @@
                                        Text="{loc:Loc SettingsPage_WorthKnowingWhileRobloxIs}" />
                             <CheckBox x:Name="DiscordJoinToggle"
                                       Foreground="{DynamicResource WhiteBrush}" FontSize="{DynamicResource BodyFontSize}"
-                                      Margin="22,0,0,0" Click="OnDiscordJoinToggle">
+                                      Margin="22,0,0,0" Checked="OnDiscordJoinToggle" Unchecked="OnDiscordJoinToggle">
                                 <TextBlock Text="{loc:Loc SettingsPage_LetFriendsJoinYourServer}" TextWrapping="Wrap" />
                             </CheckBox>
                             <TextBlock x:Name="DiscordStatusLine" FontSize="{DynamicResource BodyFontSize}"

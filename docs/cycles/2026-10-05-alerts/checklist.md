@@ -263,11 +263,41 @@ Spanish install shows the whole new Alerts section in English.
 Every `Click`-wired `CheckBox`/`ToggleButton` on the Settings page moves to `Checked`/`Unchecked` or
 two-way binding, the way streamer mode was fixed for F-102.
 
-- [ ] A UIA toggle of each control saves and changes behaviour — the measured failure was
-      `MemoryWatchdogEnabledToggle` reporting Off while the watchdog ran.
-- [ ] **New `ToggleWiringFenceTests` fails when a new `Click`-wired toggle appears.** The fence is the
-      deliverable; the fix without it is one release from regressing.
-- [ ] No double-fire: the handler must not run twice per user click after the change.
+- [x] **Ten controls converted, not nine.** The sweep found `SquadLaunchWindow`'s `CarefulModeToggle`
+      carrying the identical defect — and it *saves*, so a UIA toggle of careful mode in the modal
+      silently did nothing. Fixed with the nine on this page rather than left for a later cycle,
+      because it is the same defect and the fence had to cover it anyway.
+- [x] A UIA toggle of each control saves and changes behaviour. The wiring is proved structurally by
+      the fence plus two new framework facts in `TogglePatternReachesTheHandlerTests`: that
+      `Toggle()` raises `Checked`/`Unchecked` **exactly once** (the file previously pinned only that
+      it does NOT raise `Click` — what is broken, never what works, so the fix's own premise was
+      unmeasured), and that a programmatic `IsChecked` write raises `Checked` too.
+- [x] **`ToggleWiringFenceTests` added and watched failing on all ten first.** Two assertions: no
+      toggle wired with `Click`, and no toggle wired for one state only (a `Checked` without an
+      `Unchecked` saves on tick and silently keeps the old value on untick, which reads as "it won't
+      turn off"). It scans the whole App, not this page, because a fence scoped to one file sends the
+      next instance to a different file — which is exactly where the tenth one was. The tag regex is
+      multiline on purpose: the first single-line grep of this sweep returned **zero** matches while
+      all ten sat in the tree, and the scan floor of 30 is what stops that reading as a clean bill.
+- [x] No double-fire, and it is now structurally impossible rather than merely absent: one shared
+      handler on `Checked`+`Unchecked` fires once per user action, and the fence forbids a `Click`
+      alongside them, which was the only way to get two.
+- [x] **The conversion needed guards, which the rewire alone would have missed.** Every one of the
+      ten reverts its own checkbox from the stored value when its save throws. While they were
+      `Click`-wired an assignment raised nothing, so that was free; `Checked`/`Unchecked` makes the
+      rollback re-enter the handler that is handling the failure. `SetToggle` wraps every
+      programmatic write in a re-entrancy counter — a counter so nesting is safe, and a flag of its
+      own rather than `_suppressClickHandlers`, for the reason `_paintingMetricAlertsToggle` already
+      records: that flag is raised and cleared by other concerns, one of them a dispatcher callback
+      this page does not schedule.
+- [x] **A latent bug fixed on the way past.** The old rollbacks set `_suppressClickHandlers = true`,
+      then *awaited* the stored value, then assigned — holding a page-wide suppression flag across an
+      await, during which any other control's handler was silently swallowed. `SetToggle` takes the
+      value as an argument, so the await completes before the counter is raised and the guard spans
+      only the synchronous assignment.
+- [x] Checked before converting: none of the ten carries a literal `IsChecked` in XAML, so nothing
+      now fires during `InitializeComponent` ahead of the fields it would touch; and nothing outside
+      these two files writes their `IsChecked`.
 
 ## 8. `RORORO_LAUNCH_REASON`
 

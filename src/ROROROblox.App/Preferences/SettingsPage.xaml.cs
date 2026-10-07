@@ -70,6 +70,54 @@ internal partial class SettingsPage : UserControl, IDisposable
     private bool _suppressClickHandlers; // true while we set the initial check states.
     private bool _loaded;                 // true once OnLoaded has populated; gates the culture-change re-render.
 
+    /// <summary>
+    /// Depth of a programmatic write to a toggle's <c>IsChecked</c>. Raised only by
+    /// <see cref="SetToggle"/>, and only across the synchronous assignment itself.
+    /// <para>
+    /// v1.33 item 7 moved every toggle on this page from <c>Click</c> to
+    /// <c>Checked</c>/<c>Unchecked</c>, because <c>TogglePattern.Toggle()</c> raises the latter and
+    /// never the former (F-102), so a <c>Click</c>-wired box flipped by automation or a screen
+    /// reader saved nothing. That conversion changes what a programmatic write costs: an
+    /// <c>IsChecked</c> assignment used to raise no handler at all, and now raises one. Two kinds of
+    /// site therefore need guarding — the initial paint, and the ROLLBACK each handler performs
+    /// from the file when its own save throws, which without a guard re-enters the very handler
+    /// that is handling the failure.
+    /// </para>
+    /// <para>
+    /// A counter rather than a bool so nesting is safe, and a flag of its own rather than reusing
+    /// <see cref="_suppressClickHandlers"/> for the reason <c>_paintingMetricAlertsToggle</c>
+    /// already records: that flag is raised and cleared by other concerns, including a dispatcher
+    /// callback this page does not schedule, so a toggle's correctness must not depend on it.
+    /// </para>
+    /// </summary>
+    private int _programmaticToggleWrites;
+
+    /// <summary>True while <see cref="SetToggle"/> is assigning; every converted handler returns early on it.</summary>
+    private bool PaintingToggles => _programmaticToggleWrites > 0;
+
+    /// <summary>
+    /// Sets a toggle's state without its handler treating it as a user action.
+    /// <para>
+    /// Callers evaluate any <c>await</c> in the ARGUMENT, so the counter is only raised across the
+    /// synchronous assignment. That is deliberate and it fixes a latent bug in the code this
+    /// replaced: the old rollbacks set <c>_suppressClickHandlers = true</c>, then awaited the stored
+    /// value, then assigned — holding a page-wide suppression flag across an await, during which any
+    /// other control's handler would have been silently swallowed.
+    /// </para>
+    /// </summary>
+    private void SetToggle(System.Windows.Controls.Primitives.ToggleButton toggle, bool value)
+    {
+        _programmaticToggleWrites++;
+        try
+        {
+            toggle.IsChecked = value;
+        }
+        finally
+        {
+            _programmaticToggleWrites--;
+        }
+    }
+
     // Keeps the alerts status line's "auto-rejoin in use" answer live while the page is shown
     // (Settings is a non-modal shell page, F-013). Created in OnLoaded, disposed on Unloaded and in
     // Dispose, so a page swapped out by the shell holds no subscription on the view model's rows.
@@ -240,8 +288,8 @@ internal partial class SettingsPage : UserControl, IDisposable
             _suppressClickHandlers = true;
             try
             {
-                DiscordPresenceToggle.IsChecked = config.PresenceEnabled;
-                DiscordJoinToggle.IsChecked = config.JoinEnabled;
+                SetToggle(DiscordPresenceToggle, config.PresenceEnabled);
+                SetToggle(DiscordJoinToggle, config.JoinEnabled);
                 DiscordJoinToggle.IsEnabled = config.PresenceEnabled;
                 SetRoutingChecks(config);
                 RefreshAlertsStatus();
@@ -324,16 +372,16 @@ internal partial class SettingsPage : UserControl, IDisposable
                 ShowMemorySwitch();
             }
 
-            RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
-            LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
-            LaunchWindowedToggle.IsChecked = await _settings.GetLaunchWindowedAsync();
+            SetToggle(RunOnLoginToggle, SafeIsStartupEnabled());
+            SetToggle(LaunchMainToggle, await _settings.GetLaunchMainOnStartupAsync());
+            SetToggle(LaunchWindowedToggle, await _settings.GetLaunchWindowedAsync());
             // v1.18 — the mirror of the Squad Launch modal's careful-mode toggle (F-020). Read on
             // every open, exactly as SquadLaunchWindow.OnLoaded reads it, so the two surfaces agree
             // without either one holding a copy of the value.
-            CarefulSquadLaunchToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
+            SetToggle(CarefulSquadLaunchToggle, await _settings.GetCarefulSquadLaunchAsync());
 
-            AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
-            AutoForceStopToggle.IsChecked = await _settings.GetAutoForceStopAsync();
+            SetToggle(AlwaysShowRecycleToggle, await _settings.GetAlwaysShowRecycleAsync());
+            SetToggle(AutoForceStopToggle, await _settings.GetAutoForceStopAsync());
 
             // The metric-alert opt-in, painted HERE with the other settings.json-backed toggles
             // rather than in PopulateAlertControls, because that method paints from the Discord
@@ -386,8 +434,8 @@ internal partial class SettingsPage : UserControl, IDisposable
                 // populated notify.dat for the rest of the session (review 2026-09-04).
                 await _phoneNotifyService.InitializeAsync();
                 var discordConfig = CurrentDiscordConfig;
-                DiscordPresenceToggle.IsChecked = discordConfig.PresenceEnabled;
-                DiscordJoinToggle.IsChecked = discordConfig.JoinEnabled;
+                SetToggle(DiscordPresenceToggle, discordConfig.PresenceEnabled);
+                SetToggle(DiscordJoinToggle, discordConfig.JoinEnabled);
                 // FIX 7 (final whole-branch review, 2026-08-03): Join has no effect while presence
                 // is off (DiscordPresenceService.JoinEnabled is now PresenceEnabled && JoinEnabled)
                 // — disabling the checkbox here says so instead of leaving it checkable-but-inert.
@@ -420,9 +468,9 @@ internal partial class SettingsPage : UserControl, IDisposable
                 // Same disabled-toggles-with-explanation shape as the "DiscordPresence is null"
                 // branch above — a store read failure and "the feature isn't available" look
                 // identical to the user, and both are non-fatal to the rest of this dialog.
-                DiscordPresenceToggle.IsChecked = false;
+                SetToggle(DiscordPresenceToggle, false);
                 DiscordPresenceToggle.IsEnabled = false;
-                DiscordJoinToggle.IsChecked = false;
+                SetToggle(DiscordJoinToggle, false);
                 DiscordJoinToggle.IsEnabled = false;
                 DiscordStatusLine.Text = Loc.Get("Shell_Pref_DiscordNotSetUp");
             }
@@ -698,7 +746,7 @@ internal partial class SettingsPage : UserControl, IDisposable
 
     private void OnRunOnLoginToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         try
         {
             if (RunOnLoginToggle.IsChecked == true)
@@ -718,15 +766,13 @@ internal partial class SettingsPage : UserControl, IDisposable
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             // Revert visual state.
-            _suppressClickHandlers = true;
-            RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
-            _suppressClickHandlers = false;
+            SetToggle(RunOnLoginToggle, SafeIsStartupEnabled());
         }
     }
 
     private async void OnLaunchWindowedToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         try
         {
             await _settings.SetLaunchWindowedAsync(LaunchWindowedToggle.IsChecked == true);
@@ -738,15 +784,13 @@ internal partial class SettingsPage : UserControl, IDisposable
                 Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
-            _suppressClickHandlers = true;
-            LaunchWindowedToggle.IsChecked = await _settings.GetLaunchWindowedAsync();
-            _suppressClickHandlers = false;
+            SetToggle(LaunchWindowedToggle, await _settings.GetLaunchWindowedAsync());
         }
     }
 
     private async void OnLaunchMainToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         try
         {
             await _settings.SetLaunchMainOnStartupAsync(LaunchMainToggle.IsChecked == true);
@@ -758,9 +802,7 @@ internal partial class SettingsPage : UserControl, IDisposable
                 Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
-            _suppressClickHandlers = true;
-            LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
-            _suppressClickHandlers = false;
+            SetToggle(LaunchMainToggle, await _settings.GetLaunchMainOnStartupAsync());
         }
     }
 
@@ -776,7 +818,7 @@ internal partial class SettingsPage : UserControl, IDisposable
     /// </summary>
     private async void OnCarefulSquadLaunchToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         try
         {
             await _settings.SetCarefulSquadLaunchAsync(CarefulSquadLaunchToggle.IsChecked == true);
@@ -788,15 +830,13 @@ internal partial class SettingsPage : UserControl, IDisposable
                 Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
-            _suppressClickHandlers = true;
-            CarefulSquadLaunchToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
-            _suppressClickHandlers = false;
+            SetToggle(CarefulSquadLaunchToggle, await _settings.GetCarefulSquadLaunchAsync());
         }
     }
 
     private async void OnAutoForceStopToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         var wanted = AutoForceStopToggle.IsChecked == true;
         try
         {
@@ -809,15 +849,13 @@ internal partial class SettingsPage : UserControl, IDisposable
             MessageBox.Show(Window.GetWindow(this),
                 Loc.Format("Shell_Pref_CouldntSaveSetting", ex.Message),
                 "RoRoRo", MessageBoxButton.OK, MessageBoxImage.Warning);
-            _suppressClickHandlers = true;
-            AutoForceStopToggle.IsChecked = !wanted;
-            _suppressClickHandlers = false;
+            SetToggle(AutoForceStopToggle, !wanted);
         }
     }
 
     private async void OnAlwaysShowRecycleToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         var wanted = AlwaysShowRecycleToggle.IsChecked == true;
         try
         {
@@ -833,9 +871,7 @@ internal partial class SettingsPage : UserControl, IDisposable
                 Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
-            _suppressClickHandlers = true;
-            AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
-            _suppressClickHandlers = false;
+            SetToggle(AlwaysShowRecycleToggle, await _settings.GetAlwaysShowRecycleAsync());
         }
     }
 
@@ -882,7 +918,7 @@ internal partial class SettingsPage : UserControl, IDisposable
     /// </summary>
     private async void OnDiscordPresenceToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         var wanted = DiscordPresenceToggle.IsChecked == true;
         // FIX 7: keep the Join checkbox's enabled state tracking presence live, not just at
         // OnLoaded — Join has no effect while presence is off (DiscordPresenceService.JoinEnabled).
@@ -900,7 +936,7 @@ internal partial class SettingsPage : UserControl, IDisposable
                 MessageBoxImage.Warning);
             // A failed mutate publishes nothing, so Current still matches the disk — repaint from it.
             _suppressClickHandlers = true;
-            DiscordPresenceToggle.IsChecked = CurrentDiscordConfig.PresenceEnabled;
+            SetToggle(DiscordPresenceToggle, CurrentDiscordConfig.PresenceEnabled);
             DiscordJoinToggle.IsEnabled = CurrentDiscordConfig.PresenceEnabled;
             _suppressClickHandlers = false;
         }
@@ -909,7 +945,7 @@ internal partial class SettingsPage : UserControl, IDisposable
     /// <summary>"Let friends join your server from Discord." Same shape as <see cref="OnDiscordPresenceToggle"/>.</summary>
     private async void OnDiscordJoinToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         var wanted = DiscordJoinToggle.IsChecked == true;
         try
         {
@@ -922,9 +958,7 @@ internal partial class SettingsPage : UserControl, IDisposable
                 Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
-            _suppressClickHandlers = true;
-            DiscordJoinToggle.IsChecked = CurrentDiscordConfig.JoinEnabled;
-            _suppressClickHandlers = false;
+            SetToggle(DiscordJoinToggle, CurrentDiscordConfig.JoinEnabled);
         }
     }
 
@@ -2617,7 +2651,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         MemoryCapGhost.Text = Loc.Format("Shell_Pref_AutoValue", automatic.CapMb);
         UpdateMemoryGhosts();
 
-        MemoryWatchdogEnabledToggle.IsChecked = await _settings.GetMemoryWatchdogEnabledAsync();
+        SetToggle(MemoryWatchdogEnabledToggle, await _settings.GetMemoryWatchdogEnabledAsync());
         MemoryReserveMbInput.Text = FormatOptional(await _settings.GetMemoryReserveMbAsync());
         MemoryCapMbInput.Text = FormatOptional(await _settings.GetMemoryCapMbAsync());
         ProjectionWarnMinutesInput.Text =
@@ -2753,7 +2787,7 @@ internal partial class SettingsPage : UserControl, IDisposable
 
     private async void OnMemoryWatchdogEnabledToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         try
         {
             await _settings.SetMemoryWatchdogEnabledAsync(MemoryWatchdogEnabledToggle.IsChecked == true);
@@ -2770,9 +2804,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             // Reported on this section's own line rather than in a MessageBox, so a failure to save
             // and a refusal to accept arrive in the same place and the same voice.
             ShowMemoryWarning(Loc.Format("Shell_Pref_CouldntSaveThat", ex.Message));
-            _suppressClickHandlers = true;
-            MemoryWatchdogEnabledToggle.IsChecked = await _settings.GetMemoryWatchdogEnabledAsync();
-            _suppressClickHandlers = false;
+            SetToggle(MemoryWatchdogEnabledToggle, await _settings.GetMemoryWatchdogEnabledAsync());
         }
     }
 

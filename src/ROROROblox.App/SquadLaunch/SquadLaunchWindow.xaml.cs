@@ -24,6 +24,39 @@ internal partial class SquadLaunchWindow : Window
     private bool _suppressClickHandlers; // true while we set the initial check state.
 
     /// <summary>
+    /// Depth of a programmatic write to a toggle's <c>IsChecked</c>, raised only by
+    /// <see cref="SetToggle"/> and only across the synchronous assignment.
+    /// <para>
+    /// v1.33 item 7. Careful mode was wired <c>Click</c>, which <c>TogglePattern.Toggle()</c> never
+    /// raises (F-102) — so automation and screen readers flipped this box and the preference never
+    /// saved. It is now <c>Checked</c>/<c>Unchecked</c>, which means the rollback below re-enters
+    /// this handler unless guarded. Mirrors <c>SettingsPage</c>, the other view of this same
+    /// persisted value; see the longer note there.
+    /// </para>
+    /// </summary>
+    private int _programmaticToggleWrites;
+
+    /// <summary>True while <see cref="SetToggle"/> is assigning.</summary>
+    private bool PaintingToggles => _programmaticToggleWrites > 0;
+
+    /// <summary>
+    /// Sets a toggle's state without its handler treating it as a user action. The caller's
+    /// <c>await</c> is evaluated in the argument, so no suppression flag is ever held across it.
+    /// </summary>
+    private void SetToggle(System.Windows.Controls.Primitives.ToggleButton toggle, bool value)
+    {
+        _programmaticToggleWrites++;
+        try
+        {
+            toggle.IsChecked = value;
+        }
+        finally
+        {
+            _programmaticToggleWrites--;
+        }
+    }
+
+    /// <summary>
     /// The target the user picked — null if the user closed without launching. Either a
     /// <see cref="LaunchTarget.PrivateServer"/> (saved or pasted) or, since v1.14, a
     /// <see cref="LaunchTarget.Place"/> pasted as a plain game link: the ViewModel lands the first
@@ -57,7 +90,7 @@ internal partial class SquadLaunchWindow : Window
         _suppressClickHandlers = true;
         try
         {
-            CarefulModeToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
+            SetToggle(CarefulModeToggle, await _settings.GetCarefulSquadLaunchAsync());
         }
         finally
         {
@@ -68,7 +101,7 @@ internal partial class SquadLaunchWindow : Window
 
     private async void OnCarefulModeToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || PaintingToggles) return;
         try
         {
             await _settings.SetCarefulSquadLaunchAsync(CarefulModeToggle.IsChecked == true);
@@ -76,9 +109,7 @@ internal partial class SquadLaunchWindow : Window
         catch (Exception ex)
         {
             StatusText.Text = Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message);
-            _suppressClickHandlers = true;
-            CarefulModeToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
-            _suppressClickHandlers = false;
+            SetToggle(CarefulModeToggle, await _settings.GetCarefulSquadLaunchAsync());
         }
     }
 
