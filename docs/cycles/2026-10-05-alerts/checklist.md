@@ -347,13 +347,47 @@ two-way binding, the way streamer mode was fixed for F-102.
 Evaluate `Emoji.Wpf` and `iNKORE.UI.WPF.Emojis` — drop-in `TextBlock` replacements reading the system
 Segoe UI Emoji.
 
-- [ ] Licence suits a Store binary; the dependency is pinned and its size recorded.
-- [ ] The control honours `DynamicResource` `Foreground` and the type-ladder tokens.
-- [ ] `AutomationProperties.Name` still works, so the naming fence holds.
-- [ ] Swapped at the account row title, the Games page rows and saved private servers; titles without
-      emoji are unchanged and nothing shifts.
-- [ ] **If any check fails, drop the rider and say so.** Hand-rolling a colour-glyph renderer is not
-      in this cycle.
+### DROPPED, 2026-10-07 — and criterion 5 is the one being exercised, not dodged
+
+Evaluated both candidates and the surfaces. Four findings, any one of which would be enough; the
+fourth is the one that ends it.
+
+- [x] **Licence: neither is clean for a Store binary.** `Emoji.Wpf` 0.3.4 (Nov 2022, 1.11 MB,
+      469.6K downloads) is **WTFPL** — not OSI-approved, and its transitive dependency is literally
+      named `Stfu`. A 626 Labs LLC Store submission whose dependency manifest reads that way is a
+      brand problem before it is a legal one. `iNKORE.UI.WPF.Emojis` 0.3.6.4 (Jan 2024, 2.07 MB) is
+      **MIT**, which is fine on its face — but it is plainly a repackage of the same 0.3.x
+      `Emoji.Wpf` lineage (same version line, same description wording), so the MIT badge covers a
+      fork rather than independently reviewed code.
+- [x] **Transitive weight.** The MIT one pulls in `iNKORE.UI.WPF` — an entire third-party WPF
+      control library — to colour emoji. For 7.3K total downloads. Both are also stale against
+      .NET 10: they would be consumed through their `netcoreapp3.1` / `net6.0-windows` assets.
+- [x] **It would punch holes in four existing fences.** `NoRawXamlProseFenceTests`,
+      `MutedTextFenceTests`, `DismissOrderFenceTests` and `PreferencesCopyTests` all key on the
+      literal element name `TextBlock`. Swapping the type makes those elements invisible to the
+      prose, muted-text and dismiss-order scans unless every fence learns the new name — a cosmetic
+      change quietly shrinking four safety nets, with ratchet ceilings asserted as equality having
+      to move alongside.
+- [x] **It is not a drop-in on the surface that matters.** On the account row the game title is a
+      `<Run>` inside a composed `TextBlock` (`MainWindow.xaml:98`, beside a separator Run and the
+      status Run). Both libraries replace `TextBlock` and `RichTextBox`; **neither offers a `Run`.**
+      The primary named surface cannot take either library without restructuring the one line that
+      also carries the chip trigger logic `TriggeredStatusColourGateTests` and
+      `ThemedStatusColourTests` fence.
+- [x] **Measured what saying no actually costs, and it is cosmetics only.** Rendered four titles
+      through WPF and counted pixels: **0% saturated pixels** in every case, so emoji render
+      entirely greyscale — and the glyphs are present (U+1F43E, U+1F383, U+1F36C all in Segoe UI
+      Emoji 1.7) with correct metrics. Titles today are legible monochrome line art, **not tofu
+      boxes**. Nobody is failing to read a game name; it is just not in colour.
+
+**Verdict: dropped.** Criterion 5 pre-authorised exactly this, and the honest reading is that a
+colour-only gain does not buy a WTFPL-or-forked dependency, a transitive UI framework, four
+narrowed fences and a restructured status line.
+
+**If it is ever wanted,** the clean route is to render only the emoji runs as `DrawingImage`s off the
+font's COLR table — which is the hand-rolled colour-glyph renderer this item's own criterion rules
+out of this cycle. It would need its own cycle, its own fence updates, and a `Run`-level answer.
+Item 12's "new dependency audited" line is consequently a no-op.
 
 ## 10. The About page signs itself
 
