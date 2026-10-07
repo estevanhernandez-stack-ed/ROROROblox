@@ -70,6 +70,17 @@ Settings → Alerts → Alert sound. Try each of the three, forcing a crossing a
 **Silent** plays nothing — and still draws the notification and still colours the tray. No restart
 needed between changes.
 
+**There is no way to hear a sound from Settings.** `OnAlertSoundChanged` only saves; the string
+"What a desktop alert sounds like" is the picker's accessible name, not a play button. So this run
+cannot be done from the Settings page at all — an alert has to actually fire. That is a gap in item
+5 worth closing: a user choosing between three sounds is choosing blind.
+
+**A second noise-maker exists, and this setting does not govern it.** Ur Score plays its own sound
+from its own process on its own metric alerts. Confirmed 2026-10-07: with RoRoRo set to
+`WindowsDefault`, a metric alert still produced the chime (Ur Score's), while a memory alert
+produced the asterisk (RoRoRo's). Set RoRoRo to Silent and the plugin will still make noise.
+Product-level, not a v1.33 regression, but it will read as a bug to whoever hits it.
+
 **Result:**
 
 ### 5. The quiet period holds, and Every time means every time
@@ -147,11 +158,19 @@ exactly which strings to shorten.
 
 ### 10. A toggle tells the truth to everything that asks
 
-With accounts running, untick **"Watch memory while accounts are running"** using the keyboard
-(Tab to it, press Space) rather than the mouse.
+**Corrected 2026-10-07, mid-run: the original instruction here was a test that could not fail.**
+It said to use the keyboard rather than the mouse. F-102's own finding records that "a mouse click
+or a Space keypress on a focused box both raise `Click` and work correctly" — both paths always
+worked. The path that was broken is **UI Automation**, which is what a screen reader uses and what
+no human can produce by hand.
 
-**Pass:** warnings stop, and `settings.json` shows `memoryWatchdogEnabled: false`. Item 7's conversion
-means the keyboard and automation paths now save; before it, only a mouse click did.
+Driven instead through `TogglePattern.Toggle()` by a script, reading `settings.json` before and
+after and restoring the toggle at the end.
+
+**Pass:** the UIA state and `settings.json` move together. Before item 7 the box would report its
+new state while the file never changed.
+
+**Result 2026-10-07: PASS.** `BEFORE On / True` → `AFTER Off / False` → `RESTORED On / True`.
 
 **Result:**
 

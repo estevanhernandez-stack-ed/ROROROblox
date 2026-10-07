@@ -28,7 +28,7 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib import TTFont
 
-TEXT = "Koii 4 eva"
+TEXT = "K0ii 4 eva"  # a ZERO, not a lowercase o - the clan is K0ii (Este, 2026-10-07)
 FONT = pathlib.Path.home() / ".claude-personal" / "skills" / "626labs-design" / "fonts" / "EsteFontPro-Bold.ttf"
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "src" / "ROROROblox.App" / "About" / "Marks"

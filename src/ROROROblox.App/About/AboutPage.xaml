@@ -103,7 +103,7 @@
                                Margin="0,2,0,0" />
                     <!-- The egg's reveal, in Este's hand, drawn rather than typed (v1.33 item 10).
                          It was a TextBlock reading a localized string, and all seven catalogues held
-                         the byte-identical "Koii 4 eva" — the clan's name is not translatable, so
+                         the byte-identical "Koii 4 eva" (the old, misspelt form) — the clan's name is not translatable, so
                          those seven entries retired with this change.
 
                          THE PAGE'S ONE DUO MOMENT. The brand reserves the cyan-to-magenta gradient
@@ -127,7 +127,7 @@
                           Visibility="Collapsed"
                           Opacity="0"
                           Fill="{DynamicResource DuoBrush}"
-                          AutomationProperties.Name="Koii 4 eva">
+                          AutomationProperties.Name="K0ii 4 eva">
                         <Path.Effect>
                             <DropShadowEffect Color="#F22F89" BlurRadius="14" ShadowDepth="0" Opacity="0.85" />
                         </Path.Effect>
