@@ -324,12 +324,14 @@ public class ThemedStatusColourTests
     private static readonly AllowedXamlLiteral[] XamlAllowList =
     [
         new("src/ROROROblox.App/App.xaml", "<SolidColorBrush x:Key=", 0,
-            "NOT a finding, and the only entry here that has none. These TWELVE instances are the "
-            + "governed path's own origin: ten theme slots plus two derived fallbacks — "
-            + "InteractiveEdgeBrush, and OnMagentaBrush since F-050 — and ThemeService.ApplySlot "
-            + "REPLACES each instance on every theme change (ThemeService.cs:262-269). The hex in "
-            + "the markup is the pre-startup value of a brush the theme owns, not a colour that "
-            + "escaped it. Flagging these would flag the mechanism. Was eleven until 2026-08-20."),
+            "NOT a finding, and the only entry here that has none. These SIXTEEN instances are the "
+            + "governed path's own origin: ten theme slots, two derived fallbacks — "
+            + "InteractiveEdgeBrush, and OnMagentaBrush since F-050 — and since 2026-10-06 the four "
+            + "WPF-UI checkbox accent keys the theme now owns (ThemeSlots.CheckedAccent and its "
+            + "three siblings). ThemeService.ApplySlot REPLACES each instance on every theme change. "
+            + "The hex in the markup is the pre-startup value of a brush the theme owns, not a "
+            + "colour that escaped it. Flagging these would flag the mechanism. Was eleven until "
+            + "2026-08-20 and twelve until 2026-10-06."),
 
         // F-089's entry was retired by item 3b, which rebound SelectionDotStyle's four hexes to
         // MutedTextBrush and CyanBrush. It is deliberately not replaced by a narrower entry: an
@@ -468,6 +470,18 @@ public class ThemedStatusColourTests
     /// adding one.
     /// </para>
     /// </summary>
+    // 21 -> 25 on 2026-10-06, and it is the same KIND of move as the +1 for OnMagentaBrush below:
+    // the governed path grew by four brushes and its origin in App.xaml grew with it. The four are
+    // WPF-UI's own checkbox accent keys — CheckBoxCheckBackgroundFillChecked and its two checked
+    // hover fills, plus CheckBoxCheckGlyphForeground — which the library's CheckBox template reads
+    // through {DynamicResource} and its Dark dictionary answered with a fixed Fluent blue (#0067C0)
+    // and two Transparents. ThemeService.ApplySlot now replaces all four on every theme change, so
+    // the hexes in App.xaml are pre-startup values of brushes the theme owns, which is precisely
+    // what the App.xaml entry's reason describes and the only thing it has ever covered.
+    //
+    // DERIVED, not adjusted: App.xaml 16 + AboutWindow 9 = 25, counted against the tree. (The
+    // Modals/ entry retired at F-117 and is still gone.)
+    //
     // 22 -> 21 on 2026-08-20 by F-117, which retired the Modals/ entry and bound the single literal
     // it still covered. History of this number, kept because each move had a different cause:
     //
@@ -486,7 +500,7 @@ public class ThemedStatusColourTests
     // went clean while that entry stayed, so it now grants permission almost nothing uses. Left in
     // place rather than retired blind: one literal is a real literal and retiring the entry is a
     // separate measurement, recorded as a register row instead of done in passing here.
-    private const int AllowedXamlLiteralCeiling = 21;
+    private const int AllowedXamlLiteralCeiling = 25;
 
     /// <summary>
     /// Vacuity floor — it catches a repo-root walk that found nothing, and nothing else.

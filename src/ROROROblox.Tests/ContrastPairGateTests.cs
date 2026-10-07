@@ -147,12 +147,25 @@ public class ContrastPairGateTests
     /// <para>
     /// <b>F-050 does not close here.</b> This is its prerequisite, not its fix.
     /// </para>
+    /// <para>
+    /// THE CHECK GLYPH JOINED THE LIST on 2026-10-06, and it is the second shape of thing the scan
+    /// structurally cannot see. Both scanners look for a pair DECLARED together: an element tag
+    /// carrying <c>Background=</c> and <c>Foreground=</c>, or a keyed <c>Style</c> setting both. A
+    /// checked checkbox's fill and glyph are neither — they are two resource KEYS of WPF-UI's that
+    /// <c>ThemeService.ApplyTo</c> overrides, read by a template inside the library. Nothing about
+    /// that pair appears in any markup this repo owns, so leaving it to the scan would have left it
+    /// measured by nothing, which is F-086's whole complaint. Three entries rather than one because
+    /// the glyph sits on three different fills: resting, hovered and pressed.
+    /// </para>
     /// </summary>
     private static readonly (string Fill, string Text, string Why)[] NamedPairs =
     [
         (ThemeSlots.RowBg, ThemeSlots.MutedText, "the most common prose-on-surface pairing"),
         (ThemeSlots.Bg, ThemeSlots.MutedText, "prose on the page field"),
         (ThemeSlots.Navy, ThemeSlots.MutedText, "the disabled-button label"),
+        (ThemeSlots.CheckedAccent, ThemeSlots.OnCheckedAccent, "the check glyph on a ticked box"),
+        (ThemeSlots.CheckedAccentHover, ThemeSlots.OnCheckedAccent, "the check glyph, hovered"),
+        (ThemeSlots.CheckedAccentPressed, ThemeSlots.OnCheckedAccent, "the check glyph, pressed"),
     ];
 
     private sealed record Pair(string Fill, string Text, int Sites);

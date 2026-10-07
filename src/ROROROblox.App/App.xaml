@@ -63,6 +63,26 @@
                  nudges the winner. Value here is only the pre-startup fallback (brand's). -->
             <SolidColorBrush x:Key="OnMagentaBrush" Color="#0E1C2D" />
 
+            <!-- WPF-UI'S CHECKBOX ACCENT, TAKEN OVER. These four keys are the library's, not ours,
+                 and they are declared here for the same reason the ten slots above are: an entry
+                 written directly into Application.Resources outranks every merged dictionary,
+                 ControlsDictionary included, and ThemeService.ApplySlot replaces the instance on
+                 every theme change.
+
+                 WPF-UI's CheckBox template resolves all four through {DynamicResource}. Its Dark
+                 dictionary answers with #0067C0 for the checked fill — a fixed Fluent blue no theme
+                 can reach, so a ticked box painted library blue under flatline, a theme whose whole
+                 premise is carrying no meaning in colour — and with Transparent for both checked
+                 hover fills, which erased the tick's fill the moment the pointer arrived.
+
+                 The values here are only the pre-startup fallbacks, brand's, exactly as above. See
+                 ThemeSlots for the full account, including why this is four keys rather than an
+                 owned template. -->
+            <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked" Color="#17D4FA" />
+            <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="#4ADDFB" />
+            <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed" Color="#6FE4FC" />
+            <SolidColorBrush x:Key="CheckBoxCheckGlyphForeground" Color="#0F1F31" />
+
             <!-- Small round toggle for "include this account in batch launches."
                  Selected = filled cyan; deselected = hollow grey ring. ~14px, lives inline with
                  the secondary status text on each row. -->

@@ -29,6 +29,25 @@ internal sealed class ThemeService : IThemeAppliedSource
         _log = log ?? NullLogger<ThemeService>.Instance;
     }
 
+    /// <summary>
+    /// The hover sheen's alpha, mirroring <c>HoverSheen</c>'s <c>Opacity</c> in
+    /// <c>ControlStyles.xaml</c>. The button templates layer a white sheen at this opacity over a
+    /// rank's fill; the checkbox accent cannot layer anything, because WPF-UI's template replaces a
+    /// fill rather than revealing a layer and we do not own that template, so it composites the
+    /// same sheen at apply time instead.
+    /// <para>
+    /// NOTHING IN XAML KEEPS THESE TWO NUMBERS IN LOCKSTEP, which is the shape of defect this repo
+    /// has shipped before — a fix landing in one scanner and missing its copy in another. So a gate
+    /// reads <c>HoverSheen</c>'s opacity out of the real template and asserts it equals this
+    /// constant: <c>CheckedAccentGateTests.TheSheenOpacitiesMatchTheButtonTemplate</c>. Retune the
+    /// sheens and that test names this file.
+    /// </para>
+    /// </summary>
+    internal const double HoverSheenOpacity = 0.22;
+
+    /// <summary>The press sheen's alpha, mirroring <c>PressSheen</c>. See <see cref="HoverSheenOpacity"/>.</summary>
+    internal const double PressSheenOpacity = 0.38;
+
     public Theme? CurrentTheme { get; private set; }
 
     /// <summary>
@@ -356,6 +375,20 @@ internal sealed class ThemeService : IThemeAppliedSource
         // own better option still cannot be read.
         ApplySlot(resources, ThemeSlots.OnMagenta,
             ContrastGuard.BestForeground(theme.Magenta, [theme.White, theme.Navy], ContrastGuard.MinimumTextRatio));
+
+        // WPF-UI's checkbox accent, taken over. See ThemeSlots' block comment above these four keys
+        // for why they are keys of the library's rather than ours, and why they are written here
+        // instead of declared in ControlStyles.xaml. The short version: the library's template
+        // reads all four through {DynamicResource}, its Dark dictionary answers with a fixed Fluent
+        // blue for the fill and Transparent for both hover states, and XAML cannot alias one brush
+        // resource to another.
+        ApplySlot(resources, ThemeSlots.CheckedAccent, theme.Cyan);
+        ApplySlot(resources, ThemeSlots.CheckedAccentHover,
+            ContrastGuard.Flatten(theme.Cyan, theme.White, HoverSheenOpacity));
+        ApplySlot(resources, ThemeSlots.CheckedAccentPressed,
+            ContrastGuard.Flatten(theme.Cyan, theme.White, PressSheenOpacity));
+        ApplySlot(resources, ThemeSlots.OnCheckedAccent,
+            ContrastGuard.BestForeground(theme.Cyan, [theme.Navy, theme.White], ContrastGuard.MinimumTextRatio));
 
         return (decision, ReadBack(resources));
     }
