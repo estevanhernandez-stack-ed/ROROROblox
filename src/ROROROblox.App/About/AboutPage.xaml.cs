@@ -73,7 +73,7 @@ internal partial class AboutPage : UserControl
     {
         if (!_egg.Click()) return;
 
-        EasterEggText.Visibility = Visibility.Visible;
+        EasterEggMark.Visibility = Visibility.Visible;
         var fade = new DoubleAnimation
         {
             From = 0.0,
@@ -81,7 +81,7 @@ internal partial class AboutPage : UserControl
             Duration = TimeSpan.FromMilliseconds(380),
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
         };
-        EasterEggText.BeginAnimation(OpacityProperty, fade);
+        EasterEggMark.BeginAnimation(OpacityProperty, fade);
     }
 
     private static void OpenUrl(string url)

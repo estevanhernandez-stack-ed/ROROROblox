@@ -383,6 +383,7 @@ internal sealed class ThemeService : IThemeAppliedSource
         // blue for the fill and Transparent for both hover states, and XAML cannot alias one brush
         // resource to another.
         ApplySlot(resources, ThemeSlots.CheckedAccent, theme.Cyan);
+        ApplyDuoBrush(resources, theme);
         ApplySlot(resources, ThemeSlots.CheckedAccentHover,
             ContrastGuard.Flatten(theme.Cyan, theme.White, HoverSheenOpacity));
         ApplySlot(resources, ThemeSlots.CheckedAccentPressed,
@@ -450,6 +451,53 @@ internal sealed class ThemeService : IThemeAppliedSource
             return;
         }
         resources[key] = new SolidColorBrush(color);
+    }
+
+    /// <summary>
+    /// The brand's cyan-to-magenta duo as a single themed brush (v1.33 item 10). Used by the About
+    /// page's easter-egg mark, which is the one duo moment the brand allows per page.
+    /// </summary>
+    internal const string DuoBrushKey = "DuoBrush";
+
+    /// <summary>
+    /// Publishes <see cref="DuoBrushKey"/> as a horizontal gradient from the theme's cyan to its
+    /// magenta.
+    /// <para>
+    /// A BRUSH AND NOT A PAIR OF COLOURS, measured the hard way. The first attempt published a
+    /// <c>Color</c> beside every brush so XAML could write
+    /// <c>&lt;GradientStop Color="{DynamicResource CyanColor}"/&gt;</c>. It renders TRANSPARENT: a
+    /// <c>GradientStop</c> is a <see cref="Freezable"/>, not a framework element, and the dynamic
+    /// reference inside one does not find the dictionary. The build was clean and the page would
+    /// have shipped an invisible mark —
+    /// <c>AboutMarkGateTests.TheEggMarksGradientResolvesTheThemesCyanAndMagenta</c> is the clause
+    /// that caught it and the reason it renders pixels instead of reading the dictionary.
+    /// </para>
+    /// <para>
+    /// A <c>DynamicResource</c> on <c>Path.Fill</c> is an ordinary dependency-property lookup and
+    /// resolves normally, so the whole gradient is assembled here instead. Replaced on every theme
+    /// change rather than mutated, the same rule the solid brushes follow, and frozen because
+    /// nothing may edit it in place.
+    /// </para>
+    /// </summary>
+    private static void ApplyDuoBrush(ResourceDictionary resources, Theme theme)
+    {
+        if (!TryParseHex(theme.Cyan, out var cyan) || !TryParseHex(theme.Magenta, out var magenta))
+        {
+            return;
+        }
+
+        var duo = new LinearGradientBrush
+        {
+            StartPoint = new System.Windows.Point(0, 0),
+            EndPoint = new System.Windows.Point(1, 0),
+            GradientStops =
+            [
+                new GradientStop(cyan, 0.0),
+                new GradientStop(magenta, 1.0),
+            ],
+        };
+        duo.Freeze();
+        resources[DuoBrushKey] = duo;
     }
 
     private static bool TryParseHex(string hex, out Color color)

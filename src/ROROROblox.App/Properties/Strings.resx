@@ -29,10 +29,6 @@
     <value>Keyboard shortcuts</value>
     <comment>src/ROROROblox.App/About/AboutPage.xaml:153 xaml-text</comment>
   </data>
-  <data name="AboutPage_Koii4Eva" xml:space="preserve">
-    <value>Koii 4 eva</value>
-    <comment>src/ROROROblox.App/About/AboutPage.xaml:102 xaml-text</comment>
-  </data>
   <data name="AboutPage_Links" xml:space="preserve">
     <value>Links</value>
     <comment>src/ROROROblox.App/About/AboutPage.xaml:127 xaml-text</comment>

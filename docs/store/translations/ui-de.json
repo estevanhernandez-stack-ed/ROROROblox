@@ -3,7 +3,6 @@
   "AboutPage_CookiesAreEncryptedWithWindows": "Cookies werden pro Benutzer mit Windows DPAPI verschlüsselt. Sie verlassen diesen Rechner nie.\n                    Eine auf einen anderen PC kopierte accounts.dat lässt sich nicht entschlüsseln.",
   "AboutPage_InsideTheToolsWindowCtrl": "Im Werkzeugfenster springen auch Ctrl+1 bis Ctrl+7 direkt zu einer Seite.",
   "AboutPage_KeyboardShortcuts": "Tastenkürzel",
-  "AboutPage_Koii4Eva": "Koii 4 eva",
   "AboutPage_Links": "Links",
   "AboutPage_MultiLauncherForWindows": "Multi-Launcher für Windows.",
   "AboutPage_OpenLogFolder": "Log-Ordner öffnen",

@@ -325,6 +325,8 @@ STALE = {
     "SettingsPage_RororoShowsOneTrayToast": "the old tray-toast hint, gone with the drawn balloon",
     "SettingsPage_IdleAccounts": "card header; the three cards became one Alerts section",
     "SettingsPage_Memory": "card header; same consolidation",
+    "AboutPage_Koii4Eva": "item 10 drew it as a mark; the clan's name is not translatable and all "
+                          "seven catalogues held the byte-identical string",
 }
 
 

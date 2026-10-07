@@ -397,12 +397,57 @@ Two drawn marks following the avatar pattern (`sources/*.svg` kept, PNG committe
 wordmark with LLC at the bottom, always visible, 40px minimum; the "Koii 4 eva" wordmark revealed by
 the egg.
 
-- [ ] Neither mark requires EsteFont Pro inside the binary.
-- [ ] Gradient as a `LinearGradientBrush` behind an `OpacityMask`, colours from theme brushes, so one
-      asset serves all four themes; the existing `DropShadowEffect` stays.
-- [ ] The six `AboutPage_Koii4Eva` resx entries retire in this commit — all seven were byte-identical.
-- [ ] The egg still fires on six or seven clicks (`EasterEggCounterTests`, PR #228).
-- [ ] Marks come through the `626labs-design` skill, not freehand.
+- [x] **Neither mark requires EsteFont Pro inside the binary.** Both are outlines. The 626Labs
+      wordmark is lifted from the design skill's already-outlined official SVG — the brand rule is
+      "use the files, don't retype it… never for shipped work" — and "Koii 4 eva" was converted from
+      EsteFont Pro Bold to paths once by `scripts/make-koii-mark.py`. The licensed face ships
+      nowhere.
+- [x] **Geometry, not a PNG — a deviation from the avatar pattern this item cited.** That pattern
+      commits a rendered PNG, which suits a 256px circle-cropped character. These are wordmarks with
+      a 40px floor that must stay crisp at any DPI, and WPF draws a `Path` natively, so a raster step
+      would only lose fidelity. It also needs no rasteriser, which this box does not have (cairosvg
+      and skia both absent). Generated into `About/Marks/Marks.xaml` by
+      `scripts/gen-about-marks-xaml.py`, because 65 KB of path data should not be hand-diffed.
+      `FillRule="Nonzero"` is explicit: WPF defaults to `EvenOdd` while SVG defaults to `Nonzero`,
+      and these came out of an SVG pen.
+- [x] **No `OpacityMask`, and the gradient is a brush — this is where the drafted recipe was wrong.**
+      A mask over a tinted rectangle is what an *image* asset needs; geometry takes a `Fill`
+      directly. More importantly the first attempt published a `Color` beside every theme brush so
+      the stops could read `{DynamicResource CyanColor}` — **it renders transparent.** A
+      `GradientStop` is a `Freezable`, not a framework element, and a dynamic reference inside one
+      never finds the dictionary. The build was clean; the page would have shipped an invisible mark.
+      `ThemeService` now assembles the whole gradient as a frozen `DuoBrush` from the theme's own
+      ends, and `Path.Fill` reads it as an ordinary DP lookup. The speculative Colour surface was
+      reverted rather than left in unused.
+- [x] **One duo per page, which the draft would have broken.** The brand reserves the cyan-to-magenta
+      gradient for "dark marquee moments only, **one per page**", and forbids recolouring the
+      official marks outside their three inks. So the duo goes on the egg — the actual marquee moment
+      — and the 626Labs wordmark stays single-ink, filled from the theme's own text brush. All four
+      built-in themes are dark grounds (`#0F1F31`, `#0A1320`, `#1A0F1F`, `#101010`), which is the ink
+      the Logos README assigns `-dark` to, and reading the brush rather than the asset's baked
+      `#ffffff` keeps it legible on a user-authored light theme too.
+- [x] The existing `DropShadowEffect` stays, byte-identical. Its `ThemedStatusColourTests` allow-list
+      anchor moved from `<TextBlock.Effect>` to `<Path.Effect>` in the same commit, since only the
+      element holding the glow changed.
+- [x] **All seven `AboutPage_Koii4Eva` entries retired**, not six — the neutral catalogue counts too,
+      and `CultureKeyParityFenceTests` now asserts both directions, so leaving the cultures would
+      have failed the fence item 6b just added. Routed through the pipeline's `STALE` list with the
+      reason recorded, then all six catalogues regenerated; every catalogue is at 1,106 keys.
+- [x] The egg still fires on six or seven clicks: `EasterEggCounterTests` arrived with PR #228,
+      merged to main and rebased under this branch before the mark went in. The element is now a
+      `Path` named `EasterEggMark`; the counter, the fade and the visibility flip are untouched.
+- [x] Marks come through the `626labs-design` skill, not freehand — the official outlined wordmark
+      for one, the skill's own EsteFont Pro Bold for the other.
+- [x] **New `AboutMarkGateTests` renders pixels rather than reading the dictionary**, which is the
+      only reason the transparent-gradient bug was caught. Also pins the duo brush's ends to the
+      theme's, and asserts both geometries parse to real wordmark-shaped bounds — a truncated
+      `Figures` string parses happily into an empty geometry that looks like a layout bug. It reads
+      `Marks.xaml` off disk rather than through a `pack://` URI, because that scheme is only
+      registered once an `Application` exists, which made the clause pass or fail on test order.
+
+**Not done here:** nobody has looked at it. The marks are measured, not seen — item 11's live smoke
+is where they get eyes, and the wordmark's clear space and the egg's 26px height are the two
+judgement calls most likely to want nudging.
 
 ## 11. Live smoke, written as it runs
 

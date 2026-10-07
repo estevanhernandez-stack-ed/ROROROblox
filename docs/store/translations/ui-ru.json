@@ -3,7 +3,6 @@
   "AboutPage_CookiesAreEncryptedWithWindows": "Файлы cookie шифруются с помощью Windows DPAPI для каждого пользователя. Они никогда не покидают этот компьютер.\n                    Копия accounts.dat, перенесённая на другой ПК, не расшифруется.",
   "AboutPage_InsideTheToolsWindowCtrl": "В окне инструментов Ctrl+1 — Ctrl+7 также сразу открывают нужную страницу.",
   "AboutPage_KeyboardShortcuts": "Сочетания клавиш",
-  "AboutPage_Koii4Eva": "Koii 4 eva",
   "AboutPage_Links": "Ссылки",
   "AboutPage_MultiLauncherForWindows": "Мультилаунчер для Windows.",
   "AboutPage_OpenLogFolder": "Открыть папку журналов",

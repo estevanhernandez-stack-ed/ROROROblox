@@ -3,7 +3,6 @@
   "AboutPage_CookiesAreEncryptedWithWindows": "Les cookies sont chiffrés avec Windows DPAPI, par utilisateur. Ils ne quittent jamais cette machine.\n                    Une copie de accounts.dat déplacée vers un autre PC ne se déchiffrera pas.",
   "AboutPage_InsideTheToolsWindowCtrl": "Dans la fenêtre des outils, Ctrl+1 à Ctrl+7 sautent aussi directement à une page.",
   "AboutPage_KeyboardShortcuts": "Raccourcis clavier",
-  "AboutPage_Koii4Eva": "Koii 4 eva",
   "AboutPage_Links": "Liens",
   "AboutPage_MultiLauncherForWindows": "Multi-lanceur pour Windows.",
   "AboutPage_OpenLogFolder": "Ouvrir le dossier des journaux",

@@ -378,12 +378,17 @@ public class ThemedStatusColourTests
             + "must. Anchored on the resource block with a span that reaches the eighth brush, so a "
             + "ninth added below the anchor's reach is NOT covered and has to justify itself."),
 
-        new("src/ROROROblox.App/About/AboutPage.xaml", "<TextBlock.Effect>", 2,
+        new("src/ROROROblox.App/About/AboutPage.xaml", "<Path.Effect>", 2,
             "Spec §7, same invariant, different surface. The Easter-egg glow is a DropShadow in the "
             + "brand magenta, deliberately the fixed brand hue rather than the theme's Magenta slot "
             + "— it is the reward for finding the egg, and under flatline the theme value is a dark "
             + "achromatic grey that would render the glow invisible. Two-line span: the effect and "
-            + "the element that owns it, nothing else."),
+            + "the element that owns it, nothing else. "
+            + "ANCHOR MOVED 2026-10-07 (v1.33 item 10): the egg became a drawn mark, so the owning "
+            + "element is a Path and no longer a TextBlock. The glow itself is byte-identical — only "
+            + "what holds it changed. The mark's own fill is DuoBrush, the cyan-to-magenta duo "
+            + "ThemeService assembles from the theme's own ends, so it needs no exemption and takes "
+            + "none."),
 
         // CookieCaptureWindow's entry was retired on 2026-08-20 by F-114, which bound all fourteen
         // of its literals and took the file to zero. Not replaced by a narrower entry, for the same

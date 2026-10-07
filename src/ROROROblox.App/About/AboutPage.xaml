@@ -25,6 +25,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Hero: inline iso voxel stack + wordmark + version + tagline + Easter-egg slot -->
@@ -100,17 +101,37 @@
                                FontSize="{DynamicResource MetaFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}"
                                Margin="0,2,0,0" />
-                    <TextBlock x:Name="EasterEggText"
-                               Text="{loc:Loc AboutPage_Koii4Eva}"
-                               FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
-                               Foreground="{DynamicResource MagentaBrush}"
-                               Margin="0,8,0,0"
-                               Visibility="Collapsed"
-                               Opacity="0">
-                        <TextBlock.Effect>
+                    <!-- The egg's reveal, in Este's hand, drawn rather than typed (v1.33 item 10).
+                         It was a TextBlock reading a localized string, and all seven catalogues held
+                         the byte-identical "Koii 4 eva" — the clan's name is not translatable, so
+                         those seven entries retired with this change.
+
+                         THE PAGE'S ONE DUO MOMENT. The brand reserves the cyan-to-magenta gradient
+                         for "dark marquee moments only, one per page", so it lives here and the
+                         626Labs wordmark at the foot of the page stays single-ink. The fill is
+                         DuoBrush, which ThemeService assembles from the theme's own cyan and
+                         magenta. It is a BRUSH and not a pair of GradientStops reading theme
+                         Colours: that was tried first and renders transparent, because a
+                         GradientStop is a Freezable and a DynamicResource inside one never finds
+                         the dictionary. AboutMarkGateTests caught it; see ThemeService.ApplyDuoBrush.
+
+                         The DropShadowEffect is the one that was already here, unchanged.
+                         AutomationProperties.Name is a literal on purpose: a Path carries no text
+                         for a screen reader, and the clan's name is a proper noun that stays
+                         English in every culture. -->
+                    <Path x:Name="EasterEggMark"
+                          Data="{DynamicResource MarkKoii4Eva}"
+                          Stretch="Uniform" Height="26"
+                          HorizontalAlignment="Left"
+                          Margin="0,8,0,0"
+                          Visibility="Collapsed"
+                          Opacity="0"
+                          Fill="{DynamicResource DuoBrush}"
+                          AutomationProperties.Name="Koii 4 eva">
+                        <Path.Effect>
                             <DropShadowEffect Color="#F22F89" BlurRadius="14" ShadowDepth="0" Opacity="0.85" />
-                        </TextBlock.Effect>
-                    </TextBlock>
+                        </Path.Effect>
+                    </Path>
                 </StackPanel>
             </StackPanel>
 
@@ -177,6 +198,29 @@
                 <TextBlock Margin="0,8,0,0" FontSize="{DynamicResource MetaFontSize}" Foreground="{DynamicResource MutedTextBrush}"
                            TextWrapping="Wrap" Text="{loc:Loc AboutPage_RobloxIsATrademarkOf}" />
             </StackPanel>
+
+            <!-- The company signs the page (v1.33 item 10). The official outlined lockup from the
+                 design skill — "626Labs" in Este's hand plus "LLC" in Space Grotesk — lifted from
+                 assets/Logos/626labs-wordmark-dark.svg rather than retyped, which the brand rules
+                 require of shipped work.
+
+                 ALWAYS VISIBLE, unlike the egg above it, and at the brand's 40px floor so "LLC"
+                 stays legible; below that the rules call for the signature without "LLC" instead.
+
+                 SINGLE-INK, NOT THE DUO. The Logos README assigns the -dark ink to dark grounds and
+                 all four built-in themes are dark (#0F1F31, #0A1320, #1A0F1F, #101010) — but the
+                 fill reads the theme's own text brush rather than the asset's baked #ffffff, so it
+                 also stays legible on a user-authored light theme, which a baked PNG could not.
+
+                 Clear space: the brand asks for the height of the "6" on every side. The 32px above
+                 plus the page's own padding carries it; there is nothing below but the page edge. -->
+            <Path Grid.Row="3"
+                  Data="{DynamicResource Mark626LabsWordmark}"
+                  Fill="{DynamicResource WhiteBrush}"
+                  Stretch="Uniform" Height="40"
+                  HorizontalAlignment="Center"
+                  Margin="0,32,0,8"
+                  AutomationProperties.Name="626Labs LLC" />
         </Grid>
     </ScrollViewer>
 </UserControl>
