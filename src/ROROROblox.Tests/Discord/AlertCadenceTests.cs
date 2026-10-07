@@ -126,6 +126,69 @@ public class AlertCadenceTests
         }
     }
 
+    // ---- Writing the map back out (v1.33 item 6) ---------------------------------------------
+
+    /// <summary>
+    /// The Settings page is the first thing that WRITES this map, and a page that hand-rolls the
+    /// JSON is a second encoder for a format <see cref="AlertCadence.FromSettings"/> already owns.
+    /// These pin the round trip, which is the property that matters: whatever the page writes, the
+    /// resolver reads back as the same pace.
+    /// </summary>
+    [Fact]
+    public void ToOverridesJson_RoundTripsThroughFromSettings()
+    {
+        var json = AlertCadence.ToOverridesJson(new Dictionary<AlertKind, int>
+        {
+            [AlertKind.MemoryWarning] = 1,
+            [AlertKind.MetricBreach] = 30,
+            [AlertKind.AccountIdle] = 0,
+        });
+
+        var cadence = AlertCadence.FromSettings(5, json);
+
+        Assert.Equal(TimeSpan.FromMinutes(1), cadence.For(AlertKind.MemoryWarning));
+        Assert.Equal(TimeSpan.FromMinutes(30), cadence.For(AlertKind.MetricBreach));
+        Assert.Equal(TimeSpan.Zero, cadence.For(AlertKind.AccountIdle));
+        // Untouched kinds follow the global, which is the whole point of absence meaning "follow".
+        Assert.Equal(TimeSpan.FromMinutes(5), cadence.For(AlertKind.Recycled));
+        Assert.Equal(TimeSpan.FromMinutes(5), cadence.For(AlertKind.UptimeMark));
+    }
+
+    [Fact]
+    public void ToOverridesJson_KeysByName_NotByOrdinal()
+    {
+        // FromSettings REFUSES a numeric key on purpose, so a writer that emitted one would
+        // produce a file its own reader discards — silently, and only for users who had set an
+        // override. Asserted on the text because that is where the mistake would live.
+        var json = AlertCadence.ToOverridesJson(
+            new Dictionary<AlertKind, int> { [AlertKind.MemoryWarning] = 15 });
+
+        Assert.Contains("\"MemoryWarning\"", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"1\"", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ToOverridesJson_NoOverrides_IsEmptyRatherThanAnEmptyObject()
+    {
+        // "" is what SettingsBlob ships and what FromSettings short-circuits on. Writing "{}"
+        // instead would persist an opinion where the user has none and make an untouched install
+        // differ from a touched-and-reset one for no reason.
+        Assert.Equal(string.Empty, AlertCadence.ToOverridesJson(new Dictionary<AlertKind, int>()));
+    }
+
+    [Fact]
+    public void ToOverridesJson_DropsANegativeMinuteCount()
+    {
+        // FromSettings already discards a negative entry on read. Discarding it on write too means
+        // the file never carries a value the reader would throw away — the two guards agree rather
+        // than one quietly cleaning up after the other.
+        var json = AlertCadence.ToOverridesJson(
+            new Dictionary<AlertKind, int> { [AlertKind.MemoryWarning] = -1, [AlertKind.Recycled] = 5 });
+
+        Assert.DoesNotContain("MemoryWarning", json, StringComparison.Ordinal);
+        Assert.Equal(TimeSpan.FromMinutes(5), AlertCadence.FromSettings(9, json).For(AlertKind.Recycled));
+    }
+
     // ---- The router honours it --------------------------------------------------------------
 
     [Fact]

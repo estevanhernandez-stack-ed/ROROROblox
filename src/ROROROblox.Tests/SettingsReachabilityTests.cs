@@ -137,55 +137,24 @@ public class SettingsReachabilityTests
             + "edits the whole map would be a settings editor, which is the thing this cycle is "
             + "arguing against."),
 
-        // THESE TWO ARE TEMPORARY AND SAY SO. v1.33's checklist splits the cadence setting (item 2)
-        // from the page that edits it (item 6), in that order, because the routing collapse has to
-        // land before the section is worth drawing. Between the two commits the keys persist with
-        // no control, which is exactly the state this fence exists to refuse — so they are listed
-        // rather than allowed to fail the suite, and the listing carries its own expiry.
+        // THE THREE v1.33 ENTRIES — AlertCadenceMinutes, AlertCadenceOverridesJson and AlertSound —
+        // WERE RETIRED BY ITEM 6, in the commit that built the per-kind table, which is the commit
+        // each of their own texts named. The cadence pair became reachable through
+        // AlertCadencePicker and the six per-kind override pickers in SettingsPage.xaml (writing
+        // through SetAlertCadenceMinutesAsync / SetAlertCadenceOverridesJsonAsync), and AlertSound
+        // through AlertSoundPicker (SetAlertSoundAsync). Both edges find all three on their own
+        // now, so there is nothing left to permit.
         //
-        // RETIRE BOTH IN ITEM 6, in the commit that adds the per-kind table. The checklist line
-        // "New settings keys are reachable from a control or allow-listed with a reason" is item
-        // 6's, and the honest reading of it is that these entries come OUT. An exemption outliving
-        // its reason is the failure mode this file has caught twice (DefaultPlaceUrl, and
-        // MetricAlertsEnabled below), both times after a cycle rather than within one.
+        // RETIRED WITHIN THE CYCLE RATHER THAN AFTER IT, which is the whole point of having written
+        // the expiry into the entries. The two retirements above this line — DefaultPlaceUrl and
+        // MetricAlertsEnabled — were both a cycle late, and in both cases the reason the exemption
+        // was still there was that nothing said when it should go. These said it, and were read.
         //
-        // Not exempt because they are read at startup: App.xaml.cs reads both into the dispatcher's
-        // cadence provider, and App.xaml.cs is the composition root this fence deliberately
-        // excludes. A setting read there is being obeyed, not offered — see CompositionRoot.
-        new("AlertCadenceMinutes",
-            "v1.33 item 2 adds the key; v1.33 item 6 adds the control. Resolved through "
-            + "AlertCadence.FromSettings and consumed by AlertRouter.Route; the only reader today "
-            + "is the composition root, which this fence does not count. Retire this entry in item "
-            + "6's commit."),
-        new("AlertCadenceOverridesJson",
-            "Same split as AlertCadenceMinutes above — the per-kind override map ships one commit "
-            + "ahead of the table that edits it. Spec §8 leaves open whether every kind gets an "
-            + "override control or only the noisy ones, to be decided against the built page; "
-            + "whichever way that lands, the key stops being unreachable in item 6 and this entry "
-            + "retires with it."),
-
-        // AND A THIRD, ON THE SAME EXPIRY — THREE NOW, WHICH IS WORTH NOTICING. v1.33 item 5 adds
-        // the sound; item 6 adds the picker that chooses it. Same split and same reason as the pair
-        // above: the sound only means anything once the balloon is ours (item 4), and the section it
-        // belongs in is item 6's. Item 6's checklist line "Delete both SettingsReachabilityTests
-        // allow-list entries" is now three entries, and it says so in that checklist.
-        //
-        // Not exempt because the composition root reads it: App.xaml.cs refreshes it into the cached
-        // mode the player asks for on every play, and App.xaml.cs is the file this fence deliberately
-        // excludes. A setting read there is being obeyed, not offered — see CompositionRoot.
-        //
-        // ONE DIFFERENCE FROM THE PAIR ABOVE, recorded because it is the reasoning most likely to
-        // be mislaid: the cadence degrades DOWNWARD (a negative minute count reads as the shipped
-        // five) and this degrades UPWARD (anything unreadable reads as Chime, never Silent). Item 4
-        // replaced the shell balloon, which was the only thing forcing the Windows notification
-        // sound, so silence is now a state this app can reach by accident — and an alert that makes
-        // no sound is a log entry. The fallback has to be in the direction the user notices.
-        new("AlertSound",
-            "v1.33 item 5 adds the key; v1.33 item 6 adds the picker. Resolved through "
-            + "AlertSoundSetting.FromSetting and consumed by AlertSoundPlayer on the balloon's show "
-            + "path, so one event is one sound regardless of fan-out; the only reader today is the "
-            + "composition root, which this fence does not count. Retire this entry in item 6's "
-            + "commit, with the cadence pair above it."),
+        // Spec §8's open question was decided here too: six of the seven kinds got an override
+        // picker and uptime marks did not, because UptimeMarkTracker's two-hour interval is
+        // upstream of the router and every value such a picker could hold is either a no-op or a
+        // silent thinning of the only dead-PC signal the app has. The reasoning lives beside the
+        // uptime row in SettingsPage.xaml.
 
         // MuteIdleAlerts is the one entry here that is a RETIREMENT rather than a wait. v1.33 item 3
         // turned the setting from a control into a one-time migration: an existing `true` becomes
@@ -198,22 +167,21 @@ public class SettingsReachabilityTests
         // deserializes into, and the saving is one bool — not a trade worth making for a blob every
         // shipped version has written.
         //
-        // HONEST ABOUT ITS TIMING: as of item 3's commit the old checkbox is still on the page
-        // (MuteIdleAlertsToggle in SettingsPage.xaml, writing through SetMuteIdleAlertsAsync), so
-        // this entry is inert — the matcher would find the setting reachable without it. It is
-        // written NOW, with item 3, because item 3 is where the DECISION is made and where the
-        // reason is legible; item 6 deletes that control, and on that commit this entry becomes the
-        // only thing keeping the fence green. The alternative was adding it in item 6 and hoping
-        // the reasoning survived three items of distance, which is the same bet this file has
-        // watched fail twice in the other direction (DefaultPlaceUrl, MetricAlertsEnabled).
+        // NOW LOAD-BEARING, and it was written three items early precisely so it would be. Item 3
+        // added this entry while MuteIdleAlertsToggle was still on the page, which made it inert at
+        // the time — the matcher would have found the setting reachable without it. Item 6 deleted
+        // that checkbox, and the setting's last reader with it, so as of that commit this entry is
+        // the only thing keeping the fence green. Writing it where the DECISION was made rather
+        // than where it first bit is the opposite bet to the two retirements above, both of which
+        // went stale because nothing recorded when they should end.
         new("MuteIdleAlerts",
             "v1.33 item 3 retired it as a control: an existing `true` migrates once to "
             + "DiscordConfig.IdleDestinations = [] (IdleMuteMigration) and the key is then ignored "
             + "forever. Idle alerts route through the per-kind destinations grid, which expresses "
             + "mute per account instead of one flag for the whole roster. Kept on the record "
             + "because removing a property changes what an older settings.json deserializes into, "
-            + "for a saving of one bool. Its checkbox comes off the page in item 6; until that "
-            + "commit this entry is inert and SettingsPage.xaml would satisfy the matcher anyway."),
+            + "for a saving of one bool. Its checkbox came off the page in item 6, so this entry "
+            + "is live rather than inert as of that commit."),
 
         // MetricAlertsEnabled's entry was RETIRED 2026-09-11 by the metric-alert routing plan,
         // which gave the setting the Settings section the entry said it was waiting for:

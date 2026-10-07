@@ -107,28 +107,53 @@ show path so one event is one sound regardless of fan-out.
 Three cards become one per-kind table — **does it fire / how often at most / where does it go** — with
 the memory numbers beside the memory row and idle in the grid.
 
-- [ ] Markup order still satisfies `AlertsStatusLinePositionFenceTests:46-76`.
-- [ ] `AccessibleNamingFenceTests` and `SettingsCommitOnEnterFenceTests` move in this commit if the
+- [x] Markup order still satisfies `AlertsStatusLinePositionFenceTests:46-76`. Nothing moved across
+      its three anchors: the pace and the sound went in ABOVE the rows, the memory numbers and the
+      idle threshold went in BETWEEN rows, and `OnUnmuteAllClick` → `AlertsStatusLine` →
+      `MineWebhookInput` / `PushoverUserKeyInput` is untouched.
+- [x] `AccessibleNamingFenceTests` and `SettingsCommitOnEnterFenceTests` move in this commit if the
       page's control count changes. **Corrected by the item 4 agent — the earlier claim here was
       wrong in two ways.** `UnnamedCeiling = 1` is asserted as equality; **`ScannedFloor = 120` is
       `>=`, not equality**. And the scan only counts `Button, ToggleButton, ComboBox, TextBox,
       CheckBox, PasswordBox` — a `Border` or `TextBlock` moves neither number. Re-derive from the
       real assertions before planning around them. `CommittingFieldsOnThePage = 8` IS equality.
-- [ ] `PreferencesCopyTests` holds: second person, every label and hint ends in a period, no hint
-      restating its label.
-- [ ] New settings keys are reachable from a control or allow-listed with a reason.
-- [ ] No raw font sizes added (`DistinctRawSizeCeiling = 3`).
-- [ ] The section says, where destinations are chosen, that the tray badge is always on.
+      **NEITHER CONSTANT MOVED, and that is the measured outcome rather than an assumption.** Net
+      +11 controls (−1 `MuteIdleAlertsToggle`, +4 idle destination boxes, +8 `ComboBox`), all named,
+      so unnamed stays at 1 and the floor is a `>=` with more room than before. No `TextBox` was
+      added or removed — the three memory numbers MOVED and kept their handlers — so 8 holds.
+      Proved by mutation, not by reading: dropping `AlertSoundPicker`'s name took the ceiling to 2,
+      and dropping the moved `MemoryReserveMbInput`'s `PreviewKeyDown` named it in the Enter fence.
+- [x] `PreferencesCopyTests` holds: second person, every label and hint ends in a period, no hint
+      restating its label. Mutation-checked by removing one new hint's final period.
+- [x] New settings keys are reachable from a control or allow-listed with a reason.
+- [x] No raw font sizes added (`DistinctRawSizeCeiling = 3`). The header row uses `MetaFontSize`;
+      everything else `BodyFontSize`.
+- [x] The section says, where destinations are chosen, that the tray badge is always on
+      (`SettingsPage_TheTrayIconColoursWhatever`, directly under the "tick every place" hint and
+      above the pace, so it is read before the first row).
+
+**SPEC §8's OPEN QUESTION, DECIDED: six override pickers, not seven and not three.** A kind gets one
+when a repeat for the same cooldown key can arrive with no user action in between — which is the only
+case where a quiet period changes an outcome. That is true of drops out, eats memory, goes idle, gets
+recycled, auto-rejoin pauses and a metric crossing. It is false of **uptime marks**, and not by a
+little: `UptimeMarkTracker.MarkInterval` is two hours and sits UPSTREAM of the router, so every value
+such a picker could hold is either a no-op (under two hours) or a silent thinning of the only dead-PC
+signal the app has (over it). That cell states the fixed pace instead. Six rather than the three a
+"only the noisy ones" reading gives, because a ragged table invites "why not this row" and the
+mechanical answer is only short for one row. Reasoning lives beside the uptime row in the markup.
 
 **Two debts item 2 handed forward. Both are this item's to pay.**
 
-- [ ] **Delete all THREE `SettingsReachabilityTests` allow-list entries** for `AlertCadenceMinutes`,
+- [x] **Delete all THREE `SettingsReachabilityTests` allow-list entries** for `AlertCadenceMinutes`,
       `AlertCadenceOverridesJson` and `AlertSound`. **Corrected by the item 5 agent — it was two
       when item 2 wrote this line, and item 5 added the third on the same expiry.** They exist only
       because the keys shipped ahead of the controls that edit them, and each says so in its own
       text. This file has twice caught an exemption outliving its reason (`DefaultPlaceUrl`,
-      `MetricAlertsEnabled`) — both a cycle late.
-- [ ] **Add the generation counter to the cadence cache when this item adds the nudge — and to the
+      `MetricAlertsEnabled`) — both a cycle late. **Done, within the cycle, replaced by a note
+      recording what made each reachable.** `MuteIdleAlerts` KEPT, and it stopped being inert on
+      this commit: deleting it now fails the fence at `AppSettings.cs:713`, measured, because item 6
+      took away its last control and the only live reader left is `IdleMuteMigration` in Core.
+- [x] **Add the generation counter to the cadence cache when this item adds the nudge — and to the
       sound cache beside it.** `App.AlertCadenceSetting` is a `volatile` immutable refreshed on the
       30 s tick, with no lock, which is correct while the tick is the only writer. The moment the
       page nudges it on save there are two writers, and that is exactly the race
@@ -136,9 +161,47 @@ the memory numbers beside the memory row and idle in the grid.
       value after it. Mirror `SetMetricAlertsGate` / `BeginMetricAlertsGateRead` /
       `TryCommitMetricAlertsGate`. **`App.AlertSoundSetting` (item 5) is the same shape with the same
       single writer, so if the page nudges one it must nudge both, and both need the counter.**
+      **Both done, with SEPARATE counters and locks** — one shared bump would make every cadence
+      save drop an in-flight sound read, which is a fix manufacturing the staleness it prevents, and
+      `AlertCadenceSoundGateTests.TheTwoCountersAreIndependent` pins that. The cadence generation is
+      captured before the FIRST of its two reads, not between them: a nudge landing in that gap
+      would otherwise pair a pre-change global with a post-change override map and commit a cadence
+      that was never in the file.
+
+**What item 6 did NOT cover, for item 11's smoke doc.** Nothing asserts that the page SAVES idle
+destinations or that a picker's save reaches the router — both are `async void` handlers on a WPF
+page, the seam this repo covers by smoke rather than by unit test. The new strings are in
+`Strings.resx` only; the six culture files do not have them, so a non-English install shows them in
+English until `scripts/export-ui-strings.py` → translate → `scripts/gen-culture-resx.py` runs. That
+is a cycle gap to close before the tag, not an item-6 defect, but it is visible in exactly the
+screenshots C2 asks for.
 
 **C2 — eyes on it.** Screenshot every theme, compare against the approved shape, and walk the page
 with a keyboard only.
+
+## 6b. The six languages catch up
+
+**Depends on:** 6. **Effort:** M. **Added mid-build, 2026-10-06**, after item 6 shipped 32 new neutral
+keys and the build agent flagged that the cultures do not have them. Numbered `6b` rather than
+renumbering 7-12, which would churn every reference already written.
+
+Measured, not assumed: `Strings.resx` holds 1,107 keys, `Strings.de.resx` holds 1,075, and the
+difference is exactly the 32 this cycle added. A German, French, Russian, Portuguese, Polish or
+Spanish install shows the whole new Alerts section in English.
+
+- [ ] Run the catalog pipeline — `scripts/export-ui-strings.py` → translate → `scripts/gen-culture-resx.py`
+      — with the `PRODUCT_NOUNS` guard, so product nouns stay English.
+- [ ] Run the **translation verifier** over the new app strings. Its MCP is connected again as of
+      2026-10-06. Expect its rule-3 false positive on any quoted UI label and overrule it the way
+      v1.32 and v1.32.1 did; everything else is a real finding.
+- [ ] **Add the culture-parity fence that does not exist.** `LocKeyParityFenceTests` is named for
+      parity but asserts something else entirely: that every `{loc:Loc}` reference in XAML resolves
+      in the NEUTRAL catalog. A key present in `Strings.resx` and absent from all six cultures passes
+      it, which is exactly what happened here — 32 keys, every gate green. The new fence asserts each
+      culture carries every neutral key, with a named allow-list for anything deliberately English.
+      **This is the deliverable that stops the next cycle repeating this one.**
+- [ ] Re-check the C2 screenshots in German and Polish afterwards: the kind labels wrap in a fixed
+      180px column and the cadence strings are the longest new copy, so those two break first.
 
 ## 7. Toggles that save
 

@@ -953,9 +953,6 @@
   <data name="SettingsPage_HidesNamesAvatarsAndShare" xml:space="preserve">
     <value>Verbirgt Namen, Avatare und Freigabelinks innerhalb von RoRoRo. Es ändert nichts an dem, was Roblox selbst anzeigt — dein Stream zeigt weiterhin alles, was im Spiel auf dem Bildschirm ist.</value>
   </data>
-  <data name="SettingsPage_IdleAccounts" xml:space="preserve">
-    <value>Inaktive Konten</value>
-  </data>
   <data name="SettingsPage_IdleWarnThreshold" xml:space="preserve">
     <value>Inaktivitäts-Warnschwelle</value>
   </data>
@@ -989,9 +986,6 @@
   <data name="SettingsPage_MakesAFreshRandomTopic" xml:space="preserve">
     <value>Erzeugt ein neues zufälliges Topic. Dein Handy erhält keine Benachrichtigungen mehr, bis du das neue abonnierst.</value>
   </data>
-  <data name="SettingsPage_Memory" xml:space="preserve">
-    <value>Speicher</value>
-  </data>
   <data name="SettingsPage_MemorySettingsWarning" xml:space="preserve">
     <value>Warnung zu Speichereinstellungen</value>
   </data>
@@ -1012,9 +1006,6 @@
   </data>
   <data name="SettingsPage_MutedAccounts" xml:space="preserve">
     <value>Stummgeschaltete Konten</value>
-  </data>
-  <data name="SettingsPage_MuteIdleAlerts" xml:space="preserve">
-    <value>Inaktivitäts-Benachrichtigungen stummschalten.</value>
   </data>
   <data name="SettingsPage_MyChannel" xml:space="preserve">
     <value>Mein Kanal</value>
@@ -1102,9 +1093,6 @@
   </data>
   <data name="SettingsPage_RororoChecksEveryRunningClient" xml:space="preserve">
     <value>RoRoRo prüft jeden laufenden Client alle 30 Sekunden und sagt dir Bescheid, bevor deinem PC der Speicher ausgeht. Schalte es aus, und die drei Einstellungen unten bewirken nichts mehr. Alle vier werden beim nächsten Start von RoRoRo wirksam.</value>
-  </data>
-  <data name="SettingsPage_RororoShowsOneTrayToast" xml:space="preserve">
-    <value>RoRoRo zeigt eine Infobereich-Meldung, wenn ein laufendes Konto die untenstehende Inaktivitätsschwelle überschreitet. Dies anzuhaken behält den Zeilen-Chip, überspringt aber die Meldung.</value>
   </data>
   <data name="SettingsPage_RororoWatchesHowFastYour" xml:space="preserve">
     <value>RoRoRo beobachtet, wie schnell deine Clients wachsen, und warnt dich so lange im Voraus, bevor sie den PC füllen würden. 1 bis 1440. Standard ist 120.</value>

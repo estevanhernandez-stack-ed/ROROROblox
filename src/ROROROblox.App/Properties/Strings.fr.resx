@@ -953,9 +953,6 @@
   <data name="SettingsPage_HidesNamesAvatarsAndShare" xml:space="preserve">
     <value>Masque les noms, avatars et liens de partage dans RoRoRo. Cela ne change rien à ce que Roblox lui-même affiche — votre stream montre toujours ce qui est à l'écran dans le jeu.</value>
   </data>
-  <data name="SettingsPage_IdleAccounts" xml:space="preserve">
-    <value>Comptes inactifs</value>
-  </data>
   <data name="SettingsPage_IdleWarnThreshold" xml:space="preserve">
     <value>Seuil d'alerte d'inactivité</value>
   </data>
@@ -989,9 +986,6 @@
   <data name="SettingsPage_MakesAFreshRandomTopic" xml:space="preserve">
     <value>Crée un nouveau sujet aléatoire. Votre téléphone cesse de recevoir des alertes jusqu'à ce que vous vous abonniez au nouveau.</value>
   </data>
-  <data name="SettingsPage_Memory" xml:space="preserve">
-    <value>Mémoire</value>
-  </data>
   <data name="SettingsPage_MemorySettingsWarning" xml:space="preserve">
     <value>Avertissement des paramètres de mémoire</value>
   </data>
@@ -1012,9 +1006,6 @@
   </data>
   <data name="SettingsPage_MutedAccounts" xml:space="preserve">
     <value>Comptes en sourdine</value>
-  </data>
-  <data name="SettingsPage_MuteIdleAlerts" xml:space="preserve">
-    <value>Couper les alertes d'inactivité.</value>
   </data>
   <data name="SettingsPage_MyChannel" xml:space="preserve">
     <value>Mon canal</value>
@@ -1102,9 +1093,6 @@
   </data>
   <data name="SettingsPage_RororoChecksEveryRunningClient" xml:space="preserve">
     <value>RoRoRo vérifie chaque client en cours d'exécution toutes les 30 secondes et vous prévient avant que votre PC ne soit à court. Désactivez-le et les trois paramètres ci-dessous n'ont plus aucun effet. Les quatre prennent effet au prochain démarrage de RoRoRo.</value>
-  </data>
-  <data name="SettingsPage_RororoShowsOneTrayToast" xml:space="preserve">
-    <value>RoRoRo affiche une notification dans la barre d'état système lorsqu'un compte en cours d'exécution dépasse le seuil d'inactivité ci-dessous. Cocher ceci conserve la pastille sur la ligne mais supprime la notification.</value>
   </data>
   <data name="SettingsPage_RororoWatchesHowFastYour" xml:space="preserve">
     <value>RoRoRo surveille la vitesse à laquelle vos clients grossissent et vous avertit ce laps de temps avant qu'ils ne remplissent le PC. 1 à 1440. La valeur par défaut est 120.</value>

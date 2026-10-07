@@ -78,11 +78,18 @@ public partial class App : Application
     /// those dispatches arrive on a thread-pool timer thread that must not wait on a settings file.
     ///
     /// <para><c>volatile</c> on a reference, and <see cref="Discord.AlertCadence"/> is immutable, so
-    /// a reader sees either the old cadence or the new one and never a half-built map. There is no
-    /// generation lock here, unlike the metric gate: this value has ONE writer (the refresh below),
-    /// no nudge path, and the cost of a lost race is at most 30 seconds on a pace the user just
-    /// chose — not alerts continuing after an explicit opt-out, which is what bought the gate its
-    /// lock. The page that will nudge it lands with the Settings section (item 6).</para>
+    /// a reader sees either the old cadence or the new one and never a half-built map.</para>
+    ///
+    /// <para><b>TWO WRITERS AS OF ITEM 6, and so a generation counter like the metric gate's.</b>
+    /// Items 2 wrote "ONE writer (the refresh below), no nudge path... The page that will nudge it
+    /// lands with the Settings section (item 6)", and it has: the cadence pickers call
+    /// <see cref="SetAlertCadence"/> the moment they save. That is exactly the interleaving
+    /// <see cref="MetricAlertsGateLock"/> describes — a tick that read before the user's change
+    /// committing its stale value after it — so this is now written only through
+    /// <see cref="SetAlertCadence"/> and <see cref="TryCommitAlertCadence"/>, never assigned
+    /// directly. The losing direction matters less here than for the gate (a stale pace is 30
+    /// seconds of the wrong pace, not 30 seconds of unwanted alerts), but the fix costs the same
+    /// and the failure is just as invisible.</para>
     ///
     /// <para>Defaults to the shipped five minutes rather than to nothing, so an alert raised during
     /// startup — before the first read completes — is paced exactly as it was through v1.32.</para>
@@ -96,10 +103,16 @@ public partial class App : Application
     /// reached from a thread-pool timer thread and must not wait on a settings file.
     ///
     /// <para><c>volatile</c>, and an enum is a single word, so a reader sees either the old mode or
-    /// the new one. One writer (the refresh below), no nudge path, no generation lock — the cost of
-    /// a lost race is at most 30 seconds on a sound the user just chose. The page that will nudge it
-    /// lands with the Settings section (item 6), and if it nudges this as well as the cadence then
-    /// BOTH want the counter that item 6's checklist already owes the cadence.</para>
+    /// the new one.</para>
+    ///
+    /// <para><b>TWO WRITERS AS OF ITEM 6, with a generation counter of its own.</b> Item 5 wrote
+    /// "if it nudges this as well as the cadence then BOTH want the counter that item 6's checklist
+    /// already owes the cadence." The page nudges both, so both have one. The counter is SEPARATE
+    /// from the cadence's rather than shared: a cadence save says nothing about the sound, and one
+    /// shared bump would make every save drop an in-flight read of the other setting — a fix that
+    /// manufactures the staleness it exists to prevent (<c>AlertCadenceSoundGateTests</c> pins
+    /// that). The direction of the loss is the sharp part here: a stale commit puts a noise back
+    /// after an explicit request for quiet.</para>
     ///
     /// <para>Defaults to the shipped chime rather than to silence. An alert raised during startup —
     /// before the first read completes — makes the noise the user expects, and more to the point a
@@ -203,6 +216,132 @@ public partial class App : Application
     /// builds, never through this.
     /// </summary>
     internal static bool MetricAlertsGateForTests => MetricAlertsEnabled;
+
+    /// <summary>
+    /// Serialises the two writers of <see cref="AlertCadenceSetting"/>, and nothing else. Same
+    /// shape, same reasoning and same limits as <see cref="MetricAlertsGateLock"/>: never taken on
+    /// the dispatch path (the dispatcher's provider reads the volatile reference with no lock), and
+    /// never held across an <c>await</c>.
+    /// <para>
+    /// A SECOND lock rather than reusing the gate's. The two settings are unrelated, and sharing
+    /// one lock would also tempt sharing one generation — which would make a cadence save drop an
+    /// in-flight sound read.
+    /// </para>
+    /// </summary>
+    private static readonly object AlertCadenceLock = new();
+
+    /// <summary>Bumped by every <see cref="SetAlertCadence"/> call. See
+    /// <see cref="MetricAlertsGateGeneration"/> for the mechanism.</summary>
+    private static int AlertCadenceGeneration;
+
+    /// <summary>
+    /// Serialises the two writers of <see cref="AlertSoundSetting"/>. Separate from
+    /// <see cref="AlertCadenceLock"/> for the reason that field's doc comment gives.
+    /// </summary>
+    private static readonly object AlertSoundLock = new();
+
+    /// <summary>Bumped by every <see cref="SetAlertSound"/> call.</summary>
+    private static int AlertSoundGeneration;
+
+    /// <summary>
+    /// Tells the running dispatcher the cadence changed, for callers that have just written it.
+    /// <see cref="Preferences.SettingsPage"/>'s cadence pickers are the only ones.
+    ///
+    /// <para><b>Why this exists at all.</b> <see cref="RefreshAlertCadenceAsync"/> picks the
+    /// setting up on the view model's 30s tick, so a user who sets "every time" and then forces a
+    /// crossing waits up to 30 seconds to see it take — and "I changed it and nothing happened" is
+    /// the exact complaint this cycle exists to answer. Unlike the metric gate there is no
+    /// file-existence shortcut to fall foul of, so the nudge buys promptness rather than rescuing
+    /// a path that never ran.</para>
+    ///
+    /// <para>It sets the CACHE, never the setting — the caller has already written
+    /// <c>settings.json</c> through <see cref="IAppSettings"/>. Calling this without that write
+    /// would give the dispatcher an opinion the file does not share, which the next tick would
+    /// silently overturn.</para>
+    ///
+    /// <para><b>The nudge outranks the tick, and the bump is what says so</b>, unconditionally —
+    /// including a nudge that writes what the cache already held, because an in-flight read is
+    /// stale either way.</para>
+    /// </summary>
+    internal static void SetAlertCadence(ROROROblox.Core.Discord.AlertCadence cadence)
+    {
+        lock (AlertCadenceLock)
+        {
+            AlertCadenceGeneration++;
+            AlertCadenceSetting = cadence;
+        }
+    }
+
+    /// <summary>
+    /// The generation as of now, to be handed back to <see cref="TryCommitAlertCadence"/>.
+    /// Captured immediately before a read of the settings starts.
+    /// </summary>
+    internal static int BeginAlertCadenceRead()
+    {
+        lock (AlertCadenceLock) return AlertCadenceGeneration;
+    }
+
+    /// <summary>
+    /// Assigns the cadence only if no <see cref="SetAlertCadence"/> landed since
+    /// <paramref name="generation"/> was taken. Returns <c>false</c> when one did, in which case
+    /// this value is stale by definition and the nudge's stands.
+    /// </summary>
+    internal static bool TryCommitAlertCadence(int generation, ROROROblox.Core.Discord.AlertCadence cadence)
+    {
+        lock (AlertCadenceLock)
+        {
+            if (AlertCadenceGeneration != generation) return false;
+            AlertCadenceSetting = cadence;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// The cadence as <c>AlertDispatcher</c>'s provider sees it. Exists so the ordering above is
+    /// assertable — production reads it through the closure <see cref="ConfigureServices"/> builds.
+    /// </summary>
+    internal static ROROROblox.Core.Discord.AlertCadence AlertCadenceForTests => AlertCadenceSetting;
+
+    /// <summary>
+    /// Tells the running sound player the mode changed. <see cref="Preferences.SettingsPage"/>'s
+    /// sound picker is the only caller, and the reasoning is <see cref="SetAlertCadence"/>'s —
+    /// with one difference worth naming: the stale direction here can be a noise after an explicit
+    /// request for silence, which is a worse thirty seconds than the wrong pace.
+    /// </summary>
+    internal static void SetAlertSound(ROROROblox.Core.Discord.AlertSound sound)
+    {
+        lock (AlertSoundLock)
+        {
+            AlertSoundGeneration++;
+            AlertSoundSetting = sound;
+        }
+    }
+
+    /// <summary>The generation as of now, for <see cref="TryCommitAlertSound"/>.</summary>
+    internal static int BeginAlertSoundRead()
+    {
+        lock (AlertSoundLock) return AlertSoundGeneration;
+    }
+
+    /// <summary>
+    /// Assigns the sound only if no <see cref="SetAlertSound"/> landed since
+    /// <paramref name="generation"/> was taken.
+    /// </summary>
+    internal static bool TryCommitAlertSound(int generation, ROROROblox.Core.Discord.AlertSound sound)
+    {
+        lock (AlertSoundLock)
+        {
+            if (AlertSoundGeneration != generation) return false;
+            AlertSoundSetting = sound;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// The mode as <c>AlertSoundPlayer</c>'s provider sees it. Exists so the ordering above is
+    /// assertable — production reads it through the closure <see cref="ConfigureServices"/> builds.
+    /// </summary>
+    internal static ROROROblox.Core.Discord.AlertSound AlertSoundForTests => AlertSoundSetting;
 
     /// <summary>
     /// Where <c>LocalFileMetricRuleSource</c> reads its rules —
@@ -2201,14 +2340,28 @@ public partial class App : Application
     /// So the likeliest failure writes the default over a user's choice for at most 30 seconds,
     /// self-healing, and in the quieter direction. Only a genuinely exceptional throw reaches the
     /// catch below, which leaves the cadence at its previous value.</para>
+    ///
+    /// <para><b>It cannot overwrite a nudge that landed after its read began</b> (item 6). The
+    /// generation is captured before the FIRST of the two reads, not between them: a nudge landing
+    /// in the gap would otherwise be overwritten by a global read from before it paired with an
+    /// override read from after it — a cadence that was never in the file at all.</para>
     /// </summary>
     private async Task RefreshAlertCadenceAsync(IAppSettings settings)
     {
         try
         {
+            // BEFORE the first read, not between the two: see the remark above.
+            var generation = BeginAlertCadenceRead();
             var minutes = await settings.GetAlertCadenceMinutesAsync().ConfigureAwait(false);
             var overrides = await settings.GetAlertCadenceOverridesJsonAsync().ConfigureAwait(false);
-            AlertCadenceSetting = ROROROblox.Core.Discord.AlertCadence.FromSettings(minutes, overrides);
+            var resolved = ROROROblox.Core.Discord.AlertCadence.FromSettings(minutes, overrides);
+            if (!TryCommitAlertCadence(generation, resolved))
+            {
+                // Debug, not a warning: this is the mechanism working, and the same level
+                // RefreshMetricAlertsGateAsync logs its own drop at.
+                _log?.LogDebug(
+                    "Alert-cadence re-read was overtaken by a Settings change; the newer value stands.");
+            }
         }
         catch (Exception ex)
         {
@@ -2231,8 +2384,14 @@ public partial class App : Application
     {
         try
         {
+            var generation = BeginAlertSoundRead();
             var stored = await settings.GetAlertSoundAsync().ConfigureAwait(false);
-            AlertSoundSetting = ROROROblox.Core.Discord.AlertSoundSetting.FromSetting(stored);
+            var resolved = ROROROblox.Core.Discord.AlertSoundSetting.FromSetting(stored);
+            if (!TryCommitAlertSound(generation, resolved))
+            {
+                _log?.LogDebug(
+                    "Alert-sound re-read was overtaken by a Settings change; the newer value stands.");
+            }
         }
         catch (Exception ex)
         {

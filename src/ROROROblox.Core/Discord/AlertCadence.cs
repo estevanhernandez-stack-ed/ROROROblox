@@ -79,6 +79,39 @@ public sealed class AlertCadence
             : new AlertCadence(global, overrides);
     }
 
+    /// <summary>
+    /// The inverse of <see cref="FromSettings"/>'s override half: a kind-to-minutes map as the
+    /// string <c>AlertCadenceOverridesJson</c> holds. Added with the Settings table (v1.33 item 6),
+    /// which is the first thing that writes this key.
+    /// <para>
+    /// <b>Here rather than in the page</b>, because a page that hand-rolls the JSON is a second
+    /// encoder for a format <see cref="ParseOverrides"/> already owns — and the two most likely
+    /// ways to get it wrong are both things this file has already decided. A numeric key is
+    /// REFUSED on read, so a writer that emitted one would produce a file its own reader discards
+    /// silently; and a negative count is discarded on read, so emitting one would persist a value
+    /// that does nothing.
+    /// </para>
+    /// <para>
+    /// <b>An empty map is the empty string, not <c>"{}"</c>.</b> Empty is what <c>SettingsBlob</c>
+    /// ships and what <see cref="ParseOverrides"/> short-circuits on, so a user who sets an
+    /// override and then clears it lands back on exactly the shipped value rather than on a
+    /// different spelling of it.
+    /// </para>
+    /// </summary>
+    public static string ToOverridesJson(IReadOnlyDictionary<AlertKind, int> overrides)
+    {
+        var usable = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var (kind, minutes) in overrides)
+        {
+            // Same two refusals the reader makes, in the same direction: an undeclared kind cannot
+            // be named and a negative count would be dropped on the way back in.
+            if (!Enum.IsDefined(kind) || minutes < 0) continue;
+            usable[kind.ToString()] = minutes;
+        }
+
+        return usable.Count == 0 ? string.Empty : JsonSerializer.Serialize(usable);
+    }
+
     private static Dictionary<AlertKind, TimeSpan> ParseOverrides(string? overridesJson)
     {
         var resolved = new Dictionary<AlertKind, TimeSpan>();

@@ -953,9 +953,6 @@
   <data name="SettingsPage_HidesNamesAvatarsAndShare" xml:space="preserve">
     <value>Oculta nombres, avatares y enlaces para compartir dentro de RoRoRo. No cambia nada de lo que muestra Roblox en sí — tu transmisión sigue mostrando lo que esté en pantalla en el juego.</value>
   </data>
-  <data name="SettingsPage_IdleAccounts" xml:space="preserve">
-    <value>Cuentas inactivas</value>
-  </data>
   <data name="SettingsPage_IdleWarnThreshold" xml:space="preserve">
     <value>Umbral de aviso de inactividad</value>
   </data>
@@ -989,9 +986,6 @@
   <data name="SettingsPage_MakesAFreshRandomTopic" xml:space="preserve">
     <value>Crea un tema aleatorio nuevo. Tu teléfono deja de recibir alertas hasta que te suscribas al nuevo.</value>
   </data>
-  <data name="SettingsPage_Memory" xml:space="preserve">
-    <value>Memoria</value>
-  </data>
   <data name="SettingsPage_MemorySettingsWarning" xml:space="preserve">
     <value>Advertencia de la configuración de memoria</value>
   </data>
@@ -1012,9 +1006,6 @@
   </data>
   <data name="SettingsPage_MutedAccounts" xml:space="preserve">
     <value>Cuentas silenciadas</value>
-  </data>
-  <data name="SettingsPage_MuteIdleAlerts" xml:space="preserve">
-    <value>Silenciar alertas de inactividad.</value>
   </data>
   <data name="SettingsPage_MyChannel" xml:space="preserve">
     <value>Mi canal</value>
@@ -1102,9 +1093,6 @@
   </data>
   <data name="SettingsPage_RororoChecksEveryRunningClient" xml:space="preserve">
     <value>RoRoRo comprueba cada cliente en ejecución cada 30 segundos y te avisa antes de que tu PC se quede sin memoria. Desactívalo y las tres opciones de abajo dejan de hacer nada. Las cuatro surten efecto la próxima vez que arranque RoRoRo.</value>
-  </data>
-  <data name="SettingsPage_RororoShowsOneTrayToast" xml:space="preserve">
-    <value>RoRoRo muestra una notificación emergente en la bandeja del sistema cuando una cuenta en ejecución cruza el umbral de inactividad de abajo. Marcar esto mantiene el chip de la fila pero omite la notificación.</value>
   </data>
   <data name="SettingsPage_RororoWatchesHowFastYour" xml:space="preserve">
     <value>RoRoRo vigila la rapidez con la que crecen tus clientes y te avisa con esta antelación antes de que llenen el PC. De 1 a 1440. El valor predeterminado es 120.</value>

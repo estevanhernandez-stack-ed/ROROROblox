@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -427,8 +427,30 @@ internal partial class SettingsPage : UserControl, IDisposable
                 DiscordStatusLine.Text = Loc.Get("Shell_Pref_DiscordNotSetUp");
             }
 
-            // v1.8 idle awareness — mute toggle + warn-threshold preset (10/12/15/18 minutes).
-            MuteIdleAlertsToggle.IsChecked = await _settings.GetMuteIdleAlertsAsync();
+            // v1.33 item 6 — the pace and the sound. Before the idle threshold below rather than
+            // after it only because the pace is the thing the rows above it are read against.
+            //
+            // Its own try/catch for the reason the memory block below has one: this handler is
+            // async void with no outer catch, and AppSettings.LoadAsync maps only IOException and
+            // JsonException to defaults — an ACL-blocked settings.json throws
+            // UnauthorizedAccessException straight through and would blank everything after it.
+            try
+            {
+                await PopulateCadenceAndSoundAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(Window.GetWindow(this),
+                    Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                    Loc.Get("Shell_Pref_Title"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+
+            // v1.8 idle awareness — the warn-threshold preset (10/12/15/18 minutes). The mute
+            // toggle that used to be painted here went with v1.33 item 6: MuteIdleAlerts migrated
+            // once to DiscordConfig.IdleDestinations = [] in item 3 and is read by nothing now, so
+            // idle's "where does it go" is four checkboxes in the grid like every other kind's.
             var thresholdMinutes = await _settings.GetIdleWarnThresholdMinutesAsync();
             IdleWarnThresholdPicker.SelectedItem = IdleWarnThresholdPicker.Items
                 .OfType<System.Windows.Controls.ComboBoxItem>()
@@ -526,7 +548,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             // no restart. Composed ViewModel strings not yet migrated stay until their extraction.
             await _settings.SetUiLanguageAsync(picked.CultureName.Length == 0 ? null : picked.CultureName);
             TranslationSource.Instance.CurrentCulture = picked.CultureName.Length == 0
-                ? System.Globalization.CultureInfo.InvariantCulture
+                ? CultureInfo.InvariantCulture
                 : System.Globalization.CultureInfo.GetCultureInfo(picked.CultureName);
         }
         catch (System.Exception ex)
@@ -971,6 +993,15 @@ internal partial class SettingsPage : UserControl, IDisposable
         AutoRejoinPausedMineCheck.IsChecked = autoRejoinPaused.Contains(AlertDestination.Mine);
         AutoRejoinPausedClanCheck.IsChecked = autoRejoinPaused.Contains(AlertDestination.Clan);
         AutoRejoinPausedPhoneCheck.IsChecked = autoRejoinPaused.Contains(AlertDestination.Phone);
+        // Idle joined the grid in v1.33 item 6. DestinationsFor is what makes a config written
+        // before IdleDestinations existed show Desktop ticked rather than everything off — the
+        // same migration-on-read the four above rely on, and the reason this reads through it
+        // instead of the property.
+        var idle = config.DestinationsFor(AlertKind.AccountIdle);
+        IdleLocalCheck.IsChecked = idle.Contains(AlertDestination.Local);
+        IdleMineCheck.IsChecked = idle.Contains(AlertDestination.Mine);
+        IdleClanCheck.IsChecked = idle.Contains(AlertDestination.Clan);
+        IdlePhoneCheck.IsChecked = idle.Contains(AlertDestination.Phone);
         // MetricBreach's routing lives in the same config as the four above it. Its ON/OFF switch
         // does NOT — MetricAlertsEnabledToggle is painted from IAppSettings in OnLoaded.
         var metric = config.DestinationsFor(AlertKind.MetricBreach);
@@ -1052,6 +1083,13 @@ internal partial class SettingsPage : UserControl, IDisposable
                 (MetricBreachMineCheck, AlertDestination.Mine),
                 (MetricBreachClanCheck, AlertDestination.Clan),
                 (MetricBreachPhoneCheck, AlertDestination.Phone),
+            },
+            AlertKind.AccountIdle => new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
+            {
+                (IdleLocalCheck, AlertDestination.Local),
+                (IdleMineCheck, AlertDestination.Mine),
+                (IdleClanCheck, AlertDestination.Clan),
+                (IdlePhoneCheck, AlertDestination.Phone),
             },
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
@@ -1609,6 +1647,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         var uptimeMarks = ReadChecks(AlertKind.UptimeMark);
         var metricBreaches = ReadChecks(AlertKind.MetricBreach);
         var autoRejoinPaused = ReadChecks(AlertKind.AutoRejoinPaused);
+        var idle = ReadChecks(AlertKind.AccountIdle);
 
         try
         {
@@ -1620,6 +1659,7 @@ internal partial class SettingsPage : UserControl, IDisposable
                 UptimeMarkDestinations = uptimeMarks,
                 MetricBreachDestinations = metricBreaches,
                 AutoRejoinPausedDestinations = autoRejoinPaused,
+                IdleDestinations = idle,
                 // The singular fields are the rollback mirror: an older binary reads only them,
                 // and "first ticked destination" beats "silently dropped" — the destination-4
                 // hazard the phone spec records. The newer kinds need no mirror: Recycled,
@@ -2240,28 +2280,245 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
     }
 
-    private async void OnMuteIdleAlertsToggle(object sender, RoutedEventArgs e)
+    // ---------- Cadence and sound (v1.33 items 2 and 5, controls in item 6) ----------
+
+    /// <summary>
+    /// The six per-kind override pickers, paired with the kind each one paces. Uptime marks are
+    /// absent on purpose and the reason is written at length beside their row in the markup: the
+    /// two-hour <c>UptimeMarkTracker.MarkInterval</c> is upstream of the router, so every value an
+    /// override could hold is either a no-op or a silent thinning of the only dead-PC signal this
+    /// app has. <c>MetricRecovered</c> is absent too, and for the opposite reason — it rides
+    /// <c>MetricBreach</c>'s destinations by design, so it rides its pace.
+    /// <para>
+    /// A method rather than a field because the controls do not exist until <c>InitializeComponent</c>
+    /// has run, and a field initialiser on a partial WPF class runs before it.
+    /// </para>
+    /// </summary>
+    private IEnumerable<(AlertKind Kind, System.Windows.Controls.ComboBox Picker)> CadenceOverridePickers()
     {
-        if (_suppressClickHandlers) return;
+        yield return (AlertKind.AccountDroppedOut, DroppedOutCadencePicker);
+        yield return (AlertKind.MemoryWarning, MemoryWarningCadencePicker);
+        yield return (AlertKind.AccountIdle, IdleCadencePicker);
+        yield return (AlertKind.Recycled, RecycledCadencePicker);
+        yield return (AlertKind.AutoRejoinPaused, AutoRejoinPausedCadencePicker);
+        yield return (AlertKind.MetricBreach, MetricBreachCadencePicker);
+    }
+
+    /// <summary>
+    /// Paint the global pace and the six overrides from <c>settings.json</c>.
+    /// <para>
+    /// The global falls back to the shipped five rather than to the first item in the list. An
+    /// unrecognised stored value is a hand-edited file, and the honest thing to show for it is the
+    /// pace <c>AlertCadence.FromSettings</c> will actually apply, which for anything it cannot read
+    /// is the default. Showing "Every time" because it happens to be first would be the page
+    /// claiming a setting the router does not hold.
+    /// </para>
+    /// <para>
+    /// An override whose stored minutes match no item also lands on "Follow the pace above", which
+    /// is again what the resolver does with it — a per-entry drop, so the kind follows the global.
+    /// </para>
+    /// </summary>
+    private async Task PopulateCadenceAndSoundAsync()
+    {
+        // ALL THREE READS FIRST, AND NONE INSIDE THE SUPPRESSION WINDOW BELOW. A flag held across
+        // an await is how a real user click got swallowed earlier in this cycle — the defect
+        // _syncingWebhookReveal's note records — and three settings reads are three awaits. The
+        // window below contains no await at all, which is the property that makes it safe rather
+        // than merely short.
+        var globalMinutes = await _settings.GetAlertCadenceMinutesAsync();
+        var overridesJson = await _settings.GetAlertCadenceOverridesJsonAsync();
+        var storedSound = await _settings.GetAlertSoundAsync();
+        var cadence = AlertCadence.FromSettings(globalMinutes, overridesJson);
+
+        _suppressClickHandlers = true;
         try
         {
-            await _settings.SetMuteIdleAlertsAsync(MuteIdleAlertsToggle.IsChecked == true);
-            // Push the change into the live monitor + VM. The tray path used to do this once, on
-            // dialog close; a shell page has no close moment, and the main-window path never did
-            // it at all — an edit here silently waited for a restart. Per-edit is the fix for
-            // both (F-013).
-            await _mainViewModel.InitializeIdleSettingsAsync(_settings);
+            if (!Select(AlertCadencePicker, globalMinutes.ToString(CultureInfo.InvariantCulture)))
+            {
+                Select(AlertCadencePicker, "5");
+            }
+
+            foreach (var (kind, picker) in CadenceOverridePickers())
+            {
+                // The resolved pace for this kind equals the global exactly when it has no usable
+                // override, which is what "Follow the pace above" means. Read off the resolver
+                // rather than re-parsing the JSON here: one parser for one format.
+                var resolved = cadence.For(kind);
+                var tag = resolved == cadence.Global
+                    ? string.Empty
+                    : ((int)resolved.TotalMinutes).ToString(CultureInfo.InvariantCulture);
+                if (!Select(picker, tag))
+                {
+                    Select(picker, string.Empty);
+                }
+            }
+
+            // Through FromSetting then back through ToSetting rather than matching the raw stored
+            // string: a hand-edited "silent" or an unreadable value both land on the mode the
+            // player will actually use, so the picker cannot show something the app is not doing.
+            var sound = AlertSoundSetting.FromSetting(storedSound);
+            Select(AlertSoundPicker, AlertSoundSetting.ToSetting(sound));
+        }
+        finally
+        {
+            _suppressClickHandlers = false;
+        }
+
+        // Returns whether it found the item, so a caller can fall back rather than leaving a
+        // picker on whatever it happened to show. Selecting nothing is not an option here: an
+        // unselected ComboBox reads as "no opinion", and every one of these settings has a value.
+        static bool Select(System.Windows.Controls.ComboBox box, string tag)
+        {
+            var item = box.Items.OfType<System.Windows.Controls.ComboBoxItem>()
+                .FirstOrDefault(i => string.Equals(i.Tag as string, tag, StringComparison.Ordinal));
+            if (item is null) return false;
+            box.SelectedItem = item;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// The global pace. Writes the setting, then nudges the running cache so the next alert is
+    /// paced the way the user just asked rather than up to 30 seconds later.
+    /// <para>
+    /// <b>Both halves, in this order, and the nudge is built from the CONTROLS as they stand</b>
+    /// rather than from a value captured before the await — the correction review fix 3 made to
+    /// <see cref="OnMetricAlertsEnabledToggle"/> on 2026-09-11, for the same reason. Two quick
+    /// changes put two of these in flight; the writes serialise behind the settings semaphore so
+    /// the file ends at the second one's value, but the continuations can resume in either order
+    /// and a captured value would let the first land last and leave the cache disagreeing with the
+    /// file. <c>App.SetAlertCadence</c>'s generation counter stops the 30s tick from overwriting
+    /// either of them, which is the half that could not be fixed on this side of the seam.
+    /// </para>
+    /// </summary>
+    private async void OnAlertCadenceChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        if (AlertCadencePicker.SelectedItem is not System.Windows.Controls.ComboBoxItem { Tag: string tag }
+            || !int.TryParse(tag, out var minutes))
+        {
+            return;
+        }
+
+        try
+        {
+            await _settings.SetAlertCadenceMinutesAsync(minutes);
+            await NudgeCadenceCacheAsync();
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Window.GetWindow(this),
-                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
-                Loc.Get("Shell_Pref_Title"),
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-            _suppressClickHandlers = true;
-            MuteIdleAlertsToggle.IsChecked = await _settings.GetMuteIdleAlertsAsync();
-            _suppressClickHandlers = false;
+            await ShowCadenceSaveFailureAsync(ex);
+        }
+    }
+
+    /// <summary>
+    /// A per-kind override. Writes the whole map every time rather than one entry, because the map
+    /// is one settings key — and reading the pickers is the only way to know what the other five
+    /// currently say.
+    /// </summary>
+    private async void OnAlertCadenceOverrideChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+
+        try
+        {
+            await _settings.SetAlertCadenceOverridesJsonAsync(ReadOverridesJson());
+            await NudgeCadenceCacheAsync();
+        }
+        catch (Exception ex)
+        {
+            await ShowCadenceSaveFailureAsync(ex);
+        }
+    }
+
+    /// <summary>
+    /// The six pickers as the string <c>AlertCadenceOverridesJson</c> holds. An empty Tag is
+    /// "follow the global" and contributes no entry — absence is how the resolver spells that, so
+    /// the page must not write a row meaning the same thing.
+    /// <para>
+    /// Serialised by <c>AlertCadence.ToOverridesJson</c>, never here: that method keys by member
+    /// NAME and drops a negative count, both of which are refusals the reader already makes, and a
+    /// second encoder is how the two drift.
+    /// </para>
+    /// </summary>
+    private string ReadOverridesJson()
+    {
+        var map = new Dictionary<AlertKind, int>();
+        foreach (var (kind, picker) in CadenceOverridePickers())
+        {
+            if (picker.SelectedItem is not System.Windows.Controls.ComboBoxItem { Tag: string tag }) continue;
+            if (tag.Length == 0) continue;
+            if (!int.TryParse(tag, out var minutes)) continue;
+            map[kind] = minutes;
+        }
+
+        return AlertCadence.ToOverridesJson(map);
+    }
+
+    /// <summary>
+    /// Re-resolve both cadence keys from the controls and hand the result to the running
+    /// dispatcher. Reads the file for the global rather than the picker so a cadence saved by one
+    /// handler and an override saved by the other can never be combined into a pace neither of
+    /// them chose.
+    /// </summary>
+    private async Task NudgeCadenceCacheAsync()
+    {
+        var minutes = await _settings.GetAlertCadenceMinutesAsync();
+        App.SetAlertCadence(AlertCadence.FromSettings(minutes, ReadOverridesJson()));
+    }
+
+    /// <summary>
+    /// Says so, then repaints from the file. Reverting from the file rather than from the previous
+    /// selection for the reason <see cref="OnMetricAlertsEnabledToggle"/> records: the write may
+    /// have failed after landing, and the file is the only thing that knows.
+    /// </summary>
+    private async Task ShowCadenceSaveFailureAsync(Exception ex)
+    {
+        MessageBox.Show(Window.GetWindow(this),
+            Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+            Loc.Get("Shell_Pref_Title"),
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
+
+        try
+        {
+            await PopulateCadenceAndSoundAsync();
+        }
+        catch
+        {
+            // Swallowed, and the reason is the dialog above. If the repaint read fails too it is
+            // the same settings file failing twice, and a second message box about it would be
+            // noise on top of the one the user is already reading. The controls keep whatever they
+            // show, which is the value the user picked — wrong, but not silently wrong, because
+            // they have just been told the save did not land. This handler is reached from an
+            // async void method, so an unguarded throw here is a crash rather than a log line.
+        }
+    }
+
+    /// <summary>
+    /// The alert sound. Same write-then-nudge shape as the cadence, and the nudge matters more
+    /// here: the stale direction is a noise after an explicit request for silence.
+    /// </summary>
+    private async void OnAlertSoundChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        if (AlertSoundPicker.SelectedItem is not System.Windows.Controls.ComboBoxItem { Tag: string tag })
+        {
+            return;
+        }
+
+        try
+        {
+            // Through FromSetting rather than trusting the Tag, so a typo in the markup lands on
+            // Chime — the direction every unreadable value in this setting degrades towards —
+            // instead of persisting a string the next read would reject.
+            var sound = AlertSoundSetting.FromSetting(tag);
+            await _settings.SetAlertSoundAsync(AlertSoundSetting.ToSetting(sound));
+            App.SetAlertSound(sound);
+        }
+        catch (Exception ex)
+        {
+            await ShowCadenceSaveFailureAsync(ex);
         }
     }
 

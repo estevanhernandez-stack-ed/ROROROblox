@@ -953,9 +953,6 @@
   <data name="SettingsPage_HidesNamesAvatarsAndShare" xml:space="preserve">
     <value>Ukrywa nazwy, awatary i linki udostępniania wewnątrz RoRoRo. Nie zmienia niczego, co pokazuje sam Roblox — Twój stream nadal pokazuje to, co jest na ekranie w grze.</value>
   </data>
-  <data name="SettingsPage_IdleAccounts" xml:space="preserve">
-    <value>Bezczynne konta</value>
-  </data>
   <data name="SettingsPage_IdleWarnThreshold" xml:space="preserve">
     <value>Próg ostrzeżenia o bezczynności</value>
   </data>
@@ -989,9 +986,6 @@
   <data name="SettingsPage_MakesAFreshRandomTopic" xml:space="preserve">
     <value>Tworzy nowy losowy temat. Twój telefon przestaje otrzymywać alerty, dopóki nie zasubskrybujesz nowego.</value>
   </data>
-  <data name="SettingsPage_Memory" xml:space="preserve">
-    <value>Pamięć</value>
-  </data>
   <data name="SettingsPage_MemorySettingsWarning" xml:space="preserve">
     <value>Ostrzeżenie o ustawieniach pamięci</value>
   </data>
@@ -1012,9 +1006,6 @@
   </data>
   <data name="SettingsPage_MutedAccounts" xml:space="preserve">
     <value>Wyciszone konta</value>
-  </data>
-  <data name="SettingsPage_MuteIdleAlerts" xml:space="preserve">
-    <value>Wycisz alerty o bezczynności.</value>
   </data>
   <data name="SettingsPage_MyChannel" xml:space="preserve">
     <value>Mój kanał</value>
@@ -1102,9 +1093,6 @@
   </data>
   <data name="SettingsPage_RororoChecksEveryRunningClient" xml:space="preserve">
     <value>RoRoRo sprawdza każdego uruchomionego klienta co 30 sekund i informuje, zanim komputerowi zabraknie pamięci. Wyłącz to, a trzy ustawienia poniżej przestaną cokolwiek robić. Wszystkie cztery zaczynają obowiązywać przy następnym uruchomieniu RoRoRo.</value>
-  </data>
-  <data name="SettingsPage_RororoShowsOneTrayToast" xml:space="preserve">
-    <value>RoRoRo pokazuje jedno powiadomienie w zasobniku systemowym, gdy uruchomione konto przekroczy próg bezczynności poniżej. Zaznaczenie tego zachowuje znacznik w wierszu, ale pomija powiadomienie.</value>
   </data>
   <data name="SettingsPage_RororoWatchesHowFastYour" xml:space="preserve">
     <value>RoRoRo obserwuje, jak szybko rosną Twoi klienci, i ostrzega z tym wyprzedzeniem, zanim zapełnią komputer. Od 1 do 1440. Domyślnie 120.</value>

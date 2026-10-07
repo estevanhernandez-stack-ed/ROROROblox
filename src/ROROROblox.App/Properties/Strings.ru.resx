@@ -953,9 +953,6 @@
   <data name="SettingsPage_HidesNamesAvatarsAndShare" xml:space="preserve">
     <value>Скрывает имена, аватары и ссылки для обмена внутри RoRoRo. Это не меняет ничего из того, что показывает сам Roblox — на вашем стриме по-прежнему видно то, что на экране в игре.</value>
   </data>
-  <data name="SettingsPage_IdleAccounts" xml:space="preserve">
-    <value>Неактивные аккаунты</value>
-  </data>
   <data name="SettingsPage_IdleWarnThreshold" xml:space="preserve">
     <value>Порог предупреждения о простое</value>
   </data>
@@ -989,9 +986,6 @@
   <data name="SettingsPage_MakesAFreshRandomTopic" xml:space="preserve">
     <value>Создаёт новый случайный топик. Телефон перестанет получать оповещения, пока вы не подпишетесь на новый.</value>
   </data>
-  <data name="SettingsPage_Memory" xml:space="preserve">
-    <value>Память</value>
-  </data>
   <data name="SettingsPage_MemorySettingsWarning" xml:space="preserve">
     <value>Предупреждение о настройках памяти</value>
   </data>
@@ -1012,9 +1006,6 @@
   </data>
   <data name="SettingsPage_MutedAccounts" xml:space="preserve">
     <value>Аккаунты без оповещений</value>
-  </data>
-  <data name="SettingsPage_MuteIdleAlerts" xml:space="preserve">
-    <value>Отключить оповещения о простое.</value>
   </data>
   <data name="SettingsPage_MyChannel" xml:space="preserve">
     <value>Мой канал</value>
@@ -1102,9 +1093,6 @@
   </data>
   <data name="SettingsPage_RororoChecksEveryRunningClient" xml:space="preserve">
     <value>RoRoRo проверяет каждый запущенный клиент каждые 30 секунд и предупреждает вас до того, как на ПК кончится память. Отключите это, и три настройки ниже перестанут действовать. Все четыре вступают в силу при следующем запуске RoRoRo.</value>
-  </data>
-  <data name="SettingsPage_RororoShowsOneTrayToast" xml:space="preserve">
-    <value>RoRoRo показывает одно всплывающее уведомление в области уведомлений, когда запущенный аккаунт пересекает порог простоя ниже. Эта отметка сохраняет чип в строке, но пропускает всплывающее уведомление.</value>
   </data>
   <data name="SettingsPage_RororoWatchesHowFastYour" xml:space="preserve">
     <value>RoRoRo следит, как быстро растут ваши клиенты, и предупреждает вас за столько времени до того, как они заполнят ПК. От 1 до 1440. По умолчанию 120.</value>
