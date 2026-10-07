@@ -417,31 +417,59 @@
                                  WHITE, NOT MUTED, so PreferencesCopyTests classifies these as field
                                  labels rather than hints — a header is naming a column, not saying
                                  something to the reader, and the period rule would be wrong on it.
-                                 Same call the memory number labels already make. -->
-                            <Grid Margin="0,18,0,6">
+                                 Same call the memory number labels already make.
+
+                                 TWO LINES, NOT THREE COLUMNS (C2 defect 1, 2026-10-06). Built as
+                                 one line per row, the destinations wrapped to FOUR lines in the real
+                                 920x640 window and every row stood about 150px tall. The arithmetic
+                                 says they cannot share a line and no amount of shaving fixes it: the
+                                 card's content column measures ~460px, the label column is 180, the
+                                 cadence picker is 190 with a 12px gutter, and the four destination
+                                 boxes measure ~437 together. 180 + 202 + 437 = 819 into 460.
+
+                                 So the row splits where the reading splits. Line one answers WHICH
+                                 ALERT and HOW OFTEN, which is one thought; line two answers WHERE IT
+                                 GOES across the full width, which is the other. 437 into 460 fits,
+                                 with the WrapPanel left in place so a longer translation degrades to
+                                 two tidy lines rather than clipping — German and Polish are the two
+                                 item 6b re-checks for exactly this reason.
+
+                                 The HEADER mirrors that shape instead of losing a cell: "Where it
+                                 goes" moves to its own second line, so the header is a worked
+                                 example of the row shape rather than a legend for a grid that no
+                                 longer exists. Row grouping is carried by the gap — 4px inside a
+                                 row, 14px between rows — because the PageStartup grouping comment
+                                 forbids answering a grouping need with another container rank. -->
+                            <Grid Margin="0,18,0,10">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_AlertColumnAlert}" Width="180"
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc SettingsPage_AlertColumnAlert}" Width="180"
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}" />
-                                <TextBlock Grid.Column="1" Text="{loc:Loc SettingsPage_AlertColumnHowOften}" Width="162"
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{loc:Loc SettingsPage_AlertColumnHowOften}" Margin="12,0,0,0"
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="SemiBold" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" />
-                                <TextBlock Grid.Column="2" Text="{loc:Loc SettingsPage_AlertColumnWhereItGoes}"
+                                <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{loc:Loc SettingsPage_AlertColumnWhereItGoes}" Margin="0,2,0,0"
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}" />
                             </Grid>
 
-                            <Grid Margin="0,0,0,6">
+                            <Grid Margin="0,0,0,14">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_AnAccountDropsOut}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" TextWrapping="Wrap"
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc SettingsPage_AnAccountDropsOut}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
                                 <!-- WHICH KINDS GET AN OVERRIDE PICKER, decided against the built
                                      page as spec §8 asked. A kind gets one when a repeat for the
@@ -491,9 +519,9 @@
                                      "only the noisy ones" reading would have given: a ragged table
                                      invites the question "why not this row", and the mechanical
                                      answer above is only short for one row. -->
-                                <ComboBox Grid.Column="1" x:Name="DroppedOutCadencePicker"
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="DroppedOutCadencePicker"
                                           AutomationProperties.Name="{loc:Loc SettingsPage_HowOftenDropOutAlertsMay}"
-                                          Width="150" Margin="0,2,12,2" HorizontalAlignment="Left" Padding="8,4"
+                                          Width="190" Margin="12,2,12,2" HorizontalAlignment="Left" Padding="8,4"
                                           FontSize="{DynamicResource BodyFontSize}"
                                           SelectionChanged="OnAlertCadenceOverrideChanged">
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_FollowThePaceAbove}" Tag="" />
@@ -508,26 +536,39 @@
                                      can fan out — desktop AND phone AND a channel. Nothing ticked = off,
                                      which is also this table's "does it fire" answer. Checked/Unchecked
                                      rather than Click, for the F-102 reason: automation's TogglePattern
-                                     never raises Click. -->
-                                <WrapPanel Grid.Column="2">
-                                    <CheckBox x:Name="DroppedOutLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendDropOutAlertsTo}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="DroppedOutMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendDropOutAlertsTo_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="DroppedOutClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendDropOutAlertsTo_3}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="DroppedOutPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendDropOutAlertsTo_4}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                     never raises Click.
+
+                                     MinWidth="0" IS LOAD-BEARING ON ALL 28 OF THESE, and it is the
+                                     second half of the C2 defect-1 fix. WPF-UI's CheckBox style
+                                     carries MinWidth="120", so each box occupied ~132px with its
+                                     margin whatever its label said — 528px of demand into a ~468px
+                                     line, which wrapped "My phone" onto a line of its own even AFTER
+                                     the row was split in two. Released, the four measure ~394px
+                                     together and the line has about 70px spare, which is the margin
+                                     German and Polish will spend. The hit target is still the glyph
+                                     plus its label, well past the 24x24 floor. Do not tidy it off. -->
+                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                    <CheckBox x:Name="DroppedOutLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendDropOutAlertsTo}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="DroppedOutMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendDropOutAlertsTo_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="DroppedOutClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendDropOutAlertsTo_3}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="DroppedOutPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendDropOutAlertsTo_4}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                 </WrapPanel>
                             </Grid>
 
-                            <Grid Margin="0,0,0,6">
+                            <Grid Margin="0,0,0,14">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_AnAccountEatsMemory}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" TextWrapping="Wrap"
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc SettingsPage_AnAccountEatsMemory}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                                <ComboBox Grid.Column="1" x:Name="MemoryWarningCadencePicker"
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="MemoryWarningCadencePicker"
                                           AutomationProperties.Name="{loc:Loc SettingsPage_HowOftenMemoryWarningsMay}"
-                                          Width="150" Margin="0,2,12,2" HorizontalAlignment="Left" Padding="8,4"
+                                          Width="190" Margin="12,2,12,2" HorizontalAlignment="Left" Padding="8,4"
                                           FontSize="{DynamicResource BodyFontSize}"
                                           SelectionChanged="OnAlertCadenceOverrideChanged">
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_FollowThePaceAbove}" Tag="" />
@@ -538,11 +579,11 @@
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_30Minutes}" Tag="30" />
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_60Minutes}" Tag="60" />
                                 </ComboBox>
-                                <WrapPanel Grid.Column="2">
-                                    <CheckBox x:Name="MemoryWarningLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMemoryWarningsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="MemoryWarningMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMemoryWarningsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="MemoryWarningClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMemoryWarningsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="MemoryWarningPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMemoryWarningsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                    <CheckBox x:Name="MemoryWarningLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMemoryWarningsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MemoryWarningMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMemoryWarningsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MemoryWarningClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMemoryWarningsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MemoryWarningPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMemoryWarningsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                 </WrapPanel>
                             </Grid>
 
@@ -744,17 +785,20 @@
                                  with that written in. Unticking all four boxes below is the same
                                  request expressed properly, and a row context-menu mute is how you
                                  silence ONE account instead of all of them. -->
-                            <Grid Margin="0,0,0,6">
+                            <Grid Margin="0,0,0,14">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_AnAccountGoesIdle}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" TextWrapping="Wrap"
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc SettingsPage_AnAccountGoesIdle}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                                <ComboBox Grid.Column="1" x:Name="IdleCadencePicker"
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="IdleCadencePicker"
                                           AutomationProperties.Name="{loc:Loc SettingsPage_HowOftenIdleAlertsMay}"
-                                          Width="150" Margin="0,2,12,2" HorizontalAlignment="Left" Padding="8,4"
+                                          Width="190" Margin="12,2,12,2" HorizontalAlignment="Left" Padding="8,4"
                                           FontSize="{DynamicResource BodyFontSize}"
                                           SelectionChanged="OnAlertCadenceOverrideChanged">
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_FollowThePaceAbove}" Tag="" />
@@ -765,11 +809,11 @@
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_30Minutes}" Tag="30" />
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_60Minutes}" Tag="60" />
                                 </ComboBox>
-                                <WrapPanel Grid.Column="2">
-                                    <CheckBox x:Name="IdleLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="IdleMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="IdleClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="IdlePhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                    <CheckBox x:Name="IdleLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="IdleMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="IdleClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="IdlePhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                 </WrapPanel>
                             </Grid>
 
@@ -802,17 +846,20 @@
                                            Text="{loc:Loc SettingsPage_NobodyHasTouchedTheAccount}" />
                             </StackPanel>
 
-                            <Grid Margin="0,0,0,6">
+                            <Grid Margin="0,0,0,14">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_AnAccountGetsRecycled}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" Margin="0,2,0,0" TextWrapping="Wrap"
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc SettingsPage_AnAccountGetsRecycled}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" Margin="0,2,0,0" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                                <ComboBox Grid.Column="1" x:Name="RecycledCadencePicker"
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="RecycledCadencePicker"
                                           AutomationProperties.Name="{loc:Loc SettingsPage_HowOftenRecycleNoticesMay}"
-                                          Width="150" Margin="0,2,12,2" HorizontalAlignment="Left" Padding="8,4"
+                                          Width="190" Margin="12,2,12,2" HorizontalAlignment="Left" Padding="8,4"
                                           FontSize="{DynamicResource BodyFontSize}"
                                           SelectionChanged="OnAlertCadenceOverrideChanged">
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_FollowThePaceAbove}" Tag="" />
@@ -823,25 +870,28 @@
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_30Minutes}" Tag="30" />
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_60Minutes}" Tag="60" />
                                 </ComboBox>
-                                <WrapPanel Grid.Column="2">
-                                    <CheckBox x:Name="RecycledLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendRecycleNoticesToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="RecycledMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendRecycleNoticesToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="RecycledClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendRecycleNoticesToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="RecycledPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendRecycleNoticesToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                    <CheckBox x:Name="RecycledLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendRecycleNoticesToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="RecycledMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendRecycleNoticesToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="RecycledClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendRecycleNoticesToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="RecycledPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendRecycleNoticesToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                 </WrapPanel>
                             </Grid>
 
-                            <Grid Margin="0,0,0,6">
+                            <Grid Margin="0,0,0,14">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_AutoRejoinPausesForAnAccount}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" Margin="0,2,0,0" TextWrapping="Wrap"
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc SettingsPage_AutoRejoinPausesForAnAccount}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" Margin="0,2,0,0" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                                <ComboBox Grid.Column="1" x:Name="AutoRejoinPausedCadencePicker"
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="AutoRejoinPausedCadencePicker"
                                           AutomationProperties.Name="{loc:Loc SettingsPage_HowOftenAutoRejoinPausedAlertsMay}"
-                                          Width="150" Margin="0,2,12,2" HorizontalAlignment="Left" Padding="8,4"
+                                          Width="190" Margin="12,2,12,2" HorizontalAlignment="Left" Padding="8,4"
                                           FontSize="{DynamicResource BodyFontSize}"
                                           SelectionChanged="OnAlertCadenceOverrideChanged">
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_FollowThePaceAbove}" Tag="" />
@@ -852,21 +902,24 @@
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_30Minutes}" Tag="30" />
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_60Minutes}" Tag="60" />
                                 </ComboBox>
-                                <WrapPanel Grid.Column="2">
-                                    <CheckBox x:Name="AutoRejoinPausedLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="AutoRejoinPausedMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="AutoRejoinPausedClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="AutoRejoinPausedPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                    <CheckBox x:Name="AutoRejoinPausedLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="AutoRejoinPausedMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="AutoRejoinPausedClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="AutoRejoinPausedPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                 </WrapPanel>
                             </Grid>
 
-                            <Grid Margin="0,0,0,6">
+                            <Grid Margin="0,0,0,14">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_UptimeMarksEvery2Hours}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" Margin="0,2,0,0" TextWrapping="Wrap"
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc SettingsPage_UptimeMarksEvery2Hours}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" Margin="0,2,0,0" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
                                 <!-- THE ONE ROW WITH NO OVERRIDE PICKER, and a sentence where the
                                      others have a control. UptimeMarkTracker.MarkInterval is two
@@ -879,16 +932,16 @@
                                      nothing, which is the shape SyncMetricDestinationsEnabled's note
                                      calls "reads as broken".
 
-                                     Width matched to the pickers beside it so the third column still
-                                     starts on the same line down the table. -->
-                                <TextBlock Grid.Column="1" Text="{loc:Loc SettingsPage_FixedAtTwoHours}" Width="150" Margin="0,2,12,2" TextWrapping="Wrap"
+                                     Width matched to the pickers beside it so the cadence cell is
+                                     the same width all the way down the table. -->
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{loc:Loc SettingsPage_FixedAtTwoHours}" Width="190" Margin="12,2,12,2" TextWrapping="Wrap"
                                            FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center"
                                            Foreground="{DynamicResource MutedTextBrush}" />
-                                <WrapPanel Grid.Column="2">
-                                    <CheckBox x:Name="UptimeMarkLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendUptimeMarksToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="UptimeMarkMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendUptimeMarksToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="UptimeMarkClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendUptimeMarksToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="UptimeMarkPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendUptimeMarksToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                    <CheckBox x:Name="UptimeMarkLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendUptimeMarksToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="UptimeMarkMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendUptimeMarksToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="UptimeMarkClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendUptimeMarksToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="UptimeMarkPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendUptimeMarksToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                 </WrapPanel>
                             </Grid>
 
@@ -923,17 +976,20 @@
                                  Below rather than above because it is the kind's PRECONDITION, like
                                  the watchdog toggle and the idle threshold, and all three now sit in
                                  the same place relative to their row. -->
-                            <Grid Margin="0,0,0,6">
+                            <Grid Margin="0,0,0,14">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_AMetricCrossesAThreshold}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" Margin="0,2,0,0" TextWrapping="Wrap"
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc SettingsPage_AMetricCrossesAThreshold}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" Margin="0,2,0,0" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                                <ComboBox Grid.Column="1" x:Name="MetricBreachCadencePicker"
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="MetricBreachCadencePicker"
                                           AutomationProperties.Name="{loc:Loc SettingsPage_HowOftenMetricAlertsMay}"
-                                          Width="150" Margin="0,2,12,2" HorizontalAlignment="Left" Padding="8,4"
+                                          Width="190" Margin="12,2,12,2" HorizontalAlignment="Left" Padding="8,4"
                                           FontSize="{DynamicResource BodyFontSize}"
                                           SelectionChanged="OnAlertCadenceOverrideChanged">
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_FollowThePaceAbove}" Tag="" />
@@ -944,11 +1000,11 @@
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_30Minutes}" Tag="30" />
                                     <ComboBoxItem Content="{loc:Loc SettingsPage_60Minutes}" Tag="60" />
                                 </ComboBox>
-                                <WrapPanel Grid.Column="2">
-                                    <CheckBox x:Name="MetricBreachLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="MetricBreachMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="MetricBreachClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
-                                    <CheckBox x:Name="MetricBreachPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                    <CheckBox x:Name="MetricBreachLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MetricBreachMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MetricBreachClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MetricBreachPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                 </WrapPanel>
                             </Grid>
 

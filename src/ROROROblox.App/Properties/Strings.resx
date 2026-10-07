@@ -726,11 +726,11 @@
     <comment>src/ROROROblox.App/MainWindow.xaml:1337 xaml-text</comment>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
-    <value>Mute Discord alerts</value>
+    <value>Mute alerts</value>
     <comment>src/ROROROblox.App/MainWindow.xaml:296 xaml-text</comment>
   </data>
   <data name="MainWindow_MutedNoDiscordAlerts" xml:space="preserve">
-    <value>✓ Muted — no Discord alerts</value>
+    <value>✓ Muted — no alerts anywhere</value>
     <comment>src/ROROROblox.App/MainWindow.xaml:299 xaml-text</comment>
   </data>
   <data name="MainWindow_NoAccountsSaved" xml:space="preserve">
@@ -906,7 +906,7 @@
     <comment>src/ROROROblox.App/MainWindow.xaml:1200 xaml-text</comment>
   </data>
   <data name="MainWindow_StopDiscordAlertsForThis" xml:space="preserve">
-    <value>Stop Discord alerts for this account only. Routing is per-trigger; muting is per-account.</value>
+    <value>Stop every alert for this account, the desktop one included. Routing is per-trigger; muting is per-account.</value>
     <comment>src/ROROROblox.App/MainWindow.xaml:291 title</comment>
   </data>
   <data name="MainWindow_SystemHealthRobloxWebview2Versions" xml:space="preserve">
@@ -1450,7 +1450,7 @@
     <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:153 xaml-text</comment>
   </data>
   <data name="SettingsPage_RororoChecksEveryRunningClient" xml:space="preserve">
-    <value>RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect the next time RoRoRo starts.</value>
+    <value>RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect without a restart: the switch at once, the numbers on the next 30-second check.</value>
     <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:681 xaml-text</comment>
   </data>
   <data name="SettingsPage_RororoWatchesHowFastYour" xml:space="preserve">

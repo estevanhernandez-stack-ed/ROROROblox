@@ -202,8 +202,11 @@ public interface IAppSettings
     /// <c>CurrentUICulture</c> at startup, before any window loads. A value naming a culture
     /// whose catalog is not shipped resolves to English through the resource fallback, so a
     /// stale value never breaks the UI — but the picker only offers languages that actually
-    /// ship, so a stored value is normally a real one. Because the XAML binds its strings once
-    /// (x:Static), a change takes effect on the next launch; the picker copy says so.
+    /// ship, so a stored value is normally a real one. <b>Corrected 2026-10-06:</b> this used to
+    /// say a change waited for the next launch, which stopped being true when the XAML moved off
+    /// <c>x:Static</c> onto <c>{loc:Loc}</c>. <c>OnUiLanguageChanged</c> persists the value and
+    /// pushes <c>TranslationSource.Instance.CurrentCulture</c>, so the UI re-renders live and the
+    /// picker copy ("a change takes effect right away") is the accurate half of the pair.
     /// </summary>
     Task<string?> GetUiLanguageAsync();
     Task SetUiLanguageAsync(string? cultureName);
