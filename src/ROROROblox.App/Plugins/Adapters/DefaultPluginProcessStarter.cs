@@ -33,7 +33,29 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
 
     public event Action<int>? ProcessExited;
 
-    public int Start(string pluginId, string exePath)
+    /// <summary>
+    /// The launch's <see cref="ProcessStartInfo"/>, split out so the environment contract is
+    /// assertable without starting a process (v1.33 item 8). A real child cannot be asked what its
+    /// environment was — <see cref="IPluginProcessStarter.Start"/> takes no arguments to pass a
+    /// probe, and reading another process's environment is not something to build a test on.
+    /// </summary>
+    internal static ProcessStartInfo BuildStartInfo(string exePath, PluginLaunchReason reason)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = exePath,
+            // LOAD-BEARING FOR THE ENVIRONMENT, not only for CreateNoWindow: ProcessStartInfo
+            // throws on Start when Environment has been populated and UseShellExecute is true.
+            // The two cannot both be had, and this is the one that keeps the variable.
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = System.IO.Path.GetDirectoryName(exePath) ?? string.Empty,
+        };
+        psi.Environment[PluginLaunchReasonExtensions.EnvironmentVariableName] = reason.ToWireValue();
+        return psi;
+    }
+
+    public int Start(string pluginId, string exePath, PluginLaunchReason reason)
     {
         if (string.IsNullOrEmpty(exePath)) throw new ArgumentException("exePath is required.", nameof(exePath));
         if (!System.IO.File.Exists(exePath))
@@ -44,13 +66,7 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
             throw new System.IO.FileNotFoundException("Plugin executable not found.", exePath);
         }
 
-        var psi = new ProcessStartInfo
-        {
-            FileName = exePath,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WorkingDirectory = System.IO.Path.GetDirectoryName(exePath) ?? string.Empty,
-        };
+        var psi = BuildStartInfo(exePath, reason);
         var process = new Process
         {
             StartInfo = psi,
@@ -92,8 +108,8 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
         var adopted = _job?.TryAssign(process.Id) ?? false;
 
         _log?.LogInformation(
-            "Plugin process started: {PluginId} pid {Pid} ({ExePath}); job-managed: {Adopted}.",
-            pluginId, process.Id, exePath, adopted);
+            "Plugin process started: {PluginId} pid {Pid} ({ExePath}); reason: {Reason}; job-managed: {Adopted}.",
+            pluginId, process.Id, exePath, reason.ToWireValue(), adopted);
         return process.Id;
     }
 

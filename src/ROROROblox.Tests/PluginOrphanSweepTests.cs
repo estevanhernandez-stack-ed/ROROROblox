@@ -127,7 +127,7 @@ public class PluginOrphanSweepTests
 
         public event Action<int>? ProcessExited { add { } remove { } }
 
-        public int Start(string pluginId, string exePath) => throw new NotSupportedException();
+        public int Start(string pluginId, string exePath, PluginLaunchReason reason) => throw new NotSupportedException();
 
         public void Kill(int pid)
         {

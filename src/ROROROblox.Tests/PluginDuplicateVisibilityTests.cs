@@ -182,7 +182,7 @@ public class PluginDuplicateVisibilityTests : IDisposable
     private sealed class NoopStarter : IPluginProcessStarter
     {
         public event Action<int>? ProcessExited { add { } remove { } }
-        public int Start(string pluginId, string exePath) => 1;
+        public int Start(string pluginId, string exePath, PluginLaunchReason reason) => 1;
         public void Kill(int pid) { }
         public IReadOnlyList<int> FindRunningUnder(string dirPath) => [];
     }

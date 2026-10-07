@@ -117,7 +117,7 @@ public class PluginProcessSupervisorTests : IDisposable
         supervisor.StartAutostart(new[] { plugin });
         Assert.Single(fake.Started);
 
-        supervisor.Restart(plugin);
+        supervisor.Restart(plugin, PluginLaunchReason.Manual);
 
         Assert.Equal(2, fake.Started.Count);
         Assert.Single(fake.KilledPids);
@@ -181,11 +181,64 @@ public class PluginProcessSupervisorTests : IDisposable
         var supervisor = new PluginProcessSupervisor(fake);
         var plugin = MakePlugin("626labs.a", autostart: false);
 
-        supervisor.Start(plugin);
+        supervisor.Start(plugin, PluginLaunchReason.Manual);
 
         Assert.Single(fake.Started);
         Assert.Equal("626labs.a", fake.Started[0].id);
         Assert.True(supervisor.RunningPids.ContainsKey("626labs.a"));
+    }
+
+    // ---- RORORO_LAUNCH_REASON pass-through (v1.33 item 8) ------------------------------------
+
+    [Theory]
+    [InlineData(PluginLaunchReason.Manual)]
+    [InlineData(PluginLaunchReason.Install)]
+    [InlineData(PluginLaunchReason.Update)]
+    [InlineData(PluginLaunchReason.Restart)]
+    public void Start_PassesTheCallersReasonToTheStarter(PluginLaunchReason reason)
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+
+        supervisor.Start(MakePlugin("626labs.a", autostart: false), reason);
+
+        Assert.Equal(reason, Assert.Single(fake.StartReasons));
+    }
+
+    [Fact]
+    public void Start_OnAnAlreadyRunningPlugin_KeepsTheCallersReasonRatherThanCallingItARestart()
+    {
+        // The case that makes Restart take a reason instead of hardcoding one. Start routes through
+        // Restart when the plugin is already running, and an update that happens to relaunch a live
+        // plugin is still an UPDATE as far as that plugin is concerned — which is precisely the
+        // reason Ur Score asked for the variable, so it can skip first-run setup on an update.
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+        var plugin = MakePlugin("626labs.a", autostart: false);
+
+        supervisor.Start(plugin, PluginLaunchReason.Install);
+        supervisor.Start(plugin, PluginLaunchReason.Update);
+
+        Assert.Equal(
+            [PluginLaunchReason.Install, PluginLaunchReason.Update],
+            fake.StartReasons);
+    }
+
+    [Fact]
+    public void StartAutostart_ReportsAutostartAndNothingElse()
+    {
+        // Nobody clicked, and the sweep takes no reason parameter so no caller can claim otherwise.
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+
+        supervisor.StartAutostart([
+            MakePlugin("626labs.a", autostart: true),
+            MakePlugin("626labs.b", autostart: true),
+        ]);
+
+        Assert.Equal(
+            [PluginLaunchReason.Autostart, PluginLaunchReason.Autostart],
+            fake.StartReasons);
     }
 
     [Fact]
@@ -195,10 +248,10 @@ public class PluginProcessSupervisorTests : IDisposable
         var supervisor = new PluginProcessSupervisor(fake);
         var plugin = MakePlugin("626labs.a", autostart: false);
 
-        supervisor.Start(plugin);
+        supervisor.Start(plugin, PluginLaunchReason.Manual);
         var firstPid = supervisor.RunningPids["626labs.a"];
 
-        supervisor.Start(plugin);
+        supervisor.Start(plugin, PluginLaunchReason.Manual);
 
         Assert.Equal(2, fake.Started.Count);          // started twice
         Assert.Single(fake.KilledPids);               // old process killed once
@@ -238,9 +291,13 @@ public class PluginProcessSupervisorTests : IDisposable
         private int _nextPid = 1000;
         private readonly Dictionary<string, List<int>> _runningUnder = new(StringComparer.OrdinalIgnoreCase);
 
-        public int Start(string id, string exePath)
+        /// <summary>Launch reasons in call order (v1.33 item 8), so pass-through is assertable.</summary>
+        public List<PluginLaunchReason> StartReasons { get; } = [];
+
+        public int Start(string id, string exePath, PluginLaunchReason reason)
         {
             Started.Add((id, exePath));
+            StartReasons.Add(reason);
             return _nextPid++;
         }
 

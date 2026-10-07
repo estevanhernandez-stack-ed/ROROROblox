@@ -186,9 +186,13 @@ public class PluginsViewModelLaunchConsentTests : IDisposable
         public List<(string PluginId, string ExePath)> Started { get; } = new();
         public event Action<int>? ProcessExited;
 
-        public int Start(string pluginId, string exePath)
+        /// <summary>Launch reasons in call order (v1.33 item 8).</summary>
+        public List<PluginLaunchReason> StartReasons { get; } = [];
+
+        public int Start(string pluginId, string exePath, PluginLaunchReason reason)
         {
             Started.Add((pluginId, exePath));
+            StartReasons.Add(reason);
             return _nextPid++;
         }
 

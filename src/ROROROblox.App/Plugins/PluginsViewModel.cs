@@ -231,7 +231,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             // installer's return value is sufficient — no rescan needed.
             try
             {
-                _supervisor.Start(installed);
+                _supervisor.Start(installed, PluginLaunchReason.Install);
                 // LoadAsync above already rebuilt Plugins. Flip the matching row's
                 // IsRunning so the Launch button on it shows disabled-state immediately.
                 var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == installed.Manifest.Id);
@@ -290,7 +290,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             await LoadAsync().ConfigureAwait(true);
             if (wasRunning)
             {
-                _supervisor.Start(updated); // relaunch on the new version, only if it was running before
+                _supervisor.Start(updated, PluginLaunchReason.Update); // relaunch on the new version, only if it was running before
                 var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == updated.Manifest.Id);
                 if (newRow is not null) newRow.IsRunning = true;
             }
@@ -375,7 +375,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             }
 
             StatusBanner = Loc.Format("Plugin_Launching", row.Name);
-            _supervisor.Start(row.Plugin);
+            _supervisor.Start(row.Plugin, PluginLaunchReason.Manual);
             row.IsRunning = true;
             StatusBanner = Loc.Format("Plugin_Running", row.Name);
         }
@@ -429,7 +429,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         }
         try
         {
-            _supervisor.Restart(match.Plugin);
+            _supervisor.Restart(match.Plugin, PluginLaunchReason.Restart);
             _log.LogInformation("Plugin {PluginId}: restarted from exit banner.", match.Plugin.Manifest.Id);
             StatusBanner = Loc.Format("Plugin_Restarted", match.Name);
             _bannerPluginId = null;

@@ -307,11 +307,38 @@ two-way binding, the way streamer mode was fixed for F-102.
 `PluginProcessSupervisor.Start` passes it; four call sites supply `autostart`, `manual`, `install`,
 `update`.
 
-- [ ] All four paths set it, including the update relaunch at `PluginsViewModel.cs:293`.
-- [ ] No argv change; a plugin that ignores it is unaffected.
-- [ ] `contractVersion` does not move; no RPC, capability or consent change.
-- [ ] `DefaultPluginProcessStarterTests` covers each reason.
-- [ ] Tell the Ur Score session when it lands on main.
+- [x] **Five paths, not four.** The sweep found `PluginsViewModel.cs:432` as well — the crash
+      banner's Restart button. Given its own `restart` reason rather than folded into `manual`,
+      because it is the one case a plugin has a real motive to treat differently: it is coming back
+      from a death, not being started fresh. Autostart is `App.xaml.cs:3205`, install `:234`, update
+      `:293` (the one the checklist named), manual `:378`, restart `:432`.
+- [x] **A `PluginLaunchReason` enum, not the raw strings.** Five call sites across two files; a typo
+      in one would be a value the plugin silently never matches. `ToWireValue` is the only place the
+      spelling lives, it throws on an unmapped member, and a test asserts every member maps to a
+      distinct non-empty value — so a sixth reason cannot be added without a wire name.
+- [x] **The parameter is required, with no default.** A default would let a new launch path compile
+      while telling every plugin the wrong story about why it is running, and no value is honestly
+      right for "the caller did not say". It earned itself immediately: the compiler named seven
+      existing call sites that a default would have waved through.
+- [x] `Restart` takes the reason rather than hardcoding `restart`, because `Start` routes through it
+      when the plugin is already running — an update that happens to relaunch a live plugin is still
+      an *update* to that plugin, which is exactly the case Ur Score asked for. Pinned by
+      `Start_OnAnAlreadyRunningPlugin_KeepsTheCallersReasonRatherThanCallingItARestart`.
+      `StartAutostart` takes no reason at all, so no caller can claim a sweep was a click.
+- [x] No argv change, verified: nothing in `Plugins/` sets `psi.Arguments`. A plugin that never
+      reads the variable is byte-for-byte unaffected.
+- [x] `contractVersion` does not move; no RPC, capability or consent change. Verified against the
+      diff rather than asserted — no changed line in this commit mentions any of the three, and the
+      app-side diff is four files of thread-through.
+- [x] `DefaultPluginProcessStarterTests` covers each reason, asserted on the `ProcessStartInfo`
+      through a new internal `BuildStartInfo` seam: a real child cannot be asked what its
+      environment was, since `Start` takes no arguments to pass a probe. **The wire strings are
+      spelled out literally in the test**, not read back through `ToWireValue`, which would pass if
+      someone renamed one. Plus the trap worth a test of its own: `UseShellExecute` must stay false,
+      because `ProcessStartInfo` throws on `Start` when `Environment` is populated and it is true —
+      and that throw would land on every plugin launch, not only the ones reading the variable.
+- [ ] Tell the Ur Score session when it lands on main. **Still open** — the branch is unmerged and
+      untagged, so there is nothing for Ur Score to build against yet.
 
 ## 9. Colour emoji in titles
 

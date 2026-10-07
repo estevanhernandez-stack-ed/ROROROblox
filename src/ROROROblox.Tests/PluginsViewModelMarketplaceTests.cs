@@ -91,7 +91,10 @@ public class PluginsViewModelMarketplaceTests : IDisposable
     {
         public List<(string PluginId, string ExePath)> Started { get; } = new();
         public event Action<int>? ProcessExited;
-        public int Start(string pluginId, string exePath) { Started.Add((pluginId, exePath)); return 1; }
+        /// <summary>Launch reasons in call order (v1.33 item 8).</summary>
+        public List<PluginLaunchReason> StartReasons { get; } = [];
+        public int Start(string pluginId, string exePath, PluginLaunchReason reason)
+        { Started.Add((pluginId, exePath)); StartReasons.Add(reason); return 1; }
         public void Kill(int pid) => ProcessExited?.Invoke(pid);
         public IReadOnlyList<int> FindRunningUnder(string dirPath) => Array.Empty<int>();
     }

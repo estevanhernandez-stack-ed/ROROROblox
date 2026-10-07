@@ -30,20 +30,32 @@ public sealed class PluginProcessSupervisor
         get { lock (_lock) { return new Dictionary<string, int>(_pidByPluginId); } }
     }
 
+    /// <summary>
+    /// The startup sweep. Every launch from here is <see cref="PluginLaunchReason.Autostart"/> by
+    /// definition — nobody clicked — so this one takes no reason rather than letting a caller claim
+    /// otherwise.
+    /// </summary>
     public void StartAutostart(IEnumerable<InstalledPlugin> plugins)
     {
         foreach (var plugin in plugins)
         {
             if (!plugin.Consent.AutostartEnabled) continue;
-            StartOne(plugin);
+            StartOne(plugin, PluginLaunchReason.Autostart);
         }
     }
 
-    public void Restart(InstalledPlugin plugin)
+    /// <param name="reason">
+    /// Why, for the child's <c>RORORO_LAUNCH_REASON</c>. Passed through rather than hardcoded to
+    /// <see cref="PluginLaunchReason.Restart"/>: <see cref="Start"/> routes here when the plugin is
+    /// already running, and an install or update that happens to restart a live plugin is still an
+    /// install or an update as far as that plugin is concerned.
+    /// </param>
+    public void Restart(InstalledPlugin plugin, PluginLaunchReason reason)
     {
-        _log?.LogInformation("Restarting plugin {PluginId}.", plugin.Manifest.Id);
+        _log?.LogInformation("Restarting plugin {PluginId} ({Reason}).",
+            plugin.Manifest.Id, reason.ToWireValue());
         Stop(plugin.Manifest.Id);
-        StartOne(plugin);
+        StartOne(plugin, reason);
     }
 
     /// <summary>
@@ -53,7 +65,7 @@ public sealed class PluginProcessSupervisor
     /// freshly-installed plugin runs without a RoRoRo restart — autostart governs future
     /// launches, this governs "now".
     /// </summary>
-    public void Start(InstalledPlugin plugin)
+    public void Start(InstalledPlugin plugin, PluginLaunchReason reason)
     {
         // Check under the lock, act outside it — same minimal-hold pattern as StartOne /
         // OnProcessExited (keep the Process.Start syscall off the lock). The window between
@@ -64,11 +76,11 @@ public sealed class PluginProcessSupervisor
         lock (_lock) { alreadyRunning = _pidByPluginId.ContainsKey(plugin.Manifest.Id); }
         if (alreadyRunning)
         {
-            Restart(plugin);
+            Restart(plugin, reason);
         }
         else
         {
-            StartOne(plugin);
+            StartOne(plugin, reason);
         }
     }
 
@@ -208,9 +220,9 @@ public sealed class PluginProcessSupervisor
         }
     }
 
-    private void StartOne(InstalledPlugin plugin)
+    private void StartOne(InstalledPlugin plugin, PluginLaunchReason reason)
     {
-        var pid = _starter.Start(plugin.Manifest.Id, plugin.ExecutablePath);
+        var pid = _starter.Start(plugin.Manifest.Id, plugin.ExecutablePath, reason);
         lock (_lock) { _pidByPluginId[plugin.Manifest.Id] = pid; }
     }
 

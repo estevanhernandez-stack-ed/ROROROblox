@@ -1,4 +1,5 @@
 using System.IO;
+using ROROROblox.App.Plugins;
 using ROROROblox.App.Plugins.Adapters;
 
 namespace ROROROblox.Tests;
@@ -22,7 +23,7 @@ public class DefaultPluginProcessStarterTests
         using var exited = new ManualResetEventSlim(false);
         starter.ProcessExited += _ => exited.Set();
 
-        var pid = starter.Start("626labs.test", WhereExe);
+        var pid = starter.Start("626labs.test", WhereExe, PluginLaunchReason.Manual);
 
         Assert.True(exited.Wait(TimeSpan.FromSeconds(10)), "process never exited");
 
@@ -48,6 +49,63 @@ public class DefaultPluginProcessStarterTests
         Assert.Contains("after", exitLine);      // uptime present
     }
 
+    // ---- RORORO_LAUNCH_REASON (v1.33 item 8) -------------------------------------------------
+
+    [Theory]
+    [InlineData(PluginLaunchReason.Autostart, "autostart")]
+    [InlineData(PluginLaunchReason.Manual, "manual")]
+    [InlineData(PluginLaunchReason.Install, "install")]
+    [InlineData(PluginLaunchReason.Update, "update")]
+    [InlineData(PluginLaunchReason.Restart, "restart")]
+    public void EveryReasonReachesTheChildsEnvironment(PluginLaunchReason reason, string expected)
+    {
+        // Asserted on the ProcessStartInfo rather than a real child, because a child cannot be
+        // asked: IPluginProcessStarter.Start takes no arguments to pass a probe, and reading another
+        // process's environment is not something to build a test on. The wire strings are spelled
+        // out here on purpose — a test that read them back through ToWireValue would pass if someone
+        // renamed one, and these are a published contract the moment a plugin matches on them.
+        var psi = DefaultPluginProcessStarter.BuildStartInfo(WhereExe, reason);
+
+        Assert.Equal(expected, psi.Environment["RORORO_LAUNCH_REASON"]);
+    }
+
+    [Fact]
+    public void TheLaunchInfoKeepsUseShellExecuteFalseSoTheEnvironmentSurvives()
+    {
+        // Not style. ProcessStartInfo throws on Start when Environment has been populated and
+        // UseShellExecute is true, so these two settings cannot both be had — and the throw would
+        // land on every plugin launch, not just the ones reading the variable.
+        var psi = DefaultPluginProcessStarter.BuildStartInfo(WhereExe, PluginLaunchReason.Manual);
+
+        Assert.False(psi.UseShellExecute);
+    }
+
+    [Fact]
+    public void EveryDeclaredReasonHasADistinctWireValue()
+    {
+        // Exhaustiveness, so a sixth reason cannot be added without a wire name. ToWireValue throws
+        // on an unmapped member, and distinctness matters because two reasons sharing a string is a
+        // plugin that cannot tell them apart — which is the entire point of sending it.
+        var all = Enum.GetValues<PluginLaunchReason>();
+        Assert.NotEmpty(all);
+
+        var wire = all.Select(r => r.ToWireValue()).ToList();
+
+        Assert.DoesNotContain(wire, string.IsNullOrWhiteSpace);
+        Assert.Equal(wire.Count, wire.Distinct(StringComparer.Ordinal).Count());
+    }
+
+    [Fact]
+    public void AReasonDoesNotStopTheProcessStarting()
+    {
+        // The end-to-end half: a populated environment block must not break the launch itself.
+        var starter = new DefaultPluginProcessStarter();
+
+        var pid = starter.Start("626labs.test", WhereExe, PluginLaunchReason.Update);
+
+        Assert.True(pid > 0, "a plugin launched with a reason should still start");
+    }
+
     [Fact]
     public void Start_MissingExecutable_ThrowsAndLogsQuarantineHint()
     {
@@ -55,7 +113,7 @@ public class DefaultPluginProcessStarterTests
         var starter = new DefaultPluginProcessStarter(log);
         var missing = Path.Combine(Path.GetTempPath(), "urtask-missing-" + Guid.NewGuid().ToString("N") + ".exe");
 
-        Assert.Throws<FileNotFoundException>(() => starter.Start("626labs.test", missing));
+        Assert.Throws<FileNotFoundException>(() => starter.Start("626labs.test", missing, PluginLaunchReason.Manual));
 
         var line = Assert.Single(log.Snapshot(), l => l.Contains("not found"));
         Assert.Contains("626labs.test", line);
@@ -71,7 +129,7 @@ public class DefaultPluginProcessStarterTests
         using var exited = new ManualResetEventSlim(false);
         starter.ProcessExited += _ => exited.Set();
 
-        starter.Start("626labs.test", WhereExe);
+        starter.Start("626labs.test", WhereExe, PluginLaunchReason.Manual);
 
         Assert.True(exited.Wait(TimeSpan.FromSeconds(10)), "process never exited");
     }
