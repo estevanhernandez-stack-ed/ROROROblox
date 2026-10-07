@@ -83,3 +83,34 @@ it and nothing happened". **Worth its own look, outside this cycle.**
 Settings restored and diffed against the pre-run backup: identical apart from `alertCadenceMinutes`,
 which is now explicitly `5` where it was absent — the same value the absent key defaults to. The
 launched account and its client were left running.
+
+## Correction, 19:25 — the account was the wrong one, and Este caught it
+
+`ItsjustesteAgain` cannot join a game directly; it has to follow someone in. Launching it straight at
+a place left it sitting at Roblox's verification screen, never reaching `InGame`, until it exited on
+its own. So the client those first readings came from was stranded, not playing: **1,022 MB** against
+the **2,354 MB** the same account uses once it is actually in a game.
+
+Relaunched with `follow_main`, it was in the game in **18 seconds**, and a crossing forced against the
+real figure behaved identically — crossed at 2,354 MB against a 1,500 MB cap, dispatched to `"Mine"`
+alone, no `Local` line.
+
+**What this changes in the findings above: nothing, and that is worth stating precisely rather than
+either dismissing the point or over-conceding it.** Routing, suppression and the idle route are all
+independent of whether a client is in a game; the memory figures were real private bytes of a live
+process either way. What it does change is representativeness — a stranded client is not the case
+this feature exists for, and **item 11's full smoke must use an in-game client**, which is now
+running.
+
+One honest wrinkle it exposes: the idle alert that proved the Desktop path fired for an account that
+was **offline**, not playing. The route it proved is the same route, so the proof stands. But an idle
+alert about an account that never got into a game is arguably noise, and it would have behaved the
+same before this cycle — so it is not a regression, just a case nobody has looked at. Worth a question
+in item 11: should an account that is not in a game be eligible for an idle alert at all?
+
+**Also open, and not called a regression without evidence:** the direct launch produced a plain
+`target=Place` dispatch with no join-via-friend decision in the log at all. Either the account is not
+flagged in RoRoRo — in which case the app did exactly what it was told — or the plugin launch path
+reaches `RobloxLauncher` without passing `FlaggedLaunchRule`, which would be a v1.32 regression.
+Deciding needs the account's flag state, which lives in the encrypted vault and is only visible in the
+row menu. **Check before the cycle ends.**
