@@ -39,8 +39,17 @@ public class BrandNameFenceTests
     /// Display sinks in C#. A literal reaching one of these is read by a person whatever it looks
     /// like, so the shape rule below does not get to excuse it.
     /// </summary>
+    /// <remarks>
+    /// <c>ShowMemoryWarning\s*\(</c> sat in this alternation until 2026-10-06 and was removed with
+    /// the method (v1.33 item 4): the tray's memory balloon went when its account id moved onto the
+    /// drawn <c>AlertBalloon</c>. Removed rather than left as a dead branch, because a pattern
+    /// naming a method that does not exist reads as coverage this fence does not have. The one
+    /// surviving <c>ShowMemoryWarning</c> in the app is <c>SettingsPage</c>'s private inline
+    /// banner, which is handed <c>Loc.Format(...)</c> rather than a literal and so was never
+    /// matched by this regex in either form.
+    /// </remarks>
     private static readonly Regex DisplaySink = new(
-        "(?:ShowToast\\s*\\(|ShowMemoryWarning\\s*\\(|\\b(?:Header|Content|Text|ToolTip|ToolTipText|Title)\\s*=\\s*)(\\$?@?\"(?:[^\"\\\\]|\\\\.)*\")",
+        "(?:ShowToast\\s*\\(|\\b(?:Header|Content|Text|ToolTip|ToolTipText|Title)\\s*=\\s*)(\\$?@?\"(?:[^\"\\\\]|\\\\.)*\")",
         RegexOptions.Compiled);
 
     /// <summary>

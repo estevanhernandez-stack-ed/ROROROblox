@@ -108,9 +108,12 @@ Three cards become one per-kind table — **does it fire / how often at most / w
 the memory numbers beside the memory row and idle in the grid.
 
 - [ ] Markup order still satisfies `AlertsStatusLinePositionFenceTests:46-76`.
-- [ ] `AccessibleNamingFenceTests` (`UnnamedCeiling = 1`, `ScannedFloor = 120`, both equality) and
-      `SettingsCommitOnEnterFenceTests` (`CommittingFieldsOnThePage = 8`, equality) move in this
-      commit with their new values.
+- [ ] `AccessibleNamingFenceTests` and `SettingsCommitOnEnterFenceTests` move in this commit if the
+      page's control count changes. **Corrected by the item 4 agent — the earlier claim here was
+      wrong in two ways.** `UnnamedCeiling = 1` is asserted as equality; **`ScannedFloor = 120` is
+      `>=`, not equality**. And the scan only counts `Button, ToggleButton, ComboBox, TextBox,
+      CheckBox, PasswordBox` — a `Border` or `TextBlock` moves neither number. Re-derive from the
+      real assertions before planning around them. `CommittingFieldsOnThePage = 8` IS equality.
 - [ ] `PreferencesCopyTests` holds: second person, every label and hint ends in a period, no hint
       restating its label.
 - [ ] New settings keys are reachable from a control or allow-listed with a reason.

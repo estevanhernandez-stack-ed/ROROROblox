@@ -35,11 +35,26 @@ public class TrayWiringTests
         return (tray, fired);
     }
 
+    /// <summary>
+    /// TrayService's own source, stripped of comments. The source-scan clauses below need it in both
+    /// directions: the class's doc comments legitimately NAME <c>ShowBalloonTip</c> and
+    /// <c>ShowMemoryWarning</c> while explaining why neither is there any more, and a guard that
+    /// reads prose as code reports on something other than what it claims — the lesson
+    /// <c>SettingsReachabilityTests.WithoutComments</c> was written for and this file now reuses.
+    /// </summary>
+    private static string TrayServiceCode()
+    {
+        var root = XamlStyleScanner.FindRepoRoot();
+        Assert.False(root is null, "Could not locate ROROROblox.slnx above the test assembly.");
+        var path = Path.Combine(root!, "src", "ROROROblox.App", "Tray", "TrayService.cs");
+        return string.Join('\n', SettingsReachabilityTests.WithoutComments(path, File.ReadAllLines(path)));
+    }
+
     [Fact]
-    public void EveryBalloonTipInTrayService_IsRaisedOnTheUiThread()
+    public void TheNotificationInTrayService_IsRaisedOnTheUiThread()
     {
         // A source scan because TrayService needs a real WPF TaskbarIcon and cannot be constructed in a
-        // test. What it guards is a measured defect (2026-09-11): ShowToast called ShowBalloonTip
+        // test. What it guards is a measured defect (2026-09-11): ShowToast touched the taskbar icon
         // directly while two siblings in the same class marshalled, and its callers are NOT on the UI
         // thread — AlertDispatcher.DispatchAsync runs fire-and-forget from MetricReportSinkAdapter's
         // event, raised on a thread-pool timer thread when a metric grouping window closes (a gRPC
@@ -49,26 +64,99 @@ public class TrayWiringTests
         // Worse than one lost toast, which is why this is a fence and not a comment: the dispatcher's
         // fan-out loop is sequential and stamps the cooldown inside it, per destination, so a throw ends
         // the loop and every destination after Local loses its send too.
-        var root = XamlStyleScanner.FindRepoRoot();
-        Assert.False(root is null, "Could not locate ROROROblox.slnx above the test assembly.");
-        var source = File.ReadAllText(Path.Combine(root!, "src", "ROROROblox.App", "Tray", "TrayService.cs"));
+        //
+        // RETARGETED 2026-10-06 (v1.33 item 4). It read ShowBalloonTip and asserted exactly two calls
+        // — ShowToast's and ShowMemoryWarning's. Both are gone: the balloon is ours now
+        // (ShowCustomBalloon) and ShowMemoryWarning went with the shell balloon it wrapped. The
+        // THREAD-AFFINITY hazard did not change at all, which is the reason this clause follows the
+        // call instead of retiring with it — constructing an AlertBalloon off the UI thread throws
+        // exactly as touching the taskbar icon did, and gets swallowed exactly as quietly.
+        var source = TrayServiceCode();
 
-        var calls = source.Split("ShowBalloonTip").Length - 1;
-        Assert.Equal(2, calls);     // ShowMemoryWarning and ShowToast; a third needs its own answer here
+        var calls = source.Split("ShowCustomBalloon").Length - 1;
+        Assert.Equal(1, calls);     // ShowToast's, and only ShowToast's; a second needs its own answer here
 
-        foreach (var method in new[] { "public void ShowToast(", "public void ShowMemoryWarning(" })
+        const string method = "public void ShowToast(";
+        var start = source.IndexOf(method, StringComparison.Ordinal);
+        Assert.True(start >= 0, $"{method} is gone from TrayService — this fence needs updating.");
+
+        var body = source[start..];
+        var marshal = body.IndexOf("Dispatcher.Invoke", StringComparison.Ordinal);
+        Assert.True(marshal >= 0,
+            $"{method} does not marshal to the UI thread at all. Its callers are not on that thread "
+            + "and the exception is swallowed downstream, so the alert would disappear silently.");
+
+        // INSIDE THE LAMBDA, not merely after the word "Dispatcher.Invoke" — and this clause is
+        // stronger than the one it replaced because the weaker version was MEASURED not to bite.
+        // The old fence asked whether ShowBalloonTip appeared later in the file than the marshal
+        // did, which every call does: moving the show call out of the lambda and leaving it on the
+        // next line satisfies "later in the text" perfectly while running on the caller's thread.
+        // Tried on 2026-10-06 against the retargeted version of this clause; it stayed green.
+        Assert.Contains("ShowCustomBalloon", DelimitedSpan(body, marshal), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The source from <paramref name="from"/> through the delimiter that closes the construct
+    /// starting there — the body of the <c>Dispatcher.Invoke(() =&gt; { … })</c> call, brackets
+    /// balanced, so "is this statement inside the marshal" is a real question rather than a
+    /// question about line order.
+    /// </summary>
+    private static string DelimitedSpan(string source, int from)
+    {
+        var depth = 0;
+        var opened = false;
+        for (var i = from; i < source.Length; i++)
         {
-            var start = source.IndexOf(method, StringComparison.Ordinal);
-            Assert.True(start >= 0, $"{method} is gone from TrayService — this fence needs updating.");
-
-            var body = source[start..];
-            var balloon = body.IndexOf("ShowBalloonTip", StringComparison.Ordinal);
-            var marshal = body.IndexOf("Dispatcher.Invoke", StringComparison.Ordinal);
-            Assert.True(marshal >= 0 && marshal < balloon,
-                $"{method} reaches ShowBalloonTip without marshalling to the UI thread first. Its callers "
-                + "are not on that thread and the exception is swallowed downstream, so the alert would "
-                + "disappear silently.");
+            if (source[i] is '(' or '{') { depth++; opened = true; }
+            else if (source[i] is ')' or '}') { depth--; }
+            if (opened && depth == 0) return source[from..(i + 1)];
         }
+
+        Assert.Fail("Bracket scan ran off the end of TrayService.cs — the file does not parse the "
+            + "way this fence assumes, so its verdict means nothing.");
+        return "";
+    }
+
+    [Fact]
+    public void TrayServiceNoLongerShowsTheShellBalloon()
+    {
+        // The deliberate absence, and the reason item 4 exists at all: ShowBalloonTip ALWAYS plays the
+        // system notification sound. BalloonFlags.NoSound is in the shipped Hardcodet.NotifyIcon.Wpf
+        // 2.0.1 but only behind a NON-PUBLIC overload (verified by reflection 2026-10-05), so there is
+        // no supported way to ask the shell for a quiet one. A single ShowBalloonTip creeping back in
+        // would take the sound setting (item 5) out of the user's hands for that one alert kind and
+        // nothing else would notice.
+        var source = TrayServiceCode();
+
+        Assert.DoesNotContain("ShowBalloonTip", source, StringComparison.Ordinal);
+
+        // Vacuity floor. Both clauses here read one file off a filesystem walk, and a walk that
+        // returned an empty string would pass this and the equality above for free.
+        Assert.Contains("_taskbarIcon", source, StringComparison.Ordinal);
+        Assert.Contains("public void ShowToast(", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TrayServiceKeepsNoRememberedAccountForABalloonClick()
+    {
+        // The field that made item 3's regression invisible. _lastMemoryWarningAccountId was
+        // app-lifetime state holding "which account the balloon currently on screen is about", which
+        // meant every unrelated notification had to CLEAR it — and when the collapse routed every
+        // balloon through ShowToast, that clearing silently turned click-to-focus off. No test went
+        // red, because no signature mentioned an account.
+        //
+        // The account rides on the AlertBalloon instance now. This fails if anyone reintroduces the
+        // shape, including under a new name: the rule is that the tray holds no account between
+        // notifications, and the shell's payload-free click event has no subscriber to need one.
+        var source = TrayServiceCode();
+
+        Assert.DoesNotContain("_lastMemoryWarningAccountId", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("TrayBalloonTipClicked", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public void ShowMemoryWarning(", source, StringComparison.Ordinal);
+
+        // What SHOULD be there: the per-balloon subscription that replaced it.
+        Assert.Contains("FocusRequested", source, StringComparison.Ordinal);
+        Assert.Contains("RequestFocusAccount?.Invoke", source, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -188,9 +276,9 @@ internal sealed class RecordingTray : ITrayService
     public void UpdateStatus(MultiInstanceState state) { }
     // Recorded rather than dropped (F-100): the idle-alert path ends at a toast, and a recorder
     // that discards the only observable effect cannot witness the handler it exists to witness.
-    public readonly List<(string Title, string Message)> Toasts = new();
-    public void ShowToast(string title, string message) => Toasts.Add((title, message));
+    public readonly List<(string Title, string Message, Guid? AccountId)> Toasts = new();
+    public void ShowToast(string title, string message, Guid? accountId = null) =>
+        Toasts.Add((title, message, accountId));
     public void SetMemoryWarning(bool active) { }
-    public void ShowMemoryWarning(string title, string message, Guid accountId) { }
     public void Dispose() { }
 }

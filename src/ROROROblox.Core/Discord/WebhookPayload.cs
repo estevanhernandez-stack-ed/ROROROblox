@@ -279,7 +279,13 @@ public sealed record WebhookPayload(string Title, string Body)
     }
 
     /// <summary>The first <paramref name="length"/> UTF-16 units, one fewer when the cut would
-    /// split a surrogate pair (an emoji in a name or a label).</summary>
-    private static string Front(string text, int length) =>
+    /// split a surrogate pair (an emoji in a name or a label).
+    /// <para>
+    /// Internal rather than private since v1.33 item 4: <see cref="PayloadLimits.ClampTitle"/> needs
+    /// the same care, and two implementations of "cut a string without halving an emoji" is how one
+    /// of them quietly stops taking it.
+    /// </para>
+    /// </summary>
+    internal static string Front(string text, int length) =>
         text[..(char.IsHighSurrogate(text[length - 1]) ? length - 1 : length)];
 }

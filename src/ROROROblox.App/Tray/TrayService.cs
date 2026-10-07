@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -38,11 +39,14 @@ internal sealed class TrayService : ITrayService
     private bool _disposed;
 
     // Memory-warning overlay (Task 8) — deliberately independent of _currentState/UpdateStatus.
-    // _lastMemoryWarningAccountId is remembered so a balloon click can replay the account id on
-    // RequestFocusAccount; Windows' TrayBalloonTipClicked carries no payload of its own. Cleared
-    // by ShowToast so a click on an unrelated (idle-alert) balloon never fires a stale account.
+    //
+    // _lastMemoryWarningAccountId used to sit beside this: the account a memory balloon was about,
+    // remembered here because Windows' TrayBalloonTipClicked carries no payload of its own. It went
+    // with ShowMemoryWarning and the shell balloon on 2026-10-06 (v1.33 item 4). The account now
+    // arrives WITH the notification (ShowToast's trailing id) and rides on the drawn balloon itself,
+    // so there is no app-lifetime "last balloon" state to go stale and no reason a click on one
+    // notification could ever replay another's account.
     private bool _memoryWarningActive;
-    private Guid? _lastMemoryWarningAccountId;
 
     public event EventHandler? RequestOpenMainWindow;
     public event EventHandler? RequestToggleMutex;
@@ -66,21 +70,12 @@ internal sealed class TrayService : ITrayService
         // that means "launch main" or "surface the window" based on whether a main is set.
         _taskbarIcon.TrayMouseDoubleClick += (_, _) => RequestActivateMain?.Invoke(this, EventArgs.Empty);
 
-        // Balloon click -> RequestFocusAccount, but only when the balloon on screen was a memory
-        // warning (ShowToast clears _lastMemoryWarningAccountId, so a click on an idle-alert toast
-        // is correctly a no-op here).
-        //
-        // INERT AS OF 2026-10-06 (v1.33 item 3): ShowMemoryWarning is the only writer of
-        // _lastMemoryWarningAccountId and it no longer has a caller, so this is a no-op for every
-        // balloon. Item 4 owns restoring it — see ShowMemoryWarning's own note for the two options.
-        _taskbarIcon.TrayBalloonTipClicked += (_, _) =>
-        {
-            if (_lastMemoryWarningAccountId is { } accountId)
-            {
-                RequestFocusAccount?.Invoke(this, accountId);
-            }
-        };
-
+        // NO TrayBalloonTipClicked SUBSCRIPTION, and its absence is deliberate (v1.33 item 4).
+        // That event belongs to the SHELL balloon, which this class no longer shows — ShowToast
+        // draws its own (AlertBalloon, via ShowCustomBalloon), so the shell never has a balloon of
+        // ours to be clicked and the event can never fire. Click-to-focus is wired per balloon in
+        // ShowToast instead, from the control that was actually clicked, which is also why it no
+        // longer needs a remembered "last account" field.
         var (toggle, streamerMode, menu) = BuildContextMenu();
         _toggleItem = toggle;
         _streamerModeItem = streamerMode;
@@ -160,41 +155,6 @@ internal sealed class TrayService : ITrayService
             if (_memoryWarningActive == active) return;
             _memoryWarningActive = active;
             _taskbarIcon.Icon = ResolveIconForState(_currentState);
-        });
-    }
-
-    /// <summary>
-    /// See <see cref="SetMemoryWarning"/>'s thread-safety note — same marshaling reason.
-    /// <para>
-    /// <b>NO CALLER AS OF 2026-10-06 (v1.33 item 3).</b> <c>App.WireMemoryWarningTray</c> was the
-    /// only one, and it was the second path to the screen: it balloon'd on every memory crossing
-    /// while knowing nothing about alert destinations, the per-account mute or the quiet period.
-    /// Memory warnings now reach a screen through <c>AlertDispatcher</c>, which routes
-    /// <see cref="ROROROblox.Core.Discord.AlertDestination.Local"/> to <see cref="ShowToast"/>.
-    /// </para>
-    /// <para>
-    /// KEPT, DELIBERATELY, FOR ONE ITEM, because deleting it deletes the only click-to-focus path
-    /// in the app: <c>_lastMemoryWarningAccountId</c> is set here and nowhere else, and it is what
-    /// <c>TrayBalloonTipClicked</c> replays on <see cref="RequestFocusAccount"/>. v1.33 item 4's own
-    /// acceptance criterion is "clicking it still focuses the account the way the current balloon
-    /// does", and it names this machinery by file and line. So item 3 leaves it standing and item 4
-    /// decides: either the drawn balloon carries the account itself, or <see cref="ShowToast"/>
-    /// grows an optional account id and this method goes with the shell balloon it wraps.
-    /// </para>
-    /// <para>
-    /// <b>The regression in the gap, stated rather than discovered later:</b> until item 4 lands,
-    /// clicking a memory-warning notification does nothing. Every balloon now comes through
-    /// <see cref="ShowToast"/>, which clears <c>_lastMemoryWarningAccountId</c>, so the click
-    /// handler finds null every time.
-    /// </para>
-    /// </summary>
-    public void ShowMemoryWarning(string title, string message, Guid accountId)
-    {
-        Application.Current?.Dispatcher.Invoke(() =>
-        {
-            if (_disposed) return;
-            _lastMemoryWarningAccountId = accountId;
-            _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Warning);
         });
     }
 
@@ -336,17 +296,39 @@ internal sealed class TrayService : ITrayService
     }
 
     /// <summary>
-    /// The generic tray balloon — every alert kind routed to
+    /// The notification — every alert kind routed to
     /// <see cref="ROROROblox.Core.Discord.AlertDestination.Local"/> arrives here.
     /// <para>
-    /// <b>Length (2026-09-15):</b> the balloon holds 63 title and 255 text characters and the shell
-    /// cuts anything longer with no marker, so the dispatcher builds this destination's payload with
-    /// <see cref="ROROROblox.Core.Discord.PayloadLimits.Toast"/>: a group names the accounts that fit
-    /// and ends "and N more". A caller passing its own longer strings still gets the silent cut.
+    /// <b>DRAWN, NOT THE SHELL'S, since 2026-10-06 (v1.33 item 4).</b>
+    /// <c>ShowBalloonTip</c> is the Windows balloon and it ALWAYS plays the system notification
+    /// sound: <c>BalloonFlags.NoSound</c> exists in the shipped Hardcodet.NotifyIcon.Wpf 2.0.1 but
+    /// only behind a non-public overload (verified by reflection 2026-10-05), so there is no
+    /// supported way to ask for a quiet one. <see cref="AlertBalloon"/> through
+    /// <c>ShowCustomBalloon</c> draws no OS chrome and therefore triggers no OS sound, which is what
+    /// makes the sound a setting instead of Windows' decision (item 5 owns playing it; nothing here
+    /// plays anything). What that costs: no Action Center entry — the shell balloon had none
+    /// either — and Focus Assist is no longer consulted by anyone. Both are PRD non-goals.
+    /// </para>
+    /// <para>
+    /// <b>Click-to-focus rides on the balloon.</b> <paramref name="accountId"/> is the single
+    /// account the group resolved to, or null when it covered several;
+    /// <see cref="AlertBalloon.FocusRequested"/> replays it on <see cref="RequestFocusAccount"/>.
+    /// Per balloon, deliberately: the old path kept the account in a field on this class and the
+    /// shell's payload-free <c>TrayBalloonTipClicked</c> replayed whatever it last held, which had
+    /// to be cleared by every unrelated notification — and that clearing is what made item 3's
+    /// collapse break the feature with no test going red.
+    /// </para>
+    /// <para>
+    /// <b>Length (2026-09-15, re-stated 2026-10-06):</b> 63 title and 255 text. The dispatcher
+    /// already builds this destination's payload with
+    /// <see cref="ROROROblox.Core.Discord.PayloadLimits.Toast"/> — a group names the accounts that
+    /// fit and ends "and N more". What changed is the backstop: the SHELL used to cut a longer
+    /// string, silently and mid-line. Nothing cuts now except <see cref="AlertBalloon"/>'s own
+    /// coercion, which cuts with a visible <c>…</c>.
     /// </para>
     /// <para>
     /// <b>Thread-safety (2026-09-11):</b> marshals for the same reason
-    /// <see cref="ShowMemoryWarning"/> does, and this one had been missing it. Its callers are not on
+    /// <see cref="SetMemoryWarning"/> does, and this one had been missing it. Its callers are not on
     /// the UI thread: <c>AlertDispatcher.DispatchAsync</c> is invoked fire-and-forget from
     /// <c>MetricReportSinkAdapter.AlertsRaised</c>, which is raised on a thread-pool timer thread when a
     /// metric grouping window closes (a gRPC handler thread until 2026-09-15). <c>_taskbarIcon</c> is a
@@ -362,17 +344,43 @@ internal sealed class TrayService : ITrayService
     /// invisible.
     /// </para>
     /// </summary>
-    public void ShowToast(string title, string message)
+    public void ShowToast(string title, string message, Guid? accountId = null)
     {
         Application.Current?.Dispatcher.Invoke(() =>
         {
             if (_disposed) return;
-            // This balloon isn't about any one account — clear so a click doesn't replay a stale
-            // memory-warning account id via RequestFocusAccount.
-            _lastMemoryWarningAccountId = null;
-            _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+
+            var balloon = new AlertBalloon
+            {
+                Title = title,
+                Body = message,
+                AccountId = accountId,
+            };
+
+            // Subscribed per balloon, so the handler closes over THIS notification's account and
+            // nothing else can reach it. Close first, then focus: a balloon still on screen over a
+            // window that just came forward reads as an unfinished click.
+            balloon.FocusRequested += (_, id) =>
+            {
+                _taskbarIcon.CloseBalloon();
+                RequestFocusAccount?.Invoke(this, id);
+            };
+
+            _taskbarIcon.ShowCustomBalloon(balloon, PopupAnimation.Fade, BalloonMilliseconds);
         });
     }
+
+    /// <summary>
+    /// How long a drawn balloon stays. The shell balloon's own dwell is a user/system setting we
+    /// never saw; this one is ours, so it is written down. Eight seconds is long enough to read two
+    /// wrapped lines and decide whether to click, and short enough not to sit over a game.
+    /// <para>
+    /// <c>ShowCustomBalloon</c> takes a nullable timeout where null means "stay until closed", and
+    /// that is explicitly NOT what this is: a notification nobody dismisses is a notification that
+    /// covers the screen corner all evening.
+    /// </para>
+    /// </summary>
+    private const int BalloonMilliseconds = 8000;
 
     public void Dispose()
     {

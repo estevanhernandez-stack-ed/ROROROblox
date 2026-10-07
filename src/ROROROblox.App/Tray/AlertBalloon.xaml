@@ -1,0 +1,76 @@
+<UserControl x:Class="ROROROblox.App.Tray.AlertBalloon"
+             x:ClassModifier="internal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+
+    <!-- THE BALLOON WE DRAW (v1.33 item 4). Shown through TaskbarIcon.ShowCustomBalloon, which is
+         a WPF Popup positioned near the tray icon — not the shell balloon.
+
+         WHY NOT THE SHELL BALLOON. ShowBalloonTip always plays the system notification sound.
+         BalloonFlags.NoSound exists in Hardcodet.NotifyIcon.Wpf 2.0.1 but only behind a non-public
+         overload (verified by reflection 2026-10-05), so there is no supported way to ask for a
+         silent one. A balloon that draws no OS chrome plays no OS sound, which is the point: the
+         sound becomes a setting rather than something Windows decides (item 5 owns that; this
+         control deliberately plays nothing).
+
+         WHAT WE GIVE UP, recorded rather than discovered later: no Action Center entry (the shell
+         balloon had none either) and quiet-hours behaviour is ours now — nothing here consults
+         Focus Assist. Both are in the PRD's non-goals.
+
+         DYNAMICRESOURCE ONLY, EVERYWHERE. ThemeService.ApplySlot REPLACES each brush instance on a
+         theme change rather than mutating the held brush, so a StaticResource would render
+         correctly on first paint and then never repaint again. See App.xaml's note on the brush
+         block. AlertBalloonTests builds this control under each of the four built-in themes and
+         reads back the brush every named slot actually resolved to, plus a narrower pixel pass
+         proving it paints at all — so a slot that stops resolving fails the suite rather than the
+         eye. Measured, not reasoned: a first version of that test read the ratio off the bitmap and
+         stayed GREEN with the body text mutated to the divider hairline, because the most-contrasty
+         pixel was this border.
+
+         THE SURFACE IS THE BUTTON. One click target, the whole balloon, because the clickable
+         thing IS the notification — there is no second action to offer. It takes
+         InteractiveEdgeBrush (WCAG 1.4.11's 3:1) rather than the card hairline for a reason the
+         app's other surfaces do not have: this one floats over whatever the user happens to have
+         on screen, so a faint edge against an unknown background is no edge at all.
+
+         THE ONLY AFFORDANCE IS THE CURSOR, set from the code-behind when an account id arrives —
+         no "click to show this account" line, because a new displayed string is six translations
+         (LocKeyParityFenceTests holds parity across en/fr/de/ru/pt-BR/pl/es) and inventing them is
+         worse than the shell balloon's own silence on the same question. A hint belongs with
+         item 6's copy pass, with real translations, if it is wanted at all. -->
+
+    <Border x:Name="Surface"
+            Background="{DynamicResource RowBgBrush}"
+            BorderBrush="{DynamicResource InteractiveEdgeBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="14,12,14,12"
+            MinWidth="240"
+            MaxWidth="340"
+            MouseLeftButtonUp="OnSurfaceClicked"
+            AutomationProperties.Name="{Binding Title, ElementName=Root}"
+            AutomationProperties.HelpText="{Binding Body, ElementName=Root}"
+            AutomationProperties.LiveSetting="Polite">
+
+        <StackPanel>
+            <!-- Heading step, not Display: this sits in a 340px popup, not a page hero. -->
+            <TextBlock x:Name="TitleText"
+                       Text="{Binding Title, ElementName=Root}"
+                       FontSize="{DynamicResource HeadingFontSize}"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource WhiteBrush}"
+                       TextWrapping="Wrap" />
+
+            <!-- The body is prose, so it keeps the prose token. ContrastPairGateTests measures
+                 MutedText on RowBg unconditionally as its most common pairing, so this pair is
+                 already watched in every built-in theme. -->
+            <TextBlock x:Name="BodyText"
+                       Text="{Binding Body, ElementName=Root}"
+                       FontSize="{DynamicResource BodyFontSize}"
+                       Foreground="{DynamicResource MutedTextBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+        </StackPanel>
+    </Border>
+</UserControl>

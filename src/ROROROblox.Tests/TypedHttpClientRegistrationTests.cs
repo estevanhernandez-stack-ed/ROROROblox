@@ -81,9 +81,8 @@ public class TypedHttpClientRegistrationTests
     {
         public void Show() { }
         public void UpdateStatus(MultiInstanceState state) { }
-        public void ShowToast(string title, string message) { }
+        public void ShowToast(string title, string message, Guid? accountId = null) { }
         public void SetMemoryWarning(bool active) { }
-        public void ShowMemoryWarning(string title, string message, Guid accountId) { }
         public void Dispose() { }
         public event EventHandler? RequestOpenMainWindow { add { } remove { } }
         public event EventHandler? RequestToggleMutex { add { } remove { } }

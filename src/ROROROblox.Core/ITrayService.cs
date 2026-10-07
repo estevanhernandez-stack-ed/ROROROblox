@@ -60,8 +60,32 @@ public interface ITrayService : IDisposable
     /// </summary>
     event EventHandler RequestActivateMain;
 
-    /// <summary>Show a passive, non-blocking notification (tray balloon). Used for idle warnings.</summary>
-    void ShowToast(string title, string message);
+    /// <summary>
+    /// Show a passive, non-blocking notification. THE one way anything reaches a user's screen as
+    /// an interruption — every alert kind routed to
+    /// <see cref="ROROROblox.Core.Discord.AlertDestination.Local"/> arrives here (v1.33 item 3).
+    /// <para>
+    /// <paramref name="accountId"/> is the single account the notification is ABOUT, and it is what
+    /// a click on the notification replays through <see cref="RequestFocusAccount"/>. Trailing and
+    /// optional because most callers have nothing to say here and a Windows balloon click carries no
+    /// payload of its own, so the account has to arrive with the notification or not at all.
+    /// </para>
+    /// <para>
+    /// <b>Null means "about more than one account, or about none."</b> A coalesced group of three
+    /// drops has no single row to jump to, and the periodic uptime mark is about the machine rather
+    /// than an account (its carrier id is <see cref="Guid.Empty"/>). Such a notification is honestly
+    /// unclickable rather than clickable-and-arbitrary. The caller that decides this is
+    /// <c>AlertDispatcher</c>, once per routed group.
+    /// </para>
+    /// <para>
+    /// Until v1.33 item 4 this was <c>ShowToast(title, message)</c> plus a separate
+    /// <c>ShowMemoryWarning(title, message, accountId)</c>, and only the memory warning's click went
+    /// anywhere. Collapsing the two generalised click-to-focus to every single-account kind — a
+    /// drop, a recycle, an idle crossing, a metric breach — instead of restoring it as a
+    /// memory-warning privilege.
+    /// </para>
+    /// </summary>
+    void ShowToast(string title, string message, Guid? accountId = null);
 
     /// <summary>
     /// Memory-pressure warning overlay (Task 8). Deliberately SEPARATE from <see cref="UpdateStatus"/> —
@@ -72,17 +96,6 @@ public interface ITrayService : IDisposable
     /// </summary>
     void SetMemoryWarning(bool active);
 
-    /// <summary>
-    /// Balloon for a newly-crossed memory threshold. Fires once per latched crossing.
-    /// <para>
-    /// Deviation from the task brief's literal <c>(string title, string message)</c> signature:
-    /// a Windows balloon-click event carries no payload of its own, so <paramref name="accountId"/>
-    /// is remembered here and replayed on <see cref="RequestFocusAccount"/> when the user clicks —
-    /// there is no other channel for the click handler to learn which account the balloon was about.
-    /// </para>
-    /// </summary>
-    void ShowMemoryWarning(string title, string message, Guid accountId);
-
-    /// <summary>Fired when the user clicks a memory-warning balloon — carries the target account.</summary>
+    /// <summary>Fired when the user clicks a notification that named one account — carries it.</summary>
     event EventHandler<Guid> RequestFocusAccount;
 }

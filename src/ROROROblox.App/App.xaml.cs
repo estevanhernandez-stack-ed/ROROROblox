@@ -1398,9 +1398,15 @@ public partial class App : Application
             ActivateMain: () => ActivateMainFromTray(mainWindow),
             OpenHistory: () => OpenHistoryFromTray(mainWindow),
             OpenPlugins: () => OpenPluginsFromTray(mainWindow),
-            // Task 8 — the whole reason ShowMemoryWarning carries an accountId: a balloon click
-            // that goes nowhere wastes it. TrayBalloonTipClicked is a WPF-originated UI event
-            // (unlike PressureCrossed), so no dispatcher marshaling is needed here.
+            // Task 8's click-to-focus, GENERALISED 2026-10-06 (v1.33 item 4). It used to fire only
+            // for a memory warning, because only ShowMemoryWarning stamped an account id for the
+            // shell's payload-free balloon click to replay. Every notification now carries the
+            // account it is about — when it is about exactly one — so this handler runs for a drop,
+            // a recycle, an idle crossing and a metric breach too, and a group of three accounts
+            // never reaches it because such a balloon carries no id at all.
+            //
+            // Raised from AlertBalloon's own MouseLeftButtonUp, a WPF-originated UI event (unlike
+            // PressureCrossed), so no dispatcher marshaling is needed here.
             FocusAccount: accountId =>
             {
                 try
@@ -1867,7 +1873,8 @@ public partial class App : Application
     /// <c>OnAccountLaunched</c>/<c>OnAccountExited</c> bookkeeping lives elsewhere too.
     /// <para>
     /// THE BALLOON USED TO BE HERE, and it was the defect. This method called
-    /// <c>ITrayService.ShowMemoryWarning</c> on every crossing while knowing nothing about alert
+    /// <c>ITrayService.ShowMemoryWarning</c> — a method that no longer exists at all, deleted with
+    /// the rest of its chain on 2026-10-06 by item 4 — on every crossing while knowing nothing about alert
     /// destinations, the per-account mute or the quiet period — so the measured outcome on
     /// 2026-10-05 was <c>AlertDispatcher</c> logging "routed nowhere" under the cooldown while the
     /// balloon went out anyway. The <see cref="AlertKind.MemoryWarning"/> trigger

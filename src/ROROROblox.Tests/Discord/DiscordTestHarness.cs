@@ -560,7 +560,7 @@ internal static class DiscordTestHarness
     {
         public void Show() { }
         public void UpdateStatus(MultiInstanceState state) { }
-        public void ShowToast(string title, string message) { }
+        public void ShowToast(string title, string message, Guid? accountId = null) { }
         public void Dispose() { }
 
         public event EventHandler? RequestOpenMainWindow { add { } remove { } }
@@ -574,7 +574,6 @@ internal static class DiscordTestHarness
         public event EventHandler? RequestOpenPlugins { add { } remove { } }
         public event EventHandler? RequestActivateMain { add { } remove { } }
         public void SetMemoryWarning(bool active) { }
-        public void ShowMemoryWarning(string title, string message, Guid accountId) { }
         public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
         public event EventHandler<MultiInstanceState>? StatusChanged { add { } remove { } }
     }

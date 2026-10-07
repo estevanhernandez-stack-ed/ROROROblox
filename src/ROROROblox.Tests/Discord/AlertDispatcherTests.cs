@@ -25,9 +25,9 @@ public class AlertDispatcherTests
         /// would abort a dispatch BEFORE it reached the cooldown map — the test would then fail, or
         /// report a short toast count, for a reason that has nothing to do with the map it is about.
         /// </summary>
-        public void ShowToast(string title, string message)
+        public void ShowToast(string title, string message, Guid? accountId = null)
         {
-            lock (_toasts) { _toasts.Add($"{title}|{message}"); }
+            lock (_toasts) { _toasts.Add($"{title}|{message}"); _accountIds.Add(accountId); }
         }
 
         /// <summary>A snapshot, so an assertion never enumerates the list while a producer appends.</summary>
@@ -36,10 +36,22 @@ public class AlertDispatcherTests
             get { lock (_toasts) { return _toasts.ToArray(); } }
         }
 
+        /// <summary>
+        /// The trailing account id each toast arrived with, in order. Recorded separately from the
+        /// title|message string so a null reads as a null rather than as an empty segment — the
+        /// distinction IS the behaviour under test (v1.33 item 4): a group about one account carries
+        /// it and a group about several carries nothing.
+        /// </summary>
+        public IReadOnlyList<Guid?> AccountIds
+        {
+            get { lock (_toasts) { return _accountIds.ToArray(); } }
+        }
+
+        private readonly List<Guid?> _accountIds = [];
+
         public void Show() { }
         public void UpdateStatus(MultiInstanceState state) { }
         public void SetMemoryWarning(bool active) { }
-        public void ShowMemoryWarning(string title, string message, Guid accountId) { }
         public void Dispose() { }
         public event EventHandler? RequestOpenMainWindow { add { } remove { } }
         public event EventHandler? RequestToggleMutex { add { } remove { } }
@@ -86,6 +98,113 @@ public class AlertDispatcherTests
 
         Assert.Contains("BaronBloxwell", Assert.Single(tray.Toasts), StringComparison.Ordinal);
         Assert.Empty(handler.Bodies);
+    }
+
+    // ----------------------------------------------------------------------------------------
+    // Click-to-focus, generalised (v1.33 item 4).
+    //
+    // WHAT BROKE AND HOW QUIETLY. Through v1.32 a memory balloon was the only clickable one: the
+    // deleted App.WireMemoryWarningTray called ShowMemoryWarning(…, targetId), which stamped
+    // TrayService._lastMemoryWarningAccountId, and a shell balloon click replayed it on
+    // RequestFocusAccount. Item 3 collapsed every balloon onto this dispatcher's Local path, and
+    // ShowToast CLEARED that field by design so a click on an unrelated toast could not replay a
+    // stale account. So from item 3 until item 4 a memory-warning click did nothing, and not one
+    // test went red — the account id had never been part of any signature a test could see.
+    //
+    // The account now arrives WITH the notification, and these cases are what make that checkable.
+    // Behaviour, not shape: they go through the real Route + fan-out and read what the tray got.
+
+    [Fact]
+    public async Task DispatchAsync_AGroupAboutOneAccount_HandsTheToastThatAccount()
+    {
+        var id = Guid.NewGuid();
+        var (sender, _) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var dispatcher = Build(sender, tray, new DiscordConfig { DroppedOutDestination = AlertDestination.Local });
+
+        await dispatcher.DispatchAsync([Dropped(id, "BaronBloxwell")]).WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Single(tray.Toasts);
+        Assert.Equal(id, Assert.Single(tray.AccountIds));
+    }
+
+    [Fact]
+    public async Task DispatchAsync_AGroupAboutThreeAccounts_HandsTheToastNoAccount()
+    {
+        // The honest half. A coalesced group of three names three accounts in one balloon, and
+        // there is no single row to jump to — so it carries no id and is unclickable rather than
+        // clickable and arbitrary. Picking the first would be a coin flip dressed as a feature.
+        var (sender, _) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var dispatcher = Build(sender, tray, new DiscordConfig { DroppedOutDestination = AlertDestination.Local });
+
+        await dispatcher.DispatchAsync([
+            Dropped(Guid.NewGuid(), "BaronBloxwell"),
+            Dropped(Guid.NewGuid(), "Koii"),
+            Dropped(Guid.NewGuid(), "Mothman"),
+        ]).WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Single(tray.Toasts);
+        Assert.Null(Assert.Single(tray.AccountIds));
+    }
+
+    [Fact]
+    public async Task DispatchAsync_TwoTriggersForOneAccount_StillHandsThatAccount()
+    {
+        // Count the ACCOUNTS, not the triggers. One flapping client can raise the same kind twice
+        // inside a coalescing window, and that balloon is still about exactly one row. A naive
+        // "triggers.Count == 1" test would read this as a group and drop the id.
+        var id = Guid.NewGuid();
+        var (sender, _) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var dispatcher = Build(sender, tray, new DiscordConfig { DroppedOutDestination = AlertDestination.Local });
+
+        await dispatcher.DispatchAsync([Dropped(id, "BaronBloxwell"), Dropped(id, "BaronBloxwell")])
+            .WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Single(tray.Toasts);
+        Assert.Equal(id, Assert.Single(tray.AccountIds));
+    }
+
+    [Fact]
+    public async Task DispatchAsync_TheUptimeMark_HandsTheToastNoAccount()
+    {
+        // UptimeMark's carrier id is Guid.Empty by design (see AlertKind) — a global mark must not
+        // be silenced by any one account's mute, so it is about the machine rather than a row.
+        // Empty is one distinct id, so a plain distinct-count rule would call this single-account
+        // and hand a click an account that does not exist.
+        var (sender, _) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var dispatcher = Build(sender, tray, new DiscordConfig
+        {
+            UptimeMarkDestinations = [AlertDestination.Local],
+        });
+
+        await dispatcher.DispatchAsync([Of(AlertKind.UptimeMark, Guid.Empty)]).WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Single(tray.Toasts);
+        Assert.Null(Assert.Single(tray.AccountIds));
+    }
+
+    [Fact]
+    public async Task DispatchAsync_OneAccountFanningOutToTwoDestinations_CarriesTheAccountOnTheToastOnly()
+    {
+        // Fan-out does not multiply the account id onto the wrong destination: the webhook gets its
+        // post, the desktop gets its balloon, and only the balloon carries a clickable account.
+        var (sender, handler) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var id = Guid.NewGuid();
+        var dispatcher = Build(sender, tray, new DiscordConfig
+        {
+            DroppedOutDestinations = [AlertDestination.Local, AlertDestination.Mine],
+            MineWebhookUrl = MineUrl,
+        });
+
+        await dispatcher.DispatchAsync([Dropped(id, "BaronBloxwell")]).WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Single(handler.Bodies);
+        Assert.Single(tray.Toasts);
+        Assert.Equal(id, Assert.Single(tray.AccountIds));
     }
 
     [Fact]

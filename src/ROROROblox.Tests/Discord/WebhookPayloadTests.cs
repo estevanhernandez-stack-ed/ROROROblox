@@ -435,6 +435,52 @@ public class WebhookPayloadTests
         Assert.Equal(new PayloadLimits(title, body), PayloadLimits.For(destination));
     }
 
+    // ── The envelope as a backstop, not only as a budget (v1.33 item 4) ───────────────────────
+    // Through v1.32 the 63/255 pair was advice the dispatcher followed and the SHELL enforced: a
+    // caller passing its own longer strings got Windows' silent mid-line cut. Item 4 draws the
+    // balloon itself, so nothing cuts any more and an over-long string would simply render — a
+    // notification sized by its content instead of by its envelope. These two pin the backstop,
+    // and the marker is the part the shell never gave us.
+
+    [Fact]
+    public void ClampTitleAndClampBody_LeaveAnythingInsideTheEnvelopeExactlyAsItIs()
+    {
+        // Including the exact boundary: 63 and 255 FIT. An off-by-one here would clamp every
+        // full-width title the dispatcher already builds to sit exactly on the limit.
+        var title = new string('x', 63);
+        var body = new string('y', 255);
+
+        Assert.Same(title, Toast.ClampTitle(title));
+        Assert.Same(body, Toast.ClampBody(body));
+        Assert.Equal("", Toast.ClampTitle(""));
+    }
+
+    [Fact]
+    public void ClampTitleAndClampBody_CutAnythingLonger_AndSayTheyDid()
+    {
+        var title = Toast.ClampTitle(new string('x', 400));
+        var body = Toast.ClampBody(new string('y', 4000));
+
+        Assert.Equal(63, title.Length);
+        Assert.Equal(255, body.Length);
+        Assert.EndsWith("…", title, StringComparison.Ordinal);
+        Assert.EndsWith("…", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ClampTitle_DoesNotSplitASurrogatePair()
+    {
+        // An emoji in an account name is one UTF-16 surrogate PAIR. Cutting between its halves
+        // leaves a lone surrogate, which renders as a replacement box — the same care
+        // WebhookPayload.Front already takes for the webhook envelope, and the reason this clamp
+        // calls it rather than slicing.
+        var clamped = Toast.ClampTitle(new string('x', 61) + "\U0001F600\U0001F600");
+
+        Assert.Equal(62, clamped.Length);
+        Assert.EndsWith("…", clamped, StringComparison.Ordinal);
+        Assert.DoesNotContain('\uD83D', clamped);
+    }
+
     [Fact]
     public void ForTheToast_TheOwnersEightAccountRateGroup_NamesWhatFits_AndSaysHowManyMore()
     {

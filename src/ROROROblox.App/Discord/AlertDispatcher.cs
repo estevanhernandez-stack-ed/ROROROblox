@@ -145,7 +145,10 @@ public sealed class AlertDispatcher(
                 switch (alert.Destination)
                 {
                     case AlertDestination.Local:
-                        tray.ShowToast(payload.Title, payload.Body);
+                        // The trailing id is what makes the drawn balloon clickable (v1.33 item 4).
+                        // Supplied here and nowhere else: this is the only place that knows which
+                        // accounts a coalesced group covered by the time it becomes one balloon.
+                        tray.ShowToast(payload.Title, payload.Body, SingleAccount(alert.Triggers));
                         break;
                     // `if (send) flag = true`, never `flag |= await send`: the compiler reads the
                     // property BEFORE the await, so `|=` opens a read-to-write window spanning a
@@ -177,6 +180,41 @@ public sealed class AlertDispatcher(
         {
             log.LogWarning(ex, "Alert dispatch failed; the alert was dropped.");
         }
+    }
+
+    /// <summary>
+    /// The one account a routed group is about, or <c>null</c> when it is about more than one — or
+    /// about none. It is what <c>ITrayService.ShowToast</c> hands the drawn balloon so a click can
+    /// focus that row (v1.33 item 4).
+    /// <para>
+    /// DISTINCT ACCOUNTS, not trigger count. One flapping client can raise the same kind twice
+    /// inside a coalescing window and that balloon is still about one row;
+    /// <c>DispatchAsync_TwoTriggersForOneAccount_StillHandsThatAccount</c> is the case that fails
+    /// the easier rule.
+    /// </para>
+    /// <para>
+    /// <see cref="Guid.Empty"/> IS EXCLUDED, and it is not a defensive flourish:
+    /// <see cref="AlertKind.UptimeMark"/> carries Empty as its account id by design, because a
+    /// global mark must not be silenced by any one account's mute. Empty counts as one distinct id,
+    /// so a plain distinct-count rule would call the uptime mark single-account and hand a click an
+    /// account that does not exist — the window would surface and then fail to find a row.
+    /// </para>
+    /// <para>
+    /// A group of three carries nothing and its balloon is honestly unclickable. Picking the first
+    /// of three would be a coin flip dressed as a feature, and it is the special case this cycle
+    /// exists to delete rather than re-create.
+    /// </para>
+    /// </summary>
+    private static Guid? SingleAccount(IReadOnlyList<AlertTrigger> triggers)
+    {
+        Guid? only = null;
+        foreach (var t in triggers)
+        {
+            if (t.AccountId == Guid.Empty) return null;
+            if (only is null) { only = t.AccountId; continue; }
+            if (only != t.AccountId) return null;
+        }
+        return only;
     }
 
     /// <summary>

@@ -22,6 +22,42 @@ public readonly record struct PayloadLimits(int Title, int Body)
     /// </summary>
     public static readonly PayloadLimits Toast = new(WebhookPayload.ToastTitleLimit, WebhookPayload.ToastBodyLimit);
 
+    /// <summary>
+    /// <paramref name="text"/> cut to <see cref="Title"/> units, with a trailing <c>…</c> when it
+    /// had to be. See <see cref="Clamp"/> for why this exists at all.
+    /// </summary>
+    public string ClampTitle(string text) => Clamp(text, Title);
+
+    /// <summary><paramref name="text"/> cut to <see cref="Body"/> units. See <see cref="Clamp"/>.</summary>
+    public string ClampBody(string text) => Clamp(text, Body);
+
+    /// <summary>
+    /// The envelope as a BACKSTOP rather than only a budget (v1.33 item 4).
+    /// <para>
+    /// Through v1.32 these numbers were advice the dispatcher followed and the SHELL enforced: a
+    /// caller handing <c>TrayService.ShowToast</c> its own longer strings got Windows' silent
+    /// mid-line cut, which is what <see cref="Toast"/>'s own note describes. Item 4 draws the
+    /// balloon, so nothing cuts any more — an over-long string would just render, and a
+    /// notification would be sized by its content instead of by its envelope.
+    /// </para>
+    /// <para>
+    /// It should never fire in production: <see cref="WebhookPayload.ForAlert"/> already builds
+    /// every routed payload inside the destination's envelope. That is exactly why the <c>…</c> is
+    /// here — if it ever shows up on screen, something upstream stopped honouring the limits, and a
+    /// visible marker is the difference between noticing that and not.
+    /// </para>
+    /// <para>
+    /// Delegates the cut to <see cref="WebhookPayload.Front"/> rather than slicing: an emoji in an
+    /// account name is a surrogate PAIR, and cutting between its halves leaves a lone surrogate
+    /// that renders as a replacement box. One implementation of that care, not two.
+    /// </para>
+    /// </summary>
+    private static string Clamp(string text, int limit)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return text.Length <= limit ? text : WebhookPayload.Front(text, limit - 1) + '…';
+    }
+
     /// <summary>The envelope for <paramref name="destination"/>: the toast's for
     /// <see cref="AlertDestination.Local"/> (including a remote destination's desktop fallback, which
     /// the router has already turned into Local), the remote one for everything else.</summary>

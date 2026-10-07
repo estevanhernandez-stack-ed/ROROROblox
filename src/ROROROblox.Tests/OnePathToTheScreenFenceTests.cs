@@ -30,7 +30,16 @@ namespace ROROROblox.Tests;
 /// copying it. That file learned the lesson the hard way: a guard that reads prose as code reports
 /// on something other than what it claims. It matters here in both directions — the doc comments on
 /// <c>WireMemoryWarningTray</c> and <c>TrayService</c> still legitimately NAME
-/// <c>ShowMemoryWarning</c> while explaining why nothing calls it.
+/// <c>ShowMemoryWarning</c> while explaining why it is gone.
+/// </para>
+/// <para>
+/// UPDATED 2026-10-06 by item 4: <c>ShowMemoryWarning</c> no longer EXISTS. Item 3 left the method,
+/// <c>_lastMemoryWarningAccountId</c> and the shell-balloon click handler standing because deleting
+/// them would have deleted the app's only click-to-focus path, and said so; item 4 replaced that
+/// path — the account rides on the drawn <c>AlertBalloon</c> now — and the chain went with the shell
+/// balloon it wrapped. So <see cref="TheFenceSeesTheAppItClaimsTo"/> asserts the opposite of what it
+/// used to, and <see cref="BalloonCall"/> is proven against a sample rather than against the tray's
+/// own declaration.
 /// </para>
 /// </summary>
 public class OnePathToTheScreenFenceTests
@@ -41,9 +50,10 @@ public class OnePathToTheScreenFenceTests
     private const string CompositionRoot = "src/ROROROblox.App/App.xaml.cs";
 
     /// <summary>
-    /// The tray itself may declare <c>ShowMemoryWarning</c>; the rule is that nothing CALLS it on
-    /// the crossing path. Declaration sites are not invocations and are excluded by the pattern,
-    /// not by this path — it is here only so a failure can say "except the tray".
+    /// The tray. Item 3's rule was that it MAY declare <c>ShowMemoryWarning</c> so long as nothing
+    /// calls it on the crossing path; item 4 deleted the declaration too, so this path is now where
+    /// <see cref="TheFenceSeesTheAppItClaimsTo"/> goes to check the method is really gone rather
+    /// than renamed.
     /// </summary>
     private const string TheTrayItself = "src/ROROROblox.App/Tray/TrayService.cs";
 
@@ -163,18 +173,45 @@ public class OnePathToTheScreenFenceTests
         Assert.Contains(CompositionRoot, files.Select(f => f.RelativePath));
         Assert.Contains(TheTrayItself, files.Select(f => f.RelativePath));
 
-        // Both patterns must still fire on something, or the fence is measuring nothing. The badge
-        // call proves BadgeCall works; the tray's own declaration proves the method still exists to
-        // be called, so NothingCallsShowMemoryWarningAnyMore is green because nobody calls it rather
-        // than because the name was spelled differently.
+        // BadgeCall must still fire on something, or the badge clause is measuring nothing. (The
+        // companion proof for BalloonCall used to be the tray's own declaration of the method —
+        // item 4 deleted it, so that pattern is exercised against a sample below instead.)
         Assert.True(files.Any(f => f.Code.Any(l => BadgeCall.IsMatch(l))),
             "The badge pattern matched nothing anywhere in the App. Either the call was renamed or "
             + "this regex stopped working; either way the fence above is vacuous.");
 
+        // SAYING SO, as this clause's previous text asked for. It read: "TrayService no longer
+        // spells ShowMemoryWarning at all. If the method was deleted, say so here and in item 4's
+        // notes — this fence's point is that nothing CALLS it, which is a different claim from it
+        // not existing." It was deleted, on 2026-10-06, by v1.33 item 4, along with
+        // _lastMemoryWarningAccountId and the TrayBalloonTipClicked subscription that replayed it.
+        // Item 3 left all three standing precisely because deleting them would have deleted the
+        // only click-to-focus path in the app; item 4 replaced that path — the account now rides on
+        // the drawn balloon — so the reason expired and the chain went.
+        //
+        // The claim therefore changes shape here: it is no longer "nothing calls a method that
+        // exists" but "the method does not exist", which is the stronger of the two and needs no
+        // allow-list. TrayWiringTests.TrayServiceKeepsNoRememberedAccountForABalloonClick holds the
+        // rest of the chain down by name.
         var trayService = files.Single(f => f.RelativePath == TheTrayItself);
-        Assert.True(trayService.Code.Any(l => l.Contains("ShowMemoryWarning", StringComparison.Ordinal)),
-            "TrayService no longer spells ShowMemoryWarning at all. If the method was deleted, say "
-            + "so here and in item 4's notes — this fence's point is that nothing CALLS it, which "
-            + "is a different claim from it not existing.");
+        Assert.False(trayService.Code.Any(l => l.Contains("ShowMemoryWarning", StringComparison.Ordinal)),
+            "TrayService spells ShowMemoryWarning again. The method, the remembered account id and "
+            + "the shell-balloon click handler were deleted together by v1.33 item 4 — the account a "
+            + "notification is about now arrives WITH it and rides on the AlertBalloon instance, so "
+            + "there is nothing for this method to be the one writer of.");
+
+        // WHICH LEAVES BalloonCall UNEXERCISED, and an unexercised regex is a fence that measures
+        // nothing. Until item 4 the tray's own declaration proved the name was still spelled the
+        // way the pattern expects; with the declaration gone, the pattern is proven against a
+        // sample instead — a change in form, not in strength, because what it has to catch is an
+        // invocation and there has never been one of those to match.
+        Assert.True(BalloonCall.IsMatch("tray.ShowMemoryWarning(title, body, accountId);"),
+            "The BalloonCall pattern no longer matches an invocation through an object, so "
+            + "NothingCallsShowMemoryWarningAnyMore is green because the regex broke rather than "
+            + "because nothing calls it.");
+        Assert.False(BalloonCall.IsMatch("ShowMemoryWarning(message);"),
+            "The BalloonCall pattern now matches an UNQUALIFIED call. SettingsPage has a private "
+            + "ShowMemoryWarning(string) of its own that paints an inline banner on the page and has "
+            + "nothing to do with the tray; matching it would make this fence fail on unrelated code.");
     }
 }

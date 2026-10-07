@@ -390,9 +390,8 @@ public class PhoneDispatchTests
     {
         public void Show() { }
         public void UpdateStatus(MultiInstanceState state) { }
-        public void ShowToast(string title, string message) { }
+        public void ShowToast(string title, string message, Guid? accountId = null) { }
         public void SetMemoryWarning(bool active) { }
-        public void ShowMemoryWarning(string title, string message, Guid accountId) { }
         public void Dispose() { }
 #pragma warning disable CS0067
         public event EventHandler<MultiInstanceState>? StatusChanged;
