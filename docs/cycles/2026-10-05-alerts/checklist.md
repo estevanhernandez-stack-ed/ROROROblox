@@ -457,11 +457,27 @@ judgement calls most likely to want nudging.
 `smoke-2026-10-05-memory-watch-live-toggle.md`: pass conditions written **before** the run, a
 confound control where one exists, and the result filled in as it happens.
 
-- [ ] Every PRD acceptance criterion that needs eyes or a log is walked.
+**Script written and waiting, 2026-10-07: `docs/smoke-2026-10-07-alerts-cycle.md`.** Ten runs with
+pass conditions written BEFORE the run, in the shape of the memory-watch smoke. Needs Este; nothing
+in it can be driven headless.
+
+- [ ] Every PRD acceptance criterion that needs eyes or a log is walked. The script's ten runs map to
+      them: destination obeyed (run 1, the bug that started the cycle), our themed balloon (2),
+      click-through (3), the three sounds (4), the quiet period and Every time (5), in-game idle (6),
+      fullscreen (7), the two About marks (8), four themes plus German and Polish (9), and a toggle
+      driven by keyboard rather than mouse (10).
 - [ ] The fullscreen question is answered: does the themed balloon paint over a fullscreen Roblox
-      client? If not, it goes in the release notes rather than being quietly hoped away.
+      client? If not, it goes in the release notes rather than being quietly hoped away. **Run 7, and
+      either answer passes as long as it is recorded.**
 - [ ] Mute the memory alert's Discord and phone destinations before forcing crossings; the clan does
-      not need the test traffic.
+      not need the test traffic. **In the script's "Before starting", with a reminder to put them
+      back.**
+- [ ] **Confound controls are in the script where one exists** — run 1 re-ticks Desktop and forces
+      another crossing, because "no notification" proves nothing if the crossing was not firing. Run
+      5 carries the warning that the build's first cadence test was worthless: the re-arm cycle was
+      shorter than the quiet period, so every crossing legitimately fired.
+- [ ] **Starting theme and UI language recorded up front and restored at the end** — a previous
+      session left the theme on flatline after claiming a byte-identical restore.
 
 ## 12. Documentation & Security Verification
 
