@@ -522,7 +522,11 @@ in it can be driven headless.
       it is low impact, but it is Este's call whether the review transcript gets scrubbed.
 - [x] New dependency audited: **no-op, no dependency was added** — item 9 was dropped, with the
       licence and size facts recorded there rather than here.
-- [ ] `ROROROblox.slnx` builds on x64 and native arm64 in CI, suite green on both. **Needs the branch
-      pushed**; locally green at 2,802 unit + 27 harness, 1 harness skip by design.
+- [x] **`ROROROblox.slnx` builds on x64 and native arm64 in CI, suite green on both** — run
+      `37679432136` on `3e406df`, both architectures pass in 2m11s, alongside the `secret-scan +
+      local-path guard` job and GitGuardian. Note the trigger: `ci.yml` scopes `push` to main and
+      relies on `pull_request` for branch commits, so pushing the branch alone ran nothing — draft
+      **PR #229** is what makes this check exist. Locally 2,802 unit + 27 harness, 1 harness skip by
+      design.
 - [ ] Release paperwork follows the playbook, including the reviewer letter — which Phase 2 now names
       after it was missed on 1.32.1. **Blocked on item 11**, the live smoke, which needs Este.
