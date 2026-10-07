@@ -33,5 +33,6 @@
 *.jpeg      binary
 *.ico       binary
 *.gif       binary
+*.wav       binary
 *.zip       binary
 *.7z        binary

@@ -107,6 +107,18 @@
          icon). Embedded from docs/store/graphics so the file members upload matches the one
          Este's own application registration uses. -->
     <EmbeddedResource Include="..\..\docs\store\graphics\pushover-icon-128.png" LogicalName="ROROROblox.App.Notify.pushover-icon-128.png" />
+    <!-- The alert chime (v1.33 item 5). Synthesised, not licensed: two soft tones, E5 then B5,
+         350 ms, peak -13 dBFS. scripts/generate-alert-chime.py is the recipe and writes this file;
+         edit the numbers there and re-run rather than editing a waveform.
+
+         EmbeddedResource rather than the <Resource> the tray ICOs beside it use, deliberately. A
+         WPF <Resource> is only reachable through Application.GetResourceStream, which needs a live
+         Application to have installed the pack:// scheme and set ResourceAssembly — so the real
+         loader would be the one thing a test could not call, on an item whose whole failure mode is
+         a missing asset. AlertSoundPlayerTests calls AlertSoundPlayer.OpenBundledChime() itself and
+         measures the bytes it gets back, which is only honest if that method is the production one.
+         Same reason the Pushover icon above is embedded. -->
+    <EmbeddedResource Include="Tray\Resources\alert-chime.wav" LogicalName="ROROROblox.App.Tray.alert-chime.wav" />
   </ItemGroup>
 
   <!-- Streamer-mode banked avatar tiles — FINAL brand art (2026-07-10 design pass through

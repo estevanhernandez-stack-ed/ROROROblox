@@ -214,4 +214,125 @@ public class OnePathToTheScreenFenceTests
             + "ShowMemoryWarning(string) of its own that paints an inline banner on the page and has "
             + "nothing to do with the tray; matching it would make this fence fail on unrelated code.");
     }
+
+    // ---- v1.33 item 5: one event is one sound -------------------------------------------------
+    //
+    // The same thesis one layer down. Item 3 collapsed three producers of a BALLOON into one; this
+    // keeps the SOUND attached to that one producer rather than to the thing above it. The
+    // dispatcher fans one event out to Local, the clan channel, a webhook and a phone, sequentially
+    // in a loop — a sound played there would play per DESTINATION, so a user with three ticked
+    // would hear three chimes for one memory crossing. Only the desktop leg makes a noise, and the
+    // desktop leg is the drawn balloon's show path.
+
+    /// <summary>The only file allowed to end in an audio API, and the only file that plays one.</summary>
+    private const string TheSoundPlayer = "src/ROROROblox.App/Tray/AlertSoundPlayer.cs";
+
+    /// <summary>
+    /// Where the sound must come from. Anything that reaches an audio API here or in the player is
+    /// fine; anything that reaches one anywhere else is a second producer.
+    /// </summary>
+    private static readonly Regex AudioApi =
+        new(@"\b(SoundPlayer|SystemSounds)\b", RegexOptions.Compiled);
+
+    [Fact]
+    public void TheSoundIsPlayedFromTheBalloonsShowPath()
+    {
+        var tray = AppSources().SingleOrDefault(f => f.RelativePath == TheTrayItself);
+        Assert.NotNull(tray.Code);
+        var source = string.Join('\n', tray.Code);
+
+        const string method = "public void ShowToast(";
+        var start = source.IndexOf(method, StringComparison.Ordinal);
+        Assert.True(start >= 0, $"{method} is gone from TrayService — this fence needs updating.");
+
+        var body = source[start..];
+        var marshal = body.IndexOf("Dispatcher.Invoke", StringComparison.Ordinal);
+        Assert.True(marshal >= 0, $"{method} no longer marshals; TrayWiringTests says why that matters.");
+
+        // INSIDE the marshal, bracket-balanced, for the reason item 4 learned the hard way: a
+        // position-in-text assertion is satisfied by moving the statement onto the next line.
+        var span = BalancedSpan(body, marshal);
+        Assert.Contains("ShowCustomBalloon", span, StringComparison.Ordinal);
+        Assert.Contains(".Play()", span,  StringComparison.Ordinal);
+
+        // ONE sound per balloon shown, not one per call site. Two Play() calls in this file would
+        // mean one event could make two noises, which is the shape this fence exists to refuse.
+        Assert.Equal(1, source.Split(".Play()").Length - 1);
+    }
+
+    [Fact]
+    public void NothingOutsideTheSoundPlayerTouchesAnAudioApi()
+    {
+        // The dispatcher is the one named in the spec, and it is the one that would be wrong in the
+        // most expensive way: its fan-out loop is sequential, so a sound played per destination
+        // means a user with Local + clan + phone ticked hears three chimes for one crossing.
+        var offenders = new List<string>();
+
+        foreach (var (relativePath, code) in AppSources())
+        {
+            if (relativePath == TheSoundPlayer) continue;
+
+            for (var i = 0; i < code.Length; i++)
+            {
+                if (AudioApi.IsMatch(code[i])) offenders.Add($"{relativePath}:{i + 1}");
+            }
+        }
+
+        Assert.True(offenders.Count == 0,
+            "Something outside AlertSoundPlayer reaches an audio API. One event is one sound: the "
+            + "sound belongs to the balloon's show path, which runs once per notification, and NOT "
+            + "to AlertDispatcher, whose fan-out loop runs once per destination. Route it through "
+            + $"IAlertSoundPlayer instead.\n  " + string.Join("\n  ", offenders));
+    }
+
+    [Fact]
+    public void TheSoundFenceSeesWhatItClaimsTo()
+    {
+        var files = AppSources();
+
+        // Both clauses above pass green on an empty or mis-filtered walk.
+        Assert.Contains(TheSoundPlayer, files.Select(f => f.RelativePath));
+        Assert.Contains("src/ROROROblox.App/Discord/AlertDispatcher.cs", files.Select(f => f.RelativePath));
+
+        // The pattern must still fire on the thing it is supposed to catch, or the absence it
+        // reports is the regex's and not the app's.
+        Assert.True(files.Single(f => f.RelativePath == TheSoundPlayer).Code
+                .Any(l => AudioApi.IsMatch(l)),
+            "AlertSoundPlayer no longer names an audio API, so either the player stopped playing "
+            + "anything or the pattern broke — and NothingOutsideTheSoundPlayerTouchesAnAudioApi is "
+            + "vacuous either way.");
+
+        Assert.True(AudioApi.IsMatch("using var player = new SoundPlayer(stream);"));
+        Assert.True(AudioApi.IsMatch("SystemSounds.Asterisk.Play();"));
+        Assert.False(AudioApi.IsMatch("_sound.Play();"),
+            "The audio pattern now matches the indirection itself, so every caller of "
+            + "IAlertSoundPlayer would be reported as an offender.");
+
+        // And the bracket walk has to actually walk. A span that ran off the end would make the
+        // Contains clauses above assert against the rest of the file.
+        Assert.Equal("(a { b })", BalancedSpan("x = f(a { b }); y", 5));
+    }
+
+    /// <summary>
+    /// <paramref name="source"/> from <paramref name="from"/> through the delimiter that closes the
+    /// construct opening there, brackets balanced — so "is this call inside the marshal" is a real
+    /// question rather than a question about line order. Same helper
+    /// <c>TrayWiringTests.DelimitedSpan</c> runs on, duplicated rather than shared because sharing
+    /// it would mean one fence's refactor can quietly weaken another's.
+    /// </summary>
+    private static string BalancedSpan(string source, int from)
+    {
+        var depth = 0;
+        var opened = false;
+        for (var i = from; i < source.Length; i++)
+        {
+            if (source[i] is '(' or '{') { depth++; opened = true; }
+            else if (source[i] is ')' or '}') { depth--; }
+            if (opened && depth == 0) return source[from..(i + 1)];
+        }
+
+        Assert.Fail("Bracket scan ran off the end — the file does not parse the way this fence "
+            + "assumes, so its verdict means nothing.");
+        return "";
+    }
 }

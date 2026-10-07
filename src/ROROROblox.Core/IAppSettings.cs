@@ -252,4 +252,26 @@ public interface IAppSettings
     /// </summary>
     Task<string> GetAlertCadenceOverridesJsonAsync();
     Task SetAlertCadenceOverridesJsonAsync(string? overridesJson);
+
+    /// <summary>
+    /// What a desktop alert sounds like, as an <see cref="ROROROblox.Core.Discord.AlertSound"/>
+    /// member NAME — <c>Chime</c>, <c>Silent</c> or <c>WindowsDefault</c> (v1.33 item 5). Defaults
+    /// to <c>Chime</c>.
+    /// <para>
+    /// <b>Raw here, resolved in one place.</b> This hands back whatever is in the file, exactly as
+    /// <see cref="GetAlertCadenceOverridesJsonAsync"/> does, and
+    /// <see cref="ROROROblox.Core.Discord.AlertSoundSetting.FromSetting"/> is the only thing that
+    /// turns it into a mode. Two guards for one rule is how they drift.
+    /// </para>
+    /// <para>
+    /// <b>A name rather than a number, and an unreadable value degrades to <c>Chime</c> rather than
+    /// to silence.</b> Item 4 took the shell balloon away, and with it the OS notification sound,
+    /// so silence is now a thing this app can produce by accident — and an alert that makes no
+    /// sound is a log entry. The quieter fallback was right for the cadence (a negative count reads
+    /// as the shipped five minutes) because there the loud direction was the harm; here the harm is
+    /// inverted, so the fallback is too.
+    /// </para>
+    /// </summary>
+    Task<string> GetAlertSoundAsync();
+    Task SetAlertSoundAsync(string? sound);
 }

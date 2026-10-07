@@ -106,6 +106,86 @@ public class AppSettingsTests : IDisposable
     }
 
     [Fact]
+    public async Task AlertSound_OnASettingsFileWrittenBeforeV133_ReadsTheChime()
+    {
+        // Every settings.json in the wild has no such key. Item 4 took the shell balloon away and
+        // with it the OS notification sound, so an absent key resolving to Silent would ship the
+        // defect as the default on every upgrade.
+        File.WriteAllText(_filePath, """
+            {
+              "version": 1,
+              "activeThemeId": "midnight"
+            }
+            """);
+
+        using var settings = new AppSettings(_filePath);
+
+        Assert.Equal("Chime", await settings.GetAlertSoundAsync());
+        Assert.Equal(
+            ROROROblox.Core.Discord.AlertSound.Chime,
+            ROROROblox.Core.Discord.AlertSoundSetting.FromSetting(await settings.GetAlertSoundAsync()));
+    }
+
+    [Fact]
+    public async Task AlertSound_RoundTripsIncludingSilence()
+    {
+        // Silence is the one value a user has to be able to CHOOSE, which is a different thing from
+        // the value a corrupt file degrades to. Both directions matter and this is the one that
+        // must survive a restart.
+        var first = new AppSettings(_filePath);
+        await first.SetAlertSoundAsync(
+            ROROROblox.Core.Discord.AlertSoundSetting.ToSetting(ROROROblox.Core.Discord.AlertSound.Silent));
+        first.Dispose();
+
+        using var second = new AppSettings(_filePath);
+
+        Assert.Equal("Silent", await second.GetAlertSoundAsync());
+        Assert.Equal(
+            ROROROblox.Core.Discord.AlertSound.Silent,
+            ROROROblox.Core.Discord.AlertSoundSetting.FromSetting(await second.GetAlertSoundAsync()));
+    }
+
+    [Fact]
+    public async Task AlertSound_ACorruptValueInTheFile_StillResolvesToTheChime()
+    {
+        // The accessor hands back what is in the file, exactly as GetAlertCadenceOverridesJsonAsync
+        // does — the degrade lives in one place. What this pins is that the pair of them together
+        // land on a noise: a garbage value must not be able to silence the alert system.
+        File.WriteAllText(_filePath, """
+            { "version": 1, "alertSound": "quack" }
+            """);
+
+        using var settings = new AppSettings(_filePath);
+
+        Assert.Equal("quack", await settings.GetAlertSoundAsync());
+        Assert.Equal(
+            ROROROblox.Core.Discord.AlertSound.Chime,
+            ROROROblox.Core.Discord.AlertSoundSetting.FromSetting(await settings.GetAlertSoundAsync()));
+    }
+
+    [Fact]
+    public async Task AlertSound_ExplicitNullOrBlank_ReadsAsEmptyAndResolvesToTheChime()
+    {
+        // System.Text.Json does not enforce the record's non-nullable string, so a hand-edited null
+        // lands in the blob — the same hole GetAlertCadenceOverridesJsonAsync absorbs.
+        File.WriteAllText(_filePath, """
+            { "version": 1, "alertSound": null }
+            """);
+
+        using (var settings = new AppSettings(_filePath))
+        {
+            Assert.Equal(string.Empty, await settings.GetAlertSoundAsync());
+        }
+
+        using var written = new AppSettings(_filePath);
+        await written.SetAlertSoundAsync("   ");
+        Assert.Equal(string.Empty, await written.GetAlertSoundAsync());
+        Assert.Equal(
+            ROROROblox.Core.Discord.AlertSound.Chime,
+            ROROROblox.Core.Discord.AlertSoundSetting.FromSetting(await written.GetAlertSoundAsync()));
+    }
+
+    [Fact]
     public async Task TamperedJson_ReturnsNullDefault()
     {
         File.WriteAllText(_filePath, "{ this is not valid JSON");

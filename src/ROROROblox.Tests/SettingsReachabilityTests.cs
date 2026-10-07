@@ -164,6 +164,29 @@ public class SettingsReachabilityTests
             + "whichever way that lands, the key stops being unreachable in item 6 and this entry "
             + "retires with it."),
 
+        // AND A THIRD, ON THE SAME EXPIRY — THREE NOW, WHICH IS WORTH NOTICING. v1.33 item 5 adds
+        // the sound; item 6 adds the picker that chooses it. Same split and same reason as the pair
+        // above: the sound only means anything once the balloon is ours (item 4), and the section it
+        // belongs in is item 6's. Item 6's checklist line "Delete both SettingsReachabilityTests
+        // allow-list entries" is now three entries, and it says so in that checklist.
+        //
+        // Not exempt because the composition root reads it: App.xaml.cs refreshes it into the cached
+        // mode the player asks for on every play, and App.xaml.cs is the file this fence deliberately
+        // excludes. A setting read there is being obeyed, not offered — see CompositionRoot.
+        //
+        // ONE DIFFERENCE FROM THE PAIR ABOVE, recorded because it is the reasoning most likely to
+        // be mislaid: the cadence degrades DOWNWARD (a negative minute count reads as the shipped
+        // five) and this degrades UPWARD (anything unreadable reads as Chime, never Silent). Item 4
+        // replaced the shell balloon, which was the only thing forcing the Windows notification
+        // sound, so silence is now a state this app can reach by accident — and an alert that makes
+        // no sound is a log entry. The fallback has to be in the direction the user notices.
+        new("AlertSound",
+            "v1.33 item 5 adds the key; v1.33 item 6 adds the picker. Resolved through "
+            + "AlertSoundSetting.FromSetting and consumed by AlertSoundPlayer on the balloon's show "
+            + "path, so one event is one sound regardless of fan-out; the only reader today is the "
+            + "composition root, which this fence does not count. Retire this entry in item 6's "
+            + "commit, with the cadence pair above it."),
+
         // MuteIdleAlerts is the one entry here that is a RETIREMENT rather than a wait. v1.33 item 3
         // turned the setting from a control into a one-time migration: an existing `true` becomes
         // DiscordConfig.IdleDestinations = [] on first run after upgrade (IdleMuteMigration), and

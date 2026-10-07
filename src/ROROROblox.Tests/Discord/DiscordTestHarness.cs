@@ -385,6 +385,15 @@ internal static class DiscordTestHarness
             AlertCadenceOverridesJson = overridesJson ?? string.Empty;
             return Task.CompletedTask;
         }
+
+        /// <summary>The shipped Chime, so a harness-built alert sounds exactly as it ships.</summary>
+        public string AlertSound { get; set; } = "Chime";
+        public Task<string> GetAlertSoundAsync() => Task.FromResult(AlertSound);
+        public Task SetAlertSoundAsync(string? sound)
+        {
+            AlertSound = sound ?? string.Empty;
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore

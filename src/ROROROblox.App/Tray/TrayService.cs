@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.Localization;
 using ROROROblox.Core;
+using ROROROblox.Core.Discord;
 using ROROROblox.Core.StreamerMode;
 
 namespace ROROROblox.App.Tray;
@@ -26,6 +27,12 @@ internal sealed class TrayService : ITrayService
 
     private readonly IStreamerIdentityProvider _streamerIdentity;
     private readonly ILogger<TrayService> _log;
+
+    // The noise one notification makes (v1.33 item 5). HERE rather than in AlertDispatcher because
+    // the dispatcher's fan-out loop runs once per destination and this runs once per balloon: a
+    // sound played up there would chime three times for one crossing on a roster routed to the
+    // desktop, the clan channel and a phone. One event is one sound.
+    private readonly IAlertSoundPlayer _sound;
     private readonly TaskbarIcon _taskbarIcon;
     private readonly MenuItem _toggleItem;
     private readonly MenuItem _streamerModeItem;
@@ -61,10 +68,17 @@ internal sealed class TrayService : ITrayService
     public event EventHandler<Guid>? RequestFocusAccount;
     public event EventHandler<MultiInstanceState>? StatusChanged;
 
-    public TrayService(IStreamerIdentityProvider streamerIdentity, ILogger<TrayService>? log = null)
+    public TrayService(
+        IStreamerIdentityProvider streamerIdentity,
+        ILogger<TrayService>? log = null,
+        IAlertSoundPlayer? sound = null)
     {
         _streamerIdentity = streamerIdentity;
         _log = log ?? NullLogger<TrayService>.Instance;
+        // Defaults to the shipped chime rather than to a no-op. A composition root that forgot to
+        // pass one would otherwise produce a build where alerts are silent and nothing says so —
+        // the failure this whole item exists to stop being possible.
+        _sound = sound ?? new AlertSoundPlayer(() => AlertSoundSetting.Default);
         _taskbarIcon = new TaskbarIcon();
         // Double-click is the user's "do the thing" gesture — App.xaml.cs decides whether
         // that means "launch main" or "surface the window" based on whether a main is set.
@@ -305,9 +319,16 @@ internal sealed class TrayService : ITrayService
     /// only behind a non-public overload (verified by reflection 2026-10-05), so there is no
     /// supported way to ask for a quiet one. <see cref="AlertBalloon"/> through
     /// <c>ShowCustomBalloon</c> draws no OS chrome and therefore triggers no OS sound, which is what
-    /// makes the sound a setting instead of Windows' decision (item 5 owns playing it; nothing here
-    /// plays anything). What that costs: no Action Center entry — the shell balloon had none
-    /// either — and Focus Assist is no longer consulted by anyone. Both are PRD non-goals.
+    /// makes the sound a setting instead of Windows' decision. What that costs: no Action Center
+    /// entry — the shell balloon had none either — and Focus Assist is no longer consulted by
+    /// anyone. Both are PRD non-goals.
+    /// </para>
+    /// <para>
+    /// <b>And this is where the sound is played</b> (v1.33 item 5), through
+    /// <see cref="IAlertSoundPlayer"/> and after the balloon is up. One event is one sound: this
+    /// method runs once per notification, while <c>AlertDispatcher</c>'s fan-out loop that calls it
+    /// runs once per destination. The user's choice between the bundled chime, Windows' asterisk
+    /// and nothing is read on every play, so changing it takes effect on the next alert.
     /// </para>
     /// <para>
     /// <b>Click-to-focus rides on the balloon.</b> <paramref name="accountId"/> is the single
@@ -367,6 +388,13 @@ internal sealed class TrayService : ITrayService
             };
 
             _taskbarIcon.ShowCustomBalloon(balloon, PopupAnimation.Fade, BalloonMilliseconds);
+
+            // AFTER the balloon is up, and inside the marshal. After, because the sound announces
+            // something that is already on screen — a chime that lands first points at nothing. And
+            // inside, because this is the one place that runs exactly once per notification, which
+            // is what "one event is one sound" means operationally. It cannot throw (see
+            // IAlertSoundPlayer.Play), so it cannot cost the balloon or the rest of the fan-out.
+            _sound.Play();
         });
     }
 

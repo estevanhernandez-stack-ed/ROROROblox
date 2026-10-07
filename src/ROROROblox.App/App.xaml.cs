@@ -91,6 +91,25 @@ public partial class App : Application
         ROROROblox.Core.Discord.AlertCadence.Default;
 
     /// <summary>
+    /// What a desktop alert sounds like (v1.33 item 5), cached for the same reason
+    /// <see cref="AlertCadenceSetting"/> is: it is read on the balloon's show path, which is
+    /// reached from a thread-pool timer thread and must not wait on a settings file.
+    ///
+    /// <para><c>volatile</c>, and an enum is a single word, so a reader sees either the old mode or
+    /// the new one. One writer (the refresh below), no nudge path, no generation lock — the cost of
+    /// a lost race is at most 30 seconds on a sound the user just chose. The page that will nudge it
+    /// lands with the Settings section (item 6), and if it nudges this as well as the cadence then
+    /// BOTH want the counter that item 6's checklist already owes the cadence.</para>
+    ///
+    /// <para>Defaults to the shipped chime rather than to silence. An alert raised during startup —
+    /// before the first read completes — makes the noise the user expects, and more to the point a
+    /// refresh that never runs leaves alerts audible rather than mute. Silence is how this feature
+    /// fails invisibly, so no default and no fallback anywhere in it points that way.</para>
+    /// </summary>
+    private static volatile ROROROblox.Core.Discord.AlertSound AlertSoundSetting =
+        ROROROblox.Core.Discord.AlertSoundSetting.Default;
+
+    /// <summary>
     /// Serialises the two writers of <see cref="MetricAlertsEnabled"/> against each other, and
     /// nothing else.
     ///
@@ -822,11 +841,18 @@ public partial class App : Application
         // ContextMenu / MenuItem, and a plain singleton constructs on whichever thread resolves it
         // first. On 2026-08-20 that was a threadpool continuation (StartPluginHostListener →
         // AlertDispatcher → ITrayService) and startup died cross-thread on a Freezable (F-122).
+        // The alert sound (v1.33 item 5). Registered separately from the tray so the mode provider
+        // is written down once: it reads AlertSoundSetting on EVERY play, which is what makes a
+        // change on the Settings page take effect on the next alert instead of the next launch.
+        services.AddSingleton<Tray.IAlertSoundPlayer>(sp => new Tray.AlertSoundPlayer(
+            () => AlertSoundSetting,
+            sp.GetService<ILogger<Tray.AlertSoundPlayer>>()));
         services.AddSingleton<ITrayService>(sp => UiBoundFactory.Create(
             System.Windows.Application.Current?.Dispatcher,
             () => new TrayService(
                 sp.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(),
-                sp.GetService<ILogger<TrayService>>())));
+                sp.GetService<ILogger<TrayService>>(),
+                sp.GetRequiredService<Tray.IAlertSoundPlayer>())));
         services.AddSingleton<IAppSettings>(_ => new AppSettings());
         services.AddSingleton<IFavoriteGameStore>(_ => new FavoriteGameStore());
         services.AddSingleton<IPrivateServerStore>(_ => new PrivateServerStore());
@@ -2095,6 +2121,10 @@ public partial class App : Application
             // there is nothing to skip.
             await RefreshAlertCadenceAsync(settings).ConfigureAwait(true);
             vm.PeriodicTick += (_, _) => _ = RefreshAlertCadenceAsync(settings);
+
+            // And the sound (v1.33 item 5), on the same tick for the same reason.
+            await RefreshAlertSoundAsync(settings).ConfigureAwait(true);
+            vm.PeriodicTick += (_, _) => _ = RefreshAlertSoundAsync(settings);
         }
         catch (Exception ex)
         {
@@ -2183,6 +2213,30 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "Alert-cadence re-read threw; the cadence keeps its last value.");
+        }
+    }
+
+    /// <summary>
+    /// Re-reads the sound choice into <see cref="AlertSoundSetting"/>.
+    ///
+    /// <para>Every failure direction here ends on the chime, which is the opposite of what
+    /// <see cref="RefreshAlertCadenceAsync"/> does and deliberately so. <c>AppSettings.LoadAsync</c>
+    /// never throws — a locked file, a zero-length read mid-save and a corrupt blob all return a
+    /// DEFAULT <c>SettingsBlob</c>, whose <c>AlertSound</c> is <c>"Chime"</c> — so the likeliest
+    /// failure overwrites a user's chosen silence with a noise for at most 30 seconds. That is the
+    /// annoying direction rather than the harmful one: the quiet direction is a user who stops being
+    /// told about a crashed client and has no way to tell that from nothing happening.</para>
+    /// </summary>
+    private async Task RefreshAlertSoundAsync(IAppSettings settings)
+    {
+        try
+        {
+            var stored = await settings.GetAlertSoundAsync().ConfigureAwait(false);
+            AlertSoundSetting = ROROROblox.Core.Discord.AlertSoundSetting.FromSetting(stored);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Alert-sound re-read threw; the sound keeps its last value.");
         }
     }
 

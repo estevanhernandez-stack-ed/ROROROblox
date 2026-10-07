@@ -122,16 +122,20 @@ the memory numbers beside the memory row and idle in the grid.
 
 **Two debts item 2 handed forward. Both are this item's to pay.**
 
-- [ ] **Delete both `SettingsReachabilityTests` allow-list entries** for `AlertCadenceMinutes` and
-      `AlertCadenceOverridesJson`. They exist only because the keys shipped one commit ahead of the
-      controls that edit them, and each says so in its own text. This file has twice caught an
-      exemption outliving its reason (`DefaultPlaceUrl`, `MetricAlertsEnabled`) — both a cycle late.
-- [ ] **Add the generation counter to the cadence cache when this item adds the nudge.**
-      `App.AlertCadenceSetting` is a `volatile` immutable refreshed on the 30 s tick, with no lock,
-      which is correct while the tick is the only writer. The moment the page nudges it on save there
-      are two writers, and that is exactly the race `MetricAlertsGateTests` documents: a tick that
-      read before the user's change commits its stale value after it. Mirror
-      `SetMetricAlertsGate` / `BeginMetricAlertsGateRead` / `TryCommitMetricAlertsGate`.
+- [ ] **Delete all THREE `SettingsReachabilityTests` allow-list entries** for `AlertCadenceMinutes`,
+      `AlertCadenceOverridesJson` and `AlertSound`. **Corrected by the item 5 agent — it was two
+      when item 2 wrote this line, and item 5 added the third on the same expiry.** They exist only
+      because the keys shipped ahead of the controls that edit them, and each says so in its own
+      text. This file has twice caught an exemption outliving its reason (`DefaultPlaceUrl`,
+      `MetricAlertsEnabled`) — both a cycle late.
+- [ ] **Add the generation counter to the cadence cache when this item adds the nudge — and to the
+      sound cache beside it.** `App.AlertCadenceSetting` is a `volatile` immutable refreshed on the
+      30 s tick, with no lock, which is correct while the tick is the only writer. The moment the
+      page nudges it on save there are two writers, and that is exactly the race
+      `MetricAlertsGateTests` documents: a tick that read before the user's change commits its stale
+      value after it. Mirror `SetMetricAlertsGate` / `BeginMetricAlertsGateRead` /
+      `TryCommitMetricAlertsGate`. **`App.AlertSoundSetting` (item 5) is the same shape with the same
+      single writer, so if the page nudges one it must nudge both, and both need the counter.**
 
 **C2 — eyes on it.** Screenshot every theme, compare against the approved shape, and walk the page
 with a keyboard only.

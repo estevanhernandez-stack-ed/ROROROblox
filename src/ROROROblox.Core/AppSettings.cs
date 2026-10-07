@@ -385,6 +385,40 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    /// <summary>
+    /// Never null to a caller, for the reason <see cref="GetAlertCadenceOverridesJsonAsync"/>
+    /// documents: a blob written with an explicit <c>null</c> decodes as null despite the record's
+    /// non-nullable string, and handing that out would push the same check into every reader.
+    /// <para>
+    /// Hands back whatever is in the file, unvalidated.
+    /// <see cref="Discord.AlertSoundSetting.FromSetting"/> is the only thing that turns it into a
+    /// mode, and it is where a garbage value becomes a chime rather than silence.
+    /// </para>
+    /// </summary>
+    public async Task<string> GetAlertSoundAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).AlertSound ?? string.Empty; }
+        finally { _gate.Release(); }
+    }
+
+    /// <summary>
+    /// Stored as given. Blank normalises to <c>""</c> the way
+    /// <see cref="SetAlertCadenceOverridesJsonAsync"/> does — a whitespace value is an accident on
+    /// the way to a choice, not a choice — and <c>""</c> resolves to the default chime.
+    /// </summary>
+    public async Task SetAlertSoundAsync(string? sound)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            var value = string.IsNullOrWhiteSpace(sound) ? string.Empty : sound.Trim();
+            await SaveAsync(s with { AlertSound = value }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task<bool> GetStreamerModeAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -663,6 +697,14 @@ public sealed class AppSettings : IAppSettings, IDisposable
     // absent resolves to 5 and zero resolves to zero. The overrides blob defaults to "" rather
     // than null for the same reason an empty culture name does not — there is no third state to
     // express, and AlertCadence.FromSettings treats null, blank and "{}" identically anyway.
+    //
+    // AlertSound (v1.33) is the same no-migration deal with one difference worth writing down: its
+    // default is the member NAME "Chime" rather than an empty string, even though "" resolves to
+    // Chime anyway. The reason is that this value is the one a human is most likely to hand-edit,
+    // and a file that says "alertSound": "" teaches nothing about what the legal values are, while
+    // one that says "Chime" is a working example of the format. The ordinal is never persisted —
+    // see AlertSoundSetting, which refuses a numeric value precisely so the enum's declaration
+    // order cannot become part of the file format.
     private sealed record SettingsBlob(
         int Version,
         bool LaunchMainOnStartup = false,
@@ -690,5 +732,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
         Dictionary<string, bool>? EdgeRemediationAnswers = null,
         bool MetricAlertsEnabled = false,
         int AlertCadenceMinutes = 5,
-        string AlertCadenceOverridesJson = "");
+        string AlertCadenceOverridesJson = "",
+        string AlertSound = "Chime");
 }

@@ -209,6 +209,8 @@ public class StreamerIdentityProviderTests
         public Task SetAlertCadenceMinutesAsync(int minutes) => throw new NotImplementedException();
         public Task<string> GetAlertCadenceOverridesJsonAsync() => throw new NotImplementedException();
         public Task SetAlertCadenceOverridesJsonAsync(string? overridesJson) => throw new NotImplementedException();
+        public Task<string> GetAlertSoundAsync() => throw new NotImplementedException();
+        public Task SetAlertSoundAsync(string? sound) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryIdentityStore : IStreamerIdentityStore
