@@ -18,13 +18,19 @@ Effort: **S** under an hour, **M** a few hours, **L** most of a day.
 
 **Depends on:** nothing. **Effort:** S.
 
+**Boxes verified against the tree 2026-10-07, not from memory.** `AccountIdle` is last in `AlertKind`
+(the `RepeatedDrops`/`RelaunchFailed` that look like they follow belong to `AutoRejoinPauseReason`,
+a different enum in the same file — a first sweep misread that and had to be corrected);
+`DestinationsFor` carries the `AccountIdle` arm with the migration shape; `WebhookPayload` emits
+"<name> went idle" rather than a label.
+
 Append `AccountIdle` to `AlertKind` (`Core/Discord/AlertTrigger.cs:11`). Add `IdleDestinations` to
 `DiscordConfig` with the `AutoRejoinPausedDestinations` migration shape (`DiscordConfig.cs:58-70`):
 a config written before the field existed reads `[Local]`, not `[]`.
 
-- [ ] A `discord.dat` with no `IdleDestinations` resolves to `[Local]` through `DestinationsFor`.
-- [ ] Append-only: no existing kind's position in any destination list moves.
-- [ ] `WebhookPayload` renders the new kind with wording that reads as a sentence, not a label.
+- [x] A `discord.dat` with no `IdleDestinations` resolves to `[Local]` through `DestinationsFor`.
+- [x] Append-only: no existing kind's position in any destination list moves.
+- [x] `WebhookPayload` renders the new kind with wording that reads as a sentence, not a label.
 
 **Amended 2026-10-07, after this item had already shipped.** Este's ruling on the open question
 this item left behind: *"an account that isn't in a game should not be getting an idle alert. That's
@@ -55,36 +61,44 @@ kicked out of.
 
 **Depends on:** nothing (parallel with 1). **Effort:** M.
 
+**Boxes verified against the tree 2026-10-07.** The boundary is `nowUtc - last >= quietPeriod` at
+`AlertRouter.MaySpeak`, and `quietPeriod <= TimeSpan.Zero` returns true, which is "0 means every
+alert passes" in one line. All four private `IAppSettings` fakes name `AlertCadenceMinutes`.
+
 `AlertCadenceMinutes` (default 5, `0` = every time) and `AlertCadenceOverridesJson` on `SettingsBlob`
 at the bottom of `Core/AppSettings.cs`, plus `IAppSettings` members. `AlertRouter.Cooldown` stops
 being `static readonly` and becomes a value `Route` is given.
 
-- [ ] Four test files' private `IAppSettings` fakes updated (`MainViewModelTests`,
+- [x] Four test files' private `IAppSettings` fakes updated (`MainViewModelTests`,
       `RobloxLauncherTests`, `StreamerIdentityProviderTests`, `Discord/DiscordTestHarness`) — they
       stop compiling until they are.
-- [ ] **`>` becomes `>=` at `AlertRouter.cs:92`**, with a test pinning both sides of the boundary: a
+- [x] **`>` becomes `>=` at `AlertRouter.cs:92`**, with a test pinning both sides of the boundary: a
       repeat at exactly the cadence fires; one a second early does not.
-- [ ] `0` means every alert passes.
-- [ ] An override for one kind does not change another kind's pace.
-- [ ] Cadence is evaluated once per event, not once per destination — pinned by a test, because a
+- [x] `0` means every alert passes.
+- [x] An override for one kind does not change another kind's pace.
+- [x] Cadence is evaluated once per event, not once per destination — pinned by a test, because a
       refactor inverts this silently.
-- [ ] Default stays 5 minutes: an upgrade changes nobody's behaviour.
+- [x] Default stays 5 minutes: an upgrade changes nobody's behaviour.
 
 ## 3. Collapse the three paths to one
 
 **Depends on:** 1, 2. **Effort:** M. **→ C1 halts here.**
+
+**Boxes verified against the tree 2026-10-07.** `IdleAlertPresenter.cs` does not exist;
+`IdleAlertTriggerTests` carries the history of what it replaced rather than the old file being
+deleted silently; `ActivityMonitor` still owns `WarnLatched`; `OnePathToTheScreenFenceTests` exists.
 
 `WireMemoryWarningTray` keeps `SetMemoryWarning(true)` and loses its balloon. `IdleAlertPresenter` is
 deleted; `MainViewModel.cs:3589-3595` raises an `AccountIdle` trigger instead. `MuteIdleAlerts`
 migrates once to `IdleDestinations = []`, stays in `SettingsBlob`, and goes on the
 `SettingsReachabilityTests` allow-list with the reason written in.
 
-- [ ] Unticking Desktop for a kind produces no balloon and no sound for it.
-- [ ] Ticking Desktop produces exactly **one** balloon per event, not two.
-- [ ] A per-account mute silences the desktop for that account.
-- [ ] The tray badge still colours on every crossing with every destination off.
-- [ ] `ActivityMonitor`'s `WarnLatched` edge latch is untouched — "newly idle" is not "may we speak".
-- [ ] `IdleAlertPresenterTests` is rewritten against the trigger, not deleted silently.
+- [x] Unticking Desktop for a kind produces no balloon and no sound for it.
+- [x] Ticking Desktop produces exactly **one** balloon per event, not two.
+- [x] A per-account mute silences the desktop for that account.
+- [x] The tray badge still colours on every crossing with every destination off.
+- [x] `ActivityMonitor`'s `WarnLatched` edge latch is untouched — "newly idle" is not "may we speak".
+- [x] `IdleAlertPresenterTests` is rewritten against the trigger, not deleted silently.
 
 **C1 — live check before going on.** With accounts running: force a memory crossing with Desktop
 unticked (silence), then ticked (one balloon), then with the account muted (silence), then with
@@ -94,36 +108,48 @@ cadence at 1 minute and at every-time. Write it up as it runs.
 
 **Depends on:** 3. **Effort:** M.
 
+**Boxes verified against the tree 2026-10-07, including one that looked like a gap and was not.**
+`WindowChromeFenceTests` does not name `AlertBalloon` — correctly, because the balloon is a
+`UserControl` shown through the tray icon's `ShowCustomBalloon`, so there is no window of ours to
+list. `ShowMemoryWarning` and `_lastMemoryWarningAccountId` are gone from `Tray/` (the surviving
+mentions are two comments recording the deletion, plus an unrelated same-named local method on
+`SettingsPage`). The only `StaticResource` in `AlertBalloon.xaml` is inside a comment explaining why
+a `StaticResource` would be wrong.
+
 `App/Tray/AlertBalloon.xaml`, a themed `UserControl` shown via
 `TaskbarIcon.ShowCustomBalloon(UIElement, PopupAnimation, int?)`. `TrayService.ShowToast` and
 `ShowMemoryWarning` stop calling `ShowBalloonTip`.
 
-- [ ] `DynamicResource` brushes only; it follows all four themes, checked in each.
-- [ ] No OS sound plays from the balloon itself.
-- [ ] Title and body still obey `PayloadLimits`' desktop envelope (63/255) or the limits move
+- [x] `DynamicResource` brushes only; it follows all four themes, checked in each.
+- [x] No OS sound plays from the balloon itself.
+- [x] Title and body still obey `PayloadLimits`' desktop envelope (63/255) or the limits move
       deliberately with the tests that hold them.
-- [ ] **Click-to-focus is restored and generalised — item 3 broke it, invisibly.** `ShowToast` gains
+- [x] **Click-to-focus is restored and generalised — item 3 broke it, invisibly.** `ShowToast` gains
       an optional trailing account id; the dispatcher supplies it when a coalesced group resolves to
       exactly one account; the drawn balloon carries it and a click focuses that row. It then works
       for every single-account kind, not just memory warnings. A three-account group carries no id
       and is honestly unclickable.
-- [ ] `TrayService.ShowMemoryWarning` and `_lastMemoryWarningAccountId` are removed with the rest of
+- [x] `TrayService.ShowMemoryWarning` and `_lastMemoryWarningAccountId` are removed with the rest of
       the chain once the new path works — item 3 left them standing precisely because deleting them
       would have made this criterion unimplementable, and said so.
-- [ ] A new window/control goes in the fence lists it belongs to (`WindowChromeFenceTests` if it is a
+- [x] A new window/control goes in the fence lists it belongs to (`WindowChromeFenceTests` if it is a
       window — it should not be).
 
 ## 5. The sound is a choice
 
 **Depends on:** 4. **Effort:** S + an asset.
 
+**Boxes verified against the tree 2026-10-07.** The chime is committed at
+`Tray/Resources/alert-chime.wav` and generated by `scripts/generate-alert-chime.py`;
+`AlertSoundPlayer` uses `System.Media.SoundPlayer` and the `SystemSounds.Asterisk` arm is present.
+
 `AlertSound` setting (`Silent | Chime | WindowsDefault`, default `Chime`), played from the balloon's
 show path so one event is one sound regardless of fan-out.
 
-- [ ] Chime is a bundled `.wav` played with `System.Media.SoundPlayer`; synthesised, short, quiet,
+- [x] Chime is a bundled `.wav` played with `System.Media.SoundPlayer`; synthesised, short, quiet,
       two soft tones. Judged by ear before the item closes.
-- [ ] `WindowsDefault` is `SystemSounds.Asterisk`; `Silent` plays nothing.
-- [ ] Changing the setting takes effect on the next alert with no restart.
+- [x] `WindowsDefault` is `SystemSounds.Asterisk`; `Silent` plays nothing.
+- [x] Changing the setting takes effect on the next alert with no restart.
 
 ## 6. One alerts section
 
