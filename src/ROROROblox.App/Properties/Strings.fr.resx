@@ -3258,4 +3258,100 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   <data name="Shell_Msg_FlaggedLeftStopped" xml:space="preserve">
     <value>Aucun lancement pour {0} : personne à suivre n'est dans un jeu.</value>
   </data>
+  <data name="SettingsPage_AlertColumnAlert" xml:space="preserve">
+    <value>Alerte</value>
+  </data>
+  <data name="SettingsPage_AlertColumnHowOften" xml:space="preserve">
+    <value>Au maximum une fois toutes les</value>
+  </data>
+  <data name="SettingsPage_AlertColumnWhereItGoes" xml:space="preserve">
+    <value>Où elle va</value>
+  </data>
+  <data name="SettingsPage_HowOftenAtMost" xml:space="preserve">
+    <value>À quelle fréquence au maximum</value>
+  </data>
+  <data name="SettingsPage_HowOftenAtMostHint" xml:space="preserve">
+    <value>Une période de silence par compte et par alerte, pour qu'une mauvaise minute donne un message et non vingt. Réglez-le sur « Chaque fois » et rien n'est retenu.</value>
+  </data>
+  <data name="SettingsPage_HowOftenAnyAlertMayRepeat" xml:space="preserve">
+    <value>À quelle fréquence une alerte peut se répéter au maximum</value>
+  </data>
+  <data name="SettingsPage_EveryTime" xml:space="preserve">
+    <value>Chaque fois</value>
+  </data>
+  <data name="SettingsPage_1Minute" xml:space="preserve">
+    <value>1 minute</value>
+  </data>
+  <data name="SettingsPage_5Minutes" xml:space="preserve">
+    <value>5 minutes</value>
+  </data>
+  <data name="SettingsPage_30Minutes" xml:space="preserve">
+    <value>30 minutes</value>
+  </data>
+  <data name="SettingsPage_60Minutes" xml:space="preserve">
+    <value>60 minutes</value>
+  </data>
+  <data name="SettingsPage_FollowThePaceAbove" xml:space="preserve">
+    <value>Suivre le rythme ci-dessus</value>
+  </data>
+  <data name="SettingsPage_AlertSound" xml:space="preserve">
+    <value>Son d'alerte</value>
+  </data>
+  <data name="SettingsPage_AlertSoundHint" xml:space="preserve">
+    <value>Retentit une fois par alerte, quel que soit le nombre de destinations. « Silencieux » affiche toujours la notification et colore toujours la barre d'état système.</value>
+  </data>
+  <data name="SettingsPage_WhatADesktopAlertSoundsLike" xml:space="preserve">
+    <value>Le son d'une alerte sur le bureau</value>
+  </data>
+  <data name="SettingsPage_SoundSilent" xml:space="preserve">
+    <value>Silencieux</value>
+  </data>
+  <data name="SettingsPage_SoundRororoChime" xml:space="preserve">
+    <value>Carillon RoRoRo</value>
+  </data>
+  <data name="SettingsPage_SoundWindowsDefault" xml:space="preserve">
+    <value>Son par défaut de Windows</value>
+  </data>
+  <data name="SettingsPage_TheTrayIconColoursWhatever" xml:space="preserve">
+    <value>L'icône de la barre d'état système se colore pour tout ce que vous décochez ici, afin que vous puissiez toujours le voir sur le PC. Décocher « Bureau » supprime la notification et son son, jamais le badge.</value>
+  </data>
+  <data name="SettingsPage_AnAccountGoesIdle" xml:space="preserve">
+    <value>Un compte devient inactif dans un jeu</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToThe" xml:space="preserve">
+    <value>Envoyer les alertes d'inactivité au bureau</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToMy" xml:space="preserve">
+    <value>Envoyer les alertes d'inactivité à mon canal Discord</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToThe_2" xml:space="preserve">
+    <value>Envoyer les alertes d'inactivité au canal Discord du clan</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToMy_2" xml:space="preserve">
+    <value>Envoyer les alertes d'inactivité à mon téléphone</value>
+  </data>
+  <data name="SettingsPage_NobodyHasTouchedTheAccount" xml:space="preserve">
+    <value>Combien de temps un compte reste sans aucune action de votre part avant d'être considéré comme inactif. Seuls les comptes réellement dans un jeu déclenchent cette alerte, puisque seuls eux peuvent en être expulsés. La puce de la ligne apparaît au même moment de toute façon, quel que soit le réglage de cette alerte.</value>
+  </data>
+  <data name="SettingsPage_HowOftenDropOutAlertsMay" xml:space="preserve">
+    <value>À quelle fréquence les alertes de décrochage peuvent se répéter au maximum</value>
+  </data>
+  <data name="SettingsPage_HowOftenMemoryWarningsMay" xml:space="preserve">
+    <value>À quelle fréquence les avertissements de mémoire peuvent se répéter au maximum</value>
+  </data>
+  <data name="SettingsPage_HowOftenIdleAlertsMay" xml:space="preserve">
+    <value>À quelle fréquence les alertes d'inactivité peuvent se répéter au maximum</value>
+  </data>
+  <data name="SettingsPage_HowOftenRecycleNoticesMay" xml:space="preserve">
+    <value>À quelle fréquence les avis de recyclage peuvent se répéter au maximum</value>
+  </data>
+  <data name="SettingsPage_HowOftenAutoRejoinPausedAlertsMay" xml:space="preserve">
+    <value>À quelle fréquence les alertes de reconnexion suspendue peuvent se répéter au maximum</value>
+  </data>
+  <data name="SettingsPage_HowOftenMetricAlertsMay" xml:space="preserve">
+    <value>À quelle fréquence les alertes métriques peuvent se répéter au maximum</value>
+  </data>
+  <data name="SettingsPage_FixedAtTwoHours" xml:space="preserve">
+    <value>Fixé à deux heures.</value>
+  </data>
 </root>

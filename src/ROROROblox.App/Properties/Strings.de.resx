@@ -3258,4 +3258,100 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="Shell_Msg_FlaggedLeftStopped" xml:space="preserve">
     <value>Kein Start für {0}: Niemand, dem gefolgt werden kann, ist in einem Spiel.</value>
   </data>
+  <data name="SettingsPage_AlertColumnAlert" xml:space="preserve">
+    <value>Benachrichtigung</value>
+  </data>
+  <data name="SettingsPage_AlertColumnHowOften" xml:space="preserve">
+    <value>Höchstens einmal alle</value>
+  </data>
+  <data name="SettingsPage_AlertColumnWhereItGoes" xml:space="preserve">
+    <value>Wohin sie geht</value>
+  </data>
+  <data name="SettingsPage_HowOftenAtMost" xml:space="preserve">
+    <value>Wie oft höchstens</value>
+  </data>
+  <data name="SettingsPage_HowOftenAtMostHint" xml:space="preserve">
+    <value>Eine Ruhezeit pro Konto und pro Benachrichtigung, damit eine schlechte Minute eine Nachricht ergibt und nicht zwanzig. Stelle es auf „Jedes Mal“ und nichts wird zurückgehalten.</value>
+  </data>
+  <data name="SettingsPage_HowOftenAnyAlertMayRepeat" xml:space="preserve">
+    <value>Wie oft sich eine Benachrichtigung höchstens wiederholen darf</value>
+  </data>
+  <data name="SettingsPage_EveryTime" xml:space="preserve">
+    <value>Jedes Mal</value>
+  </data>
+  <data name="SettingsPage_1Minute" xml:space="preserve">
+    <value>1 Minute</value>
+  </data>
+  <data name="SettingsPage_5Minutes" xml:space="preserve">
+    <value>5 Minuten</value>
+  </data>
+  <data name="SettingsPage_30Minutes" xml:space="preserve">
+    <value>30 Minuten</value>
+  </data>
+  <data name="SettingsPage_60Minutes" xml:space="preserve">
+    <value>60 Minuten</value>
+  </data>
+  <data name="SettingsPage_FollowThePaceAbove" xml:space="preserve">
+    <value>Dem Takt oben folgen</value>
+  </data>
+  <data name="SettingsPage_AlertSound" xml:space="preserve">
+    <value>Benachrichtigungston</value>
+  </data>
+  <data name="SettingsPage_AlertSoundHint" xml:space="preserve">
+    <value>Erklingt einmal pro Benachrichtigung, egal an wie viele Orte sie geht. „Stumm“ zeichnet die Benachrichtigung weiterhin und färbt weiterhin das Tray-Symbol.</value>
+  </data>
+  <data name="SettingsPage_WhatADesktopAlertSoundsLike" xml:space="preserve">
+    <value>Wie eine Desktop-Benachrichtigung klingt</value>
+  </data>
+  <data name="SettingsPage_SoundSilent" xml:space="preserve">
+    <value>Stumm</value>
+  </data>
+  <data name="SettingsPage_SoundRororoChime" xml:space="preserve">
+    <value>RoRoRo-Klang</value>
+  </data>
+  <data name="SettingsPage_SoundWindowsDefault" xml:space="preserve">
+    <value>Windows-Standard</value>
+  </data>
+  <data name="SettingsPage_TheTrayIconColoursWhatever" xml:space="preserve">
+    <value>Das Tray-Symbol färbt sich für alles, was du hier abwählst, damit du es am PC immer noch mitbekommst. „Desktop“ abzuwählen nimmt die Benachrichtigung und ihren Ton weg, nie das Abzeichen.</value>
+  </data>
+  <data name="SettingsPage_AnAccountGoesIdle" xml:space="preserve">
+    <value>Ein Konto wird in einem Spiel inaktiv</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToThe" xml:space="preserve">
+    <value>Inaktivitäts-Benachrichtigungen an den Desktop senden</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToMy" xml:space="preserve">
+    <value>Inaktivitäts-Benachrichtigungen an meinen Discord-Kanal senden</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToThe_2" xml:space="preserve">
+    <value>Inaktivitäts-Benachrichtigungen an den Clan-Discord-Kanal senden</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToMy_2" xml:space="preserve">
+    <value>Inaktivitäts-Benachrichtigungen an mein Handy senden</value>
+  </data>
+  <data name="SettingsPage_NobodyHasTouchedTheAccount" xml:space="preserve">
+    <value>Wie lange ein Konto ohne Eingabe von dir dasteht, bevor es als inaktiv gilt. Nur Konten, die tatsächlich in einem Spiel sind, lösen diese Benachrichtigung aus, denn nur sie können dafür hinausgeworfen werden. Der Chip in der Zeile erscheint ohnehin im selben Moment, egal wie diese Benachrichtigung eingestellt ist.</value>
+  </data>
+  <data name="SettingsPage_HowOftenDropOutAlertsMay" xml:space="preserve">
+    <value>Wie oft sich Ausfall-Benachrichtigungen höchstens wiederholen dürfen</value>
+  </data>
+  <data name="SettingsPage_HowOftenMemoryWarningsMay" xml:space="preserve">
+    <value>Wie oft sich Speicherwarnungen höchstens wiederholen dürfen</value>
+  </data>
+  <data name="SettingsPage_HowOftenIdleAlertsMay" xml:space="preserve">
+    <value>Wie oft sich Inaktivitäts-Benachrichtigungen höchstens wiederholen dürfen</value>
+  </data>
+  <data name="SettingsPage_HowOftenRecycleNoticesMay" xml:space="preserve">
+    <value>Wie oft sich Neu-verbinden-Hinweise höchstens wiederholen dürfen</value>
+  </data>
+  <data name="SettingsPage_HowOftenAutoRejoinPausedAlertsMay" xml:space="preserve">
+    <value>Wie oft sich Neubeitritt-Pause-Benachrichtigungen höchstens wiederholen dürfen</value>
+  </data>
+  <data name="SettingsPage_HowOftenMetricAlertsMay" xml:space="preserve">
+    <value>Wie oft sich Metrik-Benachrichtigungen höchstens wiederholen dürfen</value>
+  </data>
+  <data name="SettingsPage_FixedAtTwoHours" xml:space="preserve">
+    <value>Fest auf zwei Stunden.</value>
+  </data>
 </root>

@@ -3258,4 +3258,100 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   <data name="Shell_Msg_FlaggedLeftStopped" xml:space="preserve">
     <value>{0}: nie uruchomiono, bo nikt, do kogo można dołączyć, nie jest w grze.</value>
   </data>
+  <data name="SettingsPage_AlertColumnAlert" xml:space="preserve">
+    <value>Alert</value>
+  </data>
+  <data name="SettingsPage_AlertColumnHowOften" xml:space="preserve">
+    <value>Najwyżej raz na</value>
+  </data>
+  <data name="SettingsPage_AlertColumnWhereItGoes" xml:space="preserve">
+    <value>Gdzie trafia</value>
+  </data>
+  <data name="SettingsPage_HowOftenAtMost" xml:space="preserve">
+    <value>Jak często najwyżej</value>
+  </data>
+  <data name="SettingsPage_HowOftenAtMostHint" xml:space="preserve">
+    <value>Okres ciszy dla każdego konta i każdego alertu, więc jedna zła minuta to jedna wiadomość, a nie dwadzieścia. Ustaw „Za każdym razem” i nic nie zostanie wstrzymane.</value>
+  </data>
+  <data name="SettingsPage_HowOftenAnyAlertMayRepeat" xml:space="preserve">
+    <value>Jak często najwyżej może powtarzać się dowolny alert</value>
+  </data>
+  <data name="SettingsPage_EveryTime" xml:space="preserve">
+    <value>Za każdym razem</value>
+  </data>
+  <data name="SettingsPage_1Minute" xml:space="preserve">
+    <value>1 minuta</value>
+  </data>
+  <data name="SettingsPage_5Minutes" xml:space="preserve">
+    <value>5 minut</value>
+  </data>
+  <data name="SettingsPage_30Minutes" xml:space="preserve">
+    <value>30 minut</value>
+  </data>
+  <data name="SettingsPage_60Minutes" xml:space="preserve">
+    <value>60 minut</value>
+  </data>
+  <data name="SettingsPage_FollowThePaceAbove" xml:space="preserve">
+    <value>Zgodnie z tempem powyżej</value>
+  </data>
+  <data name="SettingsPage_AlertSound" xml:space="preserve">
+    <value>Dźwięk alertu</value>
+  </data>
+  <data name="SettingsPage_AlertSoundHint" xml:space="preserve">
+    <value>Odtwarza się raz na alert, niezależnie od liczby miejsc, do których trafia. „Cisza” nadal rysuje powiadomienie i nadal koloruje zasobnik.</value>
+  </data>
+  <data name="SettingsPage_WhatADesktopAlertSoundsLike" xml:space="preserve">
+    <value>Jak brzmi alert na pulpicie</value>
+  </data>
+  <data name="SettingsPage_SoundSilent" xml:space="preserve">
+    <value>Cisza</value>
+  </data>
+  <data name="SettingsPage_SoundRororoChime" xml:space="preserve">
+    <value>Dzwonek RoRoRo</value>
+  </data>
+  <data name="SettingsPage_SoundWindowsDefault" xml:space="preserve">
+    <value>Domyślny dźwięk Windows</value>
+  </data>
+  <data name="SettingsPage_TheTrayIconColoursWhatever" xml:space="preserve">
+    <value>Ikona w zasobniku koloruje wszystko, co tutaj odznaczysz, więc zawsze dowiesz się przy komputerze. Odznaczenie „Pulpit” usuwa powiadomienie i jego dźwięk, nigdy plakietkę.</value>
+  </data>
+  <data name="SettingsPage_AnAccountGoesIdle" xml:space="preserve">
+    <value>Konto staje się bezczynne w grze</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToThe" xml:space="preserve">
+    <value>Wysyłaj alerty o bezczynności na pulpit</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToMy" xml:space="preserve">
+    <value>Wysyłaj alerty o bezczynności na mój kanał Discord</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToThe_2" xml:space="preserve">
+    <value>Wysyłaj alerty o bezczynności na kanał Discord klanu</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToMy_2" xml:space="preserve">
+    <value>Wysyłaj alerty o bezczynności na mój telefon</value>
+  </data>
+  <data name="SettingsPage_NobodyHasTouchedTheAccount" xml:space="preserve">
+    <value>Jak długo konto pozostaje bez żadnych działań z twojej strony, zanim zostanie uznane za bezczynne. Ten alert wywołują tylko konta, które naprawdę są w grze, bo tylko one mogą za to zostać wyrzucone. Plakietka w wierszu pojawia się i tak w tym samym momencie, niezależnie od ustawienia tego alertu.</value>
+  </data>
+  <data name="SettingsPage_HowOftenDropOutAlertsMay" xml:space="preserve">
+    <value>Jak często najwyżej mogą powtarzać się alerty o wypadnięciu</value>
+  </data>
+  <data name="SettingsPage_HowOftenMemoryWarningsMay" xml:space="preserve">
+    <value>Jak często najwyżej mogą powtarzać się ostrzeżenia o pamięci</value>
+  </data>
+  <data name="SettingsPage_HowOftenIdleAlertsMay" xml:space="preserve">
+    <value>Jak często najwyżej mogą powtarzać się alerty o bezczynności</value>
+  </data>
+  <data name="SettingsPage_HowOftenRecycleNoticesMay" xml:space="preserve">
+    <value>Jak często najwyżej mogą powtarzać się powiadomienia o ponownym połączeniu</value>
+  </data>
+  <data name="SettingsPage_HowOftenAutoRejoinPausedAlertsMay" xml:space="preserve">
+    <value>Jak często najwyżej mogą powtarzać się alerty o wstrzymaniu ponownego dołączania</value>
+  </data>
+  <data name="SettingsPage_HowOftenMetricAlertsMay" xml:space="preserve">
+    <value>Jak często najwyżej mogą powtarzać się alerty o wskaźnikach</value>
+  </data>
+  <data name="SettingsPage_FixedAtTwoHours" xml:space="preserve">
+    <value>Ustalone na dwie godziny.</value>
+  </data>
 </root>

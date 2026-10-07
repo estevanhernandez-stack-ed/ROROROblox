@@ -1,6 +1,6 @@
 {
   "source": "Strings.resx",
-  "count": 1017,
+  "count": 1107,
   "rows": [
     {
       "key": "AboutPage_A626LabsProduct",
@@ -16,7 +16,7 @@
     },
     {
       "key": "AboutPage_InsideTheToolsWindowCtrl",
-      "en": "Inside the tools window, Ctrl+1 through Ctrl+6 also jump straight to a page.",
+      "en": "Inside the tools window, Ctrl+1 through Ctrl+7 also jump straight to a page.",
       "comment": "src/ROROROblox.App/About/AboutPage.xaml:177 xaml-text",
       "placeholders": false
     },
@@ -933,6 +933,42 @@
       "placeholders": false
     },
     {
+      "key": "FlaggedLaunchWindow_Cancel",
+      "en": "Cancel",
+      "comment": "Flagged-launch dialog button; the Enter-key default",
+      "placeholders": false
+    },
+    {
+      "key": "FlaggedLaunchWindow_Follow",
+      "en": "Follow",
+      "comment": "Flagged-launch dialog button: follow the picked account",
+      "placeholders": false
+    },
+    {
+      "key": "FlaggedLaunchWindow_FollowAnother",
+      "en": "Follow another account",
+      "comment": "Flagged-launch dialog label over the account picker",
+      "placeholders": false
+    },
+    {
+      "key": "FlaggedLaunchWindow_ItsFixed",
+      "en": "It's fixed, join directly",
+      "comment": "Flagged-launch dialog button: clear the join-via-friend flag and join directly",
+      "placeholders": false
+    },
+    {
+      "key": "FlaggedLaunchWindow_NobodyJoinable",
+      "en": "None of your accounts is in a game you can join right now.",
+      "comment": "Flagged-launch dialog note when no account is joinable",
+      "placeholders": false
+    },
+    {
+      "key": "FlaggedLaunchWindow_Title",
+      "en": "Join through your main",
+      "comment": "Flagged-launch dialog title and heading",
+      "placeholders": false
+    },
+    {
       "key": "FriendFollowWindow_Close",
       "en": "Close",
       "comment": "src/ROROROblox.App/Friends/FriendFollowWindow.xaml:68 xaml-text",
@@ -1221,6 +1257,120 @@
       "placeholders": false
     },
     {
+      "key": "KnownIssuesPage_CheckFailed",
+      "en": "Couldn't check at {0}. Showing the saved list.",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "KnownIssuesPage_Checking",
+      "en": "Checking for known issues…",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_Empty",
+      "en": "No known Roblox issues right now.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_EnglishOnly",
+      "en": "Issue descriptions are in English.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_Heading",
+      "en": "Known Roblox issues",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_Intro",
+      "en": "Problems in Roblox itself, and what to do about them.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_LastChecked",
+      "en": "Last checked at {0}.",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "KnownIssuesPage_NeverReached",
+      "en": "Couldn't reach the list of known issues yet.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_OpenLink",
+      "en": "Open {0} in your browser",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "KnownIssuesPage_OpenMemorySettings",
+      "en": "Open memory settings",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_Posted",
+      "en": "Posted {0}",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "KnownIssuesPage_RobloxTag",
+      "en": "Roblox",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_RororoCanHelp",
+      "en": "RoRoRo can help",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_ShowAccounts",
+      "en": "Show accounts",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_VersionAffected",
+      "en": "Your Roblox version ({0}) is affected.",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "KnownIssuesPage_VersionFixed",
+      "en": "Fixed in {0}. You have {1}.",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "KnownIssuesPage_VersionNotYet",
+      "en": "Affects {0} and later. You have {1}.",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "KnownIssuesPage_VersionUnknown",
+      "en": "Couldn't read your Roblox version.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "KnownIssuesPage_WhatToDo",
+      "en": "What to do",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "LanguageNotice_Body",
       "en": "It follows your system language automatically. Pick a different one any time in Settings › Appearance.",
       "comment": "One-time post-update tray notice body; names the Settings NAV destination (Appearance), not the Language section heading inside it, so the path is findable (localized Phase D)",
@@ -1437,6 +1587,12 @@
       "placeholders": false
     },
     {
+      "key": "MainWindow_DismissKnownIssueNotice",
+      "en": "Dismiss the known Roblox issue notice",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "MainWindow_DismissTheBloxstrapWarning",
       "en": "Dismiss the Bloxstrap warning",
       "comment": "src/ROROROblox.App/MainWindow.xaml:1685 aria-label",
@@ -1546,7 +1702,7 @@
     },
     {
       "key": "MainWindow_HistoryDiagnosticsPluginsLogFolder",
-      "en": "History, Diagnostics, Plugins, log folder, Stop all, tour, About.",
+      "en": "History, Diagnostics, Plugins, Known Roblox issues, log folder, Stop all, tour, About.",
       "comment": "src/ROROROblox.App/MainWindow.xaml:1169 title",
       "placeholders": false
     },
@@ -1599,6 +1755,36 @@
       "placeholders": false
     },
     {
+      "key": "MainWindow_KnownIssueNoticeMany",
+      "en": "Known Roblox issues that affect you: {0}",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "MainWindow_KnownIssueNoticeOne",
+      "en": "Known Roblox issue: {0}",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "MainWindow_KnownRobloxIssues",
+      "en": "Known Roblox issues",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_KnownRobloxIssuesCount",
+      "en": "Known Roblox issues ({0})",
+      "comment": "",
+      "placeholders": true
+    },
+    {
+      "key": "MainWindow_KnownRobloxIssuesTooltip",
+      "en": "Problems in Roblox itself, and what to do about them",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "MainWindow_LaunchAs",
       "en": "Launch As",
       "comment": "src/ROROROblox.App/MainWindow.xaml:929 xaml-text",
@@ -1636,13 +1822,13 @@
     },
     {
       "key": "MainWindow_MuteDiscordAlerts",
-      "en": "Mute Discord alerts",
+      "en": "Mute alerts",
       "comment": "src/ROROROblox.App/MainWindow.xaml:296 xaml-text",
       "placeholders": false
     },
     {
       "key": "MainWindow_MutedNoDiscordAlerts",
-      "en": "✓ Muted — no Discord alerts",
+      "en": "✓ Muted — no alerts anywhere",
       "comment": "src/ROROROblox.App/MainWindow.xaml:299 xaml-text",
       "placeholders": false
     },
@@ -1725,6 +1911,24 @@
       "placeholders": false
     },
     {
+      "key": "MainWindow_RejoinIfItDropsOut",
+      "en": "Rejoin if it drops out",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:302 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RejoinIfItDropsOutTip",
+      "en": "When this account's client is open but out of the game for 3 minutes, RoRoRo closes it and joins again. Never used for your main.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:299 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RejoinIfItDropsOut_2",
+      "en": "Rejoin if it drops out (on)",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:305 xaml-text",
+      "placeholders": false
+    },
+    {
       "key": "MainWindow_Remove",
       "en": "Remove",
       "comment": "duplicate value; key kept addressable for x:Static",
@@ -1800,6 +2004,12 @@
       "key": "MainWindow_SavedGamesAndPrivateServers",
       "en": "Saved games and private servers for the launch picker. (Ctrl+G)",
       "comment": "src/ROROROblox.App/MainWindow.xaml:1144 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SeeKnownIssues",
+      "en": "See known issues",
+      "comment": "",
       "placeholders": false
     },
     {
@@ -1894,7 +2104,7 @@
     },
     {
       "key": "MainWindow_StopDiscordAlertsForThis",
-      "en": "Stop Discord alerts for this account only. Routing is per-trigger; muting is per-account.",
+      "en": "Stop every alert for this account, the desktop one included. Routing is per-trigger; muting is per-account.",
       "comment": "src/ROROROblox.App/MainWindow.xaml:291 title",
       "placeholders": false
     },
@@ -2106,6 +2316,12 @@
       "key": "Plugin_Cap_MemoryPressure",
       "en": "Notify the plugin when an account's memory use gets high enough to risk the machine running out of RAM.",
       "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_MetricsReport",
+      "en": "Report numbers it gathers, so RoRoRo can alert you about them",
+      "comment": "Plugin capability description, consent sheet (localized Phase D)",
       "placeholders": false
     },
     {
@@ -2643,6 +2859,36 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_1Minute",
+      "en": "1 minute",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_30Minutes",
+      "en": "30 minutes",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_5Minutes",
+      "en": "5 minutes",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_60Minutes",
+      "en": "60 minutes",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AMetricCrossesAThreshold",
+      "en": "A metric crosses a threshold",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:439 xaml-text",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_AServerOnlyYouRead",
       "en": "A server only you read. Saved encrypted on this PC and never leaves it except to post your alerts.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:441 xaml-text",
@@ -2685,6 +2931,36 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_AlertColumnAlert",
+      "en": "Alert",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AlertColumnHowOften",
+      "en": "At most once every",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AlertColumnWhereItGoes",
+      "en": "Where it goes",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AlertSound",
+      "en": "Alert sound",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AlertSoundHint",
+      "en": "Plays once per alert, however many places that alert goes. Silent still draws the notification and still colours the tray.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_Alerts",
       "en": "Alerts",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:318 xaml-text",
@@ -2721,6 +2997,12 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_AnAccountGoesIdle",
+      "en": "An account goes idle in a game",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_Appearance",
       "en": "Appearance",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:37 xaml-text",
@@ -2736,6 +3018,12 @@
       "key": "SettingsPage_AssignEveryFakeNameAnd",
       "en": "Assign every fake name and avatar a fresh pick.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:191 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AutoRejoinPausesForAnAccount",
+      "en": "Auto-rejoin pauses for an account",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:399 xaml-text",
       "placeholders": false
     },
     {
@@ -2775,6 +3063,18 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_CreateTheApplication",
+      "en": "Create the application",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_DeletesTheSavedValue",
+      "en": "Deletes the saved value. Paste a new one whenever you like.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_Desktop",
       "en": "Desktop",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:340 xaml-text",
@@ -2805,9 +3105,27 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_EveryTime",
+      "en": "Every time",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_ExportAccounts",
       "en": "Export accounts…",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:257 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_FixedAtTwoHours",
+      "en": "Fixed at two hours.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_FollowThePaceAbove",
+      "en": "Follow the pace above",
+      "comment": "",
       "placeholders": false
     },
     {
@@ -2829,15 +3147,63 @@
       "placeholders": false
     },
     {
-      "key": "SettingsPage_IDonTHaveA",
-      "en": "I don't have a Discord server",
-      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:499 xaml-text",
+      "key": "SettingsPage_HowOftenAnyAlertMayRepeat",
+      "en": "How often any alert may repeat at most",
+      "comment": "",
       "placeholders": false
     },
     {
-      "key": "SettingsPage_IdleAccounts",
-      "en": "Idle accounts",
-      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:274 xaml-text",
+      "key": "SettingsPage_HowOftenAtMost",
+      "en": "How often at most",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_HowOftenAtMostHint",
+      "en": "A quiet period per account and per alert, so one bad minute is one message rather than twenty. Set it to Every time and nothing is held back.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_HowOftenAutoRejoinPausedAlertsMay",
+      "en": "How often auto-rejoin-paused alerts may repeat at most",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_HowOftenDropOutAlertsMay",
+      "en": "How often drop-out alerts may repeat at most",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_HowOftenIdleAlertsMay",
+      "en": "How often idle alerts may repeat at most",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_HowOftenMemoryWarningsMay",
+      "en": "How often memory warnings may repeat at most",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_HowOftenMetricAlertsMay",
+      "en": "How often metric alerts may repeat at most",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_HowOftenRecycleNoticesMay",
+      "en": "How often recycle notices may repeat at most",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_IDonTHaveA",
+      "en": "I don't have a Discord server",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:499 xaml-text",
       "placeholders": false
     },
     {
@@ -2872,7 +3238,7 @@
     },
     {
       "key": "SettingsPage_LanguageHint",
-      "en": "Choose the language RoRoRo's interface uses. New languages appear here as they're translated, and a change takes effect the next time you open RoRoRo.",
+      "en": "Choose the language RoRoRo's interface uses. New languages appear here as they're translated, and a change takes effect right away.",
       "comment": "Settings > Appearance — UI-language picker hint",
       "placeholders": false
     },
@@ -2913,12 +3279,6 @@
       "placeholders": false
     },
     {
-      "key": "SettingsPage_Memory",
-      "en": "Memory",
-      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:666 xaml-text",
-      "placeholders": false
-    },
-    {
       "key": "SettingsPage_MemorySettingsWarning",
       "en": "Memory settings warning",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:813 aria-label",
@@ -2937,15 +3297,21 @@
       "placeholders": false
     },
     {
-      "key": "SettingsPage_MoveYourSavedAccountsTo",
-      "en": "Move your saved accounts to another PC. Export writes a passphrase-encrypted file; import merges it in without touching accounts already on this machine.",
-      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:251 xaml-text",
+      "key": "SettingsPage_MetricAlerts",
+      "en": "Metric alerts",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:426 xaml-text",
       "placeholders": false
     },
     {
-      "key": "SettingsPage_MuteIdleAlerts",
-      "en": "Mute idle alerts.",
-      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:285 xaml-text",
+      "key": "SettingsPage_MetricAlertsHint",
+      "en": "Alerts you when a number a plugin reports crosses a threshold you set. Needs a plugin that reports one, and a rules file.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:448 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MoveYourSavedAccountsTo",
+      "en": "Move your saved accounts to another PC. Export writes a passphrase-encrypted file; import merges it in without touching accounts already on this machine.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:251 xaml-text",
       "placeholders": false
     },
     {
@@ -2991,6 +3357,12 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_NobodyHasTouchedTheAccount",
+      "en": "How long an account sits with no input from you before it counts as idle. Only accounts actually in a game raise this alert, since only they can be kicked for it. The row chip appears at the same moment either way, whatever this alert is set to.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_NormallyStopGivesRobloxTen",
       "en": "Normally Stop gives Roblox ten seconds to close itself, counting down on the row, because Roblox asks you to confirm inside the game and only a clean exit saves your Roblox settings — window size, fullscreen, graphics quality. Turn this on and Stop closes the client at once, and those settings go back to whatever was last saved.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:232 xaml-text",
@@ -3027,6 +3399,12 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_OpenTheDashboard",
+      "en": "Open the dashboard",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_OpenTheThemeBuilderCopy",
       "en": "Open the theme builder. Copy an AI prompt, paste the result back, save.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:890 title",
@@ -3039,6 +3417,12 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_OpensPushoverInYourBrowser",
+      "en": "Opens Pushover in your browser, where your user key is shown.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_PairWithTheToggleAbove",
       "en": "Pair with the toggle above for a one-step boot-to-Roblox setup. Pick a main account in the row list (the ☆ star) first.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:104 xaml-text",
@@ -3048,6 +3432,12 @@
       "key": "SettingsPage_PickABuiltInOr",
       "en": "Pick a built-in or drop your own JSON in the themes folder. The main window updates immediately; secondary dialogs (this one, Diagnostics, About) adopt the theme on next open.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:870 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_PointYourPhoneCameraAt",
+      "en": "Point your phone camera here to subscribe — no typing. Anyone who scans it can read your alerts, so keep it off stream.",
+      "comment": "",
       "placeholders": false
     },
     {
@@ -3069,9 +3459,21 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_QrCodeThatSubscribesYour",
+      "en": "QR code that subscribes your phone to this ntfy topic",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_RecycleClosesAClientAnd",
       "en": "Recycle closes a client and puts it straight back into the server it was in — useful for a client that's gone sideways, not just one eating memory. Off, it appears only when RoRoRo warns about that account's memory.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:212 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Remove",
+      "en": "Remove",
+      "comment": "",
       "placeholders": false
     },
     {
@@ -3124,14 +3526,8 @@
     },
     {
       "key": "SettingsPage_RororoChecksEveryRunningClient",
-      "en": "RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect the next time RoRoRo starts.",
+      "en": "RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect without a restart: the switch at once, the numbers on the next 30-second check.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:681 xaml-text",
-      "placeholders": false
-    },
-    {
-      "key": "SettingsPage_RororoShowsOneTrayToast",
-      "en": "RoRoRo shows one tray toast when a running account crosses the idle threshold below. Checking this keeps the row chip but skips the toast.",
-      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:287 xaml-text",
       "placeholders": false
     },
     {
@@ -3171,6 +3567,30 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_SendAutoRejoinPausedAlertsToMy",
+      "en": "Send auto-rejoin-paused alerts to my Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:403 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendAutoRejoinPausedAlertsToMy_2",
+      "en": "Send auto-rejoin-paused alerts to my phone",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:405 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendAutoRejoinPausedAlertsToThe",
+      "en": "Send auto-rejoin-paused alerts to the desktop",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:402 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendAutoRejoinPausedAlertsToThe_2",
+      "en": "Send auto-rejoin-paused alerts to the clan Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:404 aria-label",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_SendDropOutAlertsTo",
       "en": "Send drop-out alerts to the desktop",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:340 aria-label",
@@ -3195,6 +3615,30 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_SendIdleAlertsToMy",
+      "en": "Send idle alerts to my Discord channel",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendIdleAlertsToMy_2",
+      "en": "Send idle alerts to my phone",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendIdleAlertsToThe",
+      "en": "Send idle alerts to the desktop",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendIdleAlertsToThe_2",
+      "en": "Send idle alerts to the clan Discord channel",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_SendMemoryWarningsToMy",
       "en": "Send memory warnings to my Discord channel",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:356 aria-label",
@@ -3216,6 +3660,30 @@
       "key": "SettingsPage_SendMemoryWarningsToThe_2",
       "en": "Send memory warnings to the clan Discord channel",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:357 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendMetricAlertsToMy",
+      "en": "Send metric alerts to my channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:443 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendMetricAlertsToMy_2",
+      "en": "Send metric alerts to my phone",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:445 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendMetricAlertsToThe",
+      "en": "Send metric alerts to the desktop",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:442 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendMetricAlertsToThe_2",
+      "en": "Send metric alerts to the clan channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:444 aria-label",
       "placeholders": false
     },
     {
@@ -3315,6 +3783,24 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_SoundRororoChime",
+      "en": "RoRoRo chime",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SoundSilent",
+      "en": "Silent",
+      "comment": "",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SoundWindowsDefault",
+      "en": "Windows default",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_StartRororoWhenWindowsStarts",
       "en": "Start RoRoRo when Windows starts.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:83 xaml-text",
@@ -3348,6 +3834,12 @@
       "key": "SettingsPage_TheApplicationFormOnPushover",
       "en": "The application form on pushover.net has an icon slot — this saves the 128 by 128 RoRoRo mark for it.",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:527 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_TheTrayIconColoursWhatever",
+      "en": "The tray icon colours whatever you untick here, so you can always find out at the PC. Unticking Desktop drops the notification and its sound, never the badge.",
+      "comment": "",
       "placeholders": false
     },
     {
@@ -3453,6 +3945,12 @@
       "placeholders": false
     },
     {
+      "key": "SettingsPage_WhatADesktopAlertSoundsLike",
+      "en": "What a desktop alert sounds like",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "SettingsPage_WhatRororoPicksWhenA",
       "en": "What RoRoRo picks when a box is left blank",
       "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:706 aria-label",
@@ -3516,6 +4014,12 @@
       "key": "ShellWindow_History",
       "en": "History",
       "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ShellWindow_KnownRobloxIssues",
+      "en": "Known Roblox issues",
+      "comment": "",
       "placeholders": false
     },
     {
@@ -3799,6 +4303,18 @@
       "en": "Accounts exported",
       "comment": "Export success caption (localized Phase D step 3 batch 12)",
       "placeholders": false
+    },
+    {
+      "key": "Shell_FlaggedLaunch_Body",
+      "en": "{0} joins through your main, and your main isn't in a game yet.",
+      "comment": "Flagged-launch body, one account; {0}=account name",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_FlaggedLaunch_BodyMany",
+      "en": "{0} join through your main, and your main isn't in a game yet.",
+      "comment": "Flagged-launch body, several accounts; {0}=account names joined with \", \"",
+      "placeholders": true
     },
     {
       "key": "Shell_Friends_CouldntLoad",
@@ -4605,6 +5121,12 @@
       "placeholders": false
     },
     {
+      "key": "Shell_Msg_CouldntSaveAutoRejoin",
+      "en": "Couldn't save the rejoin setting: {0}",
+      "comment": "Banner; {0}=exception text (task 5, 2026-09-29)",
+      "placeholders": true
+    },
+    {
       "key": "Shell_Msg_CouldntSaveJoinViaFriend",
       "en": "Couldn't save join-via-friend: {0}",
       "comment": "Banner; {0}=exception text (localized Phase D step 3)",
@@ -4621,6 +5143,12 @@
       "en": "Couldn't set main account — see log for details.",
       "comment": "Main-account banner (localized Phase D step 3)",
       "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_FlaggedLeftStopped",
+      "en": "{0} left stopped: nobody they can follow is in a game.",
+      "comment": "Batch banner when the user cancels the flagged-accounts ask; {0}=account names joined with \", \"",
+      "placeholders": true
     },
     {
       "key": "Shell_Msg_FollowingFromSource",
@@ -5193,6 +5721,12 @@
       "placeholders": false
     },
     {
+      "key": "Shell_Pref_Reveal_StreamerConfirm",
+      "en": "Streamer mode is on. Click Show again to reveal it anyway.",
+      "comment": "",
+      "placeholders": false
+    },
+    {
       "key": "Shell_Pref_SaveIconTitle",
       "en": "Save the icon",
       "comment": "Save-icon dialog title (localized Phase D step 3)",
@@ -5694,6 +6228,12 @@
       "key": "Shell_Title_History",
       "en": "History",
       "comment": "Shell window title, History page (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Title_KnownRobloxIssues",
+      "en": "Known Roblox issues",
+      "comment": "",
       "placeholders": false
     },
     {

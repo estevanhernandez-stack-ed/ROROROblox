@@ -3258,4 +3258,100 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="Shell_Msg_FlaggedLeftStopped" xml:space="preserve">
     <value>Не запущено: {0}. Никого, к кому можно присоединиться, нет в игре.</value>
   </data>
+  <data name="SettingsPage_AlertColumnAlert" xml:space="preserve">
+    <value>Оповещение</value>
+  </data>
+  <data name="SettingsPage_AlertColumnHowOften" xml:space="preserve">
+    <value>Не чаще одного раза в</value>
+  </data>
+  <data name="SettingsPage_AlertColumnWhereItGoes" xml:space="preserve">
+    <value>Куда отправляется</value>
+  </data>
+  <data name="SettingsPage_HowOftenAtMost" xml:space="preserve">
+    <value>Как часто не более</value>
+  </data>
+  <data name="SettingsPage_HowOftenAtMostHint" xml:space="preserve">
+    <value>Период тишины для каждого аккаунта и каждого оповещения, чтобы одна плохая минута давала одно сообщение, а не двадцать. Выберите «Каждый раз» — и ничего не задерживается.</value>
+  </data>
+  <data name="SettingsPage_HowOftenAnyAlertMayRepeat" xml:space="preserve">
+    <value>Как часто любое оповещение может повторяться не более</value>
+  </data>
+  <data name="SettingsPage_EveryTime" xml:space="preserve">
+    <value>Каждый раз</value>
+  </data>
+  <data name="SettingsPage_1Minute" xml:space="preserve">
+    <value>1 минута</value>
+  </data>
+  <data name="SettingsPage_5Minutes" xml:space="preserve">
+    <value>5 минут</value>
+  </data>
+  <data name="SettingsPage_30Minutes" xml:space="preserve">
+    <value>30 минут</value>
+  </data>
+  <data name="SettingsPage_60Minutes" xml:space="preserve">
+    <value>60 минут</value>
+  </data>
+  <data name="SettingsPage_FollowThePaceAbove" xml:space="preserve">
+    <value>По частоте, заданной выше</value>
+  </data>
+  <data name="SettingsPage_AlertSound" xml:space="preserve">
+    <value>Звук оповещения</value>
+  </data>
+  <data name="SettingsPage_AlertSoundHint" xml:space="preserve">
+    <value>Звучит один раз на оповещение, сколько бы адресатов у него ни было. «Без звука» по-прежнему рисует уведомление и по-прежнему окрашивает значок в трее.</value>
+  </data>
+  <data name="SettingsPage_WhatADesktopAlertSoundsLike" xml:space="preserve">
+    <value>Как звучит оповещение на рабочем столе</value>
+  </data>
+  <data name="SettingsPage_SoundSilent" xml:space="preserve">
+    <value>Без звука</value>
+  </data>
+  <data name="SettingsPage_SoundRororoChime" xml:space="preserve">
+    <value>Сигнал RoRoRo</value>
+  </data>
+  <data name="SettingsPage_SoundWindowsDefault" xml:space="preserve">
+    <value>Стандартный звук Windows</value>
+  </data>
+  <data name="SettingsPage_TheTrayIconColoursWhatever" xml:space="preserve">
+    <value>Значок в трее окрашивается для всего, что вы здесь снимаете, так что вы всё равно узнаете об этом за компьютером. Снятие «Рабочий стол» убирает уведомление и его звук, но никогда не значок.</value>
+  </data>
+  <data name="SettingsPage_AnAccountGoesIdle" xml:space="preserve">
+    <value>Аккаунт простаивает в игре</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToThe" xml:space="preserve">
+    <value>Отправлять оповещения о простое на рабочий стол</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToMy" xml:space="preserve">
+    <value>Отправлять оповещения о простое в мой канал Discord</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToThe_2" xml:space="preserve">
+    <value>Отправлять оповещения о простое в канал Discord клана</value>
+  </data>
+  <data name="SettingsPage_SendIdleAlertsToMy_2" xml:space="preserve">
+    <value>Отправлять оповещения о простое на мой телефон</value>
+  </data>
+  <data name="SettingsPage_NobodyHasTouchedTheAccount" xml:space="preserve">
+    <value>Сколько времени аккаунт остаётся без ваших действий, прежде чем считается простаивающим. Это оповещение вызывают только аккаунты, которые действительно находятся в игре, ведь только их за это могут выкинуть. Значок в строке появляется в тот же момент в любом случае, независимо от настройки этого оповещения.</value>
+  </data>
+  <data name="SettingsPage_HowOftenDropOutAlertsMay" xml:space="preserve">
+    <value>Как часто оповещения об отвале могут повторяться не более</value>
+  </data>
+  <data name="SettingsPage_HowOftenMemoryWarningsMay" xml:space="preserve">
+    <value>Как часто предупреждения о памяти могут повторяться не более</value>
+  </data>
+  <data name="SettingsPage_HowOftenIdleAlertsMay" xml:space="preserve">
+    <value>Как часто оповещения о простое могут повторяться не более</value>
+  </data>
+  <data name="SettingsPage_HowOftenRecycleNoticesMay" xml:space="preserve">
+    <value>Как часто уведомления о переподключении могут повторяться не более</value>
+  </data>
+  <data name="SettingsPage_HowOftenAutoRejoinPausedAlertsMay" xml:space="preserve">
+    <value>Как часто оповещения о паузе автоперезахода могут повторяться не более</value>
+  </data>
+  <data name="SettingsPage_HowOftenMetricAlertsMay" xml:space="preserve">
+    <value>Как часто оповещения о метриках могут повторяться не более</value>
+  </data>
+  <data name="SettingsPage_FixedAtTwoHours" xml:space="preserve">
+    <value>Фиксировано: два часа.</value>
+  </data>
 </root>
