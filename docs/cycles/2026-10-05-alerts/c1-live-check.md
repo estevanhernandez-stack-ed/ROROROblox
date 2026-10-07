@@ -114,3 +114,18 @@ flagged in RoRoRo — in which case the app did exactly what it was told — or 
 reaches `RobloxLauncher` without passing `FlaggedLaunchRule`, which would be a v1.32 regression.
 Deciding needs the account's flag state, which lives in the encrypted vault and is only visible in the
 row menu. **Check before the cycle ends.**
+
+### Resolved, 19:37 — not a regression
+
+Este checked the row menu: **"Join via friend" is not ticked** on `ItsjustesteAgain`. So the direct
+launch logging a plain `target=Place` with no join-via-friend decision was the app doing exactly what
+it was told, and `FlaggedLaunchRule` is not being bypassed by the plugin path. v1.32's feature is
+intact.
+
+The useful half is the inverse: that flag exists for precisely this account's situation — one that
+cannot get into a game on its own — and it is not set. Ticking it would make every launch path follow
+the main automatically instead of stranding the client at the verification screen. A one-click
+configuration change, not a code change, and Este's call.
+
+For whoever tests next: **check the flag or use `follow_main` when picking a test account.** Choosing
+by "which one is free" is how this run spent twenty minutes on a client that was never going to play.
