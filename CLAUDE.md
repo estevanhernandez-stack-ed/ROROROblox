@@ -10,7 +10,7 @@ Maps live next door: [docs/architecture.md](docs/architecture.md) (modules, star
 
 ```powershell
 dotnet build ROROROblox.slnx -c Release                              # 0 errors; ~43 warnings are known noise
-dotnet test  ROROROblox.slnx -c Release --no-build                   # 1899 unit + 24 harness pass; 1 harness [Skip] by design
+dotnet test  ROROROblox.slnx -c Release --no-build                   # 2802 unit + 27 harness pass; 1 harness [Skip] by design
 dotnet test  src/ROROROblox.Tests/ -c Release --no-build             # unit only
 dotnet test  src/ROROROblox.PluginTestHarness/ -c Release --no-build # named-pipe gRPC integration only
 dotnet run --project src/ROROROblox.App                              # not re-verified this pass: the single-instance guard surfaces an existing window
@@ -34,7 +34,7 @@ powershell -ExecutionPolicy Bypass -File .claude/hooks/install.ps1   # once per 
 - **The macro wall:** the Store binary never synthesizes input or injects into the client. Consented out-of-process plugins (Ur Task, Ur AFK, ur-mcp) may; that is what the plugin system exists for (Store policy 10.2.2). Core observes, plugins act.
 - **Typed HttpClient classes have exactly one applicable ctor and take `ILogger<T>`**, or startup crashes at resolve time with a green suite (`TypedHttpClientRegistrationTests`).
 - **Themed brushes are replaced, not mutated.** Reference them and the type-ladder tokens with `DynamicResource` only. `ControlStyles.xaml` merges after WPF-UI's dictionaries.
-- **A button may not paint itself** (`ButtonRankFenceTests`); hover/pressed are sheens, never Opacity or a Chrome repaint (`ButtonStateGateTests`). A button that needs triggers uses `<Button.Style><Style BasedOn="{StaticResource …ButtonStyle}">` with Visibility/IsEnabled setters only. Fences have vacuity floors and ratchet ceilings that move in the same commit as the change: `AccessibleNamingFenceTests` unnamed ceiling 1 (asserted as equality), `ThemedStatusColourTests` literal ceiling 21, `TypeLadderFenceTests` 3 raw sizes.
+- **A button may not paint itself** (`ButtonRankFenceTests`); hover/pressed are sheens, never Opacity or a Chrome repaint (`ButtonStateGateTests`). A button that needs triggers uses `<Button.Style><Style BasedOn="{StaticResource …ButtonStyle}">` with Visibility/IsEnabled setters only. Fences have vacuity floors and ratchet ceilings that move in the same commit as the change: `AccessibleNamingFenceTests` unnamed ceiling 1 (asserted as equality), `ThemedStatusColourTests` literal ceiling 25, `TypeLadderFenceTests` 3 raw sizes.
 - **Off the UI thread read `MainViewModel.AccountsSnapshot`, never `Accounts`.** WPF-affine singletons register through `UiBoundFactory`. Marshal through `IUiDispatcher`, not `Application.Current?.Dispatcher`.
 - **Startup order is load-bearing:** theme → resolve mutex name → `TryAcquire` → gate; the plugin pipe binds before the gate modals, autostart after. Resolving `IMutexHolder` earlier freezes the hardcoded name.
 - **Every gRPC method needs an `RpcMethodCapabilityMap` entry.** Absence is denial. A missed entry fails `RpcMethodCapabilityMapTests` and the harness's `CapabilityMap_CoversEveryHostMethod`; at runtime the bind task faults, is logged at Debug, and plugins are silently off for the session (the code comments saying it "crashes" are stale). A new RPC also needs a `PluginCapability` entry, a `PluginHostService` override, and usually a provider interface added as an optional ctor parameter so the two test construction sites keep compiling.

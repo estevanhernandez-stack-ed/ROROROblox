@@ -467,16 +467,46 @@ confound control where one exists, and the result filled in as it happens.
 
 **Depends on:** 1-11. **Effort:** M.
 
-- [ ] `docs/features.md` rows updated for every changed feature; `docs/feature-ledger.md` gains its
-      row **in the session the release tags**, which is its own rule and was unfollowed for four
-      releases until 2026-10-06.
-- [ ] `docs/decisions.md` carries the cycle's real forks, and the dashboard mirror is attempted.
-- [ ] The findings register (`2026-08-04-rororo-settings-ui-audit-findings.md`) has rows flipped for
-      anything this cycle closes, verified against the tree, with counts re-recorded and a direction.
-- [ ] Secret scan and local-path guard green: no hardcoded user-profile path, no cookie prefix.
-      (Spelling that path out as an *example* trips the guard too — it blocked this checklist's own
-      first commit, which is the guard working.)
-- [ ] New dependency (if item 9 lands) audited: licence, publisher, size, pinned version.
-- [ ] `ROROROblox.slnx` builds on x64 and native arm64 in CI, suite green on both.
+- [x] **`docs/features.md`: two rows were stale, one badly.** *Activity / idle awareness* still cited
+      `App/Notifications/IdleAlertPresenter.cs`, which item 3 deleted, and `settings:muteIdleAlerts`
+      as a live gate — it now survives only as the one-time migration read, verified against the tree
+      (`App.xaml.cs:2101`). Rewritten to describe the `AlertKind.AccountIdle` routing, the in-game
+      gate and its named consequence. *Alerts* gained the idle kind, the configurable quiet period,
+      and the drawn balloon that now obeys the destination grid, the mute and the cadence — it
+      previously obeyed none of them.
+- [x] **CLAUDE.md carried two stale numbers**, both corrected: the verify line said `1899 unit + 24
+      harness` (now 2,802 + 27) and the fence list said `ThemedStatusColourTests literal ceiling 21`
+      when the constant has been 25 since item 6.
+- [ ] `docs/feature-ledger.md` gains its row **in the session the release tags**, which is its own
+      rule. **Deliberately not done now** — the branch is untagged, and doing it early is how it fell
+      four releases behind in the first place.
+- [x] **`docs/decisions.md` carries the cycle's real forks** — six entries dated 2026-10-07: the
+      in-game idle ruling, the parity fence that measured the wrong parity, the toggle guard, the
+      launch reason, the dropped emoji rider and the About marks.
+- [x] **The dashboard mirror is not just attempted, it landed** — six decisions logged
+      (`LiuSTb0ByWZE84Nfv7PR`, `eu3h1KeyzNzWsUCfi4Ch`, `OvSdNJI3DMRrbtyPIZ0Q`, `JVIxMFJjyHhAxJEDHXWr`,
+      `pVXdwjKky0RjZQBC9Y0y`, `4fMzrNjy8q3Ocw2N0gZG`, `zROC3r1JYH7vX4bDKoT4`). This session's MCP tool
+      registry dropped the dashboard mid-session and `ToolSearch` could not re-add it, so each was
+      logged through `claude -p` in a fresh process, which still had the tools. The service was never
+      down — `claude mcp list` showed it Connected throughout.
+- [x] **The findings register closes no rows, and that is the honest answer.** No open row touches
+      this cycle's surfaces: the alerts work came from Este's complaint plus a fresh audit, not from
+      the settings-UI design review this register tracks. So no counts moved and none were invented.
+      What the register did gain is the **F-102 generalisation**: that row fixed the streamer toggle
+      and the tray item and stopped, and ten more `Click`-wired toggles turned up two months later.
+      Recorded in the row with the lesson — pinning the framework fact is not the same as fencing the
+      pattern.
+- [x] **Secret scan and local-path guard green on every commit**, and swept across the whole tree
+      rather than only staged files. No key material tracked. The two cookie-prefix hits are the
+      capture tool's own *detection pattern*, not cookies. **Pre-existing exposure worth naming,
+      since this repo is PUBLIC:** three tracked files carry absolute user-profile paths — the guard's own
+      explanatory comment, `PROVENANCE.txt` (which CLAUDE.md declares immutable), and
+      `docs/reviews/2026-06-12-raw-findings.txt` (a historical transcript). None were introduced by
+      this cycle and none were touched. It leaks a username already public through the repo owner, so
+      it is low impact, but it is Este's call whether the review transcript gets scrubbed.
+- [x] New dependency audited: **no-op, no dependency was added** — item 9 was dropped, with the
+      licence and size facts recorded there rather than here.
+- [ ] `ROROROblox.slnx` builds on x64 and native arm64 in CI, suite green on both. **Needs the branch
+      pushed**; locally green at 2,802 unit + 27 harness, 1 harness skip by design.
 - [ ] Release paperwork follows the playbook, including the reviewer letter — which Phase 2 now names
-      after it was missed on 1.32.1.
+      after it was missed on 1.32.1. **Blocked on item 11**, the live smoke, which needs Este.
