@@ -214,19 +214,47 @@ Measured, not assumed: `Strings.resx` holds 1,107 keys, `Strings.de.resx` holds 
 difference is exactly the 32 this cycle added. A German, French, Russian, Portuguese, Polish or
 Spanish install shows the whole new Alerts section in English.
 
-- [ ] Run the catalog pipeline — `scripts/export-ui-strings.py` → translate → `scripts/gen-culture-resx.py`
-      — with the `PRODUCT_NOUNS` guard, so product nouns stay English.
-- [ ] Run the **translation verifier** over the new app strings. Its MCP is connected again as of
-      2026-10-06. Expect its rule-3 false positive on any quoted UI label and overrule it the way
-      v1.32 and v1.32.1 did; everything else is a real finding.
-- [ ] **Add the culture-parity fence that does not exist.** `LocKeyParityFenceTests` is named for
-      parity but asserts something else entirely: that every `{loc:Loc}` reference in XAML resolves
-      in the NEUTRAL catalog. A key present in `Strings.resx` and absent from all six cultures passes
-      it, which is exactly what happened here — 32 keys, every gate green. The new fence asserts each
-      culture carries every neutral key, with a named allow-list for anything deliberately English.
-      **This is the deliverable that stops the next cycle repeating this one.**
-- [ ] Re-check the C2 screenshots in German and Polish afterwards: the kind labels wrap in a fixed
-      180px column and the cadence strings are the longest new copy, so those two break first.
+- [x] Run the catalog pipeline — `scripts/export-ui-strings.py` → translate → `scripts/gen-culture-resx.py`
+      — with the `PRODUCT_NOUNS` guard, so product nouns stay English. All six cultures now hold
+      1,107 keys, matching neutral exactly. `RoRoRo` stays verbatim in the chime option in all six.
+      Translations live in `scripts/add-v133-translations.py` so they are reviewable and repeatable,
+      not a one-off paste.
+- [x] **Wording matched to the shipped catalog, not freshly invented.** Each destination line reuses
+      the exact pattern already in use for drop-out, memory, recycle, auto-rejoin-paused and metric
+      alerts in that language; the tray hint names the Desktop checkbox by the same word
+      `SettingsPage_Desktop` uses there; idle vocabulary follows `SettingsPage_IdleWarnThreshold`.
+- [x] **The generator refused the first run, correctly** — four translation rows whose neutral keys
+      item 6 deleted (`SettingsPage_MuteIdleAlerts`, the single flag item 3 replaced with
+      per-destination ticks; `SettingsPage_RororoShowsOneTrayToast`, the old tray-toast hint; and the
+      two card headers `SettingsPage_IdleAccounts` / `SettingsPage_Memory`). Pruned with each reason
+      recorded, plus a guard that any OTHER orphan row stops the run instead of being carried.
+- [ ] Run the **translation verifier** over the new app strings. **Still open 2026-10-07:** its MCP
+      is Connected at the CLI (`project-626labs-translations.web.app/mcp`) but this session's tool
+      registry dropped it and `ToolSearch` cannot re-add it. Needs the pending restart, not a
+      sign-in. Expect its rule-3 false positive on any quoted UI label and overrule it the way v1.32
+      and v1.32.1 did; everything else is a real finding.
+- [x] **Added the culture-parity fence that did not exist** — `CultureKeyParityFenceTests`, watched
+      failing with exactly 32 in all six before the pipeline ran. It asserts BOTH directions: every
+      neutral key present in every culture, and no culture carrying a key neutral has dropped (the
+      slower rot — a stale row reads as coverage). Cultures are **discovered from the directory**
+      rather than listed, because a hardcoded list is satisfiable by forgetting to add the seventh
+      language to it, which is the same shape of hole. Floors on catalog size and culture count stop
+      a failed parse or a broken glob from reading as parity. The deliberately-English allow-list
+      ships EMPTY: a key the UI can show is a key a translator must see, and product nouns are
+      values rather than keys, so they do not belong on it.
+- [x] **Wrapping checked by measurement rather than screenshot**, and it passes. Real values from
+      the tree (`Width="180"`, `BodyFontSize` 12, `TextWrapping="Wrap"`, body inheriting WPF-UI's
+      font stack since no body `FontFamily` is declared): every language maxes at **2 lines, nothing
+      reaches 3**. The two labels that wrap in *every* language are pre-existing
+      (`AutoRejoinPausesForAnAccount`, `UptimeMarksEvery2Hours`), so two-line labels were already
+      the shipped reality; the new idle label joins them in de/es/fr/pt-BR and stays one line in
+      en/pl/ru. Measured, not rendered — see the note below.
+- [ ] **The visual pass moves to item 11.** A screenshot sweep means launching a second RoRoRo while
+      a Store build is live with accounts in games, which is not worth the risk for a check the
+      measurement already answers numerically. Item 11 is the live smoke; the German and Polish
+      Alerts page gets its eyes there. What to look for, given the measurement: not overflow, but
+      that rows in one language now have mixed 1-line and 2-line labels, so the row rhythm is less
+      even than English's uniform single line.
 
 ## 7. Toggles that save
 

@@ -1,0 +1,71 @@
+Column 180px, 12pt, 'Segoe UI Variable Text, Segoe UI'
+
+=== worst line count per culture ===
+  de    max 2 line(s)  <- AnAccountGoesIdle, AutoRejoinPausesForAnAccount, UptimeMarksEvery2Hours, AMetricCrossesAThreshold
+  en    max 1 line(s)  <- AlertColumnAlert, AnAccountDropsOut, AnAccountEatsMemory, AnAccountGoesIdle, AnAccountGetsRecycled, AutoRejoinPausesForAnAccount, UptimeMarksEvery2Hours, AMetricCrossesAThreshold
+  es    max 2 line(s)  <- AnAccountGoesIdle, AutoRejoinPausesForAnAccount, UptimeMarksEvery2Hours
+  fr    max 2 line(s)  <- AnAccountEatsMemory, AnAccountGoesIdle, AutoRejoinPausesForAnAccount, UptimeMarksEvery2Hours
+  pl    max 2 line(s)  <- AnAccountGetsRecycled, AutoRejoinPausesForAnAccount, UptimeMarksEvery2Hours
+  pt-BR max 2 line(s)  <- AnAccountGoesIdle, AutoRejoinPausesForAnAccount, UptimeMarksEvery2Hours
+  ru    max 2 line(s)  <- AutoRejoinPausesForAnAccount, UptimeMarksEvery2Hours
+
+=== anything at 3+ lines (the row-rhythm risk) ===
+  none
+
+=== full table ===
+  en    AlertColumnAlert                   1 : Alert
+  en    AnAccountDropsOut                  1 : An account drops out
+  en    AnAccountEatsMemory                1 : An account eats memory
+  en    AnAccountGoesIdle                  1 : An account goes idle in a game
+  en    AnAccountGetsRecycled              1 : An account gets recycled
+  en    AutoRejoinPausesForAnAccount       1 : Auto-rejoin pauses for an account
+  en    UptimeMarksEvery2Hours             1 : Uptime marks (every 2 hours)
+  en    AMetricCrossesAThreshold           1 : A metric crosses a threshold
+  de    AlertColumnAlert                   1 : Benachrichtigung
+  de    AnAccountDropsOut                  1 : Ein Konto fällt aus
+  de    AnAccountEatsMemory                1 : Ein Konto frisst Speicher
+  de    AnAccountGoesIdle                  2 : Ein Konto wird in einem Spiel inaktiv
+  de    AnAccountGetsRecycled              1 : Ein Konto wird neu verbunden
+  de    AutoRejoinPausesForAnAccount       2 : Automatischer Neubeitritt pausiert für ein Konto
+  de    UptimeMarksEvery2Hours             2 : Laufzeit-Markierungen (alle 2 Stunden)
+  de    AMetricCrossesAThreshold           2 : Eine Metrik überschreitet einen Schwellenwert
+  es    AlertColumnAlert                   1 : Alerta
+  es    AnAccountDropsOut                  1 : Una cuenta se desconecta
+  es    AnAccountEatsMemory                1 : Una cuenta consume memoria
+  es    AnAccountGoesIdle                  2 : Una cuenta queda inactiva en un juego
+  es    AnAccountGetsRecycled              1 : Una cuenta se reconecta
+  es    AutoRejoinPausesForAnAccount       2 : El reingreso automático se pausa para una cuenta
+  es    UptimeMarksEvery2Hours             2 : Marcas de actividad (cada 2 horas)
+  es    AMetricCrossesAThreshold           1 : Una métrica cruza un umbral
+  fr    AlertColumnAlert                   1 : Alerte
+  fr    AnAccountDropsOut                  1 : Un compte décroche
+  fr    AnAccountEatsMemory                2 : Un compte consomme trop de mémoire
+  fr    AnAccountGoesIdle                  2 : Un compte devient inactif dans un jeu
+  fr    AnAccountGetsRecycled              1 : Un compte est recyclé
+  fr    AutoRejoinPausesForAnAccount       2 : La reconnexion automatique est suspendue pour un compte
+  fr    UptimeMarksEvery2Hours             2 : Signaux d'activité (toutes les 2 heures)
+  fr    AMetricCrossesAThreshold           1 : Une métrique franchit un seuil
+  pl    AlertColumnAlert                   1 : Alert
+  pl    AnAccountDropsOut                  1 : Konto wypada
+  pl    AnAccountEatsMemory                1 : Konto pochłania pamięć
+  pl    AnAccountGoesIdle                  1 : Konto staje się bezczynne w grze
+  pl    AnAccountGetsRecycled              2 : Konto zostaje połączone ponownie
+  pl    AutoRejoinPausesForAnAccount       2 : Automatyczne ponowne dołączanie konta wstrzymane
+  pl    UptimeMarksEvery2Hours             2 : Znaczniki czasu działania (co 2 godziny)
+  pl    AMetricCrossesAThreshold           1 : Wskaźnik przekracza próg
+  pt-BR AlertColumnAlert                   1 : Alerta
+  pt-BR AnAccountDropsOut                  1 : Uma conta cai
+  pt-BR AnAccountEatsMemory                1 : Uma conta consome memória
+  pt-BR AnAccountGoesIdle                  2 : Uma conta fica inativa em um jogo
+  pt-BR AnAccountGetsRecycled              1 : Uma conta é reciclada
+  pt-BR AutoRejoinPausesForAnAccount       2 : A reentrada automática é pausada para uma conta
+  pt-BR UptimeMarksEvery2Hours             2 : Marcas de atividade (a cada 2 horas)
+  pt-BR AMetricCrossesAThreshold           1 : Uma métrica cruza um limite
+  ru    AlertColumnAlert                   1 : Оповещение
+  ru    AnAccountDropsOut                  1 : Аккаунт отваливается
+  ru    AnAccountEatsMemory                1 : Аккаунт съедает память
+  ru    AnAccountGoesIdle                  1 : Аккаунт простаивает в игре
+  ru    AnAccountGetsRecycled              1 : Аккаунт переподключается
+  ru    AutoRejoinPausesForAnAccount       2 : Автоперезаход аккаунта приостанавливается
+  ru    UptimeMarksEvery2Hours             2 : Отметки о работе (каждые 2 часа)
+  ru    AMetricCrossesAThreshold           1 : Метрика пересекает порог
