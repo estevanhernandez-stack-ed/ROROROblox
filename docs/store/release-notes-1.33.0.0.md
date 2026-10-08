@@ -131,9 +131,21 @@ number is drawn in Este's own handwriting rather than typed. Neither needs a fon
 ## Known issues going into the next update
 
 **A plugin's alert sound is not governed by yours.** Choosing Silent silences RoRoRo. A plugin that
-makes its own noise — Ur Score does, on its own alerts — carries on, because it is a separate
-program and nothing in RoRoRo's settings reaches into it. If you set Silent and still hear something,
-that is where it is coming from.
+makes its own noise carries on, because it is a separate program and nothing in RoRoRo's settings
+reaches into it. If you set Silent and still hear something, that is where to look.
+
+Of the plugins in the catalogue, **Ur AFK is the only one that makes a sound** — the Windows
+Exclamation, when its own "sound on grab" is ticked, which is off unless you turned it on. Its own
+switch is the way to stop it. ([#230](https://github.com/estevanhernandez-stack-ed/ROROROblox/issues/230)
+asks whether RoRoRo should expose your choice so a plugin can follow it.)
+
+> **Corrected 2026-10-08, after publishing.** This paragraph named Ur Score, which was wrong. Ur
+> Score contains no audio code, no audio assets and no audio package, and builds with
+> `UseWindowsForms=false` — it cannot make a sound. All five catalogued plugins were swept and only
+> Ur AFK has any audio path. The original claim came out of the live smoke, where a noise was heard
+> with RoRoRo set to Silent and Ur Score was assumed to be the source rather than checked. What is
+> still **not** claimed is that Ur AFK's line is what was heard that night; that would need its
+> opt-in switch to have been on, which was never verified. Only that it is the one plugin that can.
 
 **An account with Roblox presence privacy on will not get idle alerts.** Idle alerts now need RoRoRo
 to see that an account is in a game, and Roblox's presence privacy hides exactly that. Such an

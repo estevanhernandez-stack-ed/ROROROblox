@@ -22,9 +22,16 @@
 >
 > **Two known issues ARE in here**, unlike 1.32.1 where they were held back. The reasoning is
 > different: those were bugs already scoped for the next release, so announcing them read as a
-> warning rather than news. These two are permanent facts a clan member will hit this week — several
-> people here run Ur Score, and if they set Silent and still hear a noise they will file it against
-> RoRoRo. One line each is cheaper than the bug report.
+> warning rather than news. These two are permanent facts a clan member will hit this week — if
+> someone sets Silent and still hears a noise they will file it against RoRoRo. One line each is
+> cheaper than the bug report.
+>
+> **The sound line names Ur AFK, and the first draft named Ur Score, which was wrong.** Ur Score
+> cannot make a sound: no audio code, no audio assets, no audio package, `UseWindowsForms=false`.
+> All five catalogued plugins were swept and Ur AFK is the only one with an audio path — the Windows
+> Exclamation, behind its own opt-in "sound on grab". So the line tells people the switch that
+> actually stops it, in the plugin that actually has it, rather than sending them to the wrong
+> window. The released notes carry the same correction with its own banner.
 >
 > **What is deliberately NOT in here:** the 32 new translated strings (real work, and this channel
 > reads the app in English), the screen-reader toggle fix (belongs to the people it affects, not to a
@@ -70,8 +77,9 @@ something it isn't in, so there was nothing to warn you about.
 Two things worth knowing:
 
 • If you set the sound to silence and still hear something, that's a
-  plugin. Ur Score makes its own noise on its own alerts, and nothing in
-  RoRoRo's settings reaches into it.
+  plugin, not RoRoRo. Ur AFK is the one that does it — tick off "sound on
+  grab" in Ur AFK and it stops. Nothing in RoRoRo's settings reaches into
+  a plugin.
 • If you've got Roblox presence privacy switched on for an account, it
   won't get idle alerts — we need to see that it's in a game, and that's
   exactly what privacy hides.
