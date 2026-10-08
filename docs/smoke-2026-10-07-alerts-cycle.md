@@ -42,7 +42,7 @@ the dispatcher logged "routed nowhere" while the popup appeared anyway.
 **Confound control:** re-tick Desktop and force another crossing. A notification must appear. If
 nothing appears either way, the crossing is not firing and run 1 proved nothing.
 
-**Result:**
+**Result 2026-10-07: PASS.** Desktop unticked for memory; a 2-account crossing at 18:46:43 logged "routed nowhere". Cooldown ruled out rather than assumed — account `9958ba45` had never been sent an alert that day, so it had no quiet period to be inside. Re-ticked, and 18:31:22 routed to Local. Before this cycle the balloon went out regardless.
 
 ### 2. It is our balloon, and it is themed
 
@@ -51,7 +51,7 @@ With Desktop ticked, force a crossing and look at what appears.
 **Pass:** a themed window in the app's own palette — not the Windows shell balloon. Readable, nothing
 clipped, title and body both present.
 
-**Result:**
+**Result 2026-10-07: PASS.** Themed window, not the shell balloon. Seen single-account ("PapasbbBri — memory warning") and grouped ("2 accounts — memory warning").
 
 ### 3. A single-account alert clicks through
 
@@ -60,7 +60,7 @@ Force a crossing that names exactly one account, then click the notification.
 **Pass:** the main window comes forward with that account's row in view. Item 4 restored this after
 item 3 broke it invisibly.
 
-**Result:**
+**Result 2026-10-07: PASS.** Driven by a synthesised click, because the balloon handles `MouseLeftButtonUp` on its own surface rather than exposing an invokable pattern, and it lives only 8 seconds (`BalloonMilliseconds`) — an agent round-trip costs more than the whole window, so trigger, detect and click had to happen inside one script. Foreground went from `…Visual Studio Code` to `RoRoRo`. The script's own verdict line said "weak" and was WRONG: it tested `$before -notmatch 'RoRoRo'`, and the VS Code title contains "ROROROblox", which matches case-insensitively.
 
 ### 4. The sound is a choice
 
@@ -81,7 +81,11 @@ from its own process on its own metric alerts. Confirmed 2026-10-07: with RoRoRo
 produced the asterisk (RoRoRo's). Set RoRoRo to Silent and the plugin will still make noise.
 Product-level, not a v1.33 regression, but it will read as a bug to whoever hits it.
 
-**Result:**
+**Result 2026-10-07: FAIL, with two findings and one correction to the diagnosis.**
+
+Windows default works — the asterisk played on a memory alert at 18:31:22. What failed is that this run cannot be performed from Settings at all, and that a second process makes noise RoRoRo does not govern (both recorded above).
+
+**Two wrong diagnoses, recorded because the reasoning is the lesson.** First: the chime cannot play, because `SoundPlayer.Play()` is async and `PlayChime` disposes the player and the stream immediately. The mechanism is real and the conclusion was wrong — the chime plays. Second: the setting never reaches the player. Also wrong. The truth was that Ur Score had made the chime heard at 18:22 from its own process while RoRoRo was set to WindowsDefault. Both errors were inference from "this could fail" to "this is the failure", settled only by a test with an unambiguous answer.
 
 ### 5. The quiet period holds, and Every time means every time
 
@@ -93,7 +97,7 @@ Set "How often at most" to 5 minutes. Force two crossings about a minute apart.
 re-arm cycle was shorter than the quiet period, so every crossing legitimately fired. Keep the
 period comfortably longer than the gap between your two crossings.
 
-**Result:**
+**Result 2026-10-07: suppression half PASS, "Every time" half NOT RUN.** Measured by accident and better for it: a forced crossing at 18:36:22.270 was held against a send at 18:31:22.273 — **4:59.997**, suppressed by three milliseconds. That is the `>=` boundary behaving exactly as item 2 specified. A second account in the same event was held at 3:59.993.
 
 ### 6. Idle means in-game idle — Este's ruling
 
@@ -107,7 +111,17 @@ appears on both regardless, which is the documented behaviour and what the hint 
 privacy hides it also raises nothing, because we cannot see that it is in a game. Nothing on screen
 explains this.
 
-**Result:**
+**Result 2026-10-07: NOT RUN — and the two failed attempts are the useful part.**
+
+This is the only run that checks the ruling Este made today, and it is the hardest to stage.
+
+**The threshold cannot be set from a file.** `InitializeIdleSettingsAsync` runs at startup and from the picker handler, and nowhere else — there is no periodic re-read, unlike the memory numbers. A `settings.json` edit never reaches `ActivityMonitor.WarnThreshold`. It has to be the picker.
+
+**And the value has to be one the picker offers.** The store accepts any value above zero; the picker's lowest option is 10 minutes. A written-in `1` was silently rewritten to 15 when the Settings page next painted. Two separate reasons the first attempt was dead, and only the second was visible.
+
+**The parked account must be LAUNCHED, not merely saved.** `ActivityMonitor` keeps a record per account from `OnAccountLaunched` to `OnAccountExited`; an account with no running client never has a crossing raised for it, so "it didn't alert" would be true for the boring reason instead of the interesting one — a vacuous pass of exactly the kind this cycle kept producing.
+
+**The setup that would actually prove it:** one account in a game; one launched and running, parked at the Roblox home screen; the picker at 10 minutes; ten minutes of no input from anyone. Pass is the in-game one alerting and the parked one staying silent.
 
 ### 7. The fullscreen question — this one goes in the release notes either way
 
@@ -118,7 +132,9 @@ client, **or** it does not. If it does not, it goes in the release notes as a kn
 being quietly hoped away. Try borderless windowed too if the client offers it, since the answer may
 differ.
 
-**Result:**
+**Result 2026-10-07: PASS. The balloon paints over a fullscreen client.** Captured: a Pet Sim 99 client filling the whole 3440×1440 primary, with the balloon bottom-right reading "PapasbbBri — memory warning / PapasbbBri — 3.2 GB · Recycle suggested". Legible against saturated white, pink and yellow, which is close to a worst case. **Nothing for the release notes.**
+
+**Two false starts worth keeping.** The first attempt measured a client at `782,260 816x638` — windowed, because the clients had been relaunched since being fullscreened. The second measured `-8,-8 3456x1408`: maximized, not fullscreen, the bottom ~40px taskbar strip uncovered. A geometry guard refused both rather than returning a pass on the easy case. The third attempt then fired no alert at all, because the reset cap was hardcoded at 3200 and the fullscreen client had grown to 3232 — the latch never reset. Caps are computed from live usage now.
 
 ### 8. The About page signs itself — nobody has seen these
 
@@ -133,7 +149,7 @@ carrying the magenta glow.
 **The two judgement calls most likely to want nudging** — say so rather than accepting them: the
 wordmark's clear space (currently 32px above) and the egg's height (currently 26px).
 
-**Result:**
+**Result 2026-10-07: PASS, with one content fix.** Both marks render: the 626Labs LLC wordmark at the foot, and the egg revealing the hand-written mark with the duo gradient and the magenta glow. Este: the clan is **K0ii**, with a zero — misspelt for a long time. Regenerated (`96a6b1d`); the accessible name moved with it, and the generator notes the character is a zero so nobody corrects it back.
 
 ### 9. All four themes, and the German and Polish Alerts page
 
@@ -154,7 +170,7 @@ exactly which strings to shorten.
 
 **Restore the starting theme and language, and confirm here that you did.**
 
-**Result:**
+**Result 2026-10-07: PASS.** Este's request from the run: the Settings nav item **Appearance should read "Language and Appearance"** — language is important and nobody hunting for it thinks to look under Appearance. Not actioned; it is a nav rename plus seven catalogues, and new scope on a closed branch.
 
 ### 10. A toggle tells the truth to everything that asks
 
