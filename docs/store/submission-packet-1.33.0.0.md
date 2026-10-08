@@ -141,18 +141,31 @@ privacy policy is unchanged and still accurate.
 
 Age rating and privacy: **unchanged** from v1.32.1.0. No new content, no new data collection.
 
-**Screenshots: one is stale, and it is a judgement call rather than a blocker.** Ten images, and this
-release visibly changes two surfaces. The Settings → Alerts section went from three cards to one
-section — and **no screenshot shows Settings at all**, so nothing there needs retaking. But
-`03-about.png` was captured 2026-08-30 and v1.33 item 10 changed the About page: it now carries the
-626 Labs wordmark at its foot and the easter egg behind the version number.
+**Screenshots: the About frame is a release stale in all seven upload folders.** A judgement call
+rather than a blocker, and bigger than it first looks.
+
+This release visibly changes two surfaces. The Settings → Alerts section went from three cards to
+one — and **no screenshot shows Settings at all**, so nothing there needs retaking. The other is the
+About page, which v1.33 item 10 changed: it now carries the 626 Labs wordmark at its foot and the
+easter egg behind the version number. `03-about` is a **captured** frame rather than an `-en`
+carry-over, so it is stale in every language: all seven folders hold a 2026-09-12 capture of an
+About page that no longer looks like that. **Seven frames, not one file.**
 
 **The caption is not wrong, which is why this is not a blocker.** Image 3's caption talks about the
 mutex and the clean reimplementation, not about the page's furniture, so the listing makes no claim
-the old capture contradicts — the image is merely a release behind on one page's decoration.
-**Recommendation: retake `03-about.png` before submitting if it is convenient, and ship without it
-if it is not.** Flagged rather than silently skipped, because "the screenshots are unchanged" would
-have been the easy and slightly false line.
+the old captures contradict. The images are a release behind on one page's decoration.
+
+**Recommendation: retake on the next convenient pass with the app in front of someone, not
+unattended tonight.** The regeneration path is a seven-language sweep that needs the app running,
+streamer mode on, and live Roblox clients for frame 01:
+
+```powershell
+pwsh -Command "& './scripts/sweep-languages.ps1' -Cultures @('en','fr','de','ru','pt-BR','pl','es')"
+```
+
+Running that unattended risks shipping a worse set than the one that exists, and the frame it would
+fix carries no claim. Flagged rather than silently skipped, because "the screenshots are unchanged"
+would have been the easy and slightly false line.
 
 ## 6. GitHub release
 
