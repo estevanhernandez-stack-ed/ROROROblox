@@ -237,8 +237,8 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 > **This section moved.** Since v1.21 the paste-ready What's-new block lives in a per-version
 > file, `docs/store/whats-new-<version>.md`, written next to that release's reviewer letter so
 > the two are drafted against the same facts. Current:
-> [`whats-new-1.32.1.0.md`](whats-new-1.32.1.0.md). Previous:
-> [`whats-new-1.32.0.0.md`](whats-new-1.32.0.0.md). (This pointer had gone six versions stale,
+> [`whats-new-1.33.0.0.md`](whats-new-1.33.0.0.md). Previous:
+> [`whats-new-1.32.1.0.md`](whats-new-1.32.1.0.md). (This pointer had gone six versions stale,
 > still naming v1.22 as current at the v1.28 cut, and four more by the v1.32.1.0 cut — worth
 > knowing that it is hand-maintained and nothing fails when it rots.) The v1.14 and v1.12 blocks that used to sit
 > here are preserved in git history and in their `release-notes-*.md` files.

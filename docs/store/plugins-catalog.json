@@ -30,7 +30,7 @@
     "name": "RoRoRo Ur MCP",
     "description": "Drive RoRoRo from Claude. A stdio MCP server Claude Code / Claude Desktop launches, authorized as this consent-gated plugin: list and launch accounts, follow the main, watch presence, stop clients, and run or stop Ur Task macros. Autostart stays off — Claude owns the process.",
     "publisher": "626 Labs LLC",
-    "latestVersion": "0.1.0",
+    "latestVersion": "0.2.0",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-mcp/releases/latest/download/",
     "minHostVersion": "1.22.0"
   },

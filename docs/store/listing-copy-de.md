@@ -1,6 +1,6 @@
 # Store listing — Deutsch (de)
 
-> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md`, refreshed for v1.26.0.0. Product nouns stay in English (RoRoRo, Squad
 > Launch, Friend Follow, Pushover, ntfy); the interface is now localized to six languages, so
 > the old English-only caveat is gone. Register: du (Gaming-Store-Norm).
@@ -27,7 +27,7 @@ Was du bekommst:
 • Erneut beitreten, wenn es ausfällt. Schalte es je Konto ein, und ein Alt, dessen Roblox-Fenster noch offen ist, der aber aus dem Spiel gefallen ist (ein Kick wegen Inaktivität, ein fehlgeschlagener Beitritt), wird geschlossen und tritt von selbst erneut bei. Höchstens dreimal pro Stunde, nie dein Hauptkonto, und dein eigenes „Stoppen“ hat immer Vorrang.
 • Ein Werkzeugfenster. Spiele, Einstellungen, Verlauf, Diagnose, Plugins, Bekannte Roblox-Probleme und Über sind Seiten eines Fensters neben deinen Konten — mit Tastenkürzeln überall; F1 zeigt die Liste.
 • Themes. Vier eingebaute, darunter eines, das Bedeutung nie allein über Farbe transportiert, plus ein Editor für eigene Themes aus zehn Farben, teilbar als Datei.
-• Optionale Alarme — Desktop, Discord oder Handy. Leite jeden Alarm an jede Kombination: Desktop-Benachrichtigungen, einen selbst erstellten Discord-Webhook oder dein Handy über Pushover oder ntfy. Verbindungsabbrüche, RAM-Warnungen, Recycle-Abschlüsse und ein „Alles gut“-Zeichen alle zwei Stunden, während deine Konten laufen. Eine frische Installation macht keinerlei Alarm-Aufrufe — nichts sendet, bevor du etwas einrichtest.
+• Optionale Alarme — Desktop, Discord oder Handy. Leite jeden Alarm an jede Kombination: Desktop-Benachrichtigungen, einen selbst erstellten Discord-Webhook oder dein Handy über Pushover oder ntfy. Verbindungsabbrüche, RAM-Warnungen, inaktive Konten, Recycle-Abschlüsse und ein „Alles gut“-Zeichen alle zwei Stunden, während deine Konten laufen. Wähle, wie oft jeder Alarm höchstens wiederholt wird und wie er klingt. Eine frische Installation macht keinerlei Alarm-Aufrufe — nichts sendet, bevor du etwas einrichtest.
 • Infobereich mit statusfarbenem Symbol — der Multi-Instanz-Status auf einen Blick; Doppelklick startet dein Hauptkonto.
 • Plugin-System. Optionale Plugins laufen als getrennte Prozesse und haben keine Berechtigungen, bis du sie einzeln erteilst.
 • Auto-Update über Velopack. Eine entfernte Konfiguration verfolgt die bekannte Roblox-Version und den Mutex-Namen, damit eine Umbenennung auf Roblox-Seite dich nicht lange ausbremst.
@@ -68,27 +68,38 @@ Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welch
 Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
-## What's new in this version (v1.32.1.0, ≤1500 chars)
+## What's new in this version (v1.33.0.0, ≤1500 chars)
 
 ```
-v1.32.1.0
+v1.33.0.0
 
-Die Speicherüberwachung reagiert sofort
+Benachrichtigungen gehen nur dorthin, wohin du sie schickst
 
-• Schalte „Speicher überwachen, während Konten laufen.“ aus,
-  und RoRoRo hört sofort auf zu überwachen. Schalte es wieder
-  ein, und es überwacht wieder. Kein Neustart nötig.
-• Die Zahlen darunter gelten ebenfalls sofort. Ändere
-  „Freizuhaltender Speicher (MB)“, „Warnen, wenn ein Konto so
-  viele Megabyte überschreitet“ oder „So weit im Voraus warnen
-  (Minuten)“, und schon die nächste Prüfung nutzt den neuen
-  Wert.
-• Schaltest du die Überwachung aus, werden die Speicheranzeigen
-  und die Warnung im Infobereich zurückgesetzt, statt mit ihrem
-  letzten Stand stehen zu bleiben.
+• Nimm bei einer Benachrichtigung das Häkchen bei „Desktop“
+  weg, und es erscheint nichts mehr dafür. RAM-Warnungen kamen
+  bisher auf den Desktop, egal was du gewählt hattest; jetzt
+  hält sich jede Benachrichtigung an die Tabelle, an die
+  Stummschaltung pro Konto und an die Ruhezeit.
+• „Wie oft höchstens“ gehört dir. Eine Einstellung für alle,
+  eine Ausnahme für jede einzelne Art, und „Jedes Mal“ hält
+  nichts zurück.
+• Die Desktop-Benachrichtigung ist jetzt RoRoRos eigenes
+  Fenster, im Design der übrigen App. Nennt sie genau ein
+  Konto, bringt dich ein Klick direkt zu dessen Zeile.
+• „Benachrichtigungston“ bietet den RoRoRo-Ton, den
+  Windows-Standard oder Stumm — und „Anhören“ spielt deine Wahl
+  vor, bevor du dich festlegst.
+• „Ein Konto wird in einem Spiel inaktiv“ heißt jetzt genau
+  das. Ein Konto, das auf der Roblox-Startseite parkt, bekommt
+  keine Inaktivitäts-Warnung mehr; es kann dort nicht
+  hinausgeworfen werden.
+• Aus drei Karten wird ein Abschnitt: eine Zeile pro
+  Benachrichtigung, Ziel und Häufigkeit nebeneinander. Die
+  Seite heißt „Sprache und Darstellung“, denn dort stellst du
+  die Sprache um.
 
 Sonst hat sich nichts geändert. Konten, Themes, Plugins,
-Alarme, Verlauf und Einstellungen bleiben unverändert.
+Verlauf und alle übrigen Einstellungen bleiben unverändert.
 ```
 
 ## Copyright (single line)

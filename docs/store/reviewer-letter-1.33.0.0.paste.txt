@@ -50,9 +50,13 @@ about the plugin interface moved:
 
   - Package.appxmanifest differs from v1.32.1.0 by the Version attribute only.
     Same runFullTrust capability, languages, protocols and startup task.
-  - No new network address and no new network call of any kind. The only URLs
-    in added lines are a XAML namespace declaration and obviously-fake webhook
-    strings inside unit tests.
+  - No new network address and no new network call of any kind. Seven URL
+    strings appear in added lines and not one is an address the app contacts:
+    four are XML namespace declarations (two XAML, the SVG namespace, and a
+    C2PA attribute carried in from the brand wordmark's own export), and three
+    are obviously-fake Discord webhook fixtures inside unit tests. The two SVG
+    files carrying namespace declarations are design sources; they are in the
+    repository only and appear in neither the build output nor the package.
   - No new permission, and no change to what data the app stores or where.
 
 4. NO INPUT SYNTHESIS, NO NEW INTEROP

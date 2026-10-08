@@ -1,6 +1,6 @@
 # Store listing — Português (Brasil) (pt-BR)
 
-> Paste-ready para Partner Center → Store listings → **Português (Brasil)**. Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Drafted
+> Paste-ready para Partner Center → Store listings → **Português (Brasil)**. Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Drafted
 > 2026-09-05 from `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo,
 > Squad Launch, Friend Follow, Pushover, ntfy); the app UI is now localized to six languages
 > (v1.26.0.0). Register: você.
@@ -27,7 +27,7 @@ O que você leva:
 • Entrar de novo se cair. Ative por conta, e um alt cuja janela do Roblox ainda está aberta, mas que caiu do jogo (uma expulsão por inatividade, uma entrada que falhou), é fechado e entra de novo sozinho. No máximo três vezes por hora, nunca a sua conta principal, e um "Parar" feito por você sempre tem prioridade.
 • Uma só janela de ferramentas. Jogos, configurações, histórico, diagnóstico, plugins, Problemas conhecidos do Roblox e Sobre são páginas de uma única janela ao lado das contas — com atalhos de teclado em tudo; F1 mostra a lista.
 • Temas. Quatro embutidos, incluindo um que nunca depende só de cor, mais um editor para criar o seu a partir de dez cores e compartilhar como arquivo.
-• Alertas opcionais — desktop, Discord ou celular. Direcione cada alerta para qualquer combinação: notificações no desktop, um webhook do Discord que você cria, ou seu celular via Pushover ou ntfy. Quedas de conta, avisos de memória, conclusões de Recycle e um sinal de "tudo certo" a cada duas horas enquanto suas contas rodam. Uma instalação nova não faz nenhuma chamada de alerta — nada sai antes de você configurar.
+• Alertas opcionais — desktop, Discord ou celular. Direcione cada alerta para qualquer combinação: notificações no desktop, um webhook do Discord que você cria, ou seu celular via Pushover ou ntfy. Quedas de conta, avisos de memória, contas inativas, conclusões de Recycle e um sinal de "tudo certo" a cada duas horas enquanto suas contas rodam. Escolha com que frequência no máximo cada alerta pode repetir e como ele soa. Uma instalação nova não faz nenhuma chamada de alerta — nada sai antes de você configurar.
 • Bandeja do sistema com ícone colorido por estado — o status de multi-instância à primeira vista; clique duplo inicia sua conta principal.
 • Sistema de plugins. Plugins opcionais rodam como processos separados e não têm permissão nenhuma até você conceder uma a uma.
 • Atualização automática via Velopack. Uma configuração remota acompanha a versão do Roblox e o nome do mutex conhecidos, para uma mudança do lado do Roblox não te travar por muito tempo.
@@ -68,27 +68,37 @@ Problemas conhecidos do Roblox — problemas do lado do Roblox, o que fazer e o 
 Entrar de novo se cair — um alt expulso ou preso fora do jogo é fechado e entra de novo sozinho, nunca a sua conta principal
 ```
 
-## What's new in this version (v1.32.1.0, ≤1500 chars)
+## What's new in this version (v1.33.0.0, ≤1500 chars)
 
 ```
-v1.32.1.0
+v1.33.0.0
 
-O monitoramento de memória responde na hora
+Os alertas vão só para onde você mandar
 
-• Desmarque "Monitorar a memória enquanto as contas estão em
-  execução." e o RoRoRo para de monitorar na mesma hora. Marque
-  de novo e ele volta a monitorar. Nenhum dos dois espera você
-  reiniciar o app.
-• Os números abaixo também valem na hora. Mude "Memória a
-  manter livre (MB)", "Avisar quando uma conta passar desta
-  quantidade de megabytes" ou "Avisar com esta antecedência
-  (minutos)" e a próxima verificação já usa o valor novo.
-• Ao desligar o monitoramento, os indicadores de memória e o
-  aviso na área de notificação são limpos, em vez de ficarem
-  parados no último estado.
+• Desmarque "Área de trabalho" em um alerta e nada mais aparece
+  por causa dele. Os avisos de memória apareciam na área de
+  trabalho independentemente do que você escolhesse; agora todo
+  alerta obedece à tabela, ao silenciamento por conta e ao
+  intervalo de silêncio.
+• "Com que frequência no máximo" é sua. Um ajuste para todos,
+  uma exceção para qualquer tipo isolado, e "Sempre" não segura
+  nada.
+• O alerta na área de trabalho agora é uma janela do próprio
+  RoRoRo, no tema do resto do app. Quando ele nomeia uma única
+  conta, um clique leva você à linha dela.
+• "Som do alerta" oferece o som do RoRoRo, o som padrão do
+  Windows ou "Silencioso", e "Ouvir" toca a sua escolha antes
+  de você confirmar.
+• "Uma conta fica inativa em um jogo" agora quer dizer
+  exatamente isso. Uma conta parada na tela inicial do Roblox
+  não recebe mais alerta de inatividade — não há de onde
+  expulsá-la.
+• Os três cartões viraram uma seção: uma linha por alerta, com
+  o destino e a frequência lado a lado. A página se chama
+  "Idioma e aparência", que é onde você troca o idioma.
 
-Nada mais mudou. Contas, temas, plugins, alertas, histórico e
-configurações continuam iguais.
+Nada mais mudou. Contas, temas, plugins, histórico e todos os
+outros ajustes continuam iguais.
 ```
 
 ## Copyright (single line)

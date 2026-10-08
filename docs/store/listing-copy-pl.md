@@ -1,6 +1,6 @@
 # Store listing — Polski (pl)
 
-> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
 > Friend Follow, Pushover, ntfy); the app UI is now localized to Polish (v1.26.0.0). Register: ty (norma dla gier).
 
@@ -26,7 +26,7 @@ Co dostajesz:
 • Dołącz ponownie, jeśli wypadnie. Włączasz to osobno dla każdego konta, a alt, którego okno Roblox jest wciąż otwarte, ale który wypadł z gry (wyrzucenie za bezczynność, nieudane dołączenie), jest zamykany i sam dołącza ponownie. Najwyżej trzy razy na godzinę, nigdy twoje główne konto, a twoje własne „Zatrzymaj” zawsze ma pierwszeństwo.
 • Jedno okno narzędzi. Gry, ustawienia, historia, diagnostyka, pluginy, Znane problemy Roblox i O programie to strony jednego okna obok listy kont — ze skrótami klawiszowymi wszędzie; F1 pokazuje listę.
 • Motywy. Cztery wbudowane, w tym jeden, który nigdy nie przekazuje znaczenia samym kolorem, plus edytor własnych motywów z dziesięciu kolorów, z udostępnianiem w pliku.
-• Alerty opcjonalne — pulpit, Discord albo telefon. Skieruj każdy alert w dowolną kombinację: powiadomienia na pulpicie, utworzony przez ciebie webhook Discorda albo telefon przez Pushover lub ntfy. Wylogowania altów, ostrzeżenia o pamięci, zakończenia Recycle i sygnał „wszystko gra" co dwie godziny, dopóki twoje konta działają. Świeża instalacja nie wykonuje żadnych wywołań alertów — nic nie wychodzi, dopóki sam czegoś nie skonfigurujesz.
+• Alerty opcjonalne — pulpit, Discord albo telefon. Skieruj każdy alert w dowolną kombinację: powiadomienia na pulpicie, utworzony przez ciebie webhook Discorda albo telefon przez Pushover lub ntfy. Wylogowania altów, ostrzeżenia o pamięci, bezczynne konta, zakończenia Recycle i sygnał „wszystko gra" co dwie godziny, dopóki twoje konta działają. Wybierz, jak często najwyżej każdy alert może się powtarzać i jak brzmi. Świeża instalacja nie wykonuje żadnych wywołań alertów — nic nie wychodzi, dopóki sam czegoś nie skonfigurujesz.
 • Zasobnik systemowy. Ikona w kolorze stanu rzutem oka pokazuje stan multi-instancji; dwuklik uruchamia główne konto.
 • System pluginów. Opcjonalne pluginy działają jako osobne procesy i nie mają żadnych uprawnień, dopóki nie nadasz każdemu z osobna.
 • Automatyczne aktualizacje przez Velopack. Zdalna konfiguracja śledzi znaną wersję Roblox i nazwę mutexa, żeby zmiana po stronie Roblox nie blokowała cię na długo.
@@ -67,28 +67,36 @@ Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
-## What's new in this version (v1.32.1.0, ≤1500 chars)
+## What's new in this version (v1.33.0.0, ≤1500 chars)
 
 ```
-v1.32.1.0
+v1.33.0.0
 
-Obserwowanie pamięci działa od razu
+Alerty trafiają tylko tam, gdzie je wyślesz
 
-• Wyłącz „Obserwuj pamięć, gdy konta są uruchomione.”, a RoRoRo
-  natychmiast przestaje obserwować. Włącz z powrotem — i znowu
-  obserwuje. W żadną stronę nie trzeba uruchamiać aplikacji
-  ponownie.
-• Liczby poniżej też działają od razu. Zmień „Pamięć do
-  zachowania wolnej (MB)”, „Ostrzegaj, gdy jedno konto
-  przekroczy tyle megabajtów” albo „Ostrzegaj z tym
-  wyprzedzeniem (minuty)” — już następne sprawdzenie użyje nowej
-  wartości.
-• Po wyłączeniu obserwowania wskaźniki pamięci i ostrzeżenie w
-  zasobniku są czyszczone, zamiast zostawać z ostatnim
-  odczytem.
+• Odznacz „Pulpit” przy jakimś alercie i nic się dla niego nie
+  pojawia. Ostrzeżenia o pamięci wyskakiwały na pulpicie
+  niezależnie od tego, co wybrałeś; teraz każdy alert trzyma
+  się tabeli, wyciszenia dla konta i przerwy między
+  powtórzeniami.
+• „Jak często najwyżej” należy do ciebie. Jedno ustawienie dla
+  wszystkich, wyjątek dla dowolnego rodzaju, a „Za każdym
+  razem” nie wstrzymuje niczego.
+• Alert na pulpicie to teraz własne okno RoRoRo, w motywie
+  reszty aplikacji. Gdy wskazuje jedno konto, kliknięcie
+  przenosi cię do jego wiersza.
+• „Dźwięk alertu” daje do wyboru sygnał RoRoRo, domyślny dźwięk
+  Windows albo „Cisza”, a „Posłuchaj” odtwarza twój wybór,
+  zanim go zatwierdzisz.
+• „Konto staje się bezczynne w grze” znaczy teraz dokładnie to.
+  Konto stojące na stronie głównej Roblox nie dostaje już
+  alertu o bezczynności — nie ma skąd go wyrzucić.
+• Trzy karty stały się jedną sekcją: wiersz na alert, miejsce
+  docelowe i częstotliwość obok siebie. Strona nazywa się
+  „Język i wygląd”, bo właśnie tam zmieniasz język.
 
-Nic poza tym się nie zmieniło. Konta, motywy, wtyczki, alerty,
-historia i ustawienia pozostają bez zmian.
+Nic poza tym się nie zmieniło. Konta, motywy, wtyczki, historia
+i wszystkie pozostałe ustawienia pozostają bez zmian.
 ```
 
 ## Copyright (single line)

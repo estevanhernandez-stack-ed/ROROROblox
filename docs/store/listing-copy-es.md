@@ -1,7 +1,7 @@
 # Store listing — Español (es)
 
 > Paste-ready para Partner Center → Store listings → **Español** (neutral — un solo texto para
-> España y Latinoamérica). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from `listing-copy.md` (v1.25.0.0 state).
+> España y Latinoamérica). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from `listing-copy.md` (v1.25.0.0 state).
 > Product nouns stay in English (RoRoRo, Squad Launch, Friend Follow, Pushover, ntfy); the
 > app UI is now localized to Spanish (v1.26.0.0). Register: tú.
 
@@ -27,7 +27,7 @@ Lo que obtienes:
 • Volver a unirse si se desconecta. Actívalo por cuenta, y un alt cuya ventana de Roblox sigue abierta pero que ha quedado fuera del juego (una expulsión por inactividad, un intento fallido de unirse) se cierra y vuelve a unirse solo. Como máximo tres veces por hora, nunca tu cuenta principal, y tu propio "Detener" siempre tiene prioridad.
 • Una sola ventana de herramientas. Juegos, ajustes, historial, diagnóstico, plugins, Problemas conocidos de Roblox y Acerca de son páginas de una misma ventana junto a tus cuentas, con atajos de teclado en todas partes — F1 muestra la lista.
 • Temas. Cuatro integrados, incluido uno que nunca transmite significado solo con color, más un editor para crear el tuyo a partir de diez colores y compartirlo como archivo.
-• Alertas opcionales: escritorio, Discord o móvil. Dirige cada alerta a cualquier combinación: notificaciones de escritorio, un webhook de Discord que tú creas, o tu móvil mediante Pushover o ntfy. Desconexiones, avisos de memoria, finales de Recycle y una señal de "todo bien" cada dos horas mientras tus cuentas corren. Una instalación nueva no hace ninguna llamada de alertas: nada sale hasta que tú lo configuras.
+• Alertas opcionales: escritorio, Discord o móvil. Dirige cada alerta a cualquier combinación: notificaciones de escritorio, un webhook de Discord que tú creas, o tu móvil mediante Pushover o ntfy. Desconexiones, avisos de memoria, cuentas inactivas, finales de Recycle y una señal de "todo bien" cada dos horas mientras tus cuentas corren. Elige con qué frecuencia como máximo puede repetirse cada alerta y cómo suena. Una instalación nueva no hace ninguna llamada de alertas: nada sale hasta que tú lo configuras.
 • Bandeja del sistema con icono coloreado por estado — el estado de multi-instancia de un vistazo; doble clic lanza tu cuenta principal.
 • Sistema de plugins. Los plugins opcionales corren como procesos separados y no tienen permisos hasta que se los concedes uno a uno.
 • Actualización automática vía Velopack. Una configuración remota sigue la versión de Roblox y el nombre del mutex conocidos, para que un cambio del lado de Roblox no te deje fuera mucho tiempo.
@@ -68,27 +68,36 @@ Problemas conocidos de Roblox — problemas del lado de Roblox, qué hacer y la 
 Volver a unirse si se desconecta: un alt expulsado o atascado fuera del juego se cierra y vuelve a unirse solo, nunca tu cuenta principal
 ```
 
-## What's new in this version (v1.32.1.0, ≤1500 chars)
+## What's new in this version (v1.33.0.0, ≤1500 chars)
 
 ```
-v1.32.1.0
+v1.33.0.0
 
-La vigilancia de memoria responde al momento
+Las alertas van solo a donde tú las mandes
 
-• Desmarca "Vigilar la memoria mientras las cuentas están en
-  ejecución." y RoRoRo deja de vigilar al instante. Vuelve a
-  marcarla y empieza otra vez. Ninguna de las dos cosas espera
-  a que reinicies.
-• Los números de debajo también se aplican al momento. Cambia
-  "Memoria que mantener libre (MB)", "Avisar cuando una cuenta
-  supere estos megabytes" o "Avisar con esta antelación
-  (minutos)" y la siguiente comprobación ya usa el valor nuevo.
-• Al desactivar la vigilancia, los indicadores de memoria y el
-  aviso del área de notificación se limpian en lugar de
-  quedarse con lo último que vieron.
+• Desmarca "Escritorio" en una alerta y ya no aparece nada por
+  ella. Los avisos de memoria salían en el escritorio
+  eligieras lo que eligieras; ahora cada alerta respeta la
+  tabla, el silencio por cuenta y el intervalo de silencio.
+• "Con qué frecuencia como máximo" es tuya. Un ajuste para
+  todas, una excepción para cualquier tipo concreto, y "Cada
+  vez" no retiene nada.
+• La alerta de escritorio es ahora una ventana del propio
+  RoRoRo, con el tema del resto de la aplicación. Cuando nombra
+  una sola cuenta, un clic te lleva a su fila.
+• "Sonido de alerta" ofrece el sonido de RoRoRo, el de Windows
+  por defecto o "Silencio", y "Escuchar" reproduce tu elección
+  antes de que la confirmes.
+• "Una cuenta queda inactiva en un juego" quiere decir
+  exactamente eso. Una cuenta aparcada en la pantalla de inicio
+  de Roblox ya no recibe aviso de inactividad: de ahí no hay
+  nada que la expulse.
+• Las tres tarjetas son una sección: una fila por alerta, con
+  su destino y su frecuencia al lado. La página se llama
+  "Idioma y apariencia", que es donde cambias el idioma.
 
-No ha cambiado nada más. Cuentas, temas, plugins, alertas,
-historial y ajustes se mantienen igual.
+No ha cambiado nada más. Cuentas, temas, plugins, historial y
+todos los demás ajustes se mantienen igual.
 ```
 
 ## Copyright (single line)
