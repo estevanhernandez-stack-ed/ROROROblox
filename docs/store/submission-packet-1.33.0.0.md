@@ -128,6 +128,30 @@ The three alert-sound choices are **described rather than quoted** in every bloc
 are built by a converter rather than held as resx values, so quoting them would mean re-translating,
 which is the one thing that file does not do.
 
+### The listing console is staged and planned, not applied
+
+The console entry (`store-listing-console`, `apps/rororo-live`) is pinned at `7d2ca00` and builds
+clean — `ready=true apiReady=true`, 10 listings, 7 copy sets, 10 screenshots. `submit_write.py plan`
+against the published submission `1152921505702059211` exits 0 with **20 fields changing and nothing
+else**: `description` and `releaseNotes` on each of the ten rows, no field emptied, no cap hit.
+
+That plan is also the proof the parity fix reached everything. The description grows on all ten rows
+— including `de-de`, `fr-ca` and `fr-fr`, the regional duplicates that carry the neutral row's copy
+— which is what a six-sheet edit is supposed to produce and what reading only the English sheet
+would not have.
+
+**`apply` has not been run.** Per the runbook a real submission exists from `apply` onward, and the
+write order matters: apply and captions both run **before** packages are uploaded, because captions
+after an upload are rejected 400. So the order from here is apply → captions → upload both MSIX →
+submit.
+
+**One thing to know about the console repo:** it is pinned correctly on this machine but the commit
+is **local only**. That repository was already diverged before this release touched it — two
+unpushed local commits from the v1.32.1 session plus two newer commits on `origin` for SnapSnip.
+Nothing overlaps (the local side touches `apps/rororo-live/config.toml` and `docs/release-loop.md`,
+the remote side touches `apps/snapsnip/copy/listing-copy.md`), so reconciling it is clean whenever
+someone wants to. The console reads its config from the working tree, so the pin works as it stands.
+
 ## 4. Notes for certification
 
 Reviewer letter: [`reviewer-letter-1.33.0.0.paste.txt`](reviewer-letter-1.33.0.0.paste.txt). It leads
