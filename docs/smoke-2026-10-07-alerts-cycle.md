@@ -121,6 +121,10 @@ This is the only run that checks the ruling Este made today, and it is the harde
 
 **The parked account must be LAUNCHED, not merely saved.** `ActivityMonitor` keeps a record per account from `OnAccountLaunched` to `OnAccountExited`; an account with no running client never has a crossing raised for it, so "it didn't alert" would be true for the boring reason instead of the interesting one — a vacuous pass of exactly the kind this cycle kept producing.
 
+**Third attempt, 2026-10-07 19:39-19:59: also dead, for a third mundane reason.** Idle clocks were at 4-5 minutes against a 15-minute threshold, so an alert was due around 19:48. RoRoRo exited cleanly at 19:45:03 — three minutes short. Nothing fired and nothing was wrong.
+
+**That is the finding this run keeps producing.** The test has a fifteen-minute latency and ANY interruption inside it invalidates the attempt silently: a file write that never reaches the monitor, a value the picker cannot hold, an app that closes early. There is no way to watch the clock advance, because `ActivityMonitor` logs nothing — the only progress indicator is the row chip, read through UI Automation. A single log line per crossing, and a Debug line per sample, would turn a fifteen-minute blind wait into something observable. That is backlog item 6 and it is worth doing before anyone attempts this run a fourth time.
+
 **The setup that would actually prove it:** one account in a game; one launched and running, parked at the Roblox home screen; the picker at 10 minutes; ten minutes of no input from anyone. Pass is the in-game one alerting and the parked one staying silent.
 
 ### 7. The fullscreen question — this one goes in the release notes either way
