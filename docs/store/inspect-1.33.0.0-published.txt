@@ -1,0 +1,35 @@
+app        : RoRoRo — Multi-launcher for Windows  (9NMJCS390KWB)
+submission : 1152921505702070341  status=Published
+listings   : 10
+
+  listing keys (use these as the dictionary keys when writing):
+    de           title=''
+    de-de        title='RoRoRo — Multi-launcher for Windows'
+    en-us        title='RoRoRo — Multi-launcher for Windows'
+    es           title=''
+    fr           title=''
+    fr-ca        title='RoRoRo — Multi-launcher for Windows'
+    fr-fr        title='RoRoRo — Multi-launcher for Windows'
+    pl           title=''
+    pt-br        title='RoRoRo — Multi-launcher for Windows'
+    ru           title=''
+
+  baseListing fields present on the first listing:
+    copyrightAndTrademarkInfo    str[185] '© 2026 626 Labs LLC. Alle Rechte vorbehalten. „R'
+    description                  str[5343] 'Multi-Launcher für Windows.\n\nRoRoRo ist ein Wind'
+    devStudio                    str[12] '626 Labs LLC'
+    features                     list[20]
+    images                       list[14]
+    keywords                     list[7]
+    licenseTerms                 str[791] 'RORORO source code is licensed under the MIT Lic'
+    releaseNotes                 str[1328] 'v1.33.0.0\n\nBenachrichtigungen gehen nur dorthin,'
+    shortDescription             str[197] 'Multi-Launcher für Windows, jetzt in 6 Sprachen:'
+    shortTitle                   str[6] 'RoRoRo'
+
+  images on the first listing: 14
+    Screenshot             01-accounts-running.png            description='Drei Konten laufen gleichzeitig, jed'
+    Screenshot             02-themes.png                      description='Vier eingebaute Themes. Flatline tra'
+    Screenshot             03-about.png                       description='Multi-Instanz-Launcher für Windows. '
+    Screenshot             04-games.png                       description='Speichere die Spiele und privaten Se'
+    Screenshot             05-diagnostics.png                 description='Die Diagnose zeigt, was RoRoRo gerad'
+    Screenshot             06-history.png                     description='Jeder Start wird aufgezeichnet, du s'
