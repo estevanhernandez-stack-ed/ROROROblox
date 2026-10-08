@@ -67,6 +67,18 @@ internal partial class SettingsPage : UserControl, IDisposable
     /// </summary>
     private ThemeStatusSummary.Line _themeFolderStatus = ThemeStatusSummary.Silent;
 
+    /// <summary>
+    /// The same player the alert path uses, so the preview is the sound an alert actually makes
+    /// rather than a second implementation that can drift from it.
+    /// <para>
+    /// Added 2026-10-07 after the v1.33 live smoke found there was no way to hear a sound before
+    /// choosing one: the picker only saved, and "What a desktop alert sounds like" is its
+    /// accessible name rather than a button. A user picked between three sounds blind, and run 4
+    /// of the smoke could not be performed from this page at all — an alert had to fire.
+    /// </para>
+    /// </summary>
+    private readonly ROROROblox.App.Tray.IAlertSoundPlayer _alertSoundPlayer;
+
     private bool _suppressClickHandlers; // true while we set the initial check states.
     private bool _loaded;                 // true once OnLoaded has populated; gates the culture-change re-render.
 
@@ -162,8 +174,10 @@ internal partial class SettingsPage : UserControl, IDisposable
         ROROROblox.Core.Notify.PhoneNotifyConfigService phoneNotifyService,
         ROROROblox.App.Notify.PhoneAlertSender phoneAlertSender,
         ISystemMemoryProbe systemMemoryProbe,
-        MemoryWatchdogGate memoryWatchdogGate)
+        MemoryWatchdogGate memoryWatchdogGate,
+        ROROROblox.App.Tray.IAlertSoundPlayer alertSoundPlayer)
     {
+        _alertSoundPlayer = alertSoundPlayer;
         _memoryWatchdogGate = memoryWatchdogGate;
         _automaticMemory = new AutomaticMemorySummary(systemMemoryProbe);
         _alertDispatcher = alertDispatcher;
@@ -2533,6 +2547,22 @@ internal partial class SettingsPage : UserControl, IDisposable
     /// The alert sound. Same write-then-nudge shape as the cadence, and the nudge matters more
     /// here: the stale direction is a noise after an explicit request for silence.
     /// </summary>
+    /// <summary>
+    /// Plays whatever the picker currently holds, through the production
+    /// <see cref="ROROROblox.App.Tray.IAlertSoundPlayer"/>.
+    /// <para>
+    /// Deliberately NOT disabled when Silent is selected. Silence is what an alert would do, so
+    /// silence is the honest preview; a greyed-out button would be answering a different question
+    /// from the one the user is asking.
+    /// </para>
+    /// <para>
+    /// No try/catch: <c>AlertSoundPlayer.Play</c> already swallows and logs its own failures, and
+    /// wrapping it again would only add a second place for the same decision to be made
+    /// differently later.
+    /// </para>
+    /// </summary>
+    private void OnHearAlertSoundClick(object sender, RoutedEventArgs e) => _alertSoundPlayer.Play();
+
     private async void OnAlertSoundChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (_suppressClickHandlers) return;

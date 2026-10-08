@@ -3042,4 +3042,12 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="SettingsPage_FixedAtTwoHours" xml:space="preserve">
     <value>Fixed at two hours.</value>
   </data>
+  <data name="SettingsPage_HearIt" xml:space="preserve">
+    <value>Hear it</value>
+    <comment>Button beside the alert sound picker; plays the selected sound (v1.33)</comment>
+  </data>
+  <data name="SettingsPage_HearTheAlertSound" xml:space="preserve">
+    <value>Hear the alert sound</value>
+    <comment>Accessible name for the Hear it button (v1.33)</comment>
+  </data>
 </root>

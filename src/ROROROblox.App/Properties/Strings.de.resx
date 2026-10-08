@@ -3351,4 +3351,10 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="SettingsPage_FixedAtTwoHours" xml:space="preserve">
     <value>Fest auf zwei Stunden.</value>
   </data>
+  <data name="SettingsPage_HearIt" xml:space="preserve">
+    <value>Anhören</value>
+  </data>
+  <data name="SettingsPage_HearTheAlertSound" xml:space="preserve">
+    <value>Benachrichtigungston anhören</value>
+  </data>
 </root>

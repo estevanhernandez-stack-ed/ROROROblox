@@ -3351,4 +3351,10 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
   <data name="SettingsPage_FixedAtTwoHours" xml:space="preserve">
     <value>Fijo en dos horas.</value>
   </data>
+  <data name="SettingsPage_HearIt" xml:space="preserve">
+    <value>Escuchar</value>
+  </data>
+  <data name="SettingsPage_HearTheAlertSound" xml:space="preserve">
+    <value>Escuchar el sonido de alerta</value>
+  </data>
 </root>

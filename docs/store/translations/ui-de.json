@@ -521,6 +521,8 @@
   "SettingsPage_FollowThePaceAbove": "Dem Takt oben folgen",
   "SettingsPage_GenerateANewNtfyTopic": "Ein neues ntfy-Topic erzeugen",
   "SettingsPage_GetToldWhenSomethingHappens": "Lass dich benachrichtigen, wenn mit einem Konto etwas passiert, während du weg vom PC bist. Das Senden an einen Discord-Kanal ist in etwa einer Minute eingerichtet — unten gibt es eine Anleitung, falls du noch nie einen Webhook erstellt hast.",
+  "SettingsPage_HearIt": "Anhören",
+  "SettingsPage_HearTheAlertSound": "Benachrichtigungston anhören",
   "SettingsPage_HidesNamesAvatarsAndShare": "Verbirgt Namen, Avatare und Freigabelinks innerhalb von RoRoRo. Es ändert nichts an dem, was Roblox selbst anzeigt — dein Stream zeigt weiterhin alles, was im Spiel auf dem Bildschirm ist.",
   "SettingsPage_HowOftenAnyAlertMayRepeat": "Wie oft sich eine Benachrichtigung höchstens wiederholen darf",
   "SettingsPage_HowOftenAtMost": "Wie oft höchstens",

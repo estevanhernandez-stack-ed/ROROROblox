@@ -2630,7 +2630,8 @@ public partial class App : Application
             _services.GetRequiredService<ISystemMemoryProbe>(),
             // Same singleton RefreshMemoryWatchdogAsync commits to: the toggle has to move the
             // watchdog this session, not just the file.
-            _services.GetRequiredService<MemoryWatchdogGate>());
+            _services.GetRequiredService<MemoryWatchdogGate>(),
+            _services.GetRequiredService<Tray.IAlertSoundPlayer>());
     }
 
     /// <summary>

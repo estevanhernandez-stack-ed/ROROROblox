@@ -3351,4 +3351,10 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="SettingsPage_FixedAtTwoHours" xml:space="preserve">
     <value>Фиксировано: два часа.</value>
   </data>
+  <data name="SettingsPage_HearIt" xml:space="preserve">
+    <value>Прослушать</value>
+  </data>
+  <data name="SettingsPage_HearTheAlertSound" xml:space="preserve">
+    <value>Прослушать звук оповещения</value>
+  </data>
 </root>

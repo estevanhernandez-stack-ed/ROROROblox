@@ -521,6 +521,8 @@
   "SettingsPage_FollowThePaceAbove": "Seguir o ritmo acima",
   "SettingsPage_GenerateANewNtfyTopic": "Gerar um novo tópico ntfy",
   "SettingsPage_GetToldWhenSomethingHappens": "Seja avisado quando algo acontecer com uma conta enquanto você está longe do PC. Enviar para um canal do Discord leva cerca de um minuto para configurar — há um passo a passo abaixo se você nunca criou um webhook.",
+  "SettingsPage_HearIt": "Ouvir",
+  "SettingsPage_HearTheAlertSound": "Ouvir o som do alerta",
   "SettingsPage_HidesNamesAvatarsAndShare": "Oculta nomes, avatares e links de compartilhamento dentro do RoRoRo. Não muda nada do que o próprio Roblox mostra — sua transmissão ainda mostra o que estiver na tela do jogo.",
   "SettingsPage_HowOftenAnyAlertMayRepeat": "Com que frequência qualquer alerta pode repetir no máximo",
   "SettingsPage_HowOftenAtMost": "Com que frequência no máximo",

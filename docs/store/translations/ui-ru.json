@@ -521,6 +521,8 @@
   "SettingsPage_FollowThePaceAbove": "По частоте, заданной выше",
   "SettingsPage_GenerateANewNtfyTopic": "Создать новый топик ntfy",
   "SettingsPage_GetToldWhenSomethingHappens": "Узнавайте, когда с аккаунтом что-то происходит, пока вы не за ПК. Настройка отправки в канал Discord занимает около минуты — ниже есть пошаговое руководство, если вы никогда не создавали вебхук.",
+  "SettingsPage_HearIt": "Прослушать",
+  "SettingsPage_HearTheAlertSound": "Прослушать звук оповещения",
   "SettingsPage_HidesNamesAvatarsAndShare": "Скрывает имена, аватары и ссылки для обмена внутри RoRoRo. Это не меняет ничего из того, что показывает сам Roblox — на вашем стриме по-прежнему видно то, что на экране в игре.",
   "SettingsPage_HowOftenAnyAlertMayRepeat": "Как часто любое оповещение может повторяться не более",
   "SettingsPage_HowOftenAtMost": "Как часто не более",

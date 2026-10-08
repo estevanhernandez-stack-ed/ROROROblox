@@ -3351,4 +3351,10 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   <data name="SettingsPage_FixedAtTwoHours" xml:space="preserve">
     <value>Fixo em duas horas.</value>
   </data>
+  <data name="SettingsPage_HearIt" xml:space="preserve">
+    <value>Ouvir</value>
+  </data>
+  <data name="SettingsPage_HearTheAlertSound" xml:space="preserve">
+    <value>Ouvir o som do alerta</value>
+  </data>
 </root>
