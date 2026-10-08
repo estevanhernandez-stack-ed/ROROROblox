@@ -1,0 +1,185 @@
+submission : 1152921505702070341  status=PendingCommit
+packages   : [('RORORO-Store-x64-1.32.1.0.msix', '1.32.1.0', 'Uploaded'), ('RORORO-Store-arm64-1.32.1.0.msix', '1.32.1.0', 'Uploaded')]
+notes      : never visible through the API; confirm in Partner Center
+  en-us.description                ok  4770 chars
+  en-us.shortDescription           ok  199 chars
+  en-us.releaseNotes               ok  1154 chars
+  en-us.copyrightAndTrademarkInfo  ok  168 chars
+  en-us.licenseTerms               ok  791 chars
+  en-us.devStudio                  ok  12 chars
+  en-us.features                   ok  20 entries
+  en-us.keywords                   ok  7 entries
+  en-us.caption[ 1]              ok  'Three accounts running at once, each with its own memory use and its own stop button. Cookies are encrypted per user with Windows DPAPI and never leave the machine.'
+  en-us.caption[ 2]              ok  'Four built-in themes. Flatline carries no meaning in colour at all, so nothing is lost to colour blindness, a bad panel, or direct sun.'
+  en-us.caption[ 3]              ok  'Multi-launcher for Windows. Holds the Roblox singleton mutex so the next client opens instead of fighting the first. A clean reimplementation, not a fork.'
+  en-us.caption[ 4]              ok  'Save the games and private servers you actually play, then pick a different one per account before you launch.'
+  en-us.caption[ 5]              ok  'Diagnostics shows what RoRoRo can see right now: versions, health, and where the logs are, for when you need to file something.'
+  en-us.caption[ 6]              ok  'Every launch is recorded, so you can see which account played what and for how long.'
+  en-us.caption[ 7]              ok  'Plugins run as separate processes and ask first. You grant each capability by name, and you can revoke it later.'
+  en-us.caption[ 8]              ok  'Build a theme from ten colours and it shows up in the picker. It is a JSON file, so you can hand it to someone else.'
+  en-us.caption[ 9]              ok  'Compact mode shows only what is running. Pin it to a corner of the screen and get back to the game.'
+  en-us.caption[10]              ok  'Eight Roblox clients, eight accounts, one PC. Each window title carries the account signed into it, so you always know which is which.'
+  de.description                ok  5343 chars
+  de.shortDescription           ok  197 chars
+  de.releaseNotes               ok  1328 chars
+  de.copyrightAndTrademarkInfo  ok  185 chars
+  de.licenseTerms               ok  791 chars
+  de.devStudio                  ok  12 chars
+  de.features                   ok  20 entries
+  de.keywords                   ok  7 entries
+  de.caption[ 1]              ok  'Drei Konten laufen gleichzeitig, jedes mit eigenem Speicherverbrauch und eigener Schaltfläche zum Stoppen. Cookies werden pro Benutzer mit Windows DPAPI verschlüsselt und verlassen den Rechner nie.'
+  de.caption[ 2]              ok  'Vier eingebaute Themes. Flatline transportiert überhaupt keine Bedeutung über Farbe, sodass bei Farbenblindheit, schlechtem Panel oder direkter Sonne nichts verloren geht.'
+  de.caption[ 3]              ok  'Multi-Instanz-Launcher für Windows. Hält den Roblox-Singleton-Mutex, damit der nächste Client startet, statt mit dem ersten zu kämpfen. Eine saubere Neuimplementierung, kein Fork.'
+  de.caption[ 4]              ok  'Speichere die Spiele und privaten Server, die du wirklich spielst, und wähle vor dem Start pro Konto ein anderes.'
+  de.caption[ 5]              ok  'Die Diagnose zeigt, was RoRoRo gerade sieht: Versionen, Zustand und wo die Logs liegen — für den Tag, an dem du etwas melden musst.'
+  de.caption[ 6]              ok  'Jeder Start wird aufgezeichnet, du siehst also, welches Konto was gespielt hat und wie lange.'
+  de.caption[ 7]              ok  'Plugins laufen als eigene Prozesse und fragen vorher. Du erteilst jede Berechtigung namentlich und kannst sie später widerrufen.'
+  de.caption[ 8]              ok  'Baue ein Theme aus zehn Farben, und es erscheint in der Auswahl. Es ist eine JSON-Datei, du kannst sie also weitergeben.'
+  de.caption[ 9]              ok  'Der Kompaktmodus zeigt nur, was läuft. Hefte ihn in eine Ecke des Bildschirms und spiel weiter.'
+  de.caption[10]              ok  'Acht Roblox-Clients, acht Konten, ein PC. Jeder Fenstertitel trägt das Konto, das darin angemeldet ist — du weißt immer, welches welches ist.'
+  de-de.description                ok  5343 chars
+  de-de.shortDescription           ok  197 chars
+  de-de.releaseNotes               ok  1328 chars
+  de-de.copyrightAndTrademarkInfo  ok  185 chars
+  de-de.licenseTerms               ok  791 chars
+  de-de.devStudio                  ok  12 chars
+  de-de.features                   ok  20 entries
+  de-de.keywords                   ok  7 entries
+  de-de.caption[ 1]              ok  'Drei Konten laufen gleichzeitig, jedes mit eigenem Speicherverbrauch und eigener Schaltfläche zum Stoppen. Cookies werden pro Benutzer mit Windows DPAPI verschlüsselt und verlassen den Rechner nie.'
+  de-de.caption[ 2]              ok  'Vier eingebaute Themes. Flatline transportiert überhaupt keine Bedeutung über Farbe, sodass bei Farbenblindheit, schlechtem Panel oder direkter Sonne nichts verloren geht.'
+  de-de.caption[ 3]              ok  'Multi-Instanz-Launcher für Windows. Hält den Roblox-Singleton-Mutex, damit der nächste Client startet, statt mit dem ersten zu kämpfen. Eine saubere Neuimplementierung, kein Fork.'
+  de-de.caption[ 4]              ok  'Speichere die Spiele und privaten Server, die du wirklich spielst, und wähle vor dem Start pro Konto ein anderes.'
+  de-de.caption[ 5]              ok  'Die Diagnose zeigt, was RoRoRo gerade sieht: Versionen, Zustand und wo die Logs liegen — für den Tag, an dem du etwas melden musst.'
+  de-de.caption[ 6]              ok  'Jeder Start wird aufgezeichnet, du siehst also, welches Konto was gespielt hat und wie lange.'
+  de-de.caption[ 7]              ok  'Plugins laufen als eigene Prozesse und fragen vorher. Du erteilst jede Berechtigung namentlich und kannst sie später widerrufen.'
+  de-de.caption[ 8]              ok  'Baue ein Theme aus zehn Farben, und es erscheint in der Auswahl. Es ist eine JSON-Datei, du kannst sie also weitergeben.'
+  de-de.caption[ 9]              ok  'Der Kompaktmodus zeigt nur, was läuft. Hefte ihn in eine Ecke des Bildschirms und spiel weiter.'
+  de-de.caption[10]              ok  'Acht Roblox-Clients, acht Konten, ein PC. Jeder Fenstertitel trägt das Konto, das darin angemeldet ist — du weißt immer, welches welches ist.'
+  es.description                ok  5287 chars
+  es.shortDescription           ok  193 chars
+  es.releaseNotes               ok  1244 chars
+  es.copyrightAndTrademarkInfo  ok  168 chars
+  es.licenseTerms               ok  791 chars
+  es.devStudio                  ok  12 chars
+  es.features                   ok  20 entries
+  es.keywords                   ok  7 entries
+  es.caption[ 1]              ok  'Tres cuentas ejecutándose a la vez, cada una con su propio uso de memoria y su propio botón de parada. Las cookies se cifran por usuario con Windows DPAPI y nunca salen de la máquina.'
+  es.caption[ 2]              ok  'Cuatro temas integrados. Flatline no transmite ningún significado mediante el color, así que no se pierde nada con daltonismo, un panel malo o sol directo.'
+  es.caption[ 3]              ok  'Multi-launcher para Windows. Retiene el mutex singleton de Roblox para que el siguiente cliente se abra en vez de pelear con el primero. Una reimplementación limpia, no un fork.'
+  es.caption[ 4]              ok  'Guarda los juegos y servidores privados a los que juegas de verdad y elige uno distinto por cuenta antes de lanzar.'
+  es.caption[ 5]              ok  'Diagnóstico muestra lo que RoRoRo ve ahora mismo: versiones, estado y dónde están los registros, para cuando necesites reportar algo.'
+  es.caption[ 6]              ok  'Cada lanzamiento queda registrado, así ves qué cuenta jugó a qué y durante cuánto tiempo.'
+  es.caption[ 7]              ok  'Los plugins se ejecutan como procesos separados y preguntan primero. Concedes cada permiso por su nombre y puedes revocarlo después.'
+  es.caption[ 8]              ok  'Crea un tema con diez colores y aparece en el selector. Es un archivo JSON, así que puedes pasárselo a otra persona.'
+  es.caption[ 9]              ok  'El modo compacto muestra solo lo que está en marcha. Fíjalo en una esquina de la pantalla y vuelve al juego.'
+  es.caption[10]              ok  'Ocho clientes de Roblox, ocho cuentas, un PC. El título de cada ventana lleva la cuenta que ha iniciado sesión en ella, así siempre sabes cuál es cuál.'
+  fr.description                ok  5357 chars
+  fr.shortDescription           ok  198 chars
+  fr.releaseNotes               ok  1334 chars
+  fr.copyrightAndTrademarkInfo  ok  169 chars
+  fr.licenseTerms               ok  791 chars
+  fr.devStudio                  ok  12 chars
+  fr.features                   ok  20 entries
+  fr.keywords                   ok  7 entries
+  fr.caption[ 1]              ok  "Trois comptes lancés en même temps, chacun avec sa mémoire utilisée et son propre bouton d'arrêt. Les cookies sont chiffrés par utilisateur avec Windows DPAPI et ne quittent jamais la machine."
+  fr.caption[ 2]              ok  'Quatre thèmes intégrés. Flatline ne fait passer aucune information par la couleur, donc rien ne se perd avec le daltonisme, un mauvais écran ou en plein soleil.'
+  fr.caption[ 3]              ok  "Multi-lanceur pour Windows. Détient le mutex singleton de Roblox pour que le client suivant s'ouvre au lieu de se battre avec le premier. Une réimplémentation propre, pas un fork."
+  fr.caption[ 4]              ok  'Enregistrez les jeux et les serveurs privés auxquels vous jouez vraiment, puis choisissez-en un différent par compte avant de lancer.'
+  fr.caption[ 5]              ok  "Diagnostics montre ce que RoRoRo voit à l'instant : versions, état de santé et emplacement des journaux, pour le jour où vous devez signaler quelque chose."
+  fr.caption[ 6]              ok  'Chaque lancement est enregistré, vous voyez donc quel compte a joué à quoi et pendant combien de temps.'
+  fr.caption[ 7]              ok  "Les plugins tournent comme des processus séparés et demandent d'abord. Vous accordez chaque capacité par son nom, et vous pouvez la révoquer ensuite."
+  fr.caption[ 8]              ok  "Composez un thème à partir de dix couleurs et il apparaît dans le sélecteur. C'est un fichier JSON, vous pouvez donc le donner à quelqu'un d'autre."
+  fr.caption[ 9]              ok  "Le mode compact n'affiche que ce qui tourne. Épinglez-le dans un coin de l'écran et retournez jouer."
+  fr.caption[10]              ok  'Huit clients Roblox, huit comptes, un seul PC. Chaque titre de fenêtre porte le compte qui y est connecté, vous savez donc toujours qui est qui.'
+  fr-ca.description                ok  5357 chars
+  fr-ca.shortDescription           ok  198 chars
+  fr-ca.releaseNotes               ok  1334 chars
+  fr-ca.copyrightAndTrademarkInfo  ok  169 chars
+  fr-ca.licenseTerms               ok  791 chars
+  fr-ca.devStudio                  ok  12 chars
+  fr-ca.features                   ok  20 entries
+  fr-ca.keywords                   ok  7 entries
+  fr-ca.caption[ 1]              ok  "Trois comptes lancés en même temps, chacun avec sa mémoire utilisée et son propre bouton d'arrêt. Les cookies sont chiffrés par utilisateur avec Windows DPAPI et ne quittent jamais la machine."
+  fr-ca.caption[ 2]              ok  'Quatre thèmes intégrés. Flatline ne fait passer aucune information par la couleur, donc rien ne se perd avec le daltonisme, un mauvais écran ou en plein soleil.'
+  fr-ca.caption[ 3]              ok  "Multi-lanceur pour Windows. Détient le mutex singleton de Roblox pour que le client suivant s'ouvre au lieu de se battre avec le premier. Une réimplémentation propre, pas un fork."
+  fr-ca.caption[ 4]              ok  'Enregistrez les jeux et les serveurs privés auxquels vous jouez vraiment, puis choisissez-en un différent par compte avant de lancer.'
+  fr-ca.caption[ 5]              ok  "Diagnostics montre ce que RoRoRo voit à l'instant : versions, état de santé et emplacement des journaux, pour le jour où vous devez signaler quelque chose."
+  fr-ca.caption[ 6]              ok  'Chaque lancement est enregistré, vous voyez donc quel compte a joué à quoi et pendant combien de temps.'
+  fr-ca.caption[ 7]              ok  "Les plugins tournent comme des processus séparés et demandent d'abord. Vous accordez chaque capacité par son nom, et vous pouvez la révoquer ensuite."
+  fr-ca.caption[ 8]              ok  "Composez un thème à partir de dix couleurs et il apparaît dans le sélecteur. C'est un fichier JSON, vous pouvez donc le donner à quelqu'un d'autre."
+  fr-ca.caption[ 9]              ok  "Le mode compact n'affiche que ce qui tourne. Épinglez-le dans un coin de l'écran et retournez jouer."
+  fr-ca.caption[10]              ok  'Huit clients Roblox, huit comptes, un seul PC. Chaque titre de fenêtre porte le compte qui y est connecté, vous savez donc toujours qui est qui.'
+  fr-fr.description                ok  5357 chars
+  fr-fr.shortDescription           ok  198 chars
+  fr-fr.releaseNotes               ok  1334 chars
+  fr-fr.copyrightAndTrademarkInfo  ok  169 chars
+  fr-fr.licenseTerms               ok  791 chars
+  fr-fr.devStudio                  ok  12 chars
+  fr-fr.features                   ok  20 entries
+  fr-fr.keywords                   ok  7 entries
+  fr-fr.caption[ 1]              ok  "Trois comptes lancés en même temps, chacun avec sa mémoire utilisée et son propre bouton d'arrêt. Les cookies sont chiffrés par utilisateur avec Windows DPAPI et ne quittent jamais la machine."
+  fr-fr.caption[ 2]              ok  'Quatre thèmes intégrés. Flatline ne fait passer aucune information par la couleur, donc rien ne se perd avec le daltonisme, un mauvais écran ou en plein soleil.'
+  fr-fr.caption[ 3]              ok  "Multi-lanceur pour Windows. Détient le mutex singleton de Roblox pour que le client suivant s'ouvre au lieu de se battre avec le premier. Une réimplémentation propre, pas un fork."
+  fr-fr.caption[ 4]              ok  'Enregistrez les jeux et les serveurs privés auxquels vous jouez vraiment, puis choisissez-en un différent par compte avant de lancer.'
+  fr-fr.caption[ 5]              ok  "Diagnostics montre ce que RoRoRo voit à l'instant : versions, état de santé et emplacement des journaux, pour le jour où vous devez signaler quelque chose."
+  fr-fr.caption[ 6]              ok  'Chaque lancement est enregistré, vous voyez donc quel compte a joué à quoi et pendant combien de temps.'
+  fr-fr.caption[ 7]              ok  "Les plugins tournent comme des processus séparés et demandent d'abord. Vous accordez chaque capacité par son nom, et vous pouvez la révoquer ensuite."
+  fr-fr.caption[ 8]              ok  "Composez un thème à partir de dix couleurs et il apparaît dans le sélecteur. C'est un fichier JSON, vous pouvez donc le donner à quelqu'un d'autre."
+  fr-fr.caption[ 9]              ok  "Le mode compact n'affiche que ce qui tourne. Épinglez-le dans un coin de l'écran et retournez jouer."
+  fr-fr.caption[10]              ok  'Huit clients Roblox, huit comptes, un seul PC. Chaque titre de fenêtre porte le compte qui y est connecté, vous savez donc toujours qui est qui.'
+  pl.description                ok  5051 chars
+  pl.shortDescription           ok  197 chars
+  pl.releaseNotes               ok  1219 chars
+  pl.copyrightAndTrademarkInfo  ok  190 chars
+  pl.licenseTerms               ok  791 chars
+  pl.devStudio                  ok  12 chars
+  pl.features                   ok  20 entries
+  pl.keywords                   ok  7 entries
+  pl.caption[ 1]              ok  'Trzy konta działają naraz, każde z własnym zużyciem pamięci i własnym przyciskiem zatrzymania. Ciasteczka szyfruje Windows DPAPI osobno dla każdego użytkownika i nigdy nie opuszczają komputera.'
+  pl.caption[ 2]              ok  'Cztery wbudowane motywy. Flatline w ogóle nie przekazuje znaczenia kolorem, więc nic nie ginie przy daltonizmie, słabej matrycy ani w pełnym słońcu.'
+  pl.caption[ 3]              ok  'Multi-launcher na Windowsa. Trzyma mutex singletona Roblox, żeby kolejny klient się otwierał, zamiast walczyć z pierwszym. Czysta reimplementacja, nie fork.'
+  pl.caption[ 4]              ok  'Zapisz gry i prywatne serwery, w które naprawdę grasz, a przed startem wybierz inne dla każdego konta.'
+  pl.caption[ 5]              ok  'Diagnostyka pokazuje, co RoRoRo widzi w tej chwili: wersje, stan i miejsce logów — na wypadek, gdy trzeba coś zgłosić.'
+  pl.caption[ 6]              ok  'Każde uruchomienie jest zapisywane, więc widzisz, które konto w co grało i jak długo.'
+  pl.caption[ 7]              ok  'Wtyczki działają jako osobne procesy i najpierw pytają. Każde uprawnienie przyznajesz z nazwy i możesz je później cofnąć.'
+  pl.caption[ 8]              ok  'Zbuduj motyw z dziesięciu kolorów, a pojawi się na liście. To plik JSON, więc możesz go komuś przekazać.'
+  pl.caption[ 9]              ok  'Tryb kompaktowy pokazuje tylko to, co działa. Przypnij go w rogu ekranu i wracaj do gry.'
+  pl.caption[10]              ok  'Osiem klientów Roblox, osiem kont, jeden PC. Tytuł każdego okna niesie konto, które jest w nim zalogowane, więc zawsze wiesz, które jest które.'
+  pt-br.description                ok  5099 chars
+  pt-br.shortDescription           ok  195 chars
+  pt-br.releaseNotes               ok  1227 chars
+  pt-br.copyrightAndTrademarkInfo  ok  169 chars
+  pt-br.licenseTerms               ok  791 chars
+  pt-br.devStudio                  ok  12 chars
+  pt-br.features                   ok  20 entries
+  pt-br.keywords                   ok  7 entries
+  pt-br.caption[ 1]              ok  'Três contas rodando ao mesmo tempo, cada uma com seu próprio uso de memória e seu próprio botão de parada. Os cookies são criptografados por usuário com o Windows DPAPI e nunca saem da máquina.'
+  pt-br.caption[ 2]              ok  'Quatro temas nativos. O Flatline não transmite nenhum significado pela cor, então nada se perde com daltonismo, um monitor ruim ou sol direto.'
+  pt-br.caption[ 3]              ok  'Multi-launcher para Windows. Segura o mutex singleton do Roblox para que o próximo cliente abra em vez de brigar com o primeiro. Uma reimplementação limpa, não um fork.'
+  pt-br.caption[ 4]              ok  'Salve os jogos e servidores privados que você realmente joga e escolha um diferente para cada conta antes de iniciar.'
+  pt-br.caption[ 5]              ok  'O Diagnóstico mostra o que o RoRoRo enxerga agora: versões, saúde e onde ficam os logs, para quando você precisar relatar algo.'
+  pt-br.caption[ 6]              ok  'Cada inicialização fica registrada, então você vê qual conta jogou o quê e por quanto tempo.'
+  pt-br.caption[ 7]              ok  'Os plugins rodam como processos separados e perguntam antes. Você concede cada permissão pelo nome e pode revogá-la depois.'
+  pt-br.caption[ 8]              ok  'Monte um tema com dez cores e ele aparece no seletor. É um arquivo JSON, então dá para passar para outra pessoa.'
+  pt-br.caption[ 9]              ok  'O modo compacto mostra só o que está rodando. Fixe num canto da tela e volte para o jogo.'
+  pt-br.caption[10]              ok  'Oito clientes Roblox, oito contas, um PC. O título de cada janela carrega a conta conectada nela, então você sempre sabe qual é qual.'
+  ru.description                ok  5189 chars
+  ru.shortDescription           ok  200 chars
+  ru.releaseNotes               ok  1265 chars
+  ru.copyrightAndTrademarkInfo  ok  157 chars
+  ru.licenseTerms               ok  791 chars
+  ru.devStudio                  ok  12 chars
+  ru.features                   ok  20 entries
+  ru.keywords                   ok  7 entries
+  ru.caption[ 1]              ok  'Три аккаунта работают одновременно, у каждого своя память и своя кнопка остановки. Куки шифруются отдельно для каждого пользователя через Windows DPAPI и никогда не покидают компьютер.'
+  ru.caption[ 2]              ok  'Четыре встроенные темы. Flatline вообще не передаёт смысл цветом, поэтому ничего не теряется при дальтонизме, плохой матрице или на солнце.'
+  ru.caption[ 3]              ok  'Мульти-лаунчер для Windows. Удерживает singleton-мьютекс Roblox, чтобы следующий клиент открывался, а не боролся с первым. Чистая реализация, а не форк.'
+  ru.caption[ 4]              ok  'Сохраните игры и приватные серверы, в которые действительно играете, и выберите разные для каждого аккаунта перед запуском.'
+  ru.caption[ 5]              ok  'Диагностика показывает, что RoRoRo видит прямо сейчас: версии, состояние и где лежат логи — на случай, когда нужно сообщить о проблеме.'
+  ru.caption[ 6]              ok  'Каждый запуск записывается, поэтому видно, какой аккаунт во что играл и сколько времени.'
+  ru.caption[ 7]              ok  'Плагины работают отдельными процессами и сначала спрашивают. Вы выдаёте каждое разрешение по имени и можете отозвать его позже.'
+  ru.caption[ 8]              ok  'Соберите тему из десяти цветов, и она появится в списке. Это файл JSON, поэтому им можно поделиться.'
+  ru.caption[ 9]              ok  'Компактный режим показывает только то, что запущено. Закрепите его в углу экрана и возвращайтесь в игру.'
+  ru.caption[10]              ok  'Восемь клиентов Roblox, восемь аккаунтов, один ПК. В заголовке каждого окна — аккаунт, который в нём вошёл, так что вы всегда знаете, где какой.'
+
+VERIFIED: the API serves every listing field and caption the payload carries.
