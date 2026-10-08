@@ -1,0 +1,90 @@
+Hello reviewer,
+
+RoRoRo is a launcher that runs several Roblox clients side by side, each signed
+in as a different account the user saved. This is v1.33.0.0. Certification last
+saw v1.32.1.0, so this is one version's delta. It is a larger one than the last
+few: a pass over how the app notifies the user.
+
+1. WHAT CHANGED
+
+All of it is about notifications the app already sent, and where they go.
+
+The app can warn the user about things happening to their own accounts: one
+dropped out, one is using a lot of memory, one went idle. Settings has a grid
+letting the user pick, per warning, whether it appears on the desktop, goes to
+a Discord channel they configured, or goes to their phone.
+
+One of those warnings ignored the grid. Memory warnings always raised a desktop
+balloon, whatever the user had chosen. That is fixed: every warning now goes
+through one place, so the grid, the per-account mute and the repeat limit apply
+to all of them equally.
+
+Three smaller changes in the same area:
+
+  - The user chooses how often a warning may repeat, from every time up to once
+    an hour. It was fixed at five minutes, which is still the default.
+  - The desktop notification is now a window the app draws itself, in the app's
+    own theme, rather than a Windows shell balloon. Clicking one that names a
+    single account brings the app forward at that account.
+  - The user picks what it sounds like — a bundled chime, the Windows default
+    sound, or silence — and can press a button to hear it. The chime is a small
+    WAV file we generated ourselves; it is not licensed audio.
+
+2. THE ONE PLUGIN-FACING CHANGE, STATED PLAINLY
+
+The app can launch optional plugin programs the user installs and consents to.
+Those launches now carry one environment variable, RORORO_LAUNCH_REASON, whose
+value is one of: autostart, manual, install, update, restart. It lets a plugin
+tell a start the user asked for from one that happened automatically.
+
+It is an environment variable and not a command-line argument deliberately, so
+that a plugin which does not read it is completely unaffected. Nothing else
+about the plugin interface moved:
+
+  - plugin_contract.proto is byte for byte what v1.32.1.0 shipped. Verified
+    against the diff, not assumed.
+  - No capability, consent prompt or RPC was added, and the contract version is
+    unchanged.
+
+3. NOTHING ELSE MOVED
+
+  - Package.appxmanifest differs from v1.32.1.0 by the Version attribute only.
+    Same runFullTrust capability, languages, protocols and startup task.
+  - No new network address and no new network call of any kind. The only URLs
+    in added lines are a XAML namespace declaration and obviously-fake webhook
+    strings inside unit tests.
+  - No new permission, and no change to what data the app stores or where.
+
+4. NO INPUT SYNTHESIS, NO NEW INTEROP
+
+No added line calls SendInput, keybd_event, mouse_event, SetWindowsHookEx,
+PostMessage, SendMessage, WriteProcessMemory or OpenProcess, and no DllImport
+or LibraryImport was added anywhere in the change. The app still synthesizes no
+input and injects into no process.
+
+5. WHAT YOU CAN EXERCISE
+
+No Roblox account is needed for most of it.
+
+Open Settings, then Alerts. The section lists each warning on its own row, with
+where it goes and how often beside it. Change "Alert sound" and press "Hear it"
+— the sound plays immediately. Setting it to Silent and pressing the button
+plays nothing, which is correct.
+
+To see a real notification: save an account and launch it, so there is a
+running client. In the same section, lower "Warn when one account passes (MB)"
+to a figure below what the client is using. Within about thirty seconds a
+themed notification appears at the corner of the screen naming the account.
+Untick Desktop for that row and repeat: nothing appears, which is the fix this
+release is mostly about.
+
+6. UNCHANGED, RESTATED
+
+  - The app synthesizes no input and injects into no process.
+  - Sign-in happens inside Roblox's own page in a WebView2 frame; only the
+    session cookie is captured, encrypted to the Windows user.
+  - No telemetry and no analytics.
+
+Thank you for your time.
+
+626 Labs LLC

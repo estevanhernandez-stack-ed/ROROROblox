@@ -37,7 +37,7 @@ No DevTools. No registry edits. No telemetry. The Roblox client launches unmodif
 - **Memory watchdog + Recycle** — learns what a client really costs in RAM on your machine, warns before you run out, and one click puts a heavy account right back in its server.
 - **Squad Launch + Friend Follow** — same private server, or one public server together.
 - **Join by link** — paste any roblox.com URL; saved games and private servers per account.
-- **Alerts wherever you want them** — desktop, a Discord webhook you create, or your phone through Pushover or ntfy, in any mix per alert: drops, memory warnings, recycle completions, and an every-two-hours all-good mark while your accounts run.
+- **Alerts wherever you want them** — desktop, a Discord webhook you create, or your phone through Pushover or ntfy, in any mix per alert: drops, memory warnings, idle accounts, recycle completions, and an every-two-hours all-good mark while your accounts run. You set how often each may repeat, and what it sounds like.
 - **History that keeps score** — most alts at once, total hours, longest session, and per-alt login streaks that only count days the account actually landed in a game.
 - **Themes** — four built in, plus a builder to make your own and share it as a file.
 - **Speaks your language** — the whole app, screens and messages alike, in French, German, Russian, Portuguese (Brazil), Polish, or Spanish. Follows your Windows language, or pick one in Settings and it switches instantly.
