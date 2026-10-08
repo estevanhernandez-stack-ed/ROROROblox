@@ -115,13 +115,18 @@
                          GradientStop is a Freezable and a DynamicResource inside one never finds
                          the dictionary. AboutMarkGateTests caught it; see ThemeService.ApplyDuoBrush.
 
+                         40px, not the 26px it first shipped at (2026-10-07): the zero carries
+                         a dot of Este's own period to separate it from an o, and below about
+                         40px that dot is too few pixels to register. 40 is also the floor the
+                         brand sets for the wordmark at the foot of this page.
+
                          The DropShadowEffect is the one that was already here, unchanged.
                          AutomationProperties.Name is a literal on purpose: a Path carries no text
                          for a screen reader, and the clan's name is a proper noun that stays
                          English in every culture. -->
                     <Path x:Name="EasterEggMark"
                           Data="{DynamicResource MarkKoii4Eva}"
-                          Stretch="Uniform" Height="26"
+                          Stretch="Uniform" Height="40"
                           HorizontalAlignment="Left"
                           Margin="0,8,0,0"
                           Visibility="Collapsed"

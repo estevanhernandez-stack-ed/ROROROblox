@@ -879,7 +879,7 @@
     <value>Аккаунт переподключается</value>
   </data>
   <data name="SettingsPage_Appearance" xml:space="preserve">
-    <value>Внешний вид</value>
+    <value>Язык и оформление</value>
   </data>
   <data name="SettingsPage_ApplicationToken" xml:space="preserve">
     <value>Токен приложения</value>

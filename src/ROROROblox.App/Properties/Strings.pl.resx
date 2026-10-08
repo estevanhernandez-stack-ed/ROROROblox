@@ -879,7 +879,7 @@
     <value>Konto zostaje połączone ponownie</value>
   </data>
   <data name="SettingsPage_Appearance" xml:space="preserve">
-    <value>Wygląd</value>
+    <value>Język i wygląd</value>
   </data>
   <data name="SettingsPage_ApplicationToken" xml:space="preserve">
     <value>Token aplikacji</value>

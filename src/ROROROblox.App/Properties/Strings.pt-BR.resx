@@ -879,7 +879,7 @@
     <value>Uma conta é reciclada</value>
   </data>
   <data name="SettingsPage_Appearance" xml:space="preserve">
-    <value>Aparência</value>
+    <value>Idioma e aparência</value>
   </data>
   <data name="SettingsPage_ApplicationToken" xml:space="preserve">
     <value>Token do aplicativo</value>

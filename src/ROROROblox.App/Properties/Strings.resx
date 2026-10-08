@@ -1166,7 +1166,7 @@
     <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:366 xaml-text</comment>
   </data>
   <data name="SettingsPage_Appearance" xml:space="preserve">
-    <value>Appearance</value>
+    <value>Language and Appearance</value>
     <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:37 xaml-text</comment>
   </data>
   <data name="SettingsPage_ApplicationToken" xml:space="preserve">

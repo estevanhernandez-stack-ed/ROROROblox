@@ -879,7 +879,7 @@
     <value>Un compte est recyclé</value>
   </data>
   <data name="SettingsPage_Appearance" xml:space="preserve">
-    <value>Apparence</value>
+    <value>Langue et apparence</value>
   </data>
   <data name="SettingsPage_ApplicationToken" xml:space="preserve">
     <value>Jeton d'application</value>

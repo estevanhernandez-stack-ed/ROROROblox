@@ -879,7 +879,7 @@
     <value>Ein Konto wird neu verbunden</value>
   </data>
   <data name="SettingsPage_Appearance" xml:space="preserve">
-    <value>Darstellung</value>
+    <value>Sprache und Darstellung</value>
   </data>
   <data name="SettingsPage_ApplicationToken" xml:space="preserve">
     <value>Anwendungs-Token</value>

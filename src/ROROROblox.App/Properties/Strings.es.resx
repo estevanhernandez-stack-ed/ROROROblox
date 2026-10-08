@@ -879,7 +879,7 @@
     <value>Una cuenta se reconecta</value>
   </data>
   <data name="SettingsPage_Appearance" xml:space="preserve">
-    <value>Apariencia</value>
+    <value>Idioma y apariencia</value>
   </data>
   <data name="SettingsPage_ApplicationToken" xml:space="preserve">
     <value>Token de aplicación</value>
