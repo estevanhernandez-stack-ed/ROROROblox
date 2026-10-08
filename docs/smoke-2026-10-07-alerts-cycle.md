@@ -205,3 +205,77 @@ new state while the file never changed.
 - Put the memory alert's Discord and phone destinations back.
 - Confirm the theme and UI language are as they started.
 - Fill in every **Result** above, including the ones that passed, and especially run 7's answer.
+
+## What this run found
+
+Nine things, none of which a unit test could have produced. Listed so they survive the session;
+severity is my read, not a decision.
+
+### Worth fixing before the tag
+
+**1. You cannot hear a sound before choosing it.** `OnAlertSoundChanged` only saves. The string
+"What a desktop alert sounds like" is the picker's `AutomationProperties.Name`, not a play button,
+so there is no preview anywhere in Settings. A user picks between three sounds blind, and the smoke
+could not test run 4 from the Settings page at all — an alert had to actually fire. One button,
+calling the same `IAlertSoundPlayer.Play()` the alert path uses.
+
+### Worth saying out loud in the release notes
+
+**2. A plugin's audio obeys no host setting.** Ur Score plays its own sound from its own process on
+its own metric alerts. Measured: with RoRoRo set to `WindowsDefault`, a metric alert produced the
+chime (Ur Score's) at 18:22 while a memory alert produced the asterisk (RoRoRo's) at 18:31. Set
+RoRoRo to Silent and the plugin still makes noise. Nothing in the UI suggests "Silent" is only
+RoRoRo's silence.
+
+**3. Presence privacy means no idle alerts, silently.** The in-game gate drops anything that does
+not report `InGame`, and `Invisible` — the privacy filter — is one of those. An account with Roblox
+presence privacy on will never get an idle alert even while sitting in a game, and nothing on
+screen explains why. Known and deliberate (the alternative is claiming a game we cannot see), but
+it belongs in the notes rather than in a user's bug report.
+
+### Smaller, and none of them v1.33 regressions
+
+**4. The idle threshold cannot be set from the settings file.** `InitializeIdleSettingsAsync` runs
+at startup and from the picker handler, and nowhere else — there is no periodic re-read. The memory
+reserve, cap and projection numbers ARE re-read on the view model's 30-second tick, so two settings
+in the same section behave differently and nothing says so. A file edit to the idle threshold looks
+like it worked and never reaches `ActivityMonitor.WarnThreshold`.
+
+**5. The idle threshold accepts values its own picker cannot offer.** The store clamps only `<= 0`;
+the picker's lowest option is 10 minutes. A stored `1` survives the getter and is silently rewritten
+to 15 the next time the Settings page paints. A setting that quietly discards what it was given.
+
+**6. `ActivityMonitor` logs nothing at all.** Zero lines in a full day's log. When idle alerts did
+not appear tonight there was no way to tell "no records" from "records exist and the alert path is
+broken" without driving the UI to read the row chips. The memory watchdog logs its crossings, which
+is why every memory run tonight was trivial to verify. One line when a crossing is raised would
+have saved an hour.
+
+**7. The idle clock is per-foreground-account, and nothing says so.** Activity is stamped against
+the account whose client is in the foreground; working in another application does not count as
+activity for any alt. That is the right design — it is what makes idle detection meaningful for
+alts — but it is not discoverable, and it is the difference between "walk away from the machine"
+and "just do not click into a client."
+
+**8. "Appearance" should read "Language and Appearance".** Este, during the theme pass. Language is
+important and nobody hunting for it looks under Appearance. A nav rename plus seven catalogues.
+
+**9. "Not all on this pc."** Este, on a `clan.battle.points` alert naming three accounts, of which
+some were not running on this machine. Metric alerts did not change this cycle so it is
+pre-existing, and it is unexplained rather than diagnosed — either the grouping spans a roster
+wider than the host, or the alert reads as something narrower than it means. Worth chasing on its
+own, not here.
+
+### Two mistakes of mine, kept because the shape repeats
+
+**Three tests that could not fail.** Run 10 as written said to use the keyboard rather than the
+mouse, when F-102's own finding records that both always worked — the broken path was UI
+Automation, which no human produces by hand. Run 7's first two attempts measured a windowed client
+and then a maximized one, either of which would have returned a pass on the easy case. In both
+cases the fix was a guard that refuses rather than a test that passes.
+
+**Two confident wrong diagnoses on the sound.** First that the chime could not play, from a real
+mechanism (async `Play()`, disposed stream) that was not the cause. Then that the setting never
+reached the player. Both were inference from "this could fail" to "this is the failure", and both
+were settled in seconds by a test with one unambiguous answer. The reading was fine; treating it as
+evidence was not.
