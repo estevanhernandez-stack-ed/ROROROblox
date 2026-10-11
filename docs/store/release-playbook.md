@@ -4,6 +4,8 @@
 
 > **Two distribution channels per release.** Microsoft Store (`dist/RORORO-Store-<arch>-<version>.msix`, x64 AND arm64, unsigned — Partner Center signs after upload) and GitHub Release (Velopack `Setup.exe` — self-updating from wired versions, see the Phase 6 note — + `RORORO-Sideload-<arch>-<version>.msix` + `dev-cert.cer` for cert-import users). Both ship from the same tag.
 
+> **Two shared docs own the Store half, and they are cross-app.** Phase 7's submission is run from [`store-listing-console/docs/release-loop.md`](../../../store-listing-console/docs/release-loop.md) — one owner per section, the agent runs every command including the commit, and its evidence table is the only place a Store API behaviour counts as known. Anything about `Package.appxmanifest` — which restricted capabilities we may declare, how a justification is worded, and where a packaged build's data actually lands on a customer's machine versus this one — is in [`msix-capabilities.md`](../../../store-listing-console/docs/msix-capabilities.md). Read the storage section before touching any privacy copy about uninstall; the claim in [`PRIVACY.md`](../PRIVACY.md) currently rests on a measurement this machine cannot make.
+
 ---
 
 ## Preconditions
