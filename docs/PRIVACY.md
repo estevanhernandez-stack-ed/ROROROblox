@@ -19,7 +19,7 @@ permalink: /privacy/
 - **Roblox session cookies are stored locally only**, encrypted with the Windows Data Protection API (DPAPI), tied to your Windows user account. Copying the file to another PC won't work — *unless you deliberately export your accounts* (Account export, v1.6), which re-encrypts them under a passphrase you choose into a file you save where you want. No cloud, no upload.
 - **No telemetry. No analytics. No third-party tracking.** RORORO makes network calls to Roblox-owned endpoints while it runs, not just at launch, including a presence heartbeat about every 25 seconds per saved account, and to GitHub Releases (for the daily update check, the compatibility feed, the known Roblox issues list (v1.31+), and, in direct-download builds only, the plugin catalog when you open the Plugins page).
 - **No data leaves your PC** except the Roblox-side calls described below — the same calls Roblox.com would make from your browser — and, if you choose to use it, a passphrase-encrypted account-export file that you save yourself (never auto-uploaded).
-- **You can delete everything**, but uninstalling alone does not do it: for every install type the data folder is `%LOCALAPPDATA%\ROROROblox\` and Windows leaves it behind on uninstall — delete that folder yourself for a full clean. (Until 2026-08-30 this bullet claimed the Store uninstall auto-removed the vault; a live test showed the Store build uses the same real folder.)
+- **You can delete everything, but uninstalling may not do it for you.** Your data sits in one of two places, and which one depends on how your copy got installed — Windows decides that, not RORORO. To find out which case you are in: press `Win+R`, paste `%LOCALAPPDATA%\ROROROblox`, and press Enter. If that folder opens, that is your data, and **uninstalling always leaves it behind** — delete the folder yourself for a full clean. If Windows says it does not exist, your copy keeps its data inside its own app package folder under `%LOCALAPPDATA%\Packages\`, and **uninstalling removes it with the app**. Checking that one path is all it takes. (Until 2026-08-30 this bullet claimed a Store uninstall always auto-removed the vault; until 2026-10-11 it claimed the opposite for every install type. Both were drawn from one PC. The paragraph under "What RORORO stores on your PC" explains the actual rule and says plainly which half is still unconfirmed.)
 
 ---
 
@@ -42,7 +42,17 @@ permalink: /privacy/
 | `last-known-mutex.txt`, `.welcome-shown` | The last verified singleton name from the compatibility feed; a marker that the welcome tour has been shown | Plain text — no secrets |
 | `known-issues.cache.json` + `.sig`, `known-issues-dismissed.json` *(v1.31+)* | The last verified copy of the known Roblox issues list and its signature (re-verified every time it is loaded); the ids of the notices you closed | Plain text — no secrets, nothing about you |
 
-For every install type — Microsoft Store, sideload MSIX, and direct download — the "app's local data folder" is `%LOCALAPPDATA%\ROROROblox\`. Verified live on 2026-08-30: the Store build writes to this same real folder (Windows does not virtualize the app's file writes), so an uninstall of any flavor leaves it in place; delete the folder yourself for a full clean. (Until that date this section said Store installs used a virtualized LocalState folder that uninstall removes.)
+**Where the "app's local data folder" actually is depends on your install, and Windows decides it rather than RORORO.** The rule for packaged apps — which the Microsoft Store and sideload MSIX builds both are — is that Windows writes to a real AppData folder **only if that folder already exists on the PC**, and otherwise redirects the writes into the app's own package folder:
+
+| Your install | Where the files are | Does uninstall delete them? |
+|---|---|---|
+| Direct download, ever, on this PC | `%LOCALAPPDATA%\ROROROblox\` | **No.** Windows leaves it. Delete it yourself. |
+| Microsoft Store or sideload, on a PC that already has that folder | the same `%LOCALAPPDATA%\ROROROblox\` | **No.** Same folder, same leftover. |
+| Microsoft Store only, on a PC that never had a direct download | `%LOCALAPPDATA%\Packages\626LabsLLC.RoRoRoBlox_…\LocalCache\` | **Yes.** It goes with the app. |
+
+The practical version is the bullet above: check `%LOCALAPPDATA%\ROROROblox` once, and its presence or absence tells you which row you are in.
+
+**What is measured, and what is not.** Rows 1 and 2 are verified live on this publisher's PC on 2026-08-30 and re-confirmed 2026-10-11, where the folder holds 1,189 files and the Store build writes into it. Row 3 is the same rule measured on a sibling 626 Labs app on the same PC, where that app's data does sit in its package folder — **it has not yet been confirmed on a clean PC running only the Store build of RORORO**, and it will be. No row claims your data goes anywhere off your PC; this is only about which folder on it. (Until 2026-08-30 this section said Store installs used a virtualized folder that uninstall removes; until 2026-10-11 it said the real folder was used for every install type. Each was true of the PC it was tested on and overstated as a rule.)
 
 ---
 
