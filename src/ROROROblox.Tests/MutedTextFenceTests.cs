@@ -39,8 +39,11 @@ namespace ROROROblox.Tests;
 /// set its colour through a <c>&lt;Style TargetType="TextBlock"&gt;</c> nested inside that child, at
 /// line 707: clause 1 finds no Foreground attribute on the Button itself, clause 2 skips the
 /// nested style because <c>TextBlock</c> is not in <c>ControlElements</c>, clause 3 never opens
-/// XAML, and clause 4 counted the binding as ordinary prose. That is the instance that revealed
-/// the limit, and it was fixed by hand. The <c>☰</c> drag grip (<c>MainWindow.xaml</c>, the child
+/// XAML, and clause 4 never saw it either: clause 4 counts <c>Foreground</c> ATTRIBUTES, and the
+/// star's binding sits on a <c>&lt;Setter&gt;</c> carrying Property and Value, so it was never
+/// counted, as prose or otherwise. That is the instance that revealed the limit, and it was fixed
+/// by hand. The comment in <c>TheFenceSeesTheAppItClaimsTo</c> says what the attribute scan does
+/// and does not reach. The <c>☰</c> drag grip (<c>MainWindow.xaml</c>, the child
 /// <c>&lt;TextBlock&gt;</c> around line 337 inside an interactive <c>&lt;Border&gt;</c>) is the
 /// other known instance of a control's label living on a child element — there the child sets
 /// Foreground directly rather than through a nested style, but the child itself is still not a

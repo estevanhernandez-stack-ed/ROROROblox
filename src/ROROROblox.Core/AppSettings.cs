@@ -246,14 +246,14 @@ public sealed class AppSettings : IAppSettings, IDisposable
         try
         {
             var mins = (await LoadAsync().ConfigureAwait(false)).IdleWarnThresholdMinutes;
-            return mins <= 0 ? 15 : mins;   // guard against a bad stored value
+            return IdleWarnThresholdOptions.Normalise(mins);   // nearest offered value; never written back by a read
         }
         finally { _gate.Release(); }
     }
 
     public async Task SetIdleWarnThresholdMinutesAsync(int minutes)
     {
-        if (minutes <= 0) minutes = 15;
+        minutes = IdleWarnThresholdOptions.Normalise(minutes);
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {

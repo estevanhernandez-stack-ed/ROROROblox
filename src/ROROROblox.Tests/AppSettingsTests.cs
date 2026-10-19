@@ -516,7 +516,7 @@ public class AppSettingsTests : IDisposable
               "defaultPlaceUrl": null,
               "launchMainOnStartup": true,
               "activeThemeId": "midnight",
-              "idleWarnThresholdMinutes": 42
+              "idleWarnThresholdMinutes": 12
             }
             """);
 
@@ -528,7 +528,7 @@ public class AppSettingsTests : IDisposable
         // corrupt-file fallback wearing the same value.
         Assert.True(await settings.GetLaunchMainOnStartupAsync());
         Assert.Equal("midnight", await settings.GetActiveThemeIdAsync());
-        Assert.Equal(42, await settings.GetIdleWarnThresholdMinutesAsync());
+        Assert.Equal(12, await settings.GetIdleWarnThresholdMinutesAsync());
     }
 
     /// <summary>
@@ -544,7 +544,7 @@ public class AppSettingsTests : IDisposable
               "version": 1,
               "launchMainOnStartup": true,
               "activeThemeId": "midnight",
-              "idleWarnThresholdMinutes": 42
+              "idleWarnThresholdMinutes": 12
             }
             """);
 
@@ -557,6 +557,6 @@ public class AppSettingsTests : IDisposable
         Assert.True(await second.GetCompactModeAsync());
         Assert.True(await second.GetLaunchMainOnStartupAsync());
         Assert.Equal("midnight", await second.GetActiveThemeIdAsync());
-        Assert.Equal(42, await second.GetIdleWarnThresholdMinutesAsync());
+        Assert.Equal(12, await second.GetIdleWarnThresholdMinutesAsync());
     }
 }

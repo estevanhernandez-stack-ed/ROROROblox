@@ -3357,4 +3357,49 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   <data name="SettingsPage_HearTheAlertSound" xml:space="preserve">
     <value>Écouter le son d'alerte</value>
   </data>
+  <data name="SettingsPage_IdleInvisibleHint" xml:space="preserve">
+    <value>Les comptes dont la confidentialité de présence Roblox est activée (Invisible) ne reçoivent jamais d'alerte d'inactivité. RoRoRo ne les voit pas en jeu, et cette alerte ne se déclenche que pour les comptes qu'il voit en jeu.</value>
+  </data>
+  <data name="SettingsPage_AlertSoundPluginsHint" xml:space="preserve">
+    <value>« Silencieux » ne coupe que les alertes propres à RoRoRo. Les plugins comme Ur Score jouent leurs propres sons, réglés dans leurs propres paramètres.</value>
+  </data>
+  <data name="SettingsPage_IdleActivityHint" xml:space="preserve">
+    <value>L'activité compte par compte, et seulement depuis le client au premier plan. Travailler dans un autre programme compte comme de l'inactivité pour tous les alts.</value>
+  </data>
+  <data name="ThemeShare_ShareButton" xml:space="preserve">
+    <value>Partager le thème</value>
+  </data>
+  <data name="ThemeShare_ImportButton" xml:space="preserve">
+    <value>Importer un thème</value>
+  </data>
+  <data name="ThemeShare_ShareButtonAccessible" xml:space="preserve">
+    <value>Enregistrer le thème personnalisé actif en fichier JSON à partager</value>
+  </data>
+  <data name="ThemeShare_ImportButtonAccessible" xml:space="preserve">
+    <value>Importer un thème depuis un fichier JSON</value>
+  </data>
+  <data name="ThemeShare_ShareDialogTitle" xml:space="preserve">
+    <value>Partager le thème</value>
+  </data>
+  <data name="ThemeShare_ImportDialogTitle" xml:space="preserve">
+    <value>Importer un thème</value>
+  </data>
+  <data name="ThemeShare_Shared" xml:space="preserve">
+    <value>{0} enregistré. Envoie le fichier à un ami, il pourra l'importer ici.</value>
+  </data>
+  <data name="ThemeShare_ShareFailed" xml:space="preserve">
+    <value>Impossible d'enregistrer le fichier : {0}</value>
+  </data>
+  <data name="ThemeShare_ImportReadFailed" xml:space="preserve">
+    <value>Impossible de lire ce fichier : {0}</value>
+  </data>
+  <data name="ThemeShare_ImportBuiltInId" xml:space="preserve">
+    <value>Ce nom appartient à un thème intégré ({0}), et les thèmes intégrés l'emportent toujours. Change le champ name du fichier et importe à nouveau.</value>
+  </data>
+  <data name="ThemeShare_ImportAlreadyExists" xml:space="preserve">
+    <value>Tu as déjà un thème personnalisé nommé {0}. Renomme-le dans le dossier des thèmes ou change le nom dans le fichier, puis importe à nouveau.</value>
+  </data>
+  <data name="ThemeShare_ImportFailed" xml:space="preserve">
+    <value>Échec de l'import : {0}</value>
+  </data>
 </root>

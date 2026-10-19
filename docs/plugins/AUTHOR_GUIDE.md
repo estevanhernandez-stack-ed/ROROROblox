@@ -147,6 +147,8 @@ Gated by the gRPC interceptor. If you call a method whose required capability is
 The following need **no capability** — every plugin can call them after handshake:
 `Handshake`, `GetHostInfo`, `GetRunningAccounts`, `UpdateUI`, `RemoveUI`.
 
+`GetHostInfo` returns `version`, `multi_instance_enabled`, `multi_instance_state` and, from NuGet 0.12.0, `install_flavour` (`store`, `sideload` or `dev`), `process_path` and `informational_version` (the version plus a `+commit` suffix). Older hosts leave the three new fields empty.
+
 `UpdateUI` and `RemoveUI` are ungated by *capability*, but they are **not unguarded**: they
 only accept a `UIHandle` your plugin created. Passing a handle you don't own — or one that was
 never issued — throws `PermissionDenied`. Both cases return the identical error, so you cannot
