@@ -428,7 +428,7 @@ public partial class App : Application
         }
 
         // Configure logging FIRST — every other failure mode below benefits from a written record.
-        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
         _loggerFactory = AppLogging.Configure(version);
         _log = _loggerFactory.CreateLogger<App>();
         WireGlobalExceptionHandlers();
@@ -1067,7 +1067,7 @@ public partial class App : Application
         services.AddHttpClient<IRobloxApi, RobloxApi>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         })
         .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
@@ -1079,7 +1079,7 @@ public partial class App : Application
         services.AddHttpClient<IRobloxCompatChecker, RobloxCompatChecker>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
@@ -1097,7 +1097,7 @@ public partial class App : Application
         services.AddHttpClient<ROROROblox.Core.KnownIssues.IKnownIssuesFeed, ROROROblox.Core.KnownIssues.KnownIssuesFeed>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
         services.AddSingleton(sp => new ROROROblox.Core.KnownIssues.KnownIssuesState(
@@ -1113,7 +1113,7 @@ public partial class App : Application
         services.AddHttpClient<IRobloxUpdateProbe, RobloxUpdateProbe>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
@@ -1294,7 +1294,7 @@ public partial class App : Application
             // and a hung POST must never be what keeps the app alive at shutdown.
             client.Timeout = TimeSpan.FromSeconds(10);
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
@@ -1303,7 +1303,7 @@ public partial class App : Application
             // Setup help is best-effort and blocks a visible field, so it fails fast.
             client.Timeout = TimeSpan.FromSeconds(5);
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
@@ -1314,14 +1314,14 @@ public partial class App : Application
         {
             client.Timeout = TimeSpan.FromSeconds(10);
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
         services.AddHttpClient<Notify.NtfySender>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(10);
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
         services.AddSingleton(sp => new Notify.PhoneAlertSender(
@@ -1381,7 +1381,7 @@ public partial class App : Application
         // client + a stop-hook that kills a running instance before a re-install touches its dir.
         services.AddHttpClient(nameof(ROROROblox.App.Plugins.PluginInstaller), client =>
         {
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(
                 new ProductInfoHeaderValue("ROROROblox-PluginInstaller", version));
 
@@ -1716,7 +1716,7 @@ public partial class App : Application
 
         var catalogHttp = _services.GetRequiredService<IHttpClientFactory>().CreateClient();
         catalogHttp.DefaultRequestHeaders.UserAgent.Clear();
-        var catalogVersion = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        var catalogVersion = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
         catalogHttp.DefaultRequestHeaders.UserAgent.Add(
             new System.Net.Http.Headers.ProductInfoHeaderValue("RORORO", catalogVersion));
         var catalogClient = new ROROROblox.App.Plugins.PluginCatalogClient(
