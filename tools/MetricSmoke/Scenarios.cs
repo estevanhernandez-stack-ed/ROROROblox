@@ -1403,20 +1403,56 @@ public static class ScenarioTable
     /// unknown id with a pair of empty strings, which would make both bodies identical and this row
     /// vacuous — so without one it SKIPS rather than passing on nothing.
     /// </para>
+    /// <para>
+    /// And since PR #234 the subject must be RUNNING on this PC: a metric alert names only running
+    /// accounts, so a saved-but-stopped subject yields the "None of your running accounts" body, which
+    /// names nobody and fails this row for a reason that is not its own. The subject is the
+    /// <c>--subject</c> account when that one is running, else the running account the shared pair-picker
+    /// finds (it waits for the operator to launch one). With none running the row skips and says so;
+    /// the saved account <see cref="ScenarioContext.ResolvableSubject"/> holds would not do.
+    /// </para>
     /// </summary>
     private static async Task<ScenarioOutcome> StreamerModeMasksAsync(ScenarioContext ctx)
     {
-        if (ctx.ResolvableSubject is null || string.IsNullOrEmpty(ctx.MaskedName))
+        string? subject = null;
+        string? maskedName = null;
+
+        if (ctx.ResolvableSubject is not null && !string.IsNullOrEmpty(ctx.MaskedName))
         {
-            return ScenarioOutcome.Skip(
-                "no account the host could resolve to a name. An unknown subject id resolves to a pair of "
-                + "empty names, which makes the personal and clan bodies identical and this row vacuous.");
+            try
+            {
+                var running = await ctx.Reporter.RunningAccountIdsAsync().ConfigureAwait(false);
+                if (running.Contains(ctx.ResolvableSubject))
+                {
+                    subject = ctx.ResolvableSubject;
+                    maskedName = ctx.MaskedName;
+                }
+            }
+            catch (Exception)
+            {
+                // Fall through to the pair-picker, which reports its own failure.
+            }
+        }
+
+        if (subject is null)
+        {
+            var (scope, why) = await ctx.ResolveRunningScopeAsync().ConfigureAwait(false);
+            if (scope is null)
+            {
+                return ScenarioOutcome.Skip(
+                    "no running account the host can name: " + why + " The first saved account is not a "
+                    + "substitute: a metric alert names only running accounts, so a stopped one gives a body "
+                    + "that names nobody and makes this row vacuous.");
+            }
+
+            subject = scope.RunningId;
+            maskedName = scope.RunningName;
         }
 
         await ctx.ClearCatcherAsync().ConfigureAwait(false);
         var watch = ctx.WatchLog();
 
-        await ctx.ReportAsync(ctx.ResolvableSubject, SmokeMetrics.Streamer, SmokeRules.BreachingLevel)
+        await ctx.ReportAsync(subject, SmokeMetrics.Streamer, SmokeRules.BreachingLevel)
             .ConfigureAwait(false);
 
         var arrived = await watch
@@ -1448,7 +1484,7 @@ public static class ScenarioTable
 
         // The masked name goes through the same JSON escaping the app's own payload does, so a name
         // carrying a non-ASCII character still matches.
-        var masked = JsonEncoded(ctx.MaskedName);
+        var masked = JsonEncoded(maskedName!);
 
         if (!mine.Contains(masked, StringComparison.Ordinal))
         {

@@ -111,8 +111,10 @@ Exit codes: `0` every scenario passed, `1` a scenario failed (or setup refused b
 sent), `2` the profile is still not fully restored — read the last few lines, they say which file.
 
 An optional `--subject <account-guid>` picks which saved account the masked-naming row reports
-against; without it, the tool asks the host for one and skips that single row if it cannot get an
-answer within a couple of the app's own settings-refresh ticks.
+against, but only if that account is RUNNING: since PR #234 a metric alert names only running accounts,
+so a stopped one would make the row fail for a reason that is not its own. Otherwise the row uses a
+running account found the same way as the two running-only rows (launch one after the app starts; it
+waits up to three minutes) and skips, saying why, if none is running.
 
 ## The two running-only rows
 
