@@ -1,0 +1,166 @@
+{
+  "run": "rororo-ux",
+  "repo": "~\\.cwt\\rororo-main",
+  "base_commit": "c4f2acba5ceb78e40737a3f7f7d5ab68f1ecf123",
+  "integration_branch": "cart/rororo-ux",
+  "integration_worktree": "~\\.cwt\\rororo-main-rororo-ux\\int",
+  "worktree_root": "~\\.cwt\\rororo-main-rororo-ux",
+  "builder_branch": "HEAD",
+  "uncommitted_at_start": [],
+  "started_at": "2026-10-19T17:51:24.300Z",
+  "items": [
+    {
+      "n": 1,
+      "slug": "idle-settings-trio",
+      "title": "Idle settings: clamp to the offered set, re-read on the tick, log ActivityMonitor",
+      "stop_class": "go",
+      "status": "merged",
+      "branch": "cart/rororo-ux--01-idle-settings-trio",
+      "worktree": "",
+      "on": null,
+      "checks": [
+        {
+          "attempt": 1,
+          "command": "dotnet build + test slnx Release (0 err/47 warn; 2822 unit (+18); 27 harness + 1 skip); no fence ceilings moved",
+          "result": "pass"
+        }
+      ],
+      "reason": ""
+    },
+    {
+      "n": 2,
+      "slug": "alerts-disclosure-copy",
+      "title": "Alerts disclosure copy: presence privacy, Silent is RoRoRo-only, per-foreground idle clock",
+      "stop_class": "go",
+      "status": "merged",
+      "branch": "cart/rororo-ux--02-alerts-disclosure-copy",
+      "worktree": "",
+      "on": null,
+      "checks": [
+        {
+          "attempt": 1,
+          "command": "dotnet build + test slnx Release (0 err/55 warn; 2822 unit; 27 harness + 1 skip); no ceilings moved",
+          "result": "pass"
+        }
+      ],
+      "reason": ""
+    },
+    {
+      "n": 3,
+      "slug": "catalog-hygiene",
+      "title": "Plugin catalog hygiene: publisher entity, versions, drift check that fails",
+      "stop_class": "go",
+      "status": "merged",
+      "branch": "cart/rororo-ux--03-catalog-hygiene",
+      "worktree": "",
+      "on": null,
+      "checks": [
+        {
+          "attempt": 1,
+          "command": "dotnet build + test slnx Release (0 err/55 warn; 2804 unit; 27 harness + 1 skip); drift script 4 runs (exit 1,1,0,0)",
+          "result": "pass"
+        }
+      ],
+      "reason": ""
+    },
+    {
+      "n": 4,
+      "slug": "host-info-build-identity",
+      "title": "host_info reports build identity",
+      "stop_class": "hold",
+      "status": "held",
+      "branch": "cart/rororo-ux--04-host-info-build-identity",
+      "worktree": "~\\.cwt\\rororo-main-rororo-ux\\04",
+      "on": null,
+      "checks": [
+        {
+          "attempt": 1,
+          "command": "dotnet build + test slnx Release (0 err; 2813 unit (+9); 27 harness + 1 skip); capability map green",
+          "result": "pass"
+        }
+      ],
+      "reason": "hold class: PluginContract proto change + 0.12.0 bump (ce989aa); store/sideload via Package SignatureKind, unit-tested only, needs a live read on Store and sideload installs"
+    },
+    {
+      "n": 5,
+      "slug": "parked-small-fixes",
+      "title": "MutedTextFence comment + About reads the package version when packaged",
+      "stop_class": "go",
+      "status": "merged",
+      "branch": "cart/rororo-ux--05-parked-small-fixes",
+      "worktree": "",
+      "on": null,
+      "checks": [
+        {
+          "attempt": 1,
+          "command": "dotnet build + test slnx Release (0 err/55 warn; 2809 unit (+5); 27 harness + 1 skip), incl. follow-up 245b4b6",
+          "result": "pass"
+        }
+      ],
+      "reason": ""
+    },
+    {
+      "n": 6,
+      "slug": "metric-alert-scoping",
+      "title": "Investigate: metric alert named accounts not running on this machine",
+      "stop_class": "hold",
+      "status": "held",
+      "branch": "cart/rororo-ux--06-metric-alert-scoping",
+      "worktree": "~\\.cwt\\rororo-main-rororo-ux\\06",
+      "on": null,
+      "checks": [
+        {
+          "attempt": 1,
+          "command": "dotnet build + test slnx Release (0 err/55 warn; 2804 unit; 27 harness + 1 skip); docs-only",
+          "result": "pass"
+        }
+      ],
+      "reason": "investigation complete, docs-only (b3cc783): metric alerts name every saved account Ur Score reports for; wording-first fix proposed; running-only filter is a product call"
+    },
+    {
+      "n": 7,
+      "slug": "theme-share",
+      "title": "Theme share: export and import in the Theme Builder",
+      "stop_class": "go",
+      "status": "merged",
+      "branch": "cart/rororo-ux--07-theme-share",
+      "worktree": "",
+      "on": null,
+      "checks": [
+        {
+          "attempt": 1,
+          "command": "dotnet build + test slnx Release (0 err/57 warn; 2846 unit (+24); 27 harness + 1 skip); no ceilings moved",
+          "result": "pass"
+        }
+      ],
+      "reason": ""
+    }
+  ],
+  "cleanup": {
+    "at": "2026-10-19T18:53:40.079Z",
+    "removed_worktrees": [
+      "~/.cwt/rororo-main-rororo-ux/04",
+      "~/.cwt/rororo-main-rororo-ux/06",
+      "~/.cwt/rororo-main-rororo-ux/int"
+    ],
+    "deleted_branches": [
+      "cart/rororo-ux--01-idle-settings-trio",
+      "cart/rororo-ux--02-alerts-disclosure-copy",
+      "cart/rororo-ux--03-catalog-hygiene",
+      "cart/rororo-ux--05-parked-small-fixes",
+      "cart/rororo-ux--07-theme-share",
+      "cart/rororo-ux"
+    ],
+    "kept": [
+      {
+        "branch": "cart/rororo-ux--04-host-info-build-identity",
+        "reason": "held; pass --include-held to delete it"
+      },
+      {
+        "branch": "cart/rororo-ux--06-metric-alert-scoping",
+        "reason": "held; pass --include-held to delete it"
+      }
+    ],
+    "root_removed": false
+  }
+}
