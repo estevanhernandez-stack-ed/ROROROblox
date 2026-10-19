@@ -1121,8 +1121,5 @@
   "WelcomeWindow_TogglesWhetherThisAccountJoins": "— schaltet um, ob dieses Konto an Mehrere starten / Squad Launch-Durchläufen teilnimmt. Bleibt über Neustarts erhalten.",
   "WelcomeWindow_WelcomeTo": "Willkommen bei",
   "WelcomeWindow_WelcomeToRororo": "Willkommen bei RoRoRo",
-  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows blendet neue Infobereich-Symbole standardmäßig aus, daher zeigt sich RoRoRos Symbol möglicherweise nicht sofort.",
-  "SettingsPage_IdleInvisibleHint": "Konten mit eingeschaltetem Roblox-Anwesenheitsschutz (Unsichtbar) bekommen nie eine Inaktivitäts-Benachrichtigung. RoRoRo sieht sie in keinem Spiel, und diese Benachrichtigung gibt es nur für Konten, die es in einem Spiel sieht.",
-  "SettingsPage_AlertSoundPluginsHint": "„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins wie Ur Score spielen ihre eigenen Töne ab, eingestellt in ihren eigenen Einstellungen.",
-  "SettingsPage_IdleActivityHint": "Aktivität zählt pro Konto und nur vom Client im Vordergrund. Wer in einem anderen Programm arbeitet, gilt für jeden Alt als inaktiv."
+  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows blendet neue Infobereich-Symbole standardmäßig aus, daher zeigt sich RoRoRos Symbol möglicherweise nicht sofort."
 }
