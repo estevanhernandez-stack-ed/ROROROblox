@@ -3366,4 +3366,40 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   <data name="SettingsPage_IdleActivityHint" xml:space="preserve">
     <value>A atividade conta por conta, e só a do cliente em primeiro plano. Trabalhar em outro programa conta como inatividade para todas as alts.</value>
   </data>
+  <data name="ThemeShare_ShareButton" xml:space="preserve">
+    <value>Compartilhar tema</value>
+  </data>
+  <data name="ThemeShare_ImportButton" xml:space="preserve">
+    <value>Importar tema</value>
+  </data>
+  <data name="ThemeShare_ShareButtonAccessible" xml:space="preserve">
+    <value>Salvar o tema personalizado ativo como arquivo JSON para compartilhar</value>
+  </data>
+  <data name="ThemeShare_ImportButtonAccessible" xml:space="preserve">
+    <value>Importar um tema de um arquivo JSON</value>
+  </data>
+  <data name="ThemeShare_ShareDialogTitle" xml:space="preserve">
+    <value>Compartilhar tema</value>
+  </data>
+  <data name="ThemeShare_ImportDialogTitle" xml:space="preserve">
+    <value>Importar tema</value>
+  </data>
+  <data name="ThemeShare_Shared" xml:space="preserve">
+    <value>{0} salvo. Mande o arquivo para um amigo e ele importa aqui.</value>
+  </data>
+  <data name="ThemeShare_ShareFailed" xml:space="preserve">
+    <value>Não foi possível salvar o arquivo: {0}</value>
+  </data>
+  <data name="ThemeShare_ImportReadFailed" xml:space="preserve">
+    <value>Não foi possível ler esse arquivo: {0}</value>
+  </data>
+  <data name="ThemeShare_ImportBuiltInId" xml:space="preserve">
+    <value>Esse nome pertence a um tema integrado ({0}), e os integrados sempre vencem. Mude o campo name no arquivo e importe de novo.</value>
+  </data>
+  <data name="ThemeShare_ImportAlreadyExists" xml:space="preserve">
+    <value>Você já tem um tema personalizado chamado {0}. Renomeie na pasta de temas ou mude o nome no arquivo e importe de novo.</value>
+  </data>
+  <data name="ThemeShare_ImportFailed" xml:space="preserve">
+    <value>Falha na importação: {0}</value>
+  </data>
 </root>

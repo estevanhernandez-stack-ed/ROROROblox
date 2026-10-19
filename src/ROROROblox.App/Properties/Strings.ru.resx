@@ -3366,4 +3366,40 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="SettingsPage_IdleActivityHint" xml:space="preserve">
     <value>Активность считается по каждому аккаунту и только из клиента на переднем плане. Работа в другой программе считается простоем для каждого альта.</value>
   </data>
+  <data name="ThemeShare_ShareButton" xml:space="preserve">
+    <value>Поделиться темой</value>
+  </data>
+  <data name="ThemeShare_ImportButton" xml:space="preserve">
+    <value>Импортировать тему</value>
+  </data>
+  <data name="ThemeShare_ShareButtonAccessible" xml:space="preserve">
+    <value>Сохранить активную собственную тему в JSON-файл, чтобы поделиться</value>
+  </data>
+  <data name="ThemeShare_ImportButtonAccessible" xml:space="preserve">
+    <value>Импортировать тему из JSON-файла</value>
+  </data>
+  <data name="ThemeShare_ShareDialogTitle" xml:space="preserve">
+    <value>Поделиться темой</value>
+  </data>
+  <data name="ThemeShare_ImportDialogTitle" xml:space="preserve">
+    <value>Импортировать тему</value>
+  </data>
+  <data name="ThemeShare_Shared" xml:space="preserve">
+    <value>Сохранено: {0}. Отправь файл другу, и он импортирует его здесь.</value>
+  </data>
+  <data name="ThemeShare_ShareFailed" xml:space="preserve">
+    <value>Не удалось сохранить файл: {0}</value>
+  </data>
+  <data name="ThemeShare_ImportReadFailed" xml:space="preserve">
+    <value>Не удалось прочитать этот файл: {0}</value>
+  </data>
+  <data name="ThemeShare_ImportBuiltInId" xml:space="preserve">
+    <value>Это имя принадлежит встроенной теме ({0}), а встроенные всегда главнее. Измени поле name в файле и импортируй снова.</value>
+  </data>
+  <data name="ThemeShare_ImportAlreadyExists" xml:space="preserve">
+    <value>У тебя уже есть своя тема с именем {0}. Переименуй её в папке тем или измени имя в файле, затем импортируй снова.</value>
+  </data>
+  <data name="ThemeShare_ImportFailed" xml:space="preserve">
+    <value>Импорт не удался: {0}</value>
+  </data>
 </root>
