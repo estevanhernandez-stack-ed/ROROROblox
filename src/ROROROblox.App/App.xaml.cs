@@ -428,7 +428,7 @@ public partial class App : Application
         }
 
         // Configure logging FIRST — every other failure mode below benefits from a written record.
-        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
         _loggerFactory = AppLogging.Configure(version);
         _log = _loggerFactory.CreateLogger<App>();
         WireGlobalExceptionHandlers();
@@ -1067,7 +1067,7 @@ public partial class App : Application
         services.AddHttpClient<IRobloxApi, RobloxApi>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         })
         .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
@@ -1079,7 +1079,7 @@ public partial class App : Application
         services.AddHttpClient<IRobloxCompatChecker, RobloxCompatChecker>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
