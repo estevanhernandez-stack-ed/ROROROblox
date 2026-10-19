@@ -1184,7 +1184,8 @@ public partial class App : Application
             sp.GetRequiredService<IForegroundWindowProbe>(),
             sp.GetRequiredService<ISystemInputClock>(),
             sp.GetRequiredService<IForegroundAccountResolver>(),
-            sp.GetRequiredService<IClock>()));
+            sp.GetRequiredService<IClock>(),
+            sp.GetService<ILogger<ActivityMonitor>>()));
 
         // v1.8's IdleAlertPresenter was registered here until 2026-10-06. v1.33 item 3 deleted it:
         // an idle crossing now raises an AlertKind.AccountIdle trigger from MainViewModel and
