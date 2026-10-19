@@ -3357,4 +3357,13 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   <data name="SettingsPage_HearTheAlertSound" xml:space="preserve">
     <value>Posłuchaj dźwięku alertu</value>
   </data>
+  <data name="SettingsPage_IdleInvisibleHint" xml:space="preserve">
+    <value>Konta z włączoną prywatnością obecności Roblox (Niewidoczny) nigdy nie dostają alertu o bezczynności. RoRoRo nie widzi ich w grze, a ten alert odpala tylko dla kont, które widzi w grze.</value>
+  </data>
+  <data name="SettingsPage_AlertSoundPluginsHint" xml:space="preserve">
+    <value>„Cisza” wycisza tylko własne alerty RoRoRo. Pluginy, takie jak Ur Score, odtwarzają własne dźwięki, ustawiane w ich własnych ustawieniach.</value>
+  </data>
+  <data name="SettingsPage_IdleActivityHint" xml:space="preserve">
+    <value>Aktywność liczy się osobno dla każdego konta i tylko z klienta na pierwszym planie. Praca w innym programie liczy się jako bezczynność dla każdego alta.</value>
+  </data>
 </root>
