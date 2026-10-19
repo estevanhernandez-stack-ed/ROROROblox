@@ -31,7 +31,7 @@ public class ScenarioTableTests
     /// smoke list, and it belongs in the same commit as a decision about whether the new row is
     /// covered — which is the whole reason it is asserted as equality rather than as a floor.
     /// </summary>
-    private const int RowsOnTheSmokeList = 22;
+    private const int RowsOnTheSmokeList = 24;
 
     private const string HarnessMarker = "`[harness]`";
 
@@ -364,7 +364,8 @@ public class ScenarioTableTests
         SmokeMetrics.Toast, SmokeMetrics.Accepted, SmokeMetrics.Denied, SmokeMetrics.Gate,
         SmokeMetrics.Value, SmokeMetrics.Subject, SmokeMetrics.Skew, SmokeMetrics.Reset,
         SmokeMetrics.Repeat, SmokeMetrics.Live, SmokeMetrics.Absent, SmokeMetrics.Malformed,
-        SmokeMetrics.Streamer, SmokeMetrics.Fallback, SmokeMetrics.Group,
+        SmokeMetrics.Streamer, SmokeMetrics.Fallback, SmokeMetrics.Group, SmokeMetrics.RunOnly,
+        SmokeMetrics.RunNone,
     ];
 
     /// <summary>Feeds the samples a scenario reports through the production history and evaluator, and
