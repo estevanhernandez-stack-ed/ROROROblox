@@ -32,6 +32,86 @@ internal partial class ThemeBuilderWindow : Window
         _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
         InitializeComponent();
         Loaded += (_, _) => JsonInput.Focus();
+        // The builder has no picker of its own; "selected" is the active theme. Built-ins ship with
+        // the app, so only a custom theme can be shared.
+        ShareThemeButton.IsEnabled = _themeService.CurrentTheme is { IsBuiltIn: false };
+    }
+
+    private async void OnShareThemeClick(object sender, RoutedEventArgs e)
+    {
+        if (_themeService.CurrentTheme is not { IsBuiltIn: false } theme)
+        {
+            return;
+        }
+        try
+        {
+            var export = ThemeShare.ExportBytes(theme);
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = Loc.Get("ThemeShare_ShareDialogTitle"),
+                FileName = export.SuggestedFileName,
+                Filter = "JSON (*.json)|*.json",
+                DefaultExt = ".json",
+            };
+            if (dialog.ShowDialog(this) != true)
+            {
+                return;
+            }
+            await File.WriteAllBytesAsync(dialog.FileName, export.Bytes);
+            StatusText.Text = Loc.Format("ThemeShare_Shared", Path.GetFileName(dialog.FileName));
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = Loc.Format("ThemeShare_ShareFailed", ex.Message);
+        }
+    }
+
+    private async void OnImportThemeClick(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = Loc.Get("ThemeShare_ImportDialogTitle"),
+            Filter = "JSON (*.json)|*.json",
+            CheckFileExists = true,
+        };
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+        try
+        {
+            var bytes = await File.ReadAllBytesAsync(dialog.FileName);
+            var check = ThemeShare.ValidateImport(bytes);
+            if (check.Invalid is not null)
+            {
+                StatusText.Text = CoreMessageCatalog.For(check.Invalid);
+                return;
+            }
+            if (check.Refusal == ThemeImportRefusal.BuiltInId)
+            {
+                StatusText.Text = Loc.Format("ThemeShare_ImportBuiltInId", check.Theme!.Name);
+                return;
+            }
+            var result = ThemeShare.ImportInto(_themeStore.UserThemesFolder, bytes);
+            if (result.Outcome == ThemeImportOutcome.AlreadyExists)
+            {
+                StatusText.Text = Loc.Format("ThemeShare_ImportAlreadyExists", result.Theme.Name);
+                return;
+            }
+            // Same hand-off as Save and apply: the settings page reloads the picker from SavedTheme.
+            await _themeService.SetActiveAsync(result.Theme.Id);
+            SavedTheme = result.Theme;
+            DialogResult = true;
+            Close();
+        }
+        catch (InvalidThemeException ex)
+        {
+            StatusText.Text = CoreMessageCatalog.For(ex);
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = Loc.Format("ThemeShare_ImportFailed", ex.Message);
+        }
     }
 
     private void OnCopyPromptClick(object sender, RoutedEventArgs e)
