@@ -3050,4 +3050,13 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
     <value>Hear the alert sound</value>
     <comment>Accessible name for the Hear it button (v1.33)</comment>
   </data>
+  <data name="SettingsPage_IdleInvisibleHint" xml:space="preserve">
+    <value>Accounts with Roblox presence privacy on (Invisible) never get an idle alert. RoRoRo can't see them in a game, and idle alerts only fire for accounts it sees in one.</value>
+  </data>
+  <data name="SettingsPage_AlertSoundPluginsHint" xml:space="preserve">
+    <value>Silent silences RoRoRo's own alerts only. Plugins such as Ur Score play their own sounds, set in their own settings.</value>
+  </data>
+  <data name="SettingsPage_IdleActivityHint" xml:space="preserve">
+    <value>Activity counts per account, and only from the client in the foreground. Working in another program counts as idle for every alt.</value>
+  </data>
 </root>

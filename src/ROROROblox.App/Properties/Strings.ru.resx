@@ -3357,4 +3357,13 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="SettingsPage_HearTheAlertSound" xml:space="preserve">
     <value>Прослушать звук оповещения</value>
   </data>
+  <data name="SettingsPage_IdleInvisibleHint" xml:space="preserve">
+    <value>Аккаунты с включённой приватностью присутствия Roblox (Невидимка) никогда не получают оповещение о простое. RoRoRo не видит их в игре, а это оповещение срабатывает только для аккаунтов, которых он видит в игре.</value>
+  </data>
+  <data name="SettingsPage_AlertSoundPluginsHint" xml:space="preserve">
+    <value>«Без звука» отключает только собственные оповещения RoRoRo. Плагины вроде Ur Score играют свои звуки, которые настраиваются в их собственных настройках.</value>
+  </data>
+  <data name="SettingsPage_IdleActivityHint" xml:space="preserve">
+    <value>Активность считается по каждому аккаунту и только из клиента на переднем плане. Работа в другой программе считается простоем для каждого альта.</value>
+  </data>
 </root>
