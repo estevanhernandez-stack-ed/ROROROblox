@@ -159,6 +159,19 @@ public class PluginHostServiceTests
     }
 
     [Fact]
+    public async Task GetHostInfo_ReportsBuildIdentity()
+    {
+        var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
+
+        var info = await service.GetHostInfo(new Empty(), FakeServerCallContext.Create());
+
+        Assert.Equal("dev", info.InstallFlavour);
+        Assert.False(string.IsNullOrWhiteSpace(info.ProcessPath));
+        Assert.False(string.IsNullOrWhiteSpace(info.InformationalVersion));
+    }
+
+    [Fact]
     public async Task GetRunningAccounts_ReturnsListFromProvider()
     {
         var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
