@@ -1106,5 +1106,8 @@
   "WelcomeWindow_TogglesWhetherThisAccountJoins": "— alterna si esta cuenta participa en las ejecuciones de Iniciar varias / Squad Launch. Persiste entre reinicios.",
   "WelcomeWindow_WelcomeTo": "Te damos la bienvenida a",
   "WelcomeWindow_WelcomeToRororo": "Te damos la bienvenida a RoRoRo",
-  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows oculta los iconos nuevos de la bandeja del sistema de forma predeterminada, así que puede que el icono de RoRoRo no aparezca de inmediato."
+  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows oculta los iconos nuevos de la bandeja del sistema de forma predeterminada, así que puede que el icono de RoRoRo no aparezca de inmediato.",
+  "SettingsPage_IdleInvisibleHint": "Las cuentas con la privacidad de presencia de Roblox activada (Invisible) nunca reciben un aviso de inactividad. RoRoRo no las ve en una partida, y este aviso solo salta para las cuentas que ve en una.",
+  "SettingsPage_AlertSoundPluginsHint": "«Silencio» solo silencia las alertas propias de RoRoRo. Los plugins como Ur Score reproducen sus propios sonidos, configurados en sus propios ajustes.",
+  "SettingsPage_IdleActivityHint": "La actividad cuenta por cuenta, y solo desde el cliente en primer plano. Trabajar en otro programa cuenta como inactividad para todas las alts."
 }
