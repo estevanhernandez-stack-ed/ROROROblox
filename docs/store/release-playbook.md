@@ -18,6 +18,7 @@
   powershell -ExecutionPolicy Bypass -File scripts/generate-dev-cert.ps1 -Password '<pwd>'
   ```
   The new cert will trigger SmartScreen for users who imported the old one — call that out in release notes.
+- **Plugin catalog matches live releases.** The tag now fails in `release.yml` on catalog drift; check by hand first with `pwsh -File scripts/check-plugin-catalog-drift.ps1` (exit 0 = clean) and fix `latestVersion` in `docs/store/plugins-catalog.json` if it reports DRIFT.
 - **`gh` CLI is authenticated.** It lives at `C:\Program Files\GitHub CLI\gh.exe` (not on PATH from inside Claude Code — invoke via full path). Verify: `& "C:\Program Files\GitHub CLI\gh.exe" auth status`.
 
 ---

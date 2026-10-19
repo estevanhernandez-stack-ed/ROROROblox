@@ -88,6 +88,18 @@
                     Padding="12,8" Margin="0,0,8,0"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Click="OnOpenFolderClick" />
+            <Button x:Name="ShareThemeButton"
+                    Content="{loc:Loc ThemeShare_ShareButton}"
+                    AutomationProperties.Name="{loc:Loc ThemeShare_ShareButtonAccessible}"
+                    Padding="12,8" Margin="0,0,8,0"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Click="OnShareThemeClick" />
+            <Button x:Name="ImportThemeButton"
+                    Content="{loc:Loc ThemeShare_ImportButton}"
+                    AutomationProperties.Name="{loc:Loc ThemeShare_ImportButtonAccessible}"
+                    Padding="12,8" Margin="0,0,8,0"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Click="OnImportThemeClick" />
             <Button Content="{loc:Loc ThemeBuilderWindow_Cancel}" Padding="14,8" Margin="0,0,8,0"
                     Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsCancel="True"

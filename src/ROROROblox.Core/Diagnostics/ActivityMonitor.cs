@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ROROROblox.Core.Diagnostics;
 
@@ -16,6 +18,7 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
     private readonly ISystemInputClock _input;
     private readonly IForegroundAccountResolver _resolver;
     private readonly IClock _clock;
+    private readonly ILogger<ActivityMonitor> _log;
     private readonly ConcurrentDictionary<Guid, Record> _records = new();
 
     private uint _lastSeenInputTick;
@@ -28,8 +31,10 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
         IForegroundWindowProbe foreground,
         ISystemInputClock input,
         IForegroundAccountResolver resolver,
-        IClock clock)
+        IClock clock,
+        ILogger<ActivityMonitor>? log = null)
     {
+        _log = log ?? NullLogger<ActivityMonitor>.Instance;
         _foreground = foreground ?? throw new ArgumentNullException(nameof(foreground));
         _input = input ?? throw new ArgumentNullException(nameof(input));
         _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
@@ -107,14 +112,20 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
 
         // 2. threshold edge evaluation (coalesced)
         List<Guid>? crossed = null;
+        var tracked = 0;
         foreach (var kv in _records)
         {
+            tracked++;
             var since = now - kv.Value.LastActivityAt;
             if (since >= WarnThreshold)
             {
                 if (!kv.Value.WarnLatched)
                 {
                     kv.Value.WarnLatched = true;
+                    // The monitor knows accounts by id only; labels live in the view model.
+                    _log.LogInformation(
+                        "idle: account {AccountId} crossed the warn threshold, idle {IdleMinutes:F1} min, threshold {ThresholdMinutes:F0} min",
+                        kv.Key, since.TotalMinutes, WarnThreshold.TotalMinutes);
                     (crossed ??= new List<Guid>()).Add(kv.Key);
                 }
             }
@@ -123,6 +134,13 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
                 kv.Value.WarnLatched = false; // re-arm
             }
         }
+
+        // Trace, not Debug: Sample() runs once a second and the app's Serilog floor is Debug
+        // (AppLogging.cs), so a Debug line here would write ~86k lines a day for nothing.
+        // The crossing line above is the diagnostic surface; this one is for a Trace session.
+        _log.LogTrace(
+            "idle: sampled {Count} account(s), input advanced={Advanced}, threshold {ThresholdMinutes:F0} min, crossed {Crossed}",
+            tracked, advanced, WarnThreshold.TotalMinutes, crossed?.Count ?? 0);
 
         if (crossed is { Count: > 0 })
         {

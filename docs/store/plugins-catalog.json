@@ -3,7 +3,7 @@
     "id": "626labs.ur-task",
     "name": "RoRoRo Ur Task",
     "description": "Per-window-aware macro recording for RoRoRo-managed alts. Record once, play on any alt — round-robin assignments, keep-alive, window-relative mouse macros, and an action bridge for sibling plugins.",
-    "publisher": "626 Labs LLC",
+    "publisher": "626Labs LLC",
     "latestVersion": "0.9.1",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-task/releases/latest/download/",
     "minHostVersion": "1.19.0"
@@ -12,7 +12,7 @@
     "id": "626labs.ur-ocr",
     "name": "RoRoRo Ur OCR",
     "description": "Watches user-defined screen regions for text or color triggers and fires keybinds when they match. Pairs with Ur Task over the action bridge for perception-to-action.",
-    "publisher": "626 Labs LLC",
+    "publisher": "626Labs LLC",
     "latestVersion": "0.4.0",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/Ur-OCR/releases/latest/download/"
   },
@@ -20,7 +20,7 @@
     "id": "626labs.ur-afk",
     "name": "RoRoRo Ur AFK",
     "description": "Keeps idle Roblox accounts alive — focuses each and taps space before the ~20-minute idle timeout. One toggle, one key ever sent.",
-    "publisher": "626 Labs LLC",
+    "publisher": "626Labs LLC",
     "latestVersion": "0.5.2",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-afk/releases/latest/download/",
     "minHostVersion": "1.8.0.0"
@@ -29,8 +29,8 @@
     "id": "626labs.ur-mcp",
     "name": "RoRoRo Ur MCP",
     "description": "Drive RoRoRo from Claude. A stdio MCP server Claude Code / Claude Desktop launches, authorized as this consent-gated plugin: list and launch accounts, follow the main, watch presence, stop clients, and run or stop Ur Task macros. Autostart stays off — Claude owns the process.",
-    "publisher": "626 Labs LLC",
-    "latestVersion": "0.2.0",
+    "publisher": "626Labs LLC",
+    "latestVersion": "0.3.0",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-mcp/releases/latest/download/",
     "minHostVersion": "1.22.0"
   },
@@ -38,7 +38,7 @@
     "id": "626labs.ur-score",
     "name": "RoRoRo Ur Score",
     "description": "A scoreboard for your accounts. Reads Pet Sim 99 clan battles and your own profiles, built in and switched on per mode, keeps every reading in a score book on your PC, and hands the stats you pick to RoRoRo's alerts. Only your own accounts' numbers are kept or sent.",
-    "publisher": "626 Labs LLC",
+    "publisher": "626Labs LLC",
     "latestVersion": "0.7.0",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/Ur-Score/releases/latest/download/",
     "minHostVersion": "1.28.0.0"

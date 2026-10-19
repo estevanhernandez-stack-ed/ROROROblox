@@ -85,6 +85,14 @@ jobs:
       - name: Test
         run: dotnet test ROROROblox.slnx --configuration Release --no-restore --logger "console;verbosity=minimal"
 
+      - name: Check plugin catalog drift
+        # Fails the tag when docs/store/plugins-catalog.json latestVersion disagrees with a
+        # plugin repo's latest release. Public repos; the default token is enough.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: pwsh -File scripts/check-plugin-catalog-drift.ps1
+
       - name: Fetch prior release (for delta generation)
         # First-ever release: no prior release exists -> non-zero exit -> tolerated.
         # All subsequent releases: this populates dist/release/ with the previous

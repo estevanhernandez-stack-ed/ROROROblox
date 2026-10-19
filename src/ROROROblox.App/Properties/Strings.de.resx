@@ -3357,4 +3357,49 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="SettingsPage_HearTheAlertSound" xml:space="preserve">
     <value>Benachrichtigungston anhören</value>
   </data>
+  <data name="SettingsPage_IdleInvisibleHint" xml:space="preserve">
+    <value>Konten mit eingeschaltetem Roblox-Anwesenheitsschutz (Unsichtbar) bekommen nie eine Inaktivitäts-Benachrichtigung. RoRoRo sieht sie in keinem Spiel, und diese Benachrichtigung gibt es nur für Konten, die es in einem Spiel sieht.</value>
+  </data>
+  <data name="SettingsPage_AlertSoundPluginsHint" xml:space="preserve">
+    <value>„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins wie Ur Score spielen ihre eigenen Töne ab, eingestellt in ihren eigenen Einstellungen.</value>
+  </data>
+  <data name="SettingsPage_IdleActivityHint" xml:space="preserve">
+    <value>Aktivität zählt pro Konto und nur vom Client im Vordergrund. Wer in einem anderen Programm arbeitet, gilt für jeden Alt als inaktiv.</value>
+  </data>
+  <data name="ThemeShare_ShareButton" xml:space="preserve">
+    <value>Design teilen</value>
+  </data>
+  <data name="ThemeShare_ImportButton" xml:space="preserve">
+    <value>Design importieren</value>
+  </data>
+  <data name="ThemeShare_ShareButtonAccessible" xml:space="preserve">
+    <value>Das aktive eigene Design als JSON-Datei zum Teilen speichern</value>
+  </data>
+  <data name="ThemeShare_ImportButtonAccessible" xml:space="preserve">
+    <value>Ein Design aus einer JSON-Datei importieren</value>
+  </data>
+  <data name="ThemeShare_ShareDialogTitle" xml:space="preserve">
+    <value>Design teilen</value>
+  </data>
+  <data name="ThemeShare_ImportDialogTitle" xml:space="preserve">
+    <value>Design importieren</value>
+  </data>
+  <data name="ThemeShare_Shared" xml:space="preserve">
+    <value>{0} gespeichert. Schick die Datei einem Freund, dann kann er sie hier importieren.</value>
+  </data>
+  <data name="ThemeShare_ShareFailed" xml:space="preserve">
+    <value>Die Datei konnte nicht gespeichert werden: {0}</value>
+  </data>
+  <data name="ThemeShare_ImportReadFailed" xml:space="preserve">
+    <value>Die Datei konnte nicht gelesen werden: {0}</value>
+  </data>
+  <data name="ThemeShare_ImportBuiltInId" xml:space="preserve">
+    <value>Dieser Name gehört zu einem integrierten Design ({0}), und integrierte Designs haben immer Vorrang. Ändere das Feld name in der Datei und importiere erneut.</value>
+  </data>
+  <data name="ThemeShare_ImportAlreadyExists" xml:space="preserve">
+    <value>Du hast bereits ein eigenes Design namens {0}. Benenne es im Designs-Ordner um oder ändere den Namen in der Datei, dann importiere erneut.</value>
+  </data>
+  <data name="ThemeShare_ImportFailed" xml:space="preserve">
+    <value>Import fehlgeschlagen: {0}</value>
+  </data>
 </root>

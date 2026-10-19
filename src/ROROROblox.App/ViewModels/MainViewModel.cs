@@ -495,6 +495,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // Tick, so on the UI thread this view model was built on, which the monitor and Accounts
         // both require. No marshal needed.
         PeriodicTick += OnAutoRejoinTick;
+
+        // The idle threshold rides the same cadence: IAppSettings broadcasts nothing, so a hand-edited
+        // settings.json reaches ActivityMonitor.WarnThreshold within one tick (the memory numbers
+        // have done the same since v1.32.1). The Settings page still pushes its own edits at once.
+        PeriodicTick += OnIdleSettingsTick;
     }
 
     /// <summary>
@@ -4354,6 +4359,25 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         _idleWarnThresholdMinutes = await settings.GetIdleWarnThresholdMinutesAsync().ConfigureAwait(false);
         _activityMonitor.WarnThreshold = TimeSpan.FromMinutes(_idleWarnThresholdMinutes);
+    }
+
+    /// <summary>
+    /// PeriodicTick subscriber: re-reads the idle threshold so a settings.json edit lands within
+    /// 30 s. async void with a catch-all for the same reason as <see cref="OnAutoRejoinTick"/>; a
+    /// failed read keeps the threshold already in force.
+    /// </summary>
+    private async void OnIdleSettingsTick(object? sender, EventArgs e) => await RefreshIdleSettingsAsync().ConfigureAwait(true);
+
+    internal async Task RefreshIdleSettingsAsync()
+    {
+        try
+        {
+            await InitializeIdleSettingsAsync(_settings).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Idle threshold re-read failed; keeping the current threshold.");
+        }
     }
 
     private void OnProcessAttachFailed(object? sender, RobloxProcessEventArgs e)

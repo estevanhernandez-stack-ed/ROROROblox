@@ -112,6 +112,25 @@ public sealed class ThemeStore : IThemeStore
 
     public async Task<Theme> SaveUserThemeAsync(string rawJson)
     {
+        var (theme, canonical) = ParseUserTheme(rawJson);
+
+        Directory.CreateDirectory(_userThemesFolder);
+        var path = Path.Combine(_userThemesFolder, theme.Id + ".json");
+        var tempPath = path + ".tmp";
+        await File.WriteAllBytesAsync(tempPath, canonical).ConfigureAwait(false);
+        File.Move(tempPath, path, overwrite: true);
+
+        return theme;
+    }
+
+    /// <summary>
+    /// The one place a user theme's JSON is read and validated. <see cref="SaveUserThemeAsync"/>
+    /// calls it, and so does <see cref="ThemeShare"/>: an imported file passes the exact checks a
+    /// pasted one does. Returns the theme plus the canonical bytes the store would write for it.
+    /// Throws <see cref="InvalidThemeException"/> on any refusal.
+    /// </summary>
+    internal static (Theme Theme, byte[] CanonicalBytes) ParseUserTheme(string rawJson)
+    {
         if (string.IsNullOrWhiteSpace(rawJson))
         {
             throw new InvalidThemeException(InvalidThemeKind.EmptyInput);
@@ -161,17 +180,23 @@ public sealed class ThemeStore : IThemeStore
             throw new InvalidThemeException(InvalidThemeKind.MissingField, ex, ex.Message);
         }
 
-        Directory.CreateDirectory(_userThemesFolder);
-        var path = Path.Combine(_userThemesFolder, id + ".json");
         // Round-trip via the canonical RawTheme shape so we don't accidentally save extra fields
         // a future Theme version might add (Id, IsBuiltIn) — those are inferred at load time.
         var canonical = JsonSerializer.SerializeToUtf8Bytes(raw, JsonOptions);
-        var tempPath = path + ".tmp";
-        await File.WriteAllBytesAsync(tempPath, canonical).ConfigureAwait(false);
-        File.Move(tempPath, path, overwrite: true);
-
-        return theme;
+        return (theme, canonical);
     }
+
+    /// <summary>The JSON <see cref="SaveUserThemeAsync"/> would write for this theme: same keys, same casing.</summary>
+    internal static byte[] ToCanonicalBytes(Theme theme)
+    {
+        var raw = new RawTheme(
+            theme.Name, theme.Bg, theme.Cyan, theme.Magenta, theme.White, theme.MutedText,
+            theme.Divider, theme.RowBg, theme.RowExpiredBg, theme.RowExpiredAccent, theme.Navy);
+        return JsonSerializer.SerializeToUtf8Bytes(raw, JsonOptions);
+    }
+
+    internal static bool IsBuiltInId(string id) =>
+        BuildBuiltIns().Any(t => string.Equals(t.Id, id, StringComparison.OrdinalIgnoreCase));
 
     private static string ToKebabId(string name)
     {
