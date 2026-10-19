@@ -81,6 +81,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     /// </summary>
     internal IMetricReportSink? MetricSinkForTests => _metricSink;
 
+    private readonly IHostBuildIdentity _buildIdentity;
+
     public PluginHostService(
         IInstalledPluginsLookup registry,
         string hostVersion,
@@ -95,7 +97,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         IPluginAccountStopper accountStopper,
         Adapters.IThemePaletteSource? themePalettes = null,
         ISavedAccountsProvider? savedAccounts = null,
-        IMetricReportSink? metricSink = null)
+        IMetricReportSink? metricSink = null,
+        IHostBuildIdentity? buildIdentity = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -111,6 +114,9 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _themePalettes = themePalettes;
         _savedAccounts = savedAccounts;
         _metricSink = metricSink;
+        // Optional like the three above, but never null at runtime: tests that do not care get the
+        // real probe (dev flavour under xUnit), so GetHostInfo always answers the new fields.
+        _buildIdentity = buildIdentity ?? new HostBuildIdentity();
     }
 
     // =====================================================================
@@ -172,6 +178,9 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
             Version = _hostVersion,
             MultiInstanceEnabled = _hostState.MultiInstanceEnabled,
             MultiInstanceState = _hostState.MultiInstanceState,
+            InstallFlavour = _buildIdentity.InstallFlavour,
+            ProcessPath = _buildIdentity.ProcessPath,
+            InformationalVersion = _buildIdentity.InformationalVersion,
         });
     }
 

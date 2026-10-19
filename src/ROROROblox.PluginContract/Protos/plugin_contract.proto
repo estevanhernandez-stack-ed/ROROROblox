@@ -131,6 +131,10 @@ message HostInfo {
   string version = 1;
   bool multi_instance_enabled = 2;
   string multi_instance_state = 3;  // "On" / "Off" / "Error"
+  // 0.12.0: build identity, so a caller can tell which binary it is driving.
+  string install_flavour = 4;       // "store" / "sideload" / "dev"
+  string process_path = 5;          // Environment.ProcessPath of the host
+  string informational_version = 6; // AssemblyInformationalVersion, e.g. "1.33.0+<commit>"
 }
 
 message RunningAccountsList {
