@@ -104,13 +104,13 @@ public class EdgeRemediationWiringTests : IDisposable
         using var settings = new AppSettings(SettingsPath);
         await settings.SetActiveThemeIdAsync("someones-theme");
         await settings.SetStreamerModeAsync(true);
-        await settings.SetIdleWarnThresholdMinutesAsync(42);
+        await settings.SetIdleWarnThresholdMinutesAsync(12);
 
         await settings.SetEdgeRemediationAnswerAsync("someones-theme", accepted: true);
 
         Assert.Equal("someones-theme", await settings.GetActiveThemeIdAsync());
         Assert.True(await settings.GetStreamerModeAsync());
-        Assert.Equal(42, await settings.GetIdleWarnThresholdMinutesAsync());
+        Assert.Equal(12, await settings.GetIdleWarnThresholdMinutesAsync());
     }
 
     [Fact]

@@ -258,4 +258,29 @@ public class ActivityMonitorTests
         m.MarkActive(Guid.NewGuid(), clock.UtcNow); // must not throw
         Assert.Empty(m.GetSnapshot());
     }
+
+    [Fact]
+    public void Sample_LogsOneInformationLine_PerCrossing_AndOneTraceLinePerSample()
+    {
+        var clock = new FakeClock();
+        var log = new CapturingLogger<ActivityMonitor>();
+        var m = new ActivityMonitor(new FakeForeground(), new FakeInput(), new FakeResolver(), clock, log);
+        var a = Guid.NewGuid();
+        m.OnAccountLaunched(a);
+
+        m.Sample();
+        clock.UtcNow = clock.UtcNow.AddMinutes(16);
+        m.Sample();
+        m.Sample(); // still latched: no second crossing line
+
+        var lines = log.Snapshot();
+        var info = lines.Where(l => l.StartsWith("[Information]", StringComparison.Ordinal)).ToList();
+        Assert.Single(info);
+        Assert.Contains(a.ToString(), info[0], StringComparison.Ordinal);
+        Assert.Contains("idle 16.0 min", info[0], StringComparison.Ordinal);
+        Assert.Contains("threshold 15 min", info[0], StringComparison.Ordinal);
+        // Per-sample lines are Trace so the app's Debug floor (AppLogging.cs) drops them in production.
+        Assert.Equal(3, lines.Count(l => l.StartsWith("[Trace]", StringComparison.Ordinal)));
+        Assert.DoesNotContain(lines, l => l.StartsWith("[Debug]", StringComparison.Ordinal));
+    }
 }

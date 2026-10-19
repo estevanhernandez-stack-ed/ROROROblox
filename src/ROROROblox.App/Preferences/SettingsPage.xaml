@@ -426,6 +426,9 @@
                             <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,4,0,0"
                                        Text="{loc:Loc SettingsPage_AlertSoundHint}" />
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="0,4,0,0"
+                                       Text="{loc:Loc SettingsPage_AlertSoundPluginsHint}" />
 
                             <!-- THE COLUMN HEADER, and the reason the table needs one. With two
                                  columns the shape read itself: a sentence, then some tick boxes.
@@ -812,6 +815,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc SettingsPage_AnAccountGoesIdle}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
@@ -834,6 +838,10 @@
                                     <CheckBox x:Name="IdleClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                     <CheckBox x:Name="IdlePhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendIdleAlertsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" MinWidth="0" Margin="0,2,6,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                 </WrapPanel>
+                                <TextBlock Grid.Row="2" Grid.ColumnSpan="2" FontSize="{DynamicResource BodyFontSize}"
+                                           Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="{loc:Loc SettingsPage_IdleInvisibleHint}" />
                             </Grid>
 
                             <!-- Idle's own precondition, beside its row for the reason memory's is:
@@ -863,6 +871,11 @@
                                            TextWrapping="Wrap"
                                            Margin="0,4,0,0"
                                            Text="{loc:Loc SettingsPage_NobodyHasTouchedTheAccount}" />
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="{loc:Loc SettingsPage_IdleActivityHint}" />
                             </StackPanel>
 
                             <Grid Margin="0,0,0,14">

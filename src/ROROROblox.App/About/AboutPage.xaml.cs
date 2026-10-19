@@ -32,7 +32,7 @@ internal partial class AboutPage : UserControl
     public AboutPage()
     {
         InitializeComponent();
-        var version = typeof(AboutPage).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
         VersionText.Text = $"v{version}";
 
         // One source of truth (F-112): the same table the windows build their bindings from.
