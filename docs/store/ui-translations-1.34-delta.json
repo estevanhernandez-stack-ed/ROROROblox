@@ -1,0 +1,199 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "dataset": "app-ui-strings",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "0930d4e",
+  "generatedUtc": "2026-10-19T20:13:04+00:00",
+  "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
+  "fields": [
+    {
+      "field": "SettingsPage_IdleInvisibleHint",
+      "en": "Accounts with Roblox presence privacy on (Invisible) never get an idle alert. RoRoRo can't see them in a game, and idle alerts only fire for accounts it sees in one.",
+      "translations": {
+        "fr": "Les comptes dont la confidentialité de présence Roblox est activée (Invisible) ne reçoivent jamais d'alerte d'inactivité. RoRoRo ne les voit pas en jeu, et cette alerte ne se déclenche que pour les comptes qu'il voit en jeu.",
+        "de": "Konten mit eingeschaltetem Roblox-Anwesenheitsschutz (Unsichtbar) bekommen nie eine Inaktivitäts-Benachrichtigung. RoRoRo sieht sie in keinem Spiel, und diese Benachrichtigung gibt es nur für Konten, die es in einem Spiel sieht.",
+        "ru": "Аккаунты с включённой приватностью присутствия Roblox (Невидимка) никогда не получают оповещение о простое. RoRoRo не видит их в игре, а это оповещение срабатывает только для аккаунтов, которых он видит в игре.",
+        "pt-br": "Contas com a privacidade de presença do Roblox ativada (Invisível) nunca recebem um alerta de inatividade. O RoRoRo não as vê em um jogo, e esse alerta só dispara para contas que ele vê em um.",
+        "pl": "Konta z włączoną prywatnością obecności Roblox (Niewidoczny) nigdy nie dostają alertu o bezczynności. RoRoRo nie widzi ich w grze, a ten alert odpala tylko dla kont, które widzi w grze.",
+        "es": "Las cuentas con la privacidad de presencia de Roblox activada (Invisible) nunca reciben un aviso de inactividad. RoRoRo no las ve en una partida, y este aviso solo salta para las cuentas que ve en una."
+      }
+    },
+    {
+      "field": "SettingsPage_AlertSoundPluginsHint",
+      "en": "Silent silences RoRoRo's own alerts only. Plugins such as Ur Score play their own sounds, set in their own settings.",
+      "translations": {
+        "fr": "« Silencieux » ne coupe que les alertes propres à RoRoRo. Les plugins comme Ur Score jouent leurs propres sons, réglés dans leurs propres paramètres.",
+        "de": "„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins wie Ur Score spielen ihre eigenen Töne ab, eingestellt in ihren eigenen Einstellungen.",
+        "ru": "«Без звука» отключает только собственные оповещения RoRoRo. Плагины вроде Ur Score играют свои звуки, которые настраиваются в их собственных настройках.",
+        "pt-br": "“Silencioso” silencia só os alertas do próprio RoRoRo. Plugins como o Ur Score tocam seus próprios sons, definidos nas configurações deles.",
+        "pl": "„Cisza” wycisza tylko własne alerty RoRoRo. Pluginy, takie jak Ur Score, odtwarzają własne dźwięki, ustawiane w ich własnych ustawieniach.",
+        "es": "«Silencio» solo silencia las alertas propias de RoRoRo. Los plugins como Ur Score reproducen sus propios sonidos, configurados en sus propios ajustes."
+      }
+    },
+    {
+      "field": "SettingsPage_IdleActivityHint",
+      "en": "Activity counts per account, and only from the client in the foreground. Working in another program counts as idle for every alt.",
+      "translations": {
+        "fr": "L'activité compte par compte, et seulement depuis le client au premier plan. Travailler dans un autre programme compte comme de l'inactivité pour tous les alts.",
+        "de": "Aktivität zählt pro Konto und nur vom Client im Vordergrund. Wer in einem anderen Programm arbeitet, gilt für jeden Alt als inaktiv.",
+        "ru": "Активность считается по каждому аккаунту и только из клиента на переднем плане. Работа в другой программе считается простоем для каждого альта.",
+        "pt-br": "A atividade conta por conta, e só a do cliente em primeiro plano. Trabalhar em outro programa conta como inatividade para todas as alts.",
+        "pl": "Aktywność liczy się osobno dla każdego konta i tylko z klienta na pierwszym planie. Praca w innym programie liczy się jako bezczynność dla każdego alta.",
+        "es": "La actividad cuenta por cuenta, y solo desde el cliente en primer plano. Trabajar en otro programa cuenta como inactividad para todas las alts."
+      }
+    },
+    {
+      "field": "ThemeShare_ShareButton",
+      "en": "Share theme",
+      "translations": {
+        "fr": "Partager le thème",
+        "de": "Design teilen",
+        "ru": "Поделиться темой",
+        "pt-br": "Compartilhar tema",
+        "pl": "Udostępnij motyw",
+        "es": "Compartir tema"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportButton",
+      "en": "Import theme",
+      "translations": {
+        "fr": "Importer un thème",
+        "de": "Design importieren",
+        "ru": "Импортировать тему",
+        "pt-br": "Importar tema",
+        "pl": "Importuj motyw",
+        "es": "Importar tema"
+      }
+    },
+    {
+      "field": "ThemeShare_ShareButtonAccessible",
+      "en": "Save the active custom theme as a JSON file to share",
+      "translations": {
+        "fr": "Enregistrer le thème personnalisé actif en fichier JSON à partager",
+        "de": "Das aktive eigene Design als JSON-Datei zum Teilen speichern",
+        "ru": "Сохранить активную собственную тему в JSON-файл, чтобы поделиться",
+        "pt-br": "Salvar o tema personalizado ativo como arquivo JSON para compartilhar",
+        "pl": "Zapisz aktywny własny motyw jako plik JSON do udostępnienia",
+        "es": "Guardar el tema personalizado activo como archivo JSON para compartirlo"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportButtonAccessible",
+      "en": "Import a theme from a JSON file",
+      "translations": {
+        "fr": "Importer un thème depuis un fichier JSON",
+        "de": "Ein Design aus einer JSON-Datei importieren",
+        "ru": "Импортировать тему из JSON-файла",
+        "pt-br": "Importar um tema de um arquivo JSON",
+        "pl": "Importuj motyw z pliku JSON",
+        "es": "Importar un tema desde un archivo JSON"
+      }
+    },
+    {
+      "field": "ThemeShare_ShareDialogTitle",
+      "en": "Share theme",
+      "translations": {
+        "fr": "Partager le thème",
+        "de": "Design teilen",
+        "ru": "Поделиться темой",
+        "pt-br": "Compartilhar tema",
+        "pl": "Udostępnij motyw",
+        "es": "Compartir tema"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportDialogTitle",
+      "en": "Import theme",
+      "translations": {
+        "fr": "Importer un thème",
+        "de": "Design importieren",
+        "ru": "Импортировать тему",
+        "pt-br": "Importar tema",
+        "pl": "Importuj motyw",
+        "es": "Importar tema"
+      }
+    },
+    {
+      "field": "ThemeShare_Shared",
+      "en": "Saved {0}. Send that file to a friend and they can import it here.",
+      "translations": {
+        "fr": "{0} enregistré. Envoie le fichier à un ami, il pourra l'importer ici.",
+        "de": "{0} gespeichert. Schick die Datei einem Freund, dann kann er sie hier importieren.",
+        "ru": "Сохранено: {0}. Отправь файл другу, и он импортирует его здесь.",
+        "pt-br": "{0} salvo. Mande o arquivo para um amigo e ele importa aqui.",
+        "pl": "Zapisano {0}. Wyślij ten plik znajomemu, a zaimportuje go tutaj.",
+        "es": "{0} guardado. Mándale el archivo a un amigo y lo importa aquí."
+      }
+    },
+    {
+      "field": "ThemeShare_ShareFailed",
+      "en": "Couldn't save the file: {0}",
+      "translations": {
+        "fr": "Impossible d'enregistrer le fichier : {0}",
+        "de": "Die Datei konnte nicht gespeichert werden: {0}",
+        "ru": "Не удалось сохранить файл: {0}",
+        "pt-br": "Não foi possível salvar o arquivo: {0}",
+        "pl": "Nie udało się zapisać pliku: {0}",
+        "es": "No se pudo guardar el archivo: {0}"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportReadFailed",
+      "en": "Couldn't read that file: {0}",
+      "translations": {
+        "fr": "Impossible de lire ce fichier : {0}",
+        "de": "Die Datei konnte nicht gelesen werden: {0}",
+        "ru": "Не удалось прочитать этот файл: {0}",
+        "pt-br": "Não foi possível ler esse arquivo: {0}",
+        "pl": "Nie udało się odczytać tego pliku: {0}",
+        "es": "No se pudo leer ese archivo: {0}"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportBuiltInId",
+      "en": "That name belongs to a built-in theme ({0}), and built-ins always win. Change the name field in the file and import again.",
+      "translations": {
+        "fr": "Ce nom appartient à un thème intégré ({0}), et les thèmes intégrés l'emportent toujours. Change le champ name du fichier et importe à nouveau.",
+        "de": "Dieser Name gehört zu einem integrierten Design ({0}), und integrierte Designs haben immer Vorrang. Ändere das Feld name in der Datei und importiere erneut.",
+        "ru": "Это имя принадлежит встроенной теме ({0}), а встроенные всегда главнее. Измени поле name в файле и импортируй снова.",
+        "pt-br": "Esse nome pertence a um tema integrado ({0}), e os integrados sempre vencem. Mude o campo name no arquivo e importe de novo.",
+        "pl": "Ta nazwa należy do wbudowanego motywu ({0}), a wbudowane zawsze wygrywają. Zmień pole name w pliku i zaimportuj ponownie.",
+        "es": "Ese nombre es de un tema integrado ({0}), y los integrados siempre ganan. Cambia el campo name del archivo e importa de nuevo."
+      }
+    },
+    {
+      "field": "ThemeShare_ImportAlreadyExists",
+      "en": "You already have a custom theme called {0}. Rename it in the themes folder, or change the name in the file, then import again.",
+      "translations": {
+        "fr": "Tu as déjà un thème personnalisé nommé {0}. Renomme-le dans le dossier des thèmes ou change le nom dans le fichier, puis importe à nouveau.",
+        "de": "Du hast bereits ein eigenes Design namens {0}. Benenne es im Designs-Ordner um oder ändere den Namen in der Datei, dann importiere erneut.",
+        "ru": "У тебя уже есть своя тема с именем {0}. Переименуй её в папке тем или измени имя в файле, затем импортируй снова.",
+        "pt-br": "Você já tem um tema personalizado chamado {0}. Renomeie na pasta de temas ou mude o nome no arquivo e importe de novo.",
+        "pl": "Masz już własny motyw o nazwie {0}. Zmień jego nazwę w folderze motywów albo zmień nazwę w pliku, po czym zaimportuj ponownie.",
+        "es": "Ya tienes un tema personalizado llamado {0}. Renómbralo en la carpeta de temas o cambia el nombre en el archivo, y vuelve a importar."
+      }
+    },
+    {
+      "field": "ThemeShare_ImportFailed",
+      "en": "Import failed: {0}",
+      "translations": {
+        "fr": "Échec de l'import : {0}",
+        "de": "Import fehlgeschlagen: {0}",
+        "ru": "Импорт не удался: {0}",
+        "pt-br": "Falha na importação: {0}",
+        "pl": "Import nie powiódł się: {0}",
+        "es": "Falló la importación: {0}"
+      }
+    }
+  ]
+}

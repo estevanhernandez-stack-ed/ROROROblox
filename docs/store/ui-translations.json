@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "f32290d",
-  "generatedUtc": "2026-09-30T00:35:42+00:00",
+  "sourceCommit": "0930d4e",
+  "generatedUtc": "2026-10-19T20:13:04+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -61,18 +61,6 @@
         "pt-br": "Atalhos de teclado",
         "pl": "Skróty klawiszowe",
         "es": "Atajos de teclado"
-      }
-    },
-    {
-      "field": "AboutPage_Koii4Eva",
-      "en": "Koii 4 eva",
-      "translations": {
-        "fr": "Koii 4 eva",
-        "de": "Koii 4 eva",
-        "ru": "Koii 4 eva",
-        "pt-br": "Koii 4 eva",
-        "pl": "Koii 4 eva",
-        "es": "Koii 4 eva"
       }
     },
     {
@@ -2141,7 +2129,7 @@
     },
     {
       "field": "MainWindow_MuteDiscordAlerts",
-      "en": "Mute Discord alerts",
+      "en": "Mute alerts",
       "translations": {
         "fr": "Couper les alertes Discord",
         "de": "Discord-Benachrichtigungen stummschalten",
@@ -2153,7 +2141,7 @@
     },
     {
       "field": "MainWindow_MutedNoDiscordAlerts",
-      "en": "✓ Muted — no Discord alerts",
+      "en": "✓ Muted — no alerts anywhere",
       "translations": {
         "fr": "✓ En sourdine — aucune alerte Discord",
         "de": "✓ Stumm — keine Discord-Benachrichtigungen",
@@ -2681,7 +2669,7 @@
     },
     {
       "field": "MainWindow_StopDiscordAlertsForThis",
-      "en": "Stop Discord alerts for this account only. Routing is per-trigger; muting is per-account.",
+      "en": "Stop every alert for this account, the desktop one included. Routing is per-trigger; muting is per-account.",
       "translations": {
         "fr": "Arrêter les alertes Discord pour ce compte uniquement. Le routage est par déclencheur ; la mise en sourdine est par compte.",
         "de": "Stoppt Discord-Benachrichtigungen nur für dieses Konto. Das Routing ist pro Auslöser; das Stummschalten ist pro Konto.",
@@ -3473,14 +3461,14 @@
     },
     {
       "field": "SettingsPage_Appearance",
-      "en": "Appearance",
+      "en": "Language and Appearance",
       "translations": {
-        "fr": "Apparence",
-        "de": "Darstellung",
-        "ru": "Внешний вид",
-        "pt-br": "Aparência",
-        "pl": "Wygląd",
-        "es": "Apariencia"
+        "fr": "Langue et apparence",
+        "de": "Sprache und Darstellung",
+        "ru": "Язык и оформление",
+        "pt-br": "Idioma e aparência",
+        "pl": "Język i wygląd",
+        "es": "Idioma y apariencia"
       }
     },
     {
@@ -3760,18 +3748,6 @@
       }
     },
     {
-      "field": "SettingsPage_IdleAccounts",
-      "en": "Idle accounts",
-      "translations": {
-        "fr": "Comptes inactifs",
-        "de": "Inaktive Konten",
-        "ru": "Неактивные аккаунты",
-        "pt-br": "Contas ociosas",
-        "pl": "Bezczynne konta",
-        "es": "Cuentas inactivas"
-      }
-    },
-    {
       "field": "SettingsPage_IdleWarnThreshold",
       "en": "Idle warn threshold",
       "translations": {
@@ -3904,18 +3880,6 @@
       }
     },
     {
-      "field": "SettingsPage_Memory",
-      "en": "Memory",
-      "translations": {
-        "fr": "Mémoire",
-        "de": "Speicher",
-        "ru": "Память",
-        "pt-br": "Memória",
-        "pl": "Pamięć",
-        "es": "Memoria"
-      }
-    },
-    {
       "field": "SettingsPage_MemorySettingsWarning",
       "en": "Memory settings warning",
       "translations": {
@@ -3997,18 +3961,6 @@
         "pt-br": "Contas silenciadas",
         "pl": "Wyciszone konta",
         "es": "Cuentas silenciadas"
-      }
-    },
-    {
-      "field": "SettingsPage_MuteIdleAlerts",
-      "en": "Mute idle alerts.",
-      "translations": {
-        "fr": "Couper les alertes d'inactivité.",
-        "de": "Inaktivitäts-Benachrichtigungen stummschalten.",
-        "ru": "Отключить оповещения о простое.",
-        "pt-br": "Silenciar alertas de inatividade.",
-        "pl": "Wycisz alerty o bezczynności.",
-        "es": "Silenciar alertas de inactividad."
       }
     },
     {
@@ -4349,7 +4301,7 @@
     },
     {
       "field": "SettingsPage_RororoChecksEveryRunningClient",
-      "en": "RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect the next time RoRoRo starts.",
+      "en": "RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect without a restart: the switch at once, the numbers on the next 30-second check.",
       "translations": {
         "fr": "RoRoRo vérifie chaque client en cours d'exécution toutes les 30 secondes et vous prévient avant que votre PC ne soit à court. Désactivez-le et les trois paramètres ci-dessous n'ont plus aucun effet. Les quatre prennent effet au prochain démarrage de RoRoRo.",
         "de": "RoRoRo prüft jeden laufenden Client alle 30 Sekunden und sagt dir Bescheid, bevor deinem PC der Speicher ausgeht. Schalte es aus, und die drei Einstellungen unten bewirken nichts mehr. Alle vier werden beim nächsten Start von RoRoRo wirksam.",
@@ -4357,18 +4309,6 @@
         "pt-br": "O RoRoRo verifica cada cliente em execução a cada 30 segundos e avisa você antes de o PC ficar sem memória. Desative e as três configurações abaixo param de fazer efeito. As quatro entram em vigor na próxima vez que o RoRoRo iniciar.",
         "pl": "RoRoRo sprawdza każdego uruchomionego klienta co 30 sekund i informuje, zanim komputerowi zabraknie pamięci. Wyłącz to, a trzy ustawienia poniżej przestaną cokolwiek robić. Wszystkie cztery zaczynają obowiązywać przy następnym uruchomieniu RoRoRo.",
         "es": "RoRoRo comprueba cada cliente en ejecución cada 30 segundos y te avisa antes de que tu PC se quede sin memoria. Desactívalo y las tres opciones de abajo dejan de hacer nada. Las cuatro surten efecto la próxima vez que arranque RoRoRo."
-      }
-    },
-    {
-      "field": "SettingsPage_RororoShowsOneTrayToast",
-      "en": "RoRoRo shows one tray toast when a running account crosses the idle threshold below. Checking this keeps the row chip but skips the toast.",
-      "translations": {
-        "fr": "RoRoRo affiche une notification dans la barre d'état système lorsqu'un compte en cours d'exécution dépasse le seuil d'inactivité ci-dessous. Cocher ceci conserve la pastille sur la ligne mais supprime la notification.",
-        "de": "RoRoRo zeigt eine Infobereich-Meldung, wenn ein laufendes Konto die untenstehende Inaktivitätsschwelle überschreitet. Dies anzuhaken behält den Zeilen-Chip, überspringt aber die Meldung.",
-        "ru": "RoRoRo показывает одно всплывающее уведомление в области уведомлений, когда запущенный аккаунт пересекает порог простоя ниже. Эта отметка сохраняет чип в строке, но пропускает всплывающее уведомление.",
-        "pt-br": "O RoRoRo mostra uma notificação na bandeja quando uma conta em execução cruza o limite de inatividade abaixo. Marcar isto mantém o chip na linha mas pula a notificação.",
-        "pl": "RoRoRo pokazuje jedno powiadomienie w zasobniku systemowym, gdy uruchomione konto przekroczy próg bezczynności poniżej. Zaznaczenie tego zachowuje znacznik w wierszu, ale pomija powiadomienie.",
-        "es": "RoRoRo muestra una notificación emergente en la bandeja del sistema cuando una cuenta en ejecución cruza el umbral de inactividad de abajo. Marcar esto mantiene el chip de la fila pero omite la notificación."
       }
     },
     {
@@ -12961,6 +12901,594 @@
         "pt-br": "{0}: sem iniciar, ninguém que possa ser seguido está em um jogo.",
         "pl": "{0}: nie uruchomiono, bo nikt, do kogo można dołączyć, nie jest w grze.",
         "es": "{0}: sin iniciar, no hay nadie en un juego a quien seguir."
+      }
+    },
+    {
+      "field": "SettingsPage_AlertColumnAlert",
+      "en": "Alert",
+      "translations": {
+        "fr": "Alerte",
+        "de": "Benachrichtigung",
+        "ru": "Оповещение",
+        "pt-br": "Alerta",
+        "pl": "Alert",
+        "es": "Alerta"
+      }
+    },
+    {
+      "field": "SettingsPage_AlertColumnHowOften",
+      "en": "At most once every",
+      "translations": {
+        "fr": "Au maximum une fois toutes les",
+        "de": "Höchstens einmal alle",
+        "ru": "Не чаще одного раза в",
+        "pt-br": "No máximo uma vez a cada",
+        "pl": "Najwyżej raz na",
+        "es": "Como máximo una vez cada"
+      }
+    },
+    {
+      "field": "SettingsPage_AlertColumnWhereItGoes",
+      "en": "Where it goes",
+      "translations": {
+        "fr": "Où elle va",
+        "de": "Wohin sie geht",
+        "ru": "Куда отправляется",
+        "pt-br": "Para onde vai",
+        "pl": "Gdzie trafia",
+        "es": "A dónde va"
+      }
+    },
+    {
+      "field": "SettingsPage_HowOftenAtMost",
+      "en": "How often at most",
+      "translations": {
+        "fr": "À quelle fréquence au maximum",
+        "de": "Wie oft höchstens",
+        "ru": "Как часто не более",
+        "pt-br": "Com que frequência no máximo",
+        "pl": "Jak często najwyżej",
+        "es": "Con qué frecuencia como máximo"
+      }
+    },
+    {
+      "field": "SettingsPage_HowOftenAtMostHint",
+      "en": "A quiet period per account and per alert, so one bad minute is one message rather than twenty. Set it to Every time and nothing is held back.",
+      "translations": {
+        "fr": "Une période de silence par compte et par alerte, pour qu'une mauvaise minute donne un message et non vingt. Réglez-le sur « Chaque fois » et rien n'est retenu.",
+        "de": "Eine Ruhezeit pro Konto und pro Benachrichtigung, damit eine schlechte Minute eine Nachricht ergibt und nicht zwanzig. Stelle es auf „Jedes Mal“ und nichts wird zurückgehalten.",
+        "ru": "Период тишины для каждого аккаунта и каждого оповещения, чтобы одна плохая минута давала одно сообщение, а не двадцать. Выберите «Каждый раз» — и ничего не задерживается.",
+        "pt-br": "Um período de silêncio por conta e por alerta, então um minuto ruim é uma mensagem em vez de vinte. Defina como “Sempre” e nada é retido.",
+        "pl": "Okres ciszy dla każdego konta i każdego alertu, więc jedna zła minuta to jedna wiadomość, a nie dwadzieścia. Ustaw „Za każdym razem” i nic nie zostanie wstrzymane.",
+        "es": "Un periodo de silencio por cuenta y por alerta, así un mal minuto es un mensaje en vez de veinte. Ponlo en «Cada vez» y nada se retiene."
+      }
+    },
+    {
+      "field": "SettingsPage_HowOftenAnyAlertMayRepeat",
+      "en": "How often any alert may repeat at most",
+      "translations": {
+        "fr": "À quelle fréquence une alerte peut se répéter au maximum",
+        "de": "Wie oft sich eine Benachrichtigung höchstens wiederholen darf",
+        "ru": "Как часто любое оповещение может повторяться не более",
+        "pt-br": "Com que frequência qualquer alerta pode repetir no máximo",
+        "pl": "Jak często najwyżej może powtarzać się dowolny alert",
+        "es": "Con qué frecuencia puede repetirse como máximo cualquier alerta"
+      }
+    },
+    {
+      "field": "SettingsPage_EveryTime",
+      "en": "Every time",
+      "translations": {
+        "fr": "Chaque fois",
+        "de": "Jedes Mal",
+        "ru": "Каждый раз",
+        "pt-br": "Sempre",
+        "pl": "Za każdym razem",
+        "es": "Cada vez"
+      }
+    },
+    {
+      "field": "SettingsPage_1Minute",
+      "en": "1 minute",
+      "translations": {
+        "fr": "1 minute",
+        "de": "1 Minute",
+        "ru": "1 минута",
+        "pt-br": "1 minuto",
+        "pl": "1 minuta",
+        "es": "1 minuto"
+      }
+    },
+    {
+      "field": "SettingsPage_5Minutes",
+      "en": "5 minutes",
+      "translations": {
+        "fr": "5 minutes",
+        "de": "5 Minuten",
+        "ru": "5 минут",
+        "pt-br": "5 minutos",
+        "pl": "5 minut",
+        "es": "5 minutos"
+      }
+    },
+    {
+      "field": "SettingsPage_30Minutes",
+      "en": "30 minutes",
+      "translations": {
+        "fr": "30 minutes",
+        "de": "30 Minuten",
+        "ru": "30 минут",
+        "pt-br": "30 minutos",
+        "pl": "30 minut",
+        "es": "30 minutos"
+      }
+    },
+    {
+      "field": "SettingsPage_60Minutes",
+      "en": "60 minutes",
+      "translations": {
+        "fr": "60 minutes",
+        "de": "60 Minuten",
+        "ru": "60 минут",
+        "pt-br": "60 minutos",
+        "pl": "60 minut",
+        "es": "60 minutos"
+      }
+    },
+    {
+      "field": "SettingsPage_FollowThePaceAbove",
+      "en": "Follow the pace above",
+      "translations": {
+        "fr": "Suivre le rythme ci-dessus",
+        "de": "Dem Takt oben folgen",
+        "ru": "По частоте, заданной выше",
+        "pt-br": "Seguir o ritmo acima",
+        "pl": "Zgodnie z tempem powyżej",
+        "es": "Seguir el ritmo de arriba"
+      }
+    },
+    {
+      "field": "SettingsPage_AlertSound",
+      "en": "Alert sound",
+      "translations": {
+        "fr": "Son d'alerte",
+        "de": "Benachrichtigungston",
+        "ru": "Звук оповещения",
+        "pt-br": "Som do alerta",
+        "pl": "Dźwięk alertu",
+        "es": "Sonido de alerta"
+      }
+    },
+    {
+      "field": "SettingsPage_AlertSoundHint",
+      "en": "Plays once per alert, however many places that alert goes. Silent still draws the notification and still colours the tray.",
+      "translations": {
+        "fr": "Retentit une fois par alerte, quel que soit le nombre de destinations. « Silencieux » affiche toujours la notification et colore toujours la barre d'état système.",
+        "de": "Erklingt einmal pro Benachrichtigung, egal an wie viele Orte sie geht. „Stumm“ zeichnet die Benachrichtigung weiterhin und färbt weiterhin das Tray-Symbol.",
+        "ru": "Звучит один раз на оповещение, сколько бы адресатов у него ни было. «Без звука» по-прежнему рисует уведомление и по-прежнему окрашивает значок в трее.",
+        "pt-br": "Toca uma vez por alerta, para quantos destinos ele for. “Silencioso” continua desenhando a notificação e continua colorindo a bandeja.",
+        "pl": "Odtwarza się raz na alert, niezależnie od liczby miejsc, do których trafia. „Cisza” nadal rysuje powiadomienie i nadal koloruje zasobnik.",
+        "es": "Suena una vez por alerta, por muchos destinos que tenga. «Silencio» sigue dibujando la notificación y sigue coloreando la bandeja."
+      }
+    },
+    {
+      "field": "SettingsPage_WhatADesktopAlertSoundsLike",
+      "en": "What a desktop alert sounds like",
+      "translations": {
+        "fr": "Le son d'une alerte sur le bureau",
+        "de": "Wie eine Desktop-Benachrichtigung klingt",
+        "ru": "Как звучит оповещение на рабочем столе",
+        "pt-br": "Como soa um alerta na área de trabalho",
+        "pl": "Jak brzmi alert na pulpicie",
+        "es": "Cómo suena una alerta de escritorio"
+      }
+    },
+    {
+      "field": "SettingsPage_SoundSilent",
+      "en": "Silent",
+      "translations": {
+        "fr": "Silencieux",
+        "de": "Stumm",
+        "ru": "Без звука",
+        "pt-br": "Silencioso",
+        "pl": "Cisza",
+        "es": "Silencio"
+      }
+    },
+    {
+      "field": "SettingsPage_SoundRororoChime",
+      "en": "RoRoRo chime",
+      "translations": {
+        "fr": "Carillon RoRoRo",
+        "de": "RoRoRo-Klang",
+        "ru": "Сигнал RoRoRo",
+        "pt-br": "Toque do RoRoRo",
+        "pl": "Dzwonek RoRoRo",
+        "es": "Timbre de RoRoRo"
+      }
+    },
+    {
+      "field": "SettingsPage_SoundWindowsDefault",
+      "en": "Windows default",
+      "translations": {
+        "fr": "Son par défaut de Windows",
+        "de": "Windows-Standard",
+        "ru": "Стандартный звук Windows",
+        "pt-br": "Padrão do Windows",
+        "pl": "Domyślny dźwięk Windows",
+        "es": "Predeterminado de Windows"
+      }
+    },
+    {
+      "field": "SettingsPage_TheTrayIconColoursWhatever",
+      "en": "The tray icon colours whatever you untick here, so you can always find out at the PC. Unticking Desktop drops the notification and its sound, never the badge.",
+      "translations": {
+        "fr": "L'icône de la barre d'état système se colore pour tout ce que vous décochez ici, afin que vous puissiez toujours le voir sur le PC. Décocher « Bureau » supprime la notification et son son, jamais le badge.",
+        "de": "Das Tray-Symbol färbt sich für alles, was du hier abwählst, damit du es am PC immer noch mitbekommst. „Desktop“ abzuwählen nimmt die Benachrichtigung und ihren Ton weg, nie das Abzeichen.",
+        "ru": "Значок в трее окрашивается для всего, что вы здесь снимаете, так что вы всё равно узнаете об этом за компьютером. Снятие «Рабочий стол» убирает уведомление и его звук, но никогда не значок.",
+        "pt-br": "O ícone da bandeja colore tudo o que você desmarcar aqui, então você sempre descobre no PC. Desmarcar “Área de trabalho” tira a notificação e o som dela, nunca o selo.",
+        "pl": "Ikona w zasobniku koloruje wszystko, co tutaj odznaczysz, więc zawsze dowiesz się przy komputerze. Odznaczenie „Pulpit” usuwa powiadomienie i jego dźwięk, nigdy plakietkę.",
+        "es": "El icono de la bandeja colorea todo lo que desmarques aquí, así siempre puedes enterarte en el PC. Desmarcar «Escritorio» quita la notificación y su sonido, nunca el distintivo."
+      }
+    },
+    {
+      "field": "SettingsPage_AnAccountGoesIdle",
+      "en": "An account goes idle in a game",
+      "translations": {
+        "fr": "Un compte devient inactif dans un jeu",
+        "de": "Ein Konto wird in einem Spiel inaktiv",
+        "ru": "Аккаунт простаивает в игре",
+        "pt-br": "Uma conta fica inativa em um jogo",
+        "pl": "Konto staje się bezczynne w grze",
+        "es": "Una cuenta queda inactiva en un juego"
+      }
+    },
+    {
+      "field": "SettingsPage_SendIdleAlertsToThe",
+      "en": "Send idle alerts to the desktop",
+      "translations": {
+        "fr": "Envoyer les alertes d'inactivité au bureau",
+        "de": "Inaktivitäts-Benachrichtigungen an den Desktop senden",
+        "ru": "Отправлять оповещения о простое на рабочий стол",
+        "pt-br": "Enviar alertas de inatividade para a área de trabalho",
+        "pl": "Wysyłaj alerty o bezczynności na pulpit",
+        "es": "Enviar alertas de inactividad al escritorio"
+      }
+    },
+    {
+      "field": "SettingsPage_SendIdleAlertsToMy",
+      "en": "Send idle alerts to my Discord channel",
+      "translations": {
+        "fr": "Envoyer les alertes d'inactivité à mon canal Discord",
+        "de": "Inaktivitäts-Benachrichtigungen an meinen Discord-Kanal senden",
+        "ru": "Отправлять оповещения о простое в мой канал Discord",
+        "pt-br": "Enviar alertas de inatividade para o meu canal do Discord",
+        "pl": "Wysyłaj alerty o bezczynności na mój kanał Discord",
+        "es": "Enviar alertas de inactividad a mi canal de Discord"
+      }
+    },
+    {
+      "field": "SettingsPage_SendIdleAlertsToThe_2",
+      "en": "Send idle alerts to the clan Discord channel",
+      "translations": {
+        "fr": "Envoyer les alertes d'inactivité au canal Discord du clan",
+        "de": "Inaktivitäts-Benachrichtigungen an den Clan-Discord-Kanal senden",
+        "ru": "Отправлять оповещения о простое в канал Discord клана",
+        "pt-br": "Enviar alertas de inatividade para o canal do clã no Discord",
+        "pl": "Wysyłaj alerty o bezczynności na kanał Discord klanu",
+        "es": "Enviar alertas de inactividad al canal de Discord del clan"
+      }
+    },
+    {
+      "field": "SettingsPage_SendIdleAlertsToMy_2",
+      "en": "Send idle alerts to my phone",
+      "translations": {
+        "fr": "Envoyer les alertes d'inactivité à mon téléphone",
+        "de": "Inaktivitäts-Benachrichtigungen an mein Handy senden",
+        "ru": "Отправлять оповещения о простое на мой телефон",
+        "pt-br": "Enviar alertas de inatividade para o meu celular",
+        "pl": "Wysyłaj alerty o bezczynności na mój telefon",
+        "es": "Enviar alertas de inactividad a mi teléfono"
+      }
+    },
+    {
+      "field": "SettingsPage_NobodyHasTouchedTheAccount",
+      "en": "How long an account sits with no input from you before it counts as idle. Only accounts actually in a game raise this alert, since only they can be kicked for it. The row chip appears at the same moment either way, whatever this alert is set to.",
+      "translations": {
+        "fr": "Combien de temps un compte reste sans aucune action de votre part avant d'être considéré comme inactif. Seuls les comptes réellement dans un jeu déclenchent cette alerte, puisque seuls eux peuvent en être expulsés. La puce de la ligne apparaît au même moment de toute façon, quel que soit le réglage de cette alerte.",
+        "de": "Wie lange ein Konto ohne Eingabe von dir dasteht, bevor es als inaktiv gilt. Nur Konten, die tatsächlich in einem Spiel sind, lösen diese Benachrichtigung aus, denn nur sie können dafür hinausgeworfen werden. Der Chip in der Zeile erscheint ohnehin im selben Moment, egal wie diese Benachrichtigung eingestellt ist.",
+        "ru": "Сколько времени аккаунт остаётся без ваших действий, прежде чем считается простаивающим. Это оповещение вызывают только аккаунты, которые действительно находятся в игре, ведь только их за это могут выкинуть. Значок в строке появляется в тот же момент в любом случае, независимо от настройки этого оповещения.",
+        "pt-br": "Quanto tempo uma conta fica sem nenhuma ação sua antes de contar como inativa. Só contas que estão realmente em um jogo geram este alerta, já que só elas podem ser expulsas por isso. O selo da linha aparece no mesmo momento de qualquer forma, seja qual for o ajuste deste alerta.",
+        "pl": "Jak długo konto pozostaje bez żadnych działań z twojej strony, zanim zostanie uznane za bezczynne. Ten alert wywołują tylko konta, które naprawdę są w grze, bo tylko one mogą za to zostać wyrzucone. Plakietka w wierszu pojawia się i tak w tym samym momencie, niezależnie od ustawienia tego alertu.",
+        "es": "Cuánto tiempo pasa una cuenta sin recibir nada de ti antes de contar como inactiva. Solo las cuentas que están realmente en un juego generan esta alerta, ya que solo a ellas se las puede expulsar por ello. El distintivo de la fila aparece en el mismo momento de todos modos, sea cual sea el ajuste de esta alerta."
+      }
+    },
+    {
+      "field": "SettingsPage_HowOftenDropOutAlertsMay",
+      "en": "How often drop-out alerts may repeat at most",
+      "translations": {
+        "fr": "À quelle fréquence les alertes de décrochage peuvent se répéter au maximum",
+        "de": "Wie oft sich Ausfall-Benachrichtigungen höchstens wiederholen dürfen",
+        "ru": "Как часто оповещения об отвале могут повторяться не более",
+        "pt-br": "Com que frequência os alertas de queda podem repetir no máximo",
+        "pl": "Jak często najwyżej mogą powtarzać się alerty o wypadnięciu",
+        "es": "Con qué frecuencia pueden repetirse como máximo las alertas de desconexión"
+      }
+    },
+    {
+      "field": "SettingsPage_HowOftenMemoryWarningsMay",
+      "en": "How often memory warnings may repeat at most",
+      "translations": {
+        "fr": "À quelle fréquence les avertissements de mémoire peuvent se répéter au maximum",
+        "de": "Wie oft sich Speicherwarnungen höchstens wiederholen dürfen",
+        "ru": "Как часто предупреждения о памяти могут повторяться не более",
+        "pt-br": "Com que frequência os avisos de memória podem repetir no máximo",
+        "pl": "Jak często najwyżej mogą powtarzać się ostrzeżenia o pamięci",
+        "es": "Con qué frecuencia pueden repetirse como máximo las advertencias de memoria"
+      }
+    },
+    {
+      "field": "SettingsPage_HowOftenIdleAlertsMay",
+      "en": "How often idle alerts may repeat at most",
+      "translations": {
+        "fr": "À quelle fréquence les alertes d'inactivité peuvent se répéter au maximum",
+        "de": "Wie oft sich Inaktivitäts-Benachrichtigungen höchstens wiederholen dürfen",
+        "ru": "Как часто оповещения о простое могут повторяться не более",
+        "pt-br": "Com que frequência os alertas de inatividade podem repetir no máximo",
+        "pl": "Jak często najwyżej mogą powtarzać się alerty o bezczynności",
+        "es": "Con qué frecuencia pueden repetirse como máximo las alertas de inactividad"
+      }
+    },
+    {
+      "field": "SettingsPage_HowOftenRecycleNoticesMay",
+      "en": "How often recycle notices may repeat at most",
+      "translations": {
+        "fr": "À quelle fréquence les avis de recyclage peuvent se répéter au maximum",
+        "de": "Wie oft sich Neu-verbinden-Hinweise höchstens wiederholen dürfen",
+        "ru": "Как часто уведомления о переподключении могут повторяться не более",
+        "pt-br": "Com que frequência os avisos de reciclagem podem repetir no máximo",
+        "pl": "Jak często najwyżej mogą powtarzać się powiadomienia o ponownym połączeniu",
+        "es": "Con qué frecuencia pueden repetirse como máximo los avisos de reconexión"
+      }
+    },
+    {
+      "field": "SettingsPage_HowOftenAutoRejoinPausedAlertsMay",
+      "en": "How often auto-rejoin-paused alerts may repeat at most",
+      "translations": {
+        "fr": "À quelle fréquence les alertes de reconnexion suspendue peuvent se répéter au maximum",
+        "de": "Wie oft sich Neubeitritt-Pause-Benachrichtigungen höchstens wiederholen dürfen",
+        "ru": "Как часто оповещения о паузе автоперезахода могут повторяться не более",
+        "pt-br": "Com que frequência os alertas de reentrada pausada podem repetir no máximo",
+        "pl": "Jak często najwyżej mogą powtarzać się alerty o wstrzymaniu ponownego dołączania",
+        "es": "Con qué frecuencia pueden repetirse como máximo las alertas de reingreso pausado"
+      }
+    },
+    {
+      "field": "SettingsPage_HowOftenMetricAlertsMay",
+      "en": "How often metric alerts may repeat at most",
+      "translations": {
+        "fr": "À quelle fréquence les alertes métriques peuvent se répéter au maximum",
+        "de": "Wie oft sich Metrik-Benachrichtigungen höchstens wiederholen dürfen",
+        "ru": "Как часто оповещения о метриках могут повторяться не более",
+        "pt-br": "Com que frequência os alertas de métricas podem repetir no máximo",
+        "pl": "Jak często najwyżej mogą powtarzać się alerty o wskaźnikach",
+        "es": "Con qué frecuencia pueden repetirse como máximo las alertas de métricas"
+      }
+    },
+    {
+      "field": "SettingsPage_FixedAtTwoHours",
+      "en": "Fixed at two hours.",
+      "translations": {
+        "fr": "Fixé à deux heures.",
+        "de": "Fest auf zwei Stunden.",
+        "ru": "Фиксировано: два часа.",
+        "pt-br": "Fixo em duas horas.",
+        "pl": "Ustalone na dwie godziny.",
+        "es": "Fijo en dos horas."
+      }
+    },
+    {
+      "field": "SettingsPage_HearIt",
+      "en": "Hear it",
+      "translations": {
+        "fr": "Écouter",
+        "de": "Anhören",
+        "ru": "Прослушать",
+        "pt-br": "Ouvir",
+        "pl": "Posłuchaj",
+        "es": "Escuchar"
+      }
+    },
+    {
+      "field": "SettingsPage_HearTheAlertSound",
+      "en": "Hear the alert sound",
+      "translations": {
+        "fr": "Écouter le son d'alerte",
+        "de": "Benachrichtigungston anhören",
+        "ru": "Прослушать звук оповещения",
+        "pt-br": "Ouvir o som do alerta",
+        "pl": "Posłuchaj dźwięku alertu",
+        "es": "Escuchar el sonido de alerta"
+      }
+    },
+    {
+      "field": "SettingsPage_IdleInvisibleHint",
+      "en": "Accounts with Roblox presence privacy on (Invisible) never get an idle alert. RoRoRo can't see them in a game, and idle alerts only fire for accounts it sees in one.",
+      "translations": {
+        "fr": "Les comptes dont la confidentialité de présence Roblox est activée (Invisible) ne reçoivent jamais d'alerte d'inactivité. RoRoRo ne les voit pas en jeu, et cette alerte ne se déclenche que pour les comptes qu'il voit en jeu.",
+        "de": "Konten mit eingeschaltetem Roblox-Anwesenheitsschutz (Unsichtbar) bekommen nie eine Inaktivitäts-Benachrichtigung. RoRoRo sieht sie in keinem Spiel, und diese Benachrichtigung gibt es nur für Konten, die es in einem Spiel sieht.",
+        "ru": "Аккаунты с включённой приватностью присутствия Roblox (Невидимка) никогда не получают оповещение о простое. RoRoRo не видит их в игре, а это оповещение срабатывает только для аккаунтов, которых он видит в игре.",
+        "pt-br": "Contas com a privacidade de presença do Roblox ativada (Invisível) nunca recebem um alerta de inatividade. O RoRoRo não as vê em um jogo, e esse alerta só dispara para contas que ele vê em um.",
+        "pl": "Konta z włączoną prywatnością obecności Roblox (Niewidoczny) nigdy nie dostają alertu o bezczynności. RoRoRo nie widzi ich w grze, a ten alert odpala tylko dla kont, które widzi w grze.",
+        "es": "Las cuentas con la privacidad de presencia de Roblox activada (Invisible) nunca reciben un aviso de inactividad. RoRoRo no las ve en una partida, y este aviso solo salta para las cuentas que ve en una."
+      }
+    },
+    {
+      "field": "SettingsPage_AlertSoundPluginsHint",
+      "en": "Silent silences RoRoRo's own alerts only. Plugins such as Ur Score play their own sounds, set in their own settings.",
+      "translations": {
+        "fr": "« Silencieux » ne coupe que les alertes propres à RoRoRo. Les plugins comme Ur Score jouent leurs propres sons, réglés dans leurs propres paramètres.",
+        "de": "„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins wie Ur Score spielen ihre eigenen Töne ab, eingestellt in ihren eigenen Einstellungen.",
+        "ru": "«Без звука» отключает только собственные оповещения RoRoRo. Плагины вроде Ur Score играют свои звуки, которые настраиваются в их собственных настройках.",
+        "pt-br": "“Silencioso” silencia só os alertas do próprio RoRoRo. Plugins como o Ur Score tocam seus próprios sons, definidos nas configurações deles.",
+        "pl": "„Cisza” wycisza tylko własne alerty RoRoRo. Pluginy, takie jak Ur Score, odtwarzają własne dźwięki, ustawiane w ich własnych ustawieniach.",
+        "es": "«Silencio» solo silencia las alertas propias de RoRoRo. Los plugins como Ur Score reproducen sus propios sonidos, configurados en sus propios ajustes."
+      }
+    },
+    {
+      "field": "SettingsPage_IdleActivityHint",
+      "en": "Activity counts per account, and only from the client in the foreground. Working in another program counts as idle for every alt.",
+      "translations": {
+        "fr": "L'activité compte par compte, et seulement depuis le client au premier plan. Travailler dans un autre programme compte comme de l'inactivité pour tous les alts.",
+        "de": "Aktivität zählt pro Konto und nur vom Client im Vordergrund. Wer in einem anderen Programm arbeitet, gilt für jeden Alt als inaktiv.",
+        "ru": "Активность считается по каждому аккаунту и только из клиента на переднем плане. Работа в другой программе считается простоем для каждого альта.",
+        "pt-br": "A atividade conta por conta, e só a do cliente em primeiro plano. Trabalhar em outro programa conta como inatividade para todas as alts.",
+        "pl": "Aktywność liczy się osobno dla każdego konta i tylko z klienta na pierwszym planie. Praca w innym programie liczy się jako bezczynność dla każdego alta.",
+        "es": "La actividad cuenta por cuenta, y solo desde el cliente en primer plano. Trabajar en otro programa cuenta como inactividad para todas las alts."
+      }
+    },
+    {
+      "field": "ThemeShare_ShareButton",
+      "en": "Share theme",
+      "translations": {
+        "fr": "Partager le thème",
+        "de": "Design teilen",
+        "ru": "Поделиться темой",
+        "pt-br": "Compartilhar tema",
+        "pl": "Udostępnij motyw",
+        "es": "Compartir tema"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportButton",
+      "en": "Import theme",
+      "translations": {
+        "fr": "Importer un thème",
+        "de": "Design importieren",
+        "ru": "Импортировать тему",
+        "pt-br": "Importar tema",
+        "pl": "Importuj motyw",
+        "es": "Importar tema"
+      }
+    },
+    {
+      "field": "ThemeShare_ShareButtonAccessible",
+      "en": "Save the active custom theme as a JSON file to share",
+      "translations": {
+        "fr": "Enregistrer le thème personnalisé actif en fichier JSON à partager",
+        "de": "Das aktive eigene Design als JSON-Datei zum Teilen speichern",
+        "ru": "Сохранить активную собственную тему в JSON-файл, чтобы поделиться",
+        "pt-br": "Salvar o tema personalizado ativo como arquivo JSON para compartilhar",
+        "pl": "Zapisz aktywny własny motyw jako plik JSON do udostępnienia",
+        "es": "Guardar el tema personalizado activo como archivo JSON para compartirlo"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportButtonAccessible",
+      "en": "Import a theme from a JSON file",
+      "translations": {
+        "fr": "Importer un thème depuis un fichier JSON",
+        "de": "Ein Design aus einer JSON-Datei importieren",
+        "ru": "Импортировать тему из JSON-файла",
+        "pt-br": "Importar um tema de um arquivo JSON",
+        "pl": "Importuj motyw z pliku JSON",
+        "es": "Importar un tema desde un archivo JSON"
+      }
+    },
+    {
+      "field": "ThemeShare_ShareDialogTitle",
+      "en": "Share theme",
+      "translations": {
+        "fr": "Partager le thème",
+        "de": "Design teilen",
+        "ru": "Поделиться темой",
+        "pt-br": "Compartilhar tema",
+        "pl": "Udostępnij motyw",
+        "es": "Compartir tema"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportDialogTitle",
+      "en": "Import theme",
+      "translations": {
+        "fr": "Importer un thème",
+        "de": "Design importieren",
+        "ru": "Импортировать тему",
+        "pt-br": "Importar tema",
+        "pl": "Importuj motyw",
+        "es": "Importar tema"
+      }
+    },
+    {
+      "field": "ThemeShare_Shared",
+      "en": "Saved {0}. Send that file to a friend and they can import it here.",
+      "translations": {
+        "fr": "{0} enregistré. Envoie le fichier à un ami, il pourra l'importer ici.",
+        "de": "{0} gespeichert. Schick die Datei einem Freund, dann kann er sie hier importieren.",
+        "ru": "Сохранено: {0}. Отправь файл другу, и он импортирует его здесь.",
+        "pt-br": "{0} salvo. Mande o arquivo para um amigo e ele importa aqui.",
+        "pl": "Zapisano {0}. Wyślij ten plik znajomemu, a zaimportuje go tutaj.",
+        "es": "{0} guardado. Mándale el archivo a un amigo y lo importa aquí."
+      }
+    },
+    {
+      "field": "ThemeShare_ShareFailed",
+      "en": "Couldn't save the file: {0}",
+      "translations": {
+        "fr": "Impossible d'enregistrer le fichier : {0}",
+        "de": "Die Datei konnte nicht gespeichert werden: {0}",
+        "ru": "Не удалось сохранить файл: {0}",
+        "pt-br": "Não foi possível salvar o arquivo: {0}",
+        "pl": "Nie udało się zapisać pliku: {0}",
+        "es": "No se pudo guardar el archivo: {0}"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportReadFailed",
+      "en": "Couldn't read that file: {0}",
+      "translations": {
+        "fr": "Impossible de lire ce fichier : {0}",
+        "de": "Die Datei konnte nicht gelesen werden: {0}",
+        "ru": "Не удалось прочитать этот файл: {0}",
+        "pt-br": "Não foi possível ler esse arquivo: {0}",
+        "pl": "Nie udało się odczytać tego pliku: {0}",
+        "es": "No se pudo leer ese archivo: {0}"
+      }
+    },
+    {
+      "field": "ThemeShare_ImportBuiltInId",
+      "en": "That name belongs to a built-in theme ({0}), and built-ins always win. Change the name field in the file and import again.",
+      "translations": {
+        "fr": "Ce nom appartient à un thème intégré ({0}), et les thèmes intégrés l'emportent toujours. Change le champ name du fichier et importe à nouveau.",
+        "de": "Dieser Name gehört zu einem integrierten Design ({0}), und integrierte Designs haben immer Vorrang. Ändere das Feld name in der Datei und importiere erneut.",
+        "ru": "Это имя принадлежит встроенной теме ({0}), а встроенные всегда главнее. Измени поле name в файле и импортируй снова.",
+        "pt-br": "Esse nome pertence a um tema integrado ({0}), e os integrados sempre vencem. Mude o campo name no arquivo e importe de novo.",
+        "pl": "Ta nazwa należy do wbudowanego motywu ({0}), a wbudowane zawsze wygrywają. Zmień pole name w pliku i zaimportuj ponownie.",
+        "es": "Ese nombre es de un tema integrado ({0}), y los integrados siempre ganan. Cambia el campo name del archivo e importa de nuevo."
+      }
+    },
+    {
+      "field": "ThemeShare_ImportAlreadyExists",
+      "en": "You already have a custom theme called {0}. Rename it in the themes folder, or change the name in the file, then import again.",
+      "translations": {
+        "fr": "Tu as déjà un thème personnalisé nommé {0}. Renomme-le dans le dossier des thèmes ou change le nom dans le fichier, puis importe à nouveau.",
+        "de": "Du hast bereits ein eigenes Design namens {0}. Benenne es im Designs-Ordner um oder ändere den Namen in der Datei, dann importiere erneut.",
+        "ru": "У тебя уже есть своя тема с именем {0}. Переименуй её в папке тем или измени имя в файле, затем импортируй снова.",
+        "pt-br": "Você já tem um tema personalizado chamado {0}. Renomeie na pasta de temas ou mude o nome no arquivo e importe de novo.",
+        "pl": "Masz już własny motyw o nazwie {0}. Zmień jego nazwę w folderze motywów albo zmień nazwę w pliku, po czym zaimportuj ponownie.",
+        "es": "Ya tienes un tema personalizado llamado {0}. Renómbralo en la carpeta de temas o cambia el nombre en el archivo, y vuelve a importar."
+      }
+    },
+    {
+      "field": "ThemeShare_ImportFailed",
+      "en": "Import failed: {0}",
+      "translations": {
+        "fr": "Échec de l'import : {0}",
+        "de": "Import fehlgeschlagen: {0}",
+        "ru": "Импорт не удался: {0}",
+        "pt-br": "Falha na importação: {0}",
+        "pl": "Import nie powiódł się: {0}",
+        "es": "Falló la importación: {0}"
       }
     }
   ]
