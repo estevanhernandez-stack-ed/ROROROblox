@@ -47,6 +47,8 @@ public static class SmokeMetrics
     public const string Streamer = "smoke.streamer";
     public const string Fallback = "smoke.fallback";
     public const string Group = "smoke.group";
+    public const string RunOnly = "smoke.runonly";
+    public const string RunNone = "smoke.runnone";
 }
 
 /// <summary>
@@ -120,6 +122,11 @@ public static class SmokeTimings
     /// </para>
     /// </summary>
     public static readonly TimeSpan SettingsPickup = AppRoutineTick * 2;
+
+    /// <summary>How long the running-only rows wait for the operator to have one saved account running
+    /// and another not. Launching a Roblox client takes most of a minute, so this is a human-paced wait
+    /// like the app-startup one, paid at most once per run (the answer is cached).</summary>
+    public static readonly TimeSpan RunningAccountWait = TimeSpan.FromMinutes(3);
 
     /// <summary>How often the log is re-read while waiting. Small enough to be invisible next to
     /// <see cref="AlertWindow"/>, large enough not to spin on a file the app has open.</summary>
@@ -198,6 +205,8 @@ public static class SmokeRules
         Level(SmokeMetrics.Streamer),
         Level(SmokeMetrics.Fallback),
         Level(SmokeMetrics.Group),
+        Level(SmokeMetrics.RunOnly),
+        Level(SmokeMetrics.RunNone),
     ];
 
     /// <summary><see cref="Canonical"/> plus the rule the live-pickup row adds while the app runs.</summary>
@@ -529,6 +538,104 @@ public sealed class ScenarioContext
             .ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// One saved account running on this PC and one saved account that is not, with the names the host
+    /// hands a plugin for them (streamer-masked, because the harness turns the mode on). Held in memory,
+    /// compared, never printed.
+    /// </summary>
+    public sealed record RunningScope(string RunningId, string RunningName, string NotRunningId, string NotRunningName);
+
+    private RunningScope? _runningScope;
+    private string? _runningScopeWhy;
+    private bool _runningScopeTried;
+
+    /// <summary>
+    /// Picks the pair the two running-only rows need, from the host itself rather than from a made-up id:
+    /// <c>GetAccounts</c> (every saved account, the same source the masked-naming row uses) says what
+    /// exists, <c>GetRunningAccounts</c> (a free read) says which of those are running, and the pair is
+    /// the first running saved account plus the first saved account that is not. A synthetic id is no
+    /// good for either role: an unknown id is "not running" by definition, which would make the
+    /// running half impossible, and it resolves to no name, which would make the naming assertions
+    /// vacuous.
+    /// <para>
+    /// Waits up to <see cref="SmokeTimings.RunningAccountWait"/> for the operator to launch an account,
+    /// once: the answer, including "there is none", is cached so the second row does not wait again.
+    /// A pair is refused when the two names are equal, one contains the other, or either occurs in the
+    /// fixed text of these two rows' alerts, because "this name appears nowhere" would then be
+    /// unprovable or false for a reason that is not the app's.
+    /// </para>
+    /// </summary>
+    public async Task<(RunningScope? Scope, string Why)> ResolveRunningScopeAsync()
+    {
+        if (_runningScopeTried) return (_runningScope, _runningScopeWhy ?? string.Empty);
+        _runningScopeTried = true;
+
+        var deadline = DateTime.UtcNow + SmokeTimings.RunningAccountWait;
+        var why = "the host reported no saved accounts.";
+        try
+        {
+            while (true)
+            {
+                var saved = await Reporter.SavedAccountsAsync().ConfigureAwait(false);
+                var runningIds = await Reporter.RunningAccountIdsAsync().ConfigureAwait(false);
+                var running = saved.Where(a => runningIds.Contains(a.AccountId)).ToList();
+                var idle = saved.Where(a => !runningIds.Contains(a.AccountId)).ToList();
+
+                if (saved.Count == 0)
+                {
+                    why = "the host reported no saved accounts.";
+                }
+                else if (running.Count == 0)
+                {
+                    why = "no saved account is running in RoRoRo. Launch one, then rerun.";
+                }
+                else if (idle.Count == 0)
+                {
+                    why = "every saved account is running, so there is no not-running account to report against. "
+                        + "Stop one, then rerun.";
+                }
+                else
+                {
+                    why = "every running/not-running pair has names that collide (equal, nested, or inside the "
+                        + "alert's own fixed wording), so \"this name appears nowhere\" could not be told from "
+                        + "a false match.";
+                    foreach (var r in running)
+                    {
+                        foreach (var n in idle)
+                        {
+                            if (!NamesAreDistinguishable(r.DisplayName, n.DisplayName)) continue;
+                            _runningScope = new RunningScope(r.AccountId, r.DisplayName, n.AccountId, n.DisplayName);
+                            return (_runningScope, string.Empty);
+                        }
+                    }
+                }
+
+                if (DateTime.UtcNow >= deadline) break;
+                await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            why = $"could not ask the host which accounts exist or run ({ex.GetType().Name}).";
+        }
+
+        _runningScopeWhy = why;
+        return (null, why);
+    }
+
+    private static bool NamesAreDistinguishable(string running, string notRunning)
+    {
+        if (string.IsNullOrWhiteSpace(running) || string.IsNullOrWhiteSpace(notRunning)) return false;
+        if (running.Contains(notRunning, StringComparison.OrdinalIgnoreCase)) return false;
+        if (notRunning.Contains(running, StringComparison.OrdinalIgnoreCase)) return false;
+
+        var fixedText = string.Join(' ', SmokeMetrics.RunOnly, SmokeMetrics.RunNone,
+            "fell below", "accounts running here", "now", "None of your running accounts moved this.",
+            "It came from other players, or from an alt on another PC.");
+        return !fixedText.Contains(notRunning, StringComparison.OrdinalIgnoreCase)
+            && !fixedText.Contains(running, StringComparison.OrdinalIgnoreCase);
+    }
+
     public Task WriteRulesAsync(IReadOnlyList<MetricRuleRow> rows)
         => Guard.WriteRulesAsync(SmokeRules.ToJson(rows));
 
@@ -612,6 +719,12 @@ public static class ScenarioTable
         new("unconfigured-destination-falls-back",
             "An unconfigured destination falls back to the desktop toast.",
             UnconfiguredDestinationFallsBackAsync),
+        new("running-only-naming",
+            "A metric alert names only the accounts running on this PC.",
+            RunningOnlyNamingAsync),
+        new("no-running-account-behind-it",
+            "A metric alert with no running account behind it says so.",
+            NoRunningAccountBehindItAsync),
         new("opt-in-gates-it",
             "The opt-in setting actually gates it.",
             OptInGatesItAsync),
@@ -983,6 +1096,180 @@ public static class ScenarioTable
         };
     }
 
+    /// <summary>The body line a metric alert carries when no running account is behind it. Spelled here,
+    /// not referenced: <c>WebhookPayload.NoRunningAccountLine</c> is internal to Core, and a harness that
+    /// asserts the wording a user reads should break when someone rewords it.</summary>
+    private const string NoRunningAccountLine =
+        "• None of your running accounts moved this. It came from other players, or from an alt on another PC.";
+
+    /// <summary>
+    /// A metric alert names only accounts running on this PC (PR #234). One running saved account and one
+    /// saved account that is not, both crossing the same Level rule in one read: ONE alert, titled with
+    /// the running account's name alone, and the not-running account's name nowhere in the title or in
+    /// the personal channel's body.
+    /// <para>
+    /// The whole window, no early exit: "exactly one" and "named nowhere" are negatives. Names are the
+    /// host's masked ones (streamer mode is on for the run), so the name check reads the Local log title
+    /// and the personal (Mine) body; the clan body carries REAL names the harness never learns, so that
+    /// channel is checked only for the wording that must not be there. The log line's own account count
+    /// is deliberately not asserted: it counts every trigger the dispatcher received, marked or not.
+    /// </para>
+    /// </summary>
+    private static async Task<ScenarioOutcome> RunningOnlyNamingAsync(ScenarioContext ctx)
+    {
+        var (scope, why) = await ctx.ResolveRunningScopeAsync().ConfigureAwait(false);
+        if (scope is null) return ScenarioOutcome.Skip($"no running/not-running pair: {why}");
+
+        await ctx.ClearCatcherAsync().ConfigureAwait(false);
+        var watch = ctx.WatchLog();
+
+        await ctx.ReportAsync(scope.NotRunningId, SmokeMetrics.RunOnly, SmokeRules.BreachingLevel).ConfigureAwait(false);
+        await ctx.ReportAsync(scope.RunningId, SmokeMetrics.RunOnly, SmokeRules.BreachingLevel).ConfigureAwait(false);
+
+        await watch.SettleAsync(SmokeTimings.AlertWindow).ConfigureAwait(false);
+
+        var locals = watch.DeliveredFor(SmokeMetrics.RunOnly, LocalDestination);
+        if (locals.Count != 1)
+        {
+            return ScenarioOutcome.Fail(locals.Count == 0
+                ? $"no 'Alert → Local' for {SmokeMetrics.RunOnly} in {Describe(SmokeTimings.AlertWindow)}; an account "
+                    + "that is not running here must not stop the alert from firing."
+                : $"{locals.Count} 'Alert → Local' lines for {SmokeMetrics.RunOnly}; two accounts in one read "
+                    + "should be one alert.");
+        }
+
+        var title = locals[0].Title;
+        if (!title.Contains(scope.RunningName, StringComparison.Ordinal))
+        {
+            return ScenarioOutcome.Fail(
+                "the alert title does not name the running account. It should read '<name> — "
+                + $"{SmokeMetrics.RunOnly} fell below ...' for the one account running here.");
+        }
+        if (title.Contains(scope.NotRunningName, StringComparison.Ordinal))
+        {
+            return ScenarioOutcome.Fail("the alert title names the account that is NOT running here.");
+        }
+        if (title.Contains("accounts running here", StringComparison.Ordinal))
+        {
+            return ScenarioOutcome.Fail(
+                "the title uses the plural count form ('N accounts running here'); one account is running, "
+                + "so it should be named instead.");
+        }
+
+        var posts = await ctx.Catcher.DrainAsync(SmokeTimings.AlertWindow).ConfigureAwait(false);
+        var ours = posts.Where(p => p.Body.Contains(SmokeMetrics.RunOnly, StringComparison.Ordinal)).ToList();
+        var mine = ours.FirstOrDefault(p => p.Path == WebhookCatcher.MinePath)?.Body;
+        var clan = ours.FirstOrDefault(p => p.Path == WebhookCatcher.ClanPath)?.Body;
+        if (mine is null || clan is null)
+        {
+            return ScenarioOutcome.Fail(
+                $"expected a post naming {SmokeMetrics.RunOnly} on both {WebhookCatcher.MinePath} and "
+                + $"{WebhookCatcher.ClanPath}; got {ours.Count} matching of {posts.Count} drained, "
+                + $"{ctx.Catcher.RequestFaults.Count} request fault(s).");
+        }
+
+        if (!mine.Contains(JsonEncoded(scope.RunningName), StringComparison.Ordinal))
+        {
+            return ScenarioOutcome.Fail("the personal channel's post does not carry the running account's name.");
+        }
+        if (mine.Contains(JsonEncoded(scope.NotRunningName), StringComparison.Ordinal))
+        {
+            return ScenarioOutcome.Fail("the personal channel's post names the account that is NOT running here.");
+        }
+
+        foreach (var (channel, body) in new[] { ("personal", mine), ("clan", clan) })
+        {
+            if (body.Contains(JsonEncoded(NoRunningAccountLine), StringComparison.Ordinal))
+            {
+                return ScenarioOutcome.Fail(
+                    $"the {channel} post carries the 'None of your running accounts' line although one running "
+                    + "account is behind the alert.");
+            }
+            if (body.Contains("accounts running here", StringComparison.Ordinal))
+            {
+                return ScenarioOutcome.Fail($"the {channel} post uses the plural 'accounts running here' form for one account.");
+            }
+        }
+
+        return ScenarioOutcome.Pass(
+            "one alert for two accounts in one read, naming only the running one; the other's name is in no "
+            + "title or personal body");
+    }
+
+    /// <summary>
+    /// The empty case: the metric crosses its rule for a saved account that is not running here and no
+    /// running account moved. The alert still fires (a clan-wide total can cross while none of this PC's
+    /// accounts moved), its title is the label and tail alone with no account noun, and the body is the
+    /// exact "None of your running accounts moved this" line, on both channels.
+    /// </summary>
+    private static async Task<ScenarioOutcome> NoRunningAccountBehindItAsync(ScenarioContext ctx)
+    {
+        var (scope, why) = await ctx.ResolveRunningScopeAsync().ConfigureAwait(false);
+        if (scope is null) return ScenarioOutcome.Skip($"no running/not-running pair: {why}");
+
+        await ctx.ClearCatcherAsync().ConfigureAwait(false);
+        var watch = ctx.WatchLog();
+
+        await ctx.ReportAsync(scope.NotRunningId, SmokeMetrics.RunNone, SmokeRules.BreachingLevel).ConfigureAwait(false);
+
+        await watch.SettleAsync(SmokeTimings.AlertWindow).ConfigureAwait(false);
+
+        var locals = watch.DeliveredFor(SmokeMetrics.RunNone, LocalDestination);
+        if (locals.Count != 1)
+        {
+            return ScenarioOutcome.Fail(locals.Count == 0
+                ? $"no 'Alert → Local' for {SmokeMetrics.RunNone} in {Describe(SmokeTimings.AlertWindow)}; a crossing "
+                    + "with no running account behind it must still alert."
+                : $"{locals.Count} 'Alert → Local' lines for {SmokeMetrics.RunNone}; expected one.");
+        }
+
+        // Label plus tail: no noun means no dash joining a name to the label, so the title opens on the
+        // metric id itself.
+        var title = locals[0].Title;
+        if (!title.StartsWith(SmokeMetrics.RunNone, StringComparison.Ordinal))
+        {
+            return ScenarioOutcome.Fail(
+                $"the title does not open on the metric label '{SmokeMetrics.RunNone}', so something sits in "
+                + "front of it where no account noun should be.");
+        }
+        if (title.Contains(scope.NotRunningName, StringComparison.Ordinal)
+            || title.Contains(scope.RunningName, StringComparison.Ordinal)
+            || title.Contains("accounts running here", StringComparison.Ordinal))
+        {
+            return ScenarioOutcome.Fail(
+                "the title carries an account name or count although nothing running is behind the alert.");
+        }
+
+        var posts = await ctx.Catcher.DrainAsync(SmokeTimings.AlertWindow).ConfigureAwait(false);
+        var ours = posts.Where(p => p.Body.Contains(SmokeMetrics.RunNone, StringComparison.Ordinal)).ToList();
+        var mine = ours.FirstOrDefault(p => p.Path == WebhookCatcher.MinePath)?.Body;
+        var clan = ours.FirstOrDefault(p => p.Path == WebhookCatcher.ClanPath)?.Body;
+        if (mine is null || clan is null)
+        {
+            return ScenarioOutcome.Fail(
+                $"expected a post naming {SmokeMetrics.RunNone} on both {WebhookCatcher.MinePath} and "
+                + $"{WebhookCatcher.ClanPath}; got {ours.Count} matching of {posts.Count} drained, "
+                + $"{ctx.Catcher.RequestFaults.Count} request fault(s).");
+        }
+
+        foreach (var (channel, body) in new[] { ("personal", mine), ("clan", clan) })
+        {
+            if (!body.Contains(JsonEncoded(NoRunningAccountLine), StringComparison.Ordinal))
+            {
+                return ScenarioOutcome.Fail($"the {channel} post does not carry the line \"{NoRunningAccountLine}\".");
+            }
+        }
+
+        if (mine.Contains(JsonEncoded(scope.NotRunningName), StringComparison.Ordinal))
+        {
+            return ScenarioOutcome.Fail("the personal post names the account that is not running here.");
+        }
+
+        return ScenarioOutcome.Pass(
+            "the alert fired with the label alone for a title and the 'None of your running accounts' line "
+            + "for a body, on both channels");
+    }
+
     /// <summary>
     /// A rule added while the app is running takes effect on the next report, no restart.
     /// <see cref="SmokeMetrics.Live"/> is absent from the file the app started with, so a delivery here
@@ -1116,20 +1403,56 @@ public static class ScenarioTable
     /// unknown id with a pair of empty strings, which would make both bodies identical and this row
     /// vacuous — so without one it SKIPS rather than passing on nothing.
     /// </para>
+    /// <para>
+    /// And since PR #234 the subject must be RUNNING on this PC: a metric alert names only running
+    /// accounts, so a saved-but-stopped subject yields the "None of your running accounts" body, which
+    /// names nobody and fails this row for a reason that is not its own. The subject is the
+    /// <c>--subject</c> account when that one is running, else the running account the shared pair-picker
+    /// finds (it waits for the operator to launch one). With none running the row skips and says so;
+    /// the saved account <see cref="ScenarioContext.ResolvableSubject"/> holds would not do.
+    /// </para>
     /// </summary>
     private static async Task<ScenarioOutcome> StreamerModeMasksAsync(ScenarioContext ctx)
     {
-        if (ctx.ResolvableSubject is null || string.IsNullOrEmpty(ctx.MaskedName))
+        string? subject = null;
+        string? maskedName = null;
+
+        if (ctx.ResolvableSubject is not null && !string.IsNullOrEmpty(ctx.MaskedName))
         {
-            return ScenarioOutcome.Skip(
-                "no account the host could resolve to a name. An unknown subject id resolves to a pair of "
-                + "empty names, which makes the personal and clan bodies identical and this row vacuous.");
+            try
+            {
+                var running = await ctx.Reporter.RunningAccountIdsAsync().ConfigureAwait(false);
+                if (running.Contains(ctx.ResolvableSubject))
+                {
+                    subject = ctx.ResolvableSubject;
+                    maskedName = ctx.MaskedName;
+                }
+            }
+            catch (Exception)
+            {
+                // Fall through to the pair-picker, which reports its own failure.
+            }
+        }
+
+        if (subject is null)
+        {
+            var (scope, why) = await ctx.ResolveRunningScopeAsync().ConfigureAwait(false);
+            if (scope is null)
+            {
+                return ScenarioOutcome.Skip(
+                    "no running account the host can name: " + why + " The first saved account is not a "
+                    + "substitute: a metric alert names only running accounts, so a stopped one gives a body "
+                    + "that names nobody and makes this row vacuous.");
+            }
+
+            subject = scope.RunningId;
+            maskedName = scope.RunningName;
         }
 
         await ctx.ClearCatcherAsync().ConfigureAwait(false);
         var watch = ctx.WatchLog();
 
-        await ctx.ReportAsync(ctx.ResolvableSubject, SmokeMetrics.Streamer, SmokeRules.BreachingLevel)
+        await ctx.ReportAsync(subject, SmokeMetrics.Streamer, SmokeRules.BreachingLevel)
             .ConfigureAwait(false);
 
         var arrived = await watch
@@ -1161,7 +1484,7 @@ public static class ScenarioTable
 
         // The masked name goes through the same JSON escaping the app's own payload does, so a name
         // carrying a non-ASCII character still matches.
-        var masked = JsonEncoded(ctx.MaskedName);
+        var masked = JsonEncoded(maskedName!);
 
         if (!mine.Contains(masked, StringComparison.Ordinal))
         {

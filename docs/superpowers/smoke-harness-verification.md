@@ -280,6 +280,23 @@ than leaving them to the narrative:
   and the drop line itself have not been made to misbehave. What is proven is that the row notices when
   the line is missing — which is the assertion — not that it notices a broken skew check specifically.
 
+## Rows added since the sixteen: live proof pending
+
+Written 2026-10-19, after the scoreboard above. These scenarios compile, are wired into the table and
+are fenced against the smoke list by `ScenarioTableTests`, and **have not been run against a live
+RoRoRo or broken to see them go red**, so they are not checks yet. The live proof is pending.
+
+| # | Row (scenario) | Added | Status |
+| --- | --- | --- | --- |
+| 17 | several-accounts-one-alert | 2026-09-15 | not yet proven red |
+| 18 | running-only-naming | 2026-10-19 | not yet run, not yet proven red |
+| 19 | no-running-account-behind-it | 2026-10-19 | not yet run, not yet proven red |
+
+When it is run, break each deliberately before trusting a green: for row 18, drop the `NotRunningHere`
+marking in `MetricReportSinkAdapter.Report` (the not-running name should then appear and the row go
+red); for row 19, make `WebhookPayload` ignore the marking when none is left (the empty-case line should
+vanish and the row go red). Needs a profile with one account running and one not.
+
 ## What the runs said about the feature, not the harness
 
 - **Zero swallowed dispatch failures across eleven runs.** `TrayService.ShowToast`'s UI-thread

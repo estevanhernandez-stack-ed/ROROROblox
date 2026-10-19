@@ -650,3 +650,13 @@ Export writes exactly what `ThemeStore.SaveUserThemeAsync` writes for a custom t
 **Consequences:** The filter is on the host, in `MetricReportSinkAdapter.Report`, and it marks rather than drops: every reading still reaches `MetricAlertCoordinator.Observe`, so the rule evaluates on unchanged numbers and a Rate series gets no gap or synthetic zero. Why not a plugin or contract change: the plugin is correct as documented, and an alt that is not running here sends the user to the wrong machine, which is a host-side presentation problem.
 
 **Evidence:** `MetricReportSinkAdapter`, `AlertTrigger.NotRunningHere`, `WebhookPayload`; tests in `MetricReportSinkAdapterTests` and `WebhookPayloadTests`.
+
+### 2026-10-19 — MetricSmoke covers running-only naming with real accounts, picked from the host
+
+**Context:** PR #234's scoping had unit tests and nothing on the live smoke list. The harness's usual subject is a fresh random id, which the host treats as "not running here" by definition, so it cannot play the running half, and it resolves to no name, so the naming assertions would be vacuous.
+
+**Decision:** Two scenarios, `running-only-naming` and `no-running-account-behind-it`, each a `[harness]` row on the smoke list. The pair is chosen at run time from the host: `GetAccounts` for saved accounts (names already streamer-masked), `GetRunningAccounts` (a free read) for which are running, first running plus first stopped. The operator launches one account after the app starts; the rows wait up to three minutes once and skip, saying why, when no usable pair exists. Names are asserted on the Local log title and the personal body (masked names); the clan body carries real names the harness never learns, so it is checked only for wording that must not appear. The log line's account count is not asserted, because it counts marked triggers too. Not chosen: a fixed saved-but-not-running id in config (rots with the profile), and a `--subject`-style flag (a second thing to keep true).
+
+**Consequences:** The rows are `[ ]` and "not yet proven red"; the live run and the two deliberate breakages are Este's, listed in `smoke-harness-verification.md`. The existing streamer-masking row reported against the first saved account, which after #234 may not be running, so its body would name nobody; it now reports against a running account (the `--subject` one if running, else the pair-picker's) and skips with the reason when none is running.
+
+**Evidence:** `tools/MetricSmoke/Scenarios.cs`, `ScenarioTableTests` (row count 22 to 24).

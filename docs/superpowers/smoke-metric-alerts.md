@@ -13,7 +13,7 @@ A row whose title is followed by `` `[harness]` `` is driven by `tools/MetricSmo
 replays it and asserts it (`dotnet run --project tools/MetricSmoke`). The marker is machine-read:
 `ScenarioTableTests` fails if the harness's scenario table names a row that is not marked here, if a
 marked row has no scenario, or if the total number of rows on this list changes. So marking a row is
-a claim the tests hold you to, and 15 rows carry it today — 17 scenarios, because two of those rows
+a claim the tests hold you to, and 17 rows carry it today — 19 scenarios, because two of those rows
 carry two cases each (granted-then-revoked versus never-declared; live pickup versus absence). A
 marker is not a tick: the harness has to be RUN, and the row still gets its `[x]` and its date from
 whoever ran it.
@@ -69,7 +69,7 @@ toasts is worth someone's attention before it is claimed that every breach is se
 
 ## Setup — what you need before any row below
 
-**The fifteen `[harness]` rows (seventeen scenarios): one command.** From the repo root, with RoRoRo **not** already
+**The seventeen `[harness]` rows (nineteen scenarios): one command.** From the repo root, with RoRoRo **not** already
 running:
 
 ```text
@@ -94,7 +94,7 @@ What it does to your profile (`%LOCALAPPDATA%\ROROROblox`), and how it gives it 
   metric, and aborts with nothing sent if any of them disagree.
 - Prints `START RORORO NOW` and waits up to three minutes for the app to answer on the plugin pipe —
   start it in that window. It has to start *after* the swap to pick any of it up.
-- Runs the seventeen scenarios (a few minutes), then restores everything it backed up, in a `finally`
+- Runs the nineteen scenarios (a few minutes; the two running-only rows need one saved account running in RoRoRo and one not, and wait up to three minutes for you to launch one), then restores everything it backed up, in a `finally`
   that also fires on the first Ctrl-C (a second one kills it outright, for whoever wants out now).
 
 **If a run is interrupted** — a second Ctrl-C, a crash, the machine losing power — the next
@@ -211,6 +211,21 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
       became 24 notifications. By eye, once, on a real Discord channel with a labelled rule: the post
       reads `3 accounts — <label> fell below <threshold>` with one `• <account> — now <value>` line
       per account, and a number of 1,000 or more carries its commas.
+- [ ] **A metric alert names only the accounts running on this PC.** `[harness]` Driven by MetricSmoke;
+      not yet proven red (2026-10-19). With one saved account running in RoRoRo and one saved account
+      that is not, report the same crossing for both in one read. One alert, titled with the running
+      account's name alone (no "N accounts running here" form for a single account), and the
+      not-running account's name in no title and not in the personal channel's body. The harness picks
+      the pair from the host (`GetAccounts` for saved, `GetRunningAccounts` for running) and skips,
+      saying why, when it cannot find one. PR #234 is why this row exists: the 2026-10-07 alert named
+      "three accounts" that were saved alts not running here. The clan body carries real names the
+      harness never learns, so it is checked only for wording that must not appear.
+- [ ] **A metric alert with no running account behind it says so.** `[harness]` Driven by MetricSmoke;
+      not yet proven red (2026-10-19). Report a crossing for a saved account that is not running here
+      and nothing else. The alert still fires, its title is the metric label and tail with no account
+      noun, and the body is exactly "• None of your running accounts moved this. It came from other
+      players, or from an alt on another PC." on both the personal and clan channels. A clan-wide
+      total can cross while none of this PC's accounts moved, which is the case this wording is for.
 - [x] **The rules file is picked up live, and its absence is inert.** `[harness]` With no rules file, the app
       starts clean and never alerts. Add one while running and confirm it takes effect without a
       restart.

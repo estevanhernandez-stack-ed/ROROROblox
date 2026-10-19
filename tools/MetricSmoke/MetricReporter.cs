@@ -172,6 +172,22 @@ public sealed class MetricReporter : IDisposable
     }
 
     /// <summary>
+    /// The ids of the accounts running on this PC right now (<c>GetRunningAccounts</c>, a free read, no
+    /// grant needed). Ids only: the running list's own names are not what the app's alert text uses, so
+    /// the running-only rows take names from <see cref="SavedAccountsAsync"/> and use this to say which of
+    /// those are running. Compared in memory, never printed.
+    /// </summary>
+    public async Task<IReadOnlySet<string>> RunningAccountIdsAsync()
+    {
+        var headers = new Metadata { { "x-plugin-id", PluginId } };
+        var list = await _client.GetRunningAccountsAsync(
+            new Empty(),
+            headers: headers,
+            deadline: DateTime.UtcNow.Add(CallTimeout));
+        return list.Accounts.Select(a => a.AccountId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// The exact conversion <see cref="ReportAsync"/> sends over the wire, pulled out as its own
     /// testable step. <see cref="DateTimeOffset.ToUnixTimeMilliseconds"/> is documented to truncate
     /// rather than round: a sub-millisecond remainder is dropped, never rounded up. That direction

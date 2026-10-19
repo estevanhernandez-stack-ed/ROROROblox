@@ -1,7 +1,7 @@
 # MetricSmoke
 
-Drives 15 of the 22 rows on [`docs/superpowers/smoke-metric-alerts.md`](../../docs/superpowers/smoke-metric-alerts.md)
-— 17 scenarios, because two of those rows carry two cases each —
+Drives 17 of the 24 rows on [`docs/superpowers/smoke-metric-alerts.md`](../../docs/superpowers/smoke-metric-alerts.md)
+— 19 scenarios, because two of those rows carry two cases each —
 against a live RoRoRo, over the real plugin pipe, using your real `%LOCALAPPDATA%\ROROROblox` profile.
 There is no scratch profile to run this against — the app has no data-root seam — so this tool backs
 your profile up before it touches anything and puts it back when it is done. Read the whole of this
@@ -15,9 +15,9 @@ a breach reaches the desktop toast line, the personal and clan Discord bodies, a
 routed safely) the phone leg's fallback; rules are picked up live and survive a malformed file; a
 clock-skewed report is dropped and said so; a resetting counter does not fire a false breach; repeated
 breaches cost one toast, not several; several accounts in one read cost one alert; streamer mode masks
-the right channel; the opt-in gate actually gates. Sixteen of those seventeen scenarios have been
-deliberately broken and watched turn red (the one-read grouping scenario, added 2026-09-15, has not
-yet) — the record is
+the right channel; the opt-in gate actually gates. Sixteen of those nineteen scenarios have been
+deliberately broken and watched turn red (the one-read grouping scenario, added 2026-09-15, and the
+two running-only scenarios, added 2026-10-19, have not yet) — the record is
 [`docs/superpowers/smoke-harness-verification.md`](../../docs/superpowers/smoke-harness-verification.md).
 
 It does **not** prove:
@@ -92,7 +92,8 @@ The run then:
    sent — if any of them disagree with what it wrote.
 4. Prints `START RORORO NOW` and waits up to three minutes for the app to answer on the plugin pipe.
    Start it in that window. It has to start *after* the swap, or it will not pick any of it up.
-5. Runs the seventeen scenarios (a few minutes) against the running app.
+5. Runs the nineteen scenarios (a few minutes) against the running app. The two running-only rows
+   (see below) wait up to three minutes for you to have launched a saved account.
 6. Restores every file it backed up, in a `finally` that also runs on the first Ctrl-C. A second Ctrl-C
    kills the process outright, for whoever wants out immediately.
 7. Tells you to **quit RoRoRo and start it again**, and means it. The restore puts the files back
@@ -110,8 +111,27 @@ Exit codes: `0` every scenario passed, `1` a scenario failed (or setup refused b
 sent), `2` the profile is still not fully restored — read the last few lines, they say which file.
 
 An optional `--subject <account-guid>` picks which saved account the masked-naming row reports
-against; without it, the tool asks the host for one and skips that single row if it cannot get an
-answer within a couple of the app's own settings-refresh ticks.
+against, but only if that account is RUNNING: since PR #234 a metric alert names only running accounts,
+so a stopped one would make the row fail for a reason that is not its own. Otherwise the row uses a
+running account found the same way as the two running-only rows (launch one after the app starts; it
+waits up to three minutes) and skips, saying why, if none is running.
+
+## The two running-only rows
+
+Two rows check that a metric alert names only accounts running on this PC (PR #234): one running
+account plus one saved-but-not-running account crossing one rule in one read, and the case where only
+a not-running account crossed. They need real accounts, so they pick them from the host rather than
+inventing ids: `GetAccounts` lists the saved accounts, `GetRunningAccounts` says which are running, and
+the pair is the first running saved account plus the first saved account that is not. There is no
+setting for this; it is whatever your profile and your launched clients look like at that moment.
+
+What you do: after `START RORORO NOW`, once the app is up, **launch one saved account** (and leave at
+least one other saved account stopped). The rows sit near the end of the run and wait up to three
+minutes, once, for that to be true. If it never is, both rows skip and say why, and a skip is not a pass.
+They also skip when two accounts' masked names collide (equal, or one inside the other), since "this
+name appears nowhere" would then prove nothing. The names are the host's streamer-masked ones; the clan
+channel carries real names the tool never learns, so it is checked only for wording that must not
+appear.
 
 ## If a run is interrupted
 

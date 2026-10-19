@@ -192,6 +192,9 @@ internal static class Program
             await ResolveNamedSubjectAsync(context, subjectOverride).ConfigureAwait(false);
 
             Console.WriteLine();
+            Console.WriteLine("[setup] The two running-only rows near the end need ONE saved account running in "
+                + "RoRoRo and at least one saved account that is not. Launch an account now; they wait up to "
+                + $"{SmokeTimings.RunningAccountWait.TotalMinutes:0} minutes for it, and skip if none shows.");
             Console.WriteLine($"Running {ScenarioTable.All.Count} scenarios. Negative rows sit through "
                 + $"{SmokeTimings.AlertWindow.TotalSeconds:0}s each (a tenth of the "
                 + $"{AlertCadence.DefaultQuietPeriod.TotalMinutes:0}-minute alert cooldown).");
