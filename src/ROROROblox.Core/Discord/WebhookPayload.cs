@@ -40,6 +40,12 @@ public sealed record WebhookPayload(string Title, string Body)
     /// <summary>The tray balloon's text: 256 UTF-16 units less its terminator.</summary>
     internal const int ToastBodyLimit = 255;
 
+    /// <summary>The body of a metric alert when none of this PC's running accounts is behind it.
+    /// English by design, like every other sentence this type composes (the Core string boundary
+    /// bans a <c>Message</c> member, not alert wording).</summary>
+    internal const string NoRunningAccountLine =
+        "• None of your running accounts moved this. It came from other players, or from an alt on another PC.";
+
     /// <summary>
     /// <paramref name="useRealNames"/> is set only for the clan destination — see
     /// <see cref="AlertTrigger"/> for why that one room is exempt from streamer mode. Defaults to
@@ -57,7 +63,22 @@ public sealed record WebhookPayload(string Title, string Body)
 
         string Name(AlertTrigger t) => useRealNames ? t.RealName : t.DisplayName;
 
-        var noun = triggers.Count == 1 ? Name(triggers[0]) : $"{triggers.Count} accounts";
+        // A metric alert names only the accounts running on THIS PC at observation time (Este's
+        // ruling, 2026-10-19). The alert fires on the metric either way, but a saved alt that is not
+        // running here would send the user to the wrong machine, so those triggers are counted out of
+        // the name, the count and the body. Every other kind names every trigger, as before.
+        var isMetric = kind is AlertKind.MetricBreach or AlertKind.MetricRecovered;
+        var named = isMetric ? triggers.Where(t => !t.NotRunningHere).ToList() : triggers.ToList();
+        var noneRunning = isMetric && named.Count == 0;
+
+        // "running here" says which population the count is about; the bare "N accounts" read as
+        // "your running accounts" on a screen that is a launcher, and was not (2026-10-19). An empty
+        // noun is the same shape as the global carrier's, so Head drops the dash and the label leads.
+        var noun = noneRunning
+            ? ""
+            : named.Count == 1
+                ? Name(named[0])
+                : isMetric ? $"{named.Count} accounts running here" : $"{named.Count} accounts";
         // Every title is a HEAD (the name or count, and for a metric the label) and a TAIL (the
         // wording: its verb and threshold), so CapTitle can shorten the part that grows without
         // cutting the part that says what happened (2026-09-15).
@@ -85,7 +106,7 @@ public sealed record WebhookPayload(string Title, string Body)
             _ => (noun, ""),
         };
 
-        var lines = triggers.Select(t => kind switch
+        var lines = named.Select(t => kind switch
         {
             AlertKind.MemoryWarning when t.PrivateBytes is { } b =>
                 $"• {Name(t)} — {b / 1024 / 1024 / 1024.0:0.0} GB · Recycle suggested",
@@ -121,6 +142,11 @@ public sealed record WebhookPayload(string Title, string Body)
                 $"• {Name(t)} — idle · Roblox kicks an idle account",
             _ => $"• {Name(t)}{(t.GameName is null ? "" : $" — {t.GameName}")}",
         }).ToList();
+
+        // The metric crossed its rule but none of this PC's running accounts is behind it (a
+        // clan-wide total moved by other players, or a Rate rule tripping on an idle saved alt).
+        // Say so instead of naming accounts that are not running here.
+        if (noneRunning) lines.Add(NoRunningAccountLine);
 
         return new WebhookPayload(CapTitle(head, tail, envelope.Title), CapLines(lines, envelope.Body));
     }

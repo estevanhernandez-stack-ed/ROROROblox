@@ -141,6 +141,13 @@ public enum AutoRejoinPauseReason
 /// this field the two would have to share one copy that is wrong for whichever case it wasn't
 /// written for.
 /// </para>
+/// <para>
+/// <paramref name="NotRunningHere"/> marks a metric trigger whose account is saved but not running on
+/// this PC at observation time (2026-10-19 ruling). The trigger still exists, because the metric
+/// crossed its rule on the same numbers as before, but the alert text must not NAME it: an alt that
+/// is not running here sends the user to the wrong machine. Trailing and optional for the same
+/// "every older construction site compiles untouched" reason as the fields above.
+/// </para>
 /// </summary>
 public sealed record AlertTrigger(
     AlertKind Kind,
@@ -152,4 +159,5 @@ public sealed record AlertTrigger(
     DateTimeOffset OccurredAtUtc,
     double? MetricValue = null,
     MetricRule? Rule = null,
-    AutoRejoinPauseReason? PauseReason = null);
+    AutoRejoinPauseReason? PauseReason = null,
+    bool NotRunningHere = false);
