@@ -44,7 +44,7 @@ public sealed record WebhookPayload(string Title, string Body)
     /// English by design, like every other sentence this type composes (the Core string boundary
     /// bans a <c>Message</c> member, not alert wording).</summary>
     internal const string NoRunningAccountLine =
-        "• None of your running accounts; other players moved the clan total.";
+        "• None of your running accounts moved this. It came from other players, or from an alt on another PC.";
 
     /// <summary>
     /// <paramref name="useRealNames"/> is set only for the clan destination — see

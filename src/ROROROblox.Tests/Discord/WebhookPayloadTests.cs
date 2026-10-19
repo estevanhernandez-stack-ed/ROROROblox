@@ -276,7 +276,7 @@ public class WebhookPayloadTests
         var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers);
 
         Assert.Equal("Diamonds went above 0", payload.Title);
-        Assert.Equal("• None of your running accounts; other players moved the clan total.", payload.Body);
+        Assert.Equal("• None of your running accounts moved this. It came from other players, or from an alt on another PC.", payload.Body);
     }
 
     [Fact]
