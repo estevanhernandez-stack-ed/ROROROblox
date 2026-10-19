@@ -40,6 +40,7 @@ public class MetricReportSinkAdapterTests
             rules ?? new FixedRules(new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10))),
             () => enabled,
             _ => ("Masked", "Real"),
+            _ => true,
             clock,
             NullLogger<MetricReportSinkAdapter>.Instance);
 
@@ -103,6 +104,7 @@ public class MetricReportSinkAdapterTests
             new FixedRules(new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero)),
             () => enabled,
             _ => ("Masked", "Real"),
+            _ => true,
             clock,
             NullLogger<MetricReportSinkAdapter>.Instance);
 
@@ -172,6 +174,7 @@ public class MetricReportSinkAdapterTests
             new FixedRules(new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero)),
             () => true,
             _ => ("Masked", "Real"),
+            _ => true,
             clock,
             NullLogger<MetricReportSinkAdapter>.Instance);
 
@@ -215,6 +218,7 @@ public class MetricReportSinkAdapterTests
             new FixedRules(new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero)),
             () => true,
             _ => ("Masked", "Real"),
+            _ => true,
             clock,
             NullLogger<MetricReportSinkAdapter>.Instance);
 
@@ -239,7 +243,7 @@ public class MetricReportSinkAdapterTests
             AlertWhenBelow: false, Label: "Diamonds");
         var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
         var sut = new MetricReportSinkAdapter(
-            new FixedRules(rule), () => true, _ => ("Masked", "Real"), clock,
+            new FixedRules(rule), () => true, _ => ("Masked", "Real"), _ => true, clock,
             NullLogger<MetricReportSinkAdapter>.Instance);
         var batches = new List<IReadOnlyList<AlertTrigger>>();
         sut.AlertsRaised += (_, t) => batches.Add(t);
@@ -268,6 +272,107 @@ public class MetricReportSinkAdapterTests
         var batch = Assert.Single(batches);
         Assert.Equal(8, batch.Count);
         Assert.All(batch, t => Assert.Equal(rule, t.Rule));
+    }
+
+    // ---- Scoping: a metric alert names only accounts running on this PC (2026-10-19) ----
+
+    private static readonly MetricRule Above500 = new(M, MetricRuleKind.Level, 500, TimeSpan.Zero,
+        AlertWhenBelow: false, Label: "Points");
+
+    private static (MetricReportSinkAdapter Sut, FakeTimeProvider Clock, List<AlertTrigger> Raised) NewScoped(
+        Func<Guid, bool> isRunningHere)
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var sut = new MetricReportSinkAdapter(
+            new FixedRules(Above500), () => true, id => (id.ToString("N")[..4], id.ToString("N")[..4]),
+            isRunningHere, clock, NullLogger<MetricReportSinkAdapter>.Instance);
+        var raised = new List<AlertTrigger>();
+        sut.AlertsRaised += (_, t) => raised.AddRange(t);
+        return (sut, clock, raised);
+    }
+
+    /// <summary>A baseline under the floor, then a reading over it: the crossing that breaches.</summary>
+    private static void Cross(MetricReportSinkAdapter sut, FakeTimeProvider clock, Guid account)
+    {
+        sut.Report(account.ToString(), M, 400, Ms(clock.GetUtcNow()));
+        clock.Advance(TimeSpan.FromSeconds(30));
+        sut.Report(account.ToString(), M, 600, Ms(clock.GetUtcNow()));
+    }
+
+    [Fact]
+    public void ARunningAccount_IsNamed()
+    {
+        var (sut, clock, raised) = NewScoped(_ => true);
+
+        Cross(sut, clock, Acct);
+        clock.Advance(MetricBreachBatcher.Window);
+
+        var t = Assert.Single(raised);
+        Assert.False(t.NotRunningHere);
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, raised);
+        Assert.StartsWith("2222 — Points went above 500", payload.Title, StringComparison.Ordinal);
+        Assert.Contains("• 2222 — now 600", payload.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ASavedAccountThatIsNotRunning_IsNotNamed_ButItsValueStillFeedsTheCoordinator()
+    {
+        var (sut, clock, raised) = NewScoped(_ => false);
+
+        Cross(sut, clock, Acct);
+        clock.Advance(MetricBreachBatcher.Window);
+
+        // The rule evaluated on the same numbers as before: both readings reached the coordinator,
+        // so the 400 to 600 crossing fired and the trigger carries the 600. Only the name is held back.
+        var t = Assert.Single(raised);
+        Assert.Equal(AlertKind.MetricBreach, t.Kind);
+        Assert.Equal(600, t.MetricValue);
+        Assert.True(t.NotRunningHere);
+        Assert.DoesNotContain("2222", WebhookPayload.ForAlert(AlertKind.MetricBreach, raised).Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnAlertWhoseRowsAreAllNotRunning_StillFires_WithTheEmptyCaseText()
+    {
+        var (sut, clock, raised) = NewScoped(_ => false);
+        var other = Guid.Parse("33333333-3333-3333-3333-333333333333");
+
+        Cross(sut, clock, Acct);
+        Cross(sut, clock, other);
+        clock.Advance(MetricBreachBatcher.Window);
+
+        Assert.Equal(2, raised.Count);
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, raised);
+        Assert.Equal("Points went above 500", payload.Title);
+        Assert.Equal("• None of your running accounts; other players moved the clan total.", payload.Body);
+    }
+
+    [Fact]
+    public void AMixedGroup_NamesOnlyTheRunningAccounts()
+    {
+        var other = Guid.Parse("33333333-3333-3333-3333-333333333333");
+        var (sut, clock, raised) = NewScoped(id => id == Acct);
+
+        Cross(sut, clock, Acct);
+        Cross(sut, clock, other);
+        clock.Advance(MetricBreachBatcher.Window);
+
+        Assert.Equal(2, raised.Count);
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, raised);
+        Assert.StartsWith("2222 — Points went above 500", payload.Title, StringComparison.Ordinal);
+        Assert.DoesNotContain("3333", payload.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheGlobalCarrier_IsNeverMarkedNotRunning()
+    {
+        // Guid.Empty is an observation about no account: there is no machine for it to be wrong about.
+        var (sut, clock, raised) = NewScoped(_ => false);
+
+        Cross(sut, clock, Guid.Empty);
+        clock.Advance(MetricBreachBatcher.Window);
+
+        Assert.False(Assert.Single(raised).NotRunningHere);
     }
 
     [Fact]

@@ -44,18 +44,18 @@ A saved account that is not running still has a real clan score; points can be e
 - Wording bug: partly. The alert does not state its population, and the default "N accounts" invites the wrong reading.
 - Not a plugin or contract defect: the plugin behaves as documented.
 
-## Proposed fix, with blast radius
+## Decided and built (2026-10-19)
 
-Recommended: wording-first, no filter.
+Este's ruling: a metric alert names only accounts running on this PC at observation time; the alert still fires on the metric, and when no running account is left to name, the text says so instead of naming idle saved alts. No plugin or contract change.
 
-1. Make the alert say what it covers. Options: a body footer or a title tail such as "N saved accounts" (`WebhookPayload.cs:60`). Blast radius: `WebhookPayload` tests, any golden payload tests, the metric-alert section of `docs/features.md`, and localisation if the strings are ever moved to the catalogue. No contract change.
-2. If Este wants running-only scoping, add a per-rule or global option rather than a hard filter. The filter belongs in `MetricReportSinkAdapter.Report`, between `:91` and `:112`, not in the coordinator: the coordinator has no running or saved set (`MetricAlertCoordinator.cs:18` constructor takes only a clock), and the sink is where `resolveNames` already reads `AccountsSnapshot`. It needs a new `Func<Guid, bool>` for "is running" (from `IRunningAccountsProvider`), tests in `MetricReportSinkAdapterTests.cs`, and care that history for a filtered account is still recorded or deliberately not (a Rate rule needs a continuous series, so dropping reports while stopped then resuming gives a gap and a delayed first rate). It also interacts with the rule "Event changed" semantics. This is more than a one-line filter and the semantics are undecided, so it was not made here.
+What changed:
 
-Why no code change on this branch: the brief allows a code fix only when it is a one-line coordinator filter with an obvious test. Neither holds. The coordinator cannot see account state, and the right behaviour (alert on idle saved accounts or not) is a product call.
+- `src/ROROROblox.App/Plugins/Adapters/MetricReportSinkAdapter.cs`: a new `Func<Guid, bool> isRunningHere` dependency, wired in `App.xaml.cs` (`IsRunningHere`, reading `MainViewModel.AccountsSnapshot` and `IsRunning`). Every report still reaches `MetricAlertCoordinator.Observe` unfiltered, so history, Rate series and the rule's verdict run on the same numbers as before and no gap or synthetic zero is introduced. A trigger for an account that is not running here is marked `NotRunningHere` after the verdict, not dropped. `Guid.Empty` (the global carrier) is never marked.
+- `src/ROROROblox.Core/Discord/AlertTrigger.cs`: trailing optional `NotRunningHere` flag.
+- `src/ROROROblox.Core/Discord/WebhookPayload.cs`: metric alerts name, count and list only triggers not marked; the count reads "3 accounts running here"; with none left the title carries the label alone and the body is "None of your running accounts; other players moved the clan total." Alert text in this type is English by design (the Core string boundary bans a `Message` member, not wording), so no resx or translation catalogue changed.
+- Tests: `MetricReportSinkAdapterTests` (running named; not-running unnamed with its value still fed to the coordinator; all-not-running still fires with the empty-case text; mixed group; global carrier), `WebhookPayloadTests` (the two phrasings), and four existing title assertions moved to "running here".
 
-## Open question for Este
-
-Should a metric alert cover only accounts running on this PC, or every saved account Ur Score can read? If "running only", is a Rate rule on a stopped account supposed to stay silent (the account is expected not to climb)? Answering this picks between the wording-only change (cheap, safe) and the sink-level running filter (new provider dependency, series-gap behaviour). The 2026-10-07 alert did not record the rule kind; if it was a Rate rule ("stopped climbing"), the not-running accounts firing is the rule working as written.
+The coordinator is untouched, as the finding recommended.
 
 ## Verification note
 

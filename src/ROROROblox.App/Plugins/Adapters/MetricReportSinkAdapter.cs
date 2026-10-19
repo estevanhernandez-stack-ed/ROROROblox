@@ -31,10 +31,17 @@ namespace ROROROblox.App.Plugins.Adapters;
 /// because it is the one nearly every destination gets; only the clan channel is allowed the real
 /// one. Off the UI thread this must read <c>MainViewModel.AccountsSnapshot</c>, never
 /// <c>Accounts</c>.</param>
+/// <param name="isRunningHere">Is this saved account running on THIS PC right now (2026-10-19). A metric
+/// alert names only such accounts; a trigger for an account that is not running here still fires
+/// (the metric crossed its rule on the same numbers) but is marked
+/// <see cref="AlertTrigger.NotRunningHere"/> so the alert text does not send the user to the wrong
+/// machine. Same thread rule as <paramref name="resolveNames"/>: read
+/// <c>MainViewModel.AccountsSnapshot</c>, never <c>Accounts</c>.</param>
 public sealed class MetricReportSinkAdapter(
     IMetricRuleSource rules,
     Func<bool> isEnabled,
     Func<Guid, (string Display, string Real)> resolveNames,
+    Func<Guid, bool> isRunningHere,
     TimeProvider time,
     ILogger<MetricReportSinkAdapter> log) : IMetricReportSink, IDisposable
 {
@@ -113,6 +120,18 @@ public sealed class MetricReportSinkAdapter(
                 new MetricObservation(accountId, metricId, value, recordedAt), display, real);
 
             if (triggers.Count == 0) return;
+
+            // Scoping by who is NAMED, not by what is OBSERVED (Este's ruling, 2026-10-19). The
+            // observation above already reached the coordinator unfiltered, so history, Rate series
+            // and the rule's verdict run on exactly the numbers they always did; dropping a not-running
+            // account's row there would have changed the rule's input (a clan-wide Level can cross
+            // while none of this PC's accounts moved) and punched a gap into a Rate series. Only the
+            // alert's text changes: an account that is not running here is marked so WebhookPayload
+            // leaves it out and says so when nobody is left to name. Guid.Empty is the global carrier,
+            // an observation about no account, and has no machine to be wrong about.
+            if (accountId != Guid.Empty && !isRunningHere(accountId))
+                triggers = [.. triggers.Select(t => t with { NotRunningHere = true })];
+
             _batcher.Add(triggers);
         }
         catch (Exception ex)

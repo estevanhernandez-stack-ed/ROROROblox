@@ -238,13 +238,55 @@ public class WebhookPayloadTests
     }
 
     [Fact]
+    public void ARunningHereCount_SaysWhichPopulationItNames()
+    {
+        // 2026-10-19: "3 accounts" on a launcher reads as "your running accounts" and was not.
+        var triggers = new[] { "A", "B", "C" }.Select(n => Fired(DiamondsAbove, n, 5)).ToList();
+
+        Assert.Equal("3 accounts running here — Diamonds went above 0",
+            WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers).Title);
+    }
+
+    [Fact]
+    public void NotRunningAccounts_AreLeftOutOfTheNameTheCountAndTheBody()
+    {
+        var triggers = new List<AlertTrigger>
+        {
+            Fired(DiamondsAbove, "RunA", 5),
+            Fired(DiamondsAbove, "RunB", 6),
+            Fired(DiamondsAbove, "IdleAlt", 7) with { NotRunningHere = true },
+        };
+
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers);
+
+        Assert.Equal("2 accounts running here — Diamonds went above 0", payload.Title);
+        Assert.DoesNotContain("IdleAlt", payload.Body, StringComparison.Ordinal);
+        Assert.Equal(2, payload.Body.Split('\n').Length);
+    }
+
+    [Fact]
+    public void WhenNoRunningAccountIsLeft_TheAlertSaysSoInsteadOfNamingIdleAlts()
+    {
+        var triggers = new List<AlertTrigger>
+        {
+            Fired(DiamondsAbove, "IdleOne", 5) with { NotRunningHere = true },
+            Fired(DiamondsAbove, "IdleTwo", 6) with { NotRunningHere = true },
+        };
+
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers);
+
+        Assert.Equal("Diamonds went above 0", payload.Title);
+        Assert.Equal("• None of your running accounts; other players moved the clan total.", payload.Body);
+    }
+
+    [Fact]
     public void EightAccounts_AreOneTitleAndOneLineEach()
     {
         var triggers = Enumerable.Range(1, 8).Select(i => Fired(DiamondsAbove, $"Alt{i}", 1000 * i)).ToList();
 
         var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers);
 
-        Assert.Equal("8 accounts — Diamonds went above 0", payload.Title);
+        Assert.Equal("8 accounts running here — Diamonds went above 0", payload.Title);
         var lines = payload.Body.Split('\n');
         Assert.Equal(8, lines.Length);
         Assert.Equal("• Alt1 — now 1,000", lines[0]);
@@ -333,7 +375,7 @@ public class WebhookPayloadTests
         var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers);
 
         AssertFitsEveryDestination(payload);
-        Assert.Equal("200 accounts — Points stopped climbing", payload.Title);
+        Assert.Equal("200 accounts running here — Points stopped climbing", payload.Title);
         var lines = payload.Body.Split('\n');
         var shown = lines.Length - 1;
         Assert.True(shown > 0);
@@ -389,7 +431,7 @@ public class WebhookPayloadTests
         var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers);
 
         AssertFitsEveryDestination(payload);
-        Assert.StartsWith("50 accounts — mmm", payload.Title, StringComparison.Ordinal);
+        Assert.StartsWith("50 accounts running here — mmm", payload.Title, StringComparison.Ordinal);
         // Was EndsWith("…") until the title cut learned to keep the wording's verb (final-review
         // Important 1, 2026-09-15): the long part is cut, the verb and threshold stay.
         Assert.EndsWith("… went above 0", payload.Title, StringComparison.Ordinal);
@@ -491,7 +533,7 @@ public class WebhookPayloadTests
         var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers, limits: Toast);
 
         AssertFitsTheBalloon(payload);
-        Assert.Equal("8 accounts — Points stopped climbing", payload.Title);
+        Assert.Equal("8 accounts running here — Points stopped climbing", payload.Title);
         var lines = payload.Body.Split('\n');
         Assert.Equal(4, lines.Length);
         for (var i = 0; i < 3; i++)

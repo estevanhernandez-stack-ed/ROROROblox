@@ -543,7 +543,7 @@ public class AlertDispatcherTests
 
         await Build(sender, tray, config).DispatchAsync([Breach("A"), Breach("B"), Breach("C")]);
 
-        Assert.StartsWith("3 accounts — Points fell below 1,000|", Assert.Single(tray.Toasts), StringComparison.Ordinal);
+        Assert.StartsWith("3 accounts running here — Points fell below 1,000|", Assert.Single(tray.Toasts), StringComparison.Ordinal);
         // The POST body is JSON, which escapes the em dash, so assert on the ASCII runs either side.
         var body = Assert.Single(handler.Bodies);
         Assert.Contains("3 accounts", body, StringComparison.Ordinal);

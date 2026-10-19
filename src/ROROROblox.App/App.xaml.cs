@@ -1482,7 +1482,7 @@ public partial class App : Application
                 sp.GetRequiredService<ILogger<ROROROblox.App.Metrics.LocalFileMetricRuleSource>>()));
 
         // The sink is the only thing on the report path that knows about this app — the RPC
-        // handler is a pass-through and the coordinator is Core — so all three of its funcs are
+        // handler is a pass-through and the coordinator is Core — so all four of its funcs are
         // supplied here, and every one of them is called on a gRPC handler thread:
         //
         //   the gate     reads a cached volatile bool, never IAppSettings. GetMetricAlertsEnabled-
@@ -1491,6 +1491,8 @@ public partial class App : Application
         //                MetricAlertsEnabled and RefreshMetricAlertsGateAsync.
         //   the names    read MainViewModel.AccountsSnapshot, never Accounts — the lock-free
         //                mirror is the only account list safe to enumerate off the UI thread.
+        //   running-here reads the same AccountsSnapshot for IsRunning (2026-10-19): a metric alert
+        //                names only accounts running on this PC. See IsRunningHere.
         //   the clock    is the same TimeProvider the rest of the alert path uses, so the skew
         //                check and the rate windows agree on "now".
         services.AddSingleton<ROROROblox.App.Plugins.IMetricReportSink>(sp =>
@@ -1503,6 +1505,7 @@ public partial class App : Application
                 sp.GetRequiredService<ROROROblox.Core.Metrics.IMetricRuleSource>(),
                 () => MetricAlertsEnabled,
                 accountId => ResolveAlertNames(sp, accountId, appLog),
+                accountId => IsRunningHere(sp, accountId, appLog),
                 TimeProvider.System,
                 sp.GetRequiredService<ILogger<ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter>>());
         });
@@ -2451,6 +2454,29 @@ public partial class App : Application
             // like a rendering bug somewhere downstream.
             log.LogDebug(ex, "Couldn't resolve names for metric-alert subject {AccountId}; the alert carries none.", accountId);
             return (string.Empty, string.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Is this saved account running on THIS PC right now: the metric sink's "who may an alert name"
+    /// question (Este's ruling, 2026-10-19). Reads <see cref="MainViewModel.AccountsSnapshot"/>, the
+    /// same lock-free mirror <see cref="ResolveAlertNames"/> and the running-accounts provider read,
+    /// never <c>Accounts</c>, and is called on a gRPC handler thread behind the same gate (see
+    /// <see cref="ResolveAlertNames"/> for why it can never be the first resolver of the view model).
+    /// An id with no matching account answers false; a failure answers false too, so the alert
+    /// names nobody and says so rather than naming an alt that may not be running here.
+    /// </summary>
+    private static bool IsRunningHere(IServiceProvider sp, Guid accountId, ILogger<App> log)
+    {
+        try
+        {
+            return sp.GetRequiredService<MainViewModel>()
+                .AccountsSnapshot.Any(a => a.Id == accountId && a.IsRunning);
+        }
+        catch (Exception ex)
+        {
+            log.LogDebug(ex, "Couldn't tell whether metric-alert subject {AccountId} is running here; treating it as not running.", accountId);
+            return false;
         }
     }
 
