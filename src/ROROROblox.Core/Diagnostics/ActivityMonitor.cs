@@ -135,7 +135,10 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
             }
         }
 
-        _log.LogDebug(
+        // Trace, not Debug: Sample() runs once a second and the app's Serilog floor is Debug
+        // (AppLogging.cs), so a Debug line here would write ~86k lines a day for nothing.
+        // The crossing line above is the diagnostic surface; this one is for a Trace session.
+        _log.LogTrace(
             "idle: sampled {Count} account(s), input advanced={Advanced}, threshold {ThresholdMinutes:F0} min, crossed {Crossed}",
             tracked, advanced, WarnThreshold.TotalMinutes, crossed?.Count ?? 0);
 
