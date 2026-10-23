@@ -288,14 +288,45 @@ RoRoRo or broken to see them go red**, so they are not checks yet. The live proo
 
 | # | Row (scenario) | Added | Status |
 | --- | --- | --- | --- |
-| 17 | several-accounts-one-alert | 2026-09-15 | not yet proven red |
-| 18 | running-only-naming | 2026-10-19 | not yet run, not yet proven red |
-| 19 | no-running-account-behind-it | 2026-10-19 | not yet run, not yet proven red |
+| 17 | several-accounts-one-alert | 2026-09-15 | green 2026-10-23; not yet proven red |
+| 18 | running-only-naming | 2026-10-19 | green 2026-10-23; not yet proven red |
+| 19 | no-running-account-behind-it | 2026-10-19 | green 2026-10-23; not yet proven red |
 
 When it is run, break each deliberately before trusting a green: for row 18, drop the `NotRunningHere`
 marking in `MetricReportSinkAdapter.Report` (the not-running name should then appear and the row go
 red); for row 19, make `WebhookPayload` ignore the marking when none is left (the empty-case line should
 vanish and the row go red). Needs a profile with one account running and one not.
+
+### First full run since #216, 2026-10-23 — 17 passed, 2 failed, both harness defects
+
+Run on Neb against the v1.34.0.0 **sideload package** (not a dev build), one account running and others
+saved but stopped. Rows 17, 18 and 19 went green for the first time. Row 18: "one alert for two accounts
+in one read, naming only the running one; the other's name is in no title or personal body." Still
+unproven red, so still not checks.
+
+The two failures were both the harness's, not the app's, and both are fixed in the same change as this
+entry:
+
+- **value-renders-legibly** — reported against a fresh subject. Since #234 a metric alert with no
+  running account behind it carries the empty-case sentence instead of a "• account — now value" line,
+  so the row had no value line to read. `21dc17e` had already fixed the identical problem in the
+  streamer row; this row was missed. It now reports against a running account from the shared
+  pair-picker and skips, saying why, when none is running.
+- **rules-picked-up-live** — red since #216 (2026-09-20) and unnoticed, because nobody ran the full
+  smoke between then and now. #216 made Level rules fire on the crossing, and a one-sample series has
+  no previous state. `ScenarioContext.ReportAsync` baselines only metrics in `SmokeRules.Canonical`,
+  and `smoke.live` is deliberately absent from it, so the row's lone breach could never alert. The app
+  re-reads the file fine: the malformed-rules row proved it in the same run. The row now sends the
+  quiet baseline itself, after writing the rule, from the same subject.
+
+Neither fix has been re-run live yet. The next full run should show 19 green, and both fixed rows
+should then be broken deliberately once, per this file's rule, before their greens are trusted.
+
+Restore after the run: `discord.dat`, `notify.dat`, `metric-rules.json` and `settings.json` were
+byte-identical to their pre-run hashes. `consent.dat` is DPAPI-encrypted and salted, so its hash
+differs on every write; it was decrypted and holds exactly the five catalogued plugins, with the
+harness's `rororo.smoke` grant gone. `smoke-backup` was left behind empty, not removed, which the
+README says should not happen: harmless, but a small guard bug.
 
 ## What the runs said about the feature, not the harness
 

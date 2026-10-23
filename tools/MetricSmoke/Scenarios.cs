@@ -878,13 +878,29 @@ public static class ScenarioTable
     /// actually made, because the log carries an alert's title and never its body — the reason a local
     /// webhook catcher exists at all. It rode a <c>long?</c> until 2026-09-09 and rendered "at 0" for
     /// 0.79 and for nothing alike.
+    /// <para>
+    /// The subject must be RUNNING on this PC. Since PR #234 a metric alert names only running accounts,
+    /// and an alert with no running account behind it carries the "None of your running accounts moved
+    /// this" sentence instead of a "• account — now value" line, so a fresh or stopped subject leaves
+    /// this row nothing to read and fails it for a reason that is not its own. Found on the first full
+    /// run after #234 (2026-10-23), which is what <c>21dc17e</c> had already fixed for the streamer
+    /// row. Uses the same shared pair-picker, and skips, saying why, when nothing is running.
+    /// </para>
     /// </summary>
     private static async Task<ScenarioOutcome> ValueRendersLegiblyAsync(ScenarioContext ctx)
     {
+        var (scope, why) = await ctx.ResolveRunningScopeAsync().ConfigureAwait(false);
+        if (scope is null)
+        {
+            return ScenarioOutcome.Skip(
+                "no running account to report against: " + why + " A metric alert names only running "
+                + "accounts, so any other subject yields the empty-case sentence and no value line to read.");
+        }
+
         await ctx.ClearCatcherAsync().ConfigureAwait(false);
         var watch = ctx.WatchLog();
 
-        await ctx.ReportAsync(ctx.FreshSubject(), SmokeMetrics.Value, 0.79).ConfigureAwait(false);
+        await ctx.ReportAsync(scope.RunningId, SmokeMetrics.Value, 0.79).ConfigureAwait(false);
 
         var arrived = await watch
             .PollForAsync(w => w.DeliveredFor(SmokeMetrics.Value, MineDestination).Count >= 1,
@@ -1274,13 +1290,28 @@ public static class ScenarioTable
     /// A rule added while the app is running takes effect on the next report, no restart.
     /// <see cref="SmokeMetrics.Live"/> is absent from the file the app started with, so a delivery here
     /// can only mean the file was re-read.
+    /// <para>
+    /// Since #216 (2026-09-20) a Level rule fires on the CROSSING, and a series with one sample has no
+    /// previous state, so it stays quiet. <see cref="ScenarioContext.ReportAsync"/> sends the quiet
+    /// baseline that makes a crossing possible only for metrics in <see cref="SmokeRules.Canonical"/>,
+    /// and <see cref="SmokeMetrics.Live"/> is deliberately absent from it, so this row's single breach
+    /// was a lone sample and could never alert. It went red on #216 and stayed red unnoticed until the
+    /// first full run after it (2026-10-23); the app re-reads the file fine, which the malformed-rules
+    /// row proves in the same run. The baseline is now sent here, after the rule is written, from the
+    /// same subject, stamped a minute back exactly as the shared helper does it.
+    /// </para>
     /// </summary>
     private static async Task<ScenarioOutcome> RulesPickedUpLiveAsync(ScenarioContext ctx)
     {
         await ctx.WriteRulesAsync(SmokeRules.WithLiveRule).ConfigureAwait(false);
 
+        var subject = ctx.FreshSubject();
+        await ctx.Reporter
+            .ReportAsync(subject, SmokeMetrics.Live, SmokeRules.QuietLevel, DateTimeOffset.UtcNow - TimeSpan.FromMinutes(1))
+            .ConfigureAwait(false);
+
         var watch = ctx.WatchLog();
-        await ctx.ReportAsync(ctx.FreshSubject(), SmokeMetrics.Live, SmokeRules.BreachingLevel)
+        await ctx.ReportAsync(subject, SmokeMetrics.Live, SmokeRules.BreachingLevel)
             .ConfigureAwait(false);
 
         var arrived = await watch
