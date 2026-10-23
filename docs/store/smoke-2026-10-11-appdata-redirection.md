@@ -6,6 +6,19 @@ which a Store uninstall removes. This settles the question `docs/PRIVACY.md` had
 wrongly in both directions since v1.23, and promotes row 3 of that policy's table from "likely" to
 measured.
 
+> **Correction 2026-10-23: this run's restore left a shadow, and it cost twelve days of settings.**
+> The nine files the test created in `LocalCache` were never removed. Once a file exists in the
+> package's `LocalCache`, Windows serves that copy over the real one, so from 2026-10-11 the app read
+> and wrote the test-created copies: the real `settings.json` froze at 10:01 that morning while the
+> app ran on defaults, with metric alerts and careful squad launch silently **off**, the memory cap
+> and theme unset, and daily logs going to `LocalCache`. The vault was never affected, since no
+> account was added. Found while investigating failed Store updates; fixed by quitting RoRoRo and
+> moving the planted `LocalCache\Local\ROROROblox` folder to quarantine (19 files, nothing
+> deleted), after which writes landed at the real path again on the next launch. **Anyone reusing
+> this method must quarantine the test's `LocalCache` writes as a fourth step** — the full method is
+> in `store-listing-console/docs/msix-capabilities.md`. The measurement below stands; only the
+> cleanup was wrong.
+
 ## What was tested, and why this way
 
 The question was only ever: **when the real folder is absent, does a packaged build create it or
