@@ -67,7 +67,7 @@ Teile deine Designs
 
 • „Design teilen“ speichert ein Design, das du gebaut hast, als
   Datei, die du an jeden schicken kannst. „Design importieren“
-  übernimmt eins, das dir jemand geschickt hat, sofort. Beides
+  übernimmt eins, das dir ein Freund geschickt hat, sofort. Beides
   findest du im Design-Builder.
 • „Über“ zeigt die Version, die du wirklich installiert hast.
 • Die Inaktivitäts-Warnung läuft immer mit einer der Zeiten, die
@@ -91,7 +91,7 @@ Partagez vos thèmes
 
 • « Partager le thème » enregistre un thème que vous avez créé
   dans un fichier à envoyer à qui vous voulez. « Importer un
-  thème » applique aussitôt celui qu'on vous a envoyé. Les deux se
+  thème » applique aussitôt celui qu'un ami vous a envoyé. Les deux se
   trouvent dans le créateur de thèmes.
 • « À propos » affiche la version réellement installée.
 • L'alerte d'inactivité utilise toujours l'une des durées
@@ -115,12 +115,12 @@ v1.34.0.0
 
 • «Поделиться темой» сохраняет созданную вами тему в файл,
   который можно отправить кому угодно. «Импортировать тему» сразу
-  применяет тему, которую прислали вам. Обе кнопки — в
+  применяет тему, которую вам прислал друг. Обе кнопки — в
   конструкторе тем.
 • «О программе» показывает версию, которая у вас действительно
   установлена.
-• Оповещение о простое всегда работает с одним из сроков, которые
-  предлагает его список.
+• Оповещение о простое всегда использует один из интервалов,
+  которые предлагает его список.
 • Настройки теперь объясняют три вещи, о которых раньше
   приходилось догадываться: почему аккаунт с включённой
   приватностью присутствия Roblox (Невидимка) никогда не получает
@@ -140,7 +140,7 @@ Compartilhe seus temas
 
 • “Compartilhar tema” salva um tema que você criou em um arquivo
   para mandar para quem quiser. “Importar tema” aplica na hora um
-  tema que alguém te mandou. Os dois ficam no criador de temas.
+  tema que um amigo te mandou. Os dois ficam no criador de temas.
 • “Sobre” mostra a versão que você realmente tem instalada.
 • O alerta de inatividade sempre usa um dos tempos que o seletor
   oferece.
@@ -162,7 +162,7 @@ Udostępniaj swoje motywy
 
 • „Udostępnij motyw” zapisuje stworzony przez ciebie motyw do
   pliku, który możesz wysłać komu chcesz. „Importuj motyw” od razu
-  stosuje motyw, który ktoś ci przysłał. Oba znajdziesz w kreatorze
+  stosuje motyw, który przysłał ci znajomy. Oba znajdziesz w kreatorze
   motywów.
 • „O programie” pokazuje wersję, którą naprawdę masz
   zainstalowaną.
@@ -187,7 +187,7 @@ Comparte tus temas
 
 • «Compartir tema» guarda un tema que hayas creado en un archivo
   que puedes mandar a quien quieras. «Importar tema» aplica al
-  momento el que te hayan enviado. Los dos están en el creador de
+  momento el que te haya enviado un amigo. Los dos están en el creador de
   temas.
 • «Acerca de» muestra la versión que de verdad tienes instalada.
 • El aviso de inactividad siempre usa uno de los tiempos que

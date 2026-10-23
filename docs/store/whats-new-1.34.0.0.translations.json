@@ -10,8 +10,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "578747a22cfabb59414125d5f83a62a7188fd554",
-  "generatedUtc": "2026-10-23T20:09:43+00:00",
+  "sourceCommit": "02a50653c9bfacc80925bf17011efd80c7e19d2d",
+  "generatedUtc": "2026-10-23T20:13:41+00:00",
   "sourceOfTruth": "docs/store/whats-new-1.34.0.0.md",
   "fields": [
     {
@@ -30,12 +30,12 @@
       "field": "whatsNew.share",
       "en": "• \"Share theme\" saves a theme you made as a file you can send to anyone. \"Import theme\" applies one a friend sent you, straight away. Both are in the theme builder.",
       "translations": {
-        "fr": "• « Partager le thème » enregistre un thème que vous avez créé dans un fichier à envoyer à qui vous voulez. « Importer un thème » applique aussitôt celui qu'on vous a envoyé. Les deux se trouvent dans le créateur de thèmes.",
-        "de": "• „Design teilen“ speichert ein Design, das du gebaut hast, als Datei, die du an jeden schicken kannst. „Design importieren“ übernimmt eins, das dir jemand geschickt hat, sofort. Beides findest du im Design-Builder.",
-        "ru": "• «Поделиться темой» сохраняет созданную вами тему в файл, который можно отправить кому угодно. «Импортировать тему» сразу применяет тему, которую прислали вам. Обе кнопки — в конструкторе тем.",
-        "pt-br": "• “Compartilhar tema” salva um tema que você criou em um arquivo para mandar para quem quiser. “Importar tema” aplica na hora um tema que alguém te mandou. Os dois ficam no criador de temas.",
-        "pl": "• „Udostępnij motyw” zapisuje stworzony przez ciebie motyw do pliku, który możesz wysłać komu chcesz. „Importuj motyw” od razu stosuje motyw, który ktoś ci przysłał. Oba znajdziesz w kreatorze motywów.",
-        "es": "• «Compartir tema» guarda un tema que hayas creado en un archivo que puedes mandar a quien quieras. «Importar tema» aplica al momento el que te hayan enviado. Los dos están en el creador de temas."
+        "fr": "• « Partager le thème » enregistre un thème que vous avez créé dans un fichier à envoyer à qui vous voulez. « Importer un thème » applique aussitôt celui qu'un ami vous a envoyé. Les deux se trouvent dans le créateur de thèmes.",
+        "de": "• „Design teilen“ speichert ein Design, das du gebaut hast, als Datei, die du an jeden schicken kannst. „Design importieren“ übernimmt eins, das dir ein Freund geschickt hat, sofort. Beides findest du im Design-Builder.",
+        "ru": "• «Поделиться темой» сохраняет созданную вами тему в файл, который можно отправить кому угодно. «Импортировать тему» сразу применяет тему, которую вам прислал друг. Обе кнопки — в конструкторе тем.",
+        "pt-br": "• “Compartilhar tema” salva um tema que você criou em um arquivo para mandar para quem quiser. “Importar tema” aplica na hora um tema que um amigo te mandou. Os dois ficam no criador de temas.",
+        "pl": "• „Udostępnij motyw” zapisuje stworzony przez ciebie motyw do pliku, który możesz wysłać komu chcesz. „Importuj motyw” od razu stosuje motyw, który przysłał ci znajomy. Oba znajdziesz w kreatorze motywów.",
+        "es": "• «Compartir tema» guarda un tema que hayas creado en un archivo que puedes mandar a quien quieras. «Importar tema» aplica al momento el que te haya enviado un amigo. Los dos están en el creador de temas."
       }
     },
     {
@@ -56,7 +56,7 @@
       "translations": {
         "fr": "• L'alerte d'inactivité utilise toujours l'une des durées proposées par son sélecteur.",
         "de": "• Die Inaktivitäts-Warnung läuft immer mit einer der Zeiten, die ihre Auswahl anbietet.",
-        "ru": "• Оповещение о простое всегда работает с одним из сроков, которые предлагает его список.",
+        "ru": "• Оповещение о простое всегда использует один из интервалов, которые предлагает его список.",
         "pt-br": "• O alerta de inatividade sempre usa um dos tempos que o seletor oferece.",
         "pl": "• Alert o bezczynności zawsze działa z jednym z czasów, które oferuje jego lista.",
         "es": "• El aviso de inactividad siempre usa uno de los tiempos que ofrece su selector."
