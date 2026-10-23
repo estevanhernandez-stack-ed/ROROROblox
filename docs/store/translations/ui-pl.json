@@ -491,7 +491,7 @@
   "SettingsPage_AlertColumnWhereItGoes": "Gdzie trafia",
   "SettingsPage_AlertSound": "Dźwięk alertu",
   "SettingsPage_AlertSoundHint": "Odtwarza się raz na alert, niezależnie od liczby miejsc, do których trafia. „Cisza” nadal rysuje powiadomienie i nadal koloruje zasobnik.",
-  "SettingsPage_AlertSoundPluginsHint": "„Cisza” wycisza tylko własne alerty RoRoRo. Pluginy, takie jak Ur Score, odtwarzają własne dźwięki, ustawiane w ich własnych ustawieniach.",
+  "SettingsPage_AlertSoundPluginsHint": "„Cisza” wycisza tylko własne alerty RoRoRo. Pluginy, które odtwarzają dźwięki, mają własne ustawienia dźwięku.",
   "SettingsPage_Alerts": "Alerty",
   "SettingsPage_AlertsMemory": "Alerty i pamięć",
   "SettingsPage_AlwaysShowRecycleOnRunning": "Zawsze pokazuj Recycle na uruchomionych kontach.",

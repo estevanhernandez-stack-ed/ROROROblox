@@ -3361,7 +3361,7 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
     <value>Contas com a privacidade de presença do Roblox ativada (Invisível) nunca recebem um alerta de inatividade. O RoRoRo não as vê em um jogo, e esse alerta só dispara para contas que ele vê em um.</value>
   </data>
   <data name="SettingsPage_AlertSoundPluginsHint" xml:space="preserve">
-    <value>“Silencioso” silencia só os alertas do próprio RoRoRo. Plugins como o Ur Score tocam seus próprios sons, definidos nas configurações deles.</value>
+    <value>“Silencioso” silencia só os alertas do próprio RoRoRo. Plugins que tocam sons têm as próprias configurações de som.</value>
   </data>
   <data name="SettingsPage_IdleActivityHint" xml:space="preserve">
     <value>A atividade conta por conta, e só a do cliente em primeiro plano. Trabalhar em outro programa conta como inatividade para todas as alts.</value>

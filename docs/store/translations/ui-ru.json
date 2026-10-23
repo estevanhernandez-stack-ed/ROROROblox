@@ -491,7 +491,7 @@
   "SettingsPage_AlertColumnWhereItGoes": "Куда отправляется",
   "SettingsPage_AlertSound": "Звук оповещения",
   "SettingsPage_AlertSoundHint": "Звучит один раз на оповещение, сколько бы адресатов у него ни было. «Без звука» по-прежнему рисует уведомление и по-прежнему окрашивает значок в трее.",
-  "SettingsPage_AlertSoundPluginsHint": "«Без звука» отключает только собственные оповещения RoRoRo. Плагины вроде Ur Score играют свои звуки, которые настраиваются в их собственных настройках.",
+  "SettingsPage_AlertSoundPluginsHint": "«Без звука» отключает только собственные оповещения RoRoRo. У плагинов, которые воспроизводят звуки, свои настройки звука.",
   "SettingsPage_Alerts": "Оповещения",
   "SettingsPage_AlertsMemory": "Оповещения и память",
   "SettingsPage_AlwaysShowRecycleOnRunning": "Всегда показывать Recycle у запущенных аккаунтов.",
