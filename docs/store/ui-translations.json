@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "0930d4e",
-  "generatedUtc": "2026-10-19T20:13:04+00:00",
+  "sourceCommit": "c019314",
+  "generatedUtc": "2026-10-23T18:13:49+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -13325,14 +13325,14 @@
     },
     {
       "field": "SettingsPage_AlertSoundPluginsHint",
-      "en": "Silent silences RoRoRo's own alerts only. Plugins such as Ur Score play their own sounds, set in their own settings.",
+      "en": "Silent silences RoRoRo's own alerts only. Plugins that play sounds have their own sound settings.",
       "translations": {
-        "fr": "« Silencieux » ne coupe que les alertes propres à RoRoRo. Les plugins comme Ur Score jouent leurs propres sons, réglés dans leurs propres paramètres.",
-        "de": "„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins wie Ur Score spielen ihre eigenen Töne ab, eingestellt in ihren eigenen Einstellungen.",
-        "ru": "«Без звука» отключает только собственные оповещения RoRoRo. Плагины вроде Ur Score играют свои звуки, которые настраиваются в их собственных настройках.",
-        "pt-br": "“Silencioso” silencia só os alertas do próprio RoRoRo. Plugins como o Ur Score tocam seus próprios sons, definidos nas configurações deles.",
-        "pl": "„Cisza” wycisza tylko własne alerty RoRoRo. Pluginy, takie jak Ur Score, odtwarzają własne dźwięki, ustawiane w ich własnych ustawieniach.",
-        "es": "«Silencio» solo silencia las alertas propias de RoRoRo. Los plugins como Ur Score reproducen sus propios sonidos, configurados en sus propios ajustes."
+        "fr": "« Silencieux » ne coupe que les alertes propres à RoRoRo. Les plugins qui jouent des sons ont leurs propres réglages de son.",
+        "de": "„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins, die Töne abspielen, haben eigene Toneinstellungen.",
+        "ru": "«Без звука» отключает только собственные оповещения RoRoRo. У плагинов, которые воспроизводят звуки, свои настройки звука.",
+        "pt-br": "“Silencioso” silencia só os alertas do próprio RoRoRo. Plugins que tocam sons têm as próprias configurações de som.",
+        "pl": "„Cisza” wycisza tylko własne alerty RoRoRo. Pluginy, które odtwarzają dźwięki, mają własne ustawienia dźwięku.",
+        "es": "«Silencio» solo silencia las alertas propias de RoRoRo. Los plugins que reproducen sonidos tienen sus propios ajustes de sonido."
       }
     },
     {
