@@ -1,0 +1,90 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "578747a22cfabb59414125d5f83a62a7188fd554",
+  "generatedUtc": "2026-10-23T20:09:43+00:00",
+  "sourceOfTruth": "docs/store/whats-new-1.34.0.0.md",
+  "fields": [
+    {
+      "field": "whatsNew.headline",
+      "en": "Share your themes",
+      "translations": {
+        "fr": "Partagez vos thèmes",
+        "de": "Teile deine Designs",
+        "ru": "Делитесь своими темами",
+        "pt-br": "Compartilhe seus temas",
+        "pl": "Udostępniaj swoje motywy",
+        "es": "Comparte tus temas"
+      }
+    },
+    {
+      "field": "whatsNew.share",
+      "en": "• \"Share theme\" saves a theme you made as a file you can send to anyone. \"Import theme\" applies one a friend sent you, straight away. Both are in the theme builder.",
+      "translations": {
+        "fr": "• « Partager le thème » enregistre un thème que vous avez créé dans un fichier à envoyer à qui vous voulez. « Importer un thème » applique aussitôt celui qu'on vous a envoyé. Les deux se trouvent dans le créateur de thèmes.",
+        "de": "• „Design teilen“ speichert ein Design, das du gebaut hast, als Datei, die du an jeden schicken kannst. „Design importieren“ übernimmt eins, das dir jemand geschickt hat, sofort. Beides findest du im Design-Builder.",
+        "ru": "• «Поделиться темой» сохраняет созданную вами тему в файл, который можно отправить кому угодно. «Импортировать тему» сразу применяет тему, которую прислали вам. Обе кнопки — в конструкторе тем.",
+        "pt-br": "• “Compartilhar tema” salva um tema que você criou em um arquivo para mandar para quem quiser. “Importar tema” aplica na hora um tema que alguém te mandou. Os dois ficam no criador de temas.",
+        "pl": "• „Udostępnij motyw” zapisuje stworzony przez ciebie motyw do pliku, który możesz wysłać komu chcesz. „Importuj motyw” od razu stosuje motyw, który ktoś ci przysłał. Oba znajdziesz w kreatorze motywów.",
+        "es": "• «Compartir tema» guarda un tema que hayas creado en un archivo que puedes mandar a quien quieras. «Importar tema» aplica al momento el que te hayan enviado. Los dos están en el creador de temas."
+      }
+    },
+    {
+      "field": "whatsNew.about",
+      "en": "• \"About\" shows the version you actually have installed.",
+      "translations": {
+        "fr": "• « À propos » affiche la version réellement installée.",
+        "de": "• „Über“ zeigt die Version, die du wirklich installiert hast.",
+        "ru": "• «О программе» показывает версию, которая у вас действительно установлена.",
+        "pt-br": "• “Sobre” mostra a versão que você realmente tem instalada.",
+        "pl": "• „O programie” pokazuje wersję, którą naprawdę masz zainstalowaną.",
+        "es": "• «Acerca de» muestra la versión que de verdad tienes instalada."
+      }
+    },
+    {
+      "field": "whatsNew.idle",
+      "en": "• The idle warning always runs at one of the times its picker offers.",
+      "translations": {
+        "fr": "• L'alerte d'inactivité utilise toujours l'une des durées proposées par son sélecteur.",
+        "de": "• Die Inaktivitäts-Warnung läuft immer mit einer der Zeiten, die ihre Auswahl anbietet.",
+        "ru": "• Оповещение о простое всегда работает с одним из сроков, которые предлагает его список.",
+        "pt-br": "• O alerta de inatividade sempre usa um dos tempos que o seletor oferece.",
+        "pl": "• Alert o bezczynności zawsze działa z jednym z czasów, które oferuje jego lista.",
+        "es": "• El aviso de inactividad siempre usa uno de los tiempos que ofrece su selector."
+      }
+    },
+    {
+      "field": "whatsNew.explains",
+      "en": "• Settings now explains three things that used to be guesswork: why an account with Roblox presence privacy on (Invisible) never gets an idle alert, what \"Silent\" covers, and what counts as activity.",
+      "translations": {
+        "fr": "• Les paramètres expliquent désormais trois points qu'il fallait deviner : pourquoi un compte dont la confidentialité de présence Roblox est activée (Invisible) ne reçoit jamais d'alerte d'inactivité, ce que couvre « Silencieux » et ce qui compte comme activité.",
+        "de": "• Die Einstellungen erklären jetzt drei Dinge, bei denen man bisher raten musste: warum ein Konto mit eingeschaltetem Roblox-Anwesenheitsschutz (Unsichtbar) nie eine Inaktivitäts-Benachrichtigung bekommt, was „Stumm“ abdeckt und was als Aktivität zählt.",
+        "ru": "• Настройки теперь объясняют три вещи, о которых раньше приходилось догадываться: почему аккаунт с включённой приватностью присутствия Roblox (Невидимка) никогда не получает оповещение о простое, что охватывает «Без звука» и что считается активностью.",
+        "pt-br": "• As configurações agora explicam três coisas que antes eram no chute: por que uma conta com a privacidade de presença do Roblox ativada (Invisível) nunca recebe alerta de inatividade, o que o “Silencioso” cobre e o que conta como atividade.",
+        "pl": "• Ustawienia wyjaśniają teraz trzy rzeczy, które wcześniej trzeba było zgadywać: dlaczego konto z włączoną prywatnością obecności Roblox (Niewidoczny) nigdy nie dostaje alertu o bezczynności, co obejmuje „Cisza” i co liczy się jako aktywność.",
+        "es": "• La configuración ahora explica tres cosas que antes había que adivinar: por qué una cuenta con la privacidad de presencia de Roblox activada (Invisible) nunca recibe un aviso de inactividad, qué cubre «Silencio» y qué cuenta como actividad."
+      }
+    },
+    {
+      "field": "whatsNew.closing",
+      "en": "Nothing else moved. Accounts, themes, plugins, history and every other setting carry over untouched.",
+      "translations": {
+        "fr": "Rien d'autre n'a changé. Comptes, thèmes, plugins, historique et tous les autres réglages sont conservés tels quels.",
+        "de": "Sonst hat sich nichts geändert. Konten, Designs, Plugins, Verlauf und alle anderen Einstellungen bleiben, wie sie sind.",
+        "ru": "Больше ничего не изменилось. Аккаунты, темы, плагины, история и все остальные настройки остаются как были.",
+        "pt-br": "Nada mais mudou. Contas, temas, plugins, histórico e todas as outras configurações continuam como estavam.",
+        "pl": "Nic więcej się nie zmieniło. Konta, motywy, pluginy, historia i wszystkie inne ustawienia zostają bez zmian.",
+        "es": "Nada más cambió. Cuentas, temas, plugins, historial y todos los demás ajustes se mantienen intactos."
+      }
+    }
+  ]
+}
