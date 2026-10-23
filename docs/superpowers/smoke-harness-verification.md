@@ -319,8 +319,16 @@ entry:
   re-reads the file fine: the malformed-rules row proved it in the same run. The row now sends the
   quiet baseline itself, after writing the rule, from the same subject.
 
-Neither fix has been re-run live yet. The next full run should show 19 green, and both fixed rows
-should then be broken deliberately once, per this file's rule, before their greens are trusted.
+**Re-run the same afternoon, 2026-10-23 14:49, same sideload package: 19 passed, 0 failed, 0
+skipped.** Both fixed rows went green: value-renders-legibly read its value line off a running
+account, and rules-picked-up-live fired once the quiet baseline was in place. Restore verified the
+same way as before: four files byte-identical, `consent.dat` identical in content once decrypted. (A
+run in between never started, because RoRoRo was not launched inside the three-minute window; it
+reported nothing and restored cleanly.)
+
+Still owed, per this file's rule: break rows 6, 11, 17, 18 and 19 once each and watch them go red
+before their greens count as checks. A green run proves the rows can pass; it does not prove they can
+fail.
 
 Restore after the run: `discord.dat`, `notify.dat`, `metric-rules.json` and `settings.json` were
 byte-identical to their pre-run hashes. `consent.dat` is DPAPI-encrypted and salted, so its hash
