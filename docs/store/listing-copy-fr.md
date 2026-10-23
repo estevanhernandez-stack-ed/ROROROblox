@@ -1,6 +1,6 @@
 # Store listing — Français (fr)
 
-> Paste-ready pour Partner Center → Store listings → **Français**. Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready pour Partner Center → Store listings → **Français**. Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
 > Friend Follow, Pushover, ntfy). The interface is now localized to six languages, so the
 > earlier English-interface caveat is gone. Register: vous (Store norm).
@@ -68,37 +68,27 @@ Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonc
 Rejoindre à nouveau s'il décroche — un alt expulsé ou coincé hors du jeu est fermé et rejoint à nouveau tout seul, jamais votre compte principal
 ```
 
-## What's new in this version (v1.33.0.0, ≤1500 chars)
+## What's new in this version (v1.34.0.0, ≤1500 chars)
 
 ```
-v1.33.0.0
+v1.34.0.0
 
-Les alertes ne partent que là où vous les envoyez
+Partagez vos thèmes
 
-• Décochez « Bureau » pour une alerte et plus rien n'apparaît
-  pour elle. Les alertes mémoire s'affichaient sur le bureau
-  quoi que vous ayez choisi ; désormais chaque alerte respecte
-  le tableau, la mise en sourdine par compte et le délai de
-  silence.
-• « À quelle fréquence au maximum » vous appartient. Un réglage
-  pour toutes, une exception pour n'importe quelle catégorie,
-  et « Chaque fois » ne retient rien.
-• L'alerte bureau est maintenant une fenêtre dessinée par
-  RoRoRo, aux couleurs du reste de l'application. Quand elle ne
-  nomme qu'un compte, un clic vous amène à sa ligne.
-• « Son d'alerte » propose le son RoRoRo, le son par défaut de
-  Windows ou « Silencieux », et « Écouter » joue votre choix
-  avant que vous ne le validiez.
-• « Un compte devient inactif dans un jeu » veut dire
-  exactement cela. Un compte resté sur la page d'accueil Roblox
-  ne reçoit plus d'alerte d'inactivité : il ne risque pas d'en
-  être expulsé.
-• Les trois cartes deviennent une seule section : une ligne par
-  alerte, la destination et la fréquence côte à côte. La page
-  s'appelle « Langue et apparence », car c'est là que vous
-  changez de langue.
+• « Partager le thème » enregistre un thème que vous avez créé
+  dans un fichier à envoyer à qui vous voulez. « Importer un
+  thème » applique aussitôt celui qu'un ami vous a envoyé. Les deux se
+  trouvent dans le créateur de thèmes.
+• « À propos » affiche la version réellement installée.
+• L'alerte d'inactivité utilise toujours l'une des durées
+  proposées par son sélecteur.
+• Les paramètres expliquent désormais trois points qu'il fallait
+  deviner : pourquoi un compte dont la confidentialité de présence
+  Roblox est activée (Invisible) ne reçoit jamais d'alerte
+  d'inactivité, ce que couvre « Silencieux » et ce qui compte
+  comme activité.
 
-Rien d'autre n'a bougé. Comptes, thèmes, plugins, historique et
+Rien d'autre n'a changé. Comptes, thèmes, plugins, historique et
 tous les autres réglages sont conservés tels quels.
 ```
 

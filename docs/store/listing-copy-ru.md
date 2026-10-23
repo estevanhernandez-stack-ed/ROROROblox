@@ -1,6 +1,6 @@
 # Store listing — Русский (ru)
 
-> Paste-ready для Partner Center → Store listings → **Русский**. Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready для Partner Center → Store listings → **Русский**. Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
 > Friend Follow, Pushover, ntfy); the app UI is now localized to Russian (v1.26.0.0). Register: вы (Store norm, lowercase).
 
@@ -67,36 +67,29 @@ Discord Join запускает RoRoRo даже закрытым — и всег
 Перезаходить, если отвалится — альт, которого кикнули или который застрял вне игры, закрывается и сам заходит снова; основной аккаунт — никогда
 ```
 
-## What's new in this version (v1.33.0.0, ≤1500 chars)
+## What's new in this version (v1.34.0.0, ≤1500 chars)
 
 ```
-v1.33.0.0
+v1.34.0.0
 
-Оповещения уходят только туда, куда вы их отправили
+Делитесь своими темами
 
-• Снимите «Рабочий стол» у какого-то оповещения — и для него
-  больше ничего не всплывает. Предупреждения о памяти
-  появлялись на рабочем столе, что бы вы ни выбрали; теперь
-  каждое оповещение подчиняется таблице, отключению звука по
-  аккаунту и паузе между повторами.
-• «Как часто не более» теперь ваше. Одна настройка для всех,
-  исключение для любого отдельного вида, а «Каждый раз» не
-  задерживает ничего.
-• Оповещение на рабочем столе — собственное окно RoRoRo,
-  оформленное как остальное приложение. Если названо ровно
-  один аккаунт, щелчок приводит вас прямо к его строке.
-• «Звук оповещения» предлагает сигнал RoRoRo, стандартный звук
-  Windows или «Без звука», а «Прослушать» проигрывает ваш выбор
-  до того, как вы его закрепите.
-• «Аккаунт простаивает в игре» теперь значит именно это.
-  Аккаунт, стоящий на домашней странице Roblox, больше не
-  получает оповещения о простое — оттуда его некуда выкинуть.
-• Три карточки стали одним разделом: по строке на оповещение,
-  адресат и частота рядом. Страница называется «Язык и
-  оформление», ведь именно там меняется язык.
+• «Поделиться темой» сохраняет созданную вами тему в файл,
+  который можно отправить кому угодно. «Импортировать тему» сразу
+  применяет тему, которую вам прислал друг. Обе кнопки — в
+  конструкторе тем.
+• «О программе» показывает версию, которая у вас действительно
+  установлена.
+• Оповещение о простое всегда использует один из интервалов,
+  которые предлагает его список.
+• Настройки теперь объясняют три вещи, о которых раньше
+  приходилось догадываться: почему аккаунт с включённой
+  приватностью присутствия Roblox (Невидимка) никогда не получает
+  оповещение о простое, что охватывает «Без звука» и что
+  считается активностью.
 
-Больше ничего не изменилось. Аккаунты, темы, плагины, история
-и все остальные настройки сохраняются без изменений.
+Больше ничего не изменилось. Аккаунты, темы, плагины, история и
+все остальные настройки остаются как были.
 ```
 
 ## Copyright (single line)

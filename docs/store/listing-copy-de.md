@@ -1,6 +1,6 @@
 # Store listing — Deutsch (de)
 
-> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md`, refreshed for v1.26.0.0. Product nouns stay in English (RoRoRo, Squad
 > Launch, Friend Follow, Pushover, ntfy); the interface is now localized to six languages, so
 > the old English-only caveat is gone. Register: du (Gaming-Store-Norm).
@@ -68,38 +68,28 @@ Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welch
 Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
-## What's new in this version (v1.33.0.0, ≤1500 chars)
+## What's new in this version (v1.34.0.0, ≤1500 chars)
 
 ```
-v1.33.0.0
+v1.34.0.0
 
-Benachrichtigungen gehen nur dorthin, wohin du sie schickst
+Teile deine Designs
 
-• Nimm bei einer Benachrichtigung das Häkchen bei „Desktop“
-  weg, und es erscheint nichts mehr dafür. RAM-Warnungen kamen
-  bisher auf den Desktop, egal was du gewählt hattest; jetzt
-  hält sich jede Benachrichtigung an die Tabelle, an die
-  Stummschaltung pro Konto und an die Ruhezeit.
-• „Wie oft höchstens“ gehört dir. Eine Einstellung für alle,
-  eine Ausnahme für jede einzelne Art, und „Jedes Mal“ hält
-  nichts zurück.
-• Die Desktop-Benachrichtigung ist jetzt RoRoRos eigenes
-  Fenster, im Design der übrigen App. Nennt sie genau ein
-  Konto, bringt dich ein Klick direkt zu dessen Zeile.
-• „Benachrichtigungston“ bietet den RoRoRo-Ton, den
-  Windows-Standard oder Stumm — und „Anhören“ spielt deine Wahl
-  vor, bevor du dich festlegst.
-• „Ein Konto wird in einem Spiel inaktiv“ heißt jetzt genau
-  das. Ein Konto, das auf der Roblox-Startseite parkt, bekommt
-  keine Inaktivitäts-Warnung mehr; es kann dort nicht
-  hinausgeworfen werden.
-• Aus drei Karten wird ein Abschnitt: eine Zeile pro
-  Benachrichtigung, Ziel und Häufigkeit nebeneinander. Die
-  Seite heißt „Sprache und Darstellung“, denn dort stellst du
-  die Sprache um.
+• „Design teilen“ speichert ein Design, das du gebaut hast, als
+  Datei, die du an jeden schicken kannst. „Design importieren“
+  übernimmt eins, das dir ein Freund geschickt hat, sofort. Beides
+  findest du im Design-Builder.
+• „Über“ zeigt die Version, die du wirklich installiert hast.
+• Die Inaktivitäts-Warnung läuft immer mit einer der Zeiten, die
+  ihre Auswahl anbietet.
+• Die Einstellungen erklären jetzt drei Dinge, bei denen man
+  bisher raten musste: warum ein Konto mit eingeschaltetem
+  Roblox-Anwesenheitsschutz (Unsichtbar) nie eine
+  Inaktivitäts-Benachrichtigung bekommt, was „Stumm“ abdeckt und
+  was als Aktivität zählt.
 
-Sonst hat sich nichts geändert. Konten, Themes, Plugins,
-Verlauf und alle übrigen Einstellungen bleiben unverändert.
+Sonst hat sich nichts geändert. Konten, Designs, Plugins, Verlauf
+und alle anderen Einstellungen bleiben, wie sie sind.
 ```
 
 ## Copyright (single line)

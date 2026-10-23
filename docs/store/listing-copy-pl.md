@@ -1,6 +1,6 @@
 # Store listing — Polski (pl)
 
-> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
 > Friend Follow, Pushover, ntfy); the app UI is now localized to Polish (v1.26.0.0). Register: ty (norma dla gier).
 
@@ -67,36 +67,29 @@ Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
-## What's new in this version (v1.33.0.0, ≤1500 chars)
+## What's new in this version (v1.34.0.0, ≤1500 chars)
 
 ```
-v1.33.0.0
+v1.34.0.0
 
-Alerty trafiają tylko tam, gdzie je wyślesz
+Udostępniaj swoje motywy
 
-• Odznacz „Pulpit” przy jakimś alercie i nic się dla niego nie
-  pojawia. Ostrzeżenia o pamięci wyskakiwały na pulpicie
-  niezależnie od tego, co wybrałeś; teraz każdy alert trzyma
-  się tabeli, wyciszenia dla konta i przerwy między
-  powtórzeniami.
-• „Jak często najwyżej” należy do ciebie. Jedno ustawienie dla
-  wszystkich, wyjątek dla dowolnego rodzaju, a „Za każdym
-  razem” nie wstrzymuje niczego.
-• Alert na pulpicie to teraz własne okno RoRoRo, w motywie
-  reszty aplikacji. Gdy wskazuje jedno konto, kliknięcie
-  przenosi cię do jego wiersza.
-• „Dźwięk alertu” daje do wyboru sygnał RoRoRo, domyślny dźwięk
-  Windows albo „Cisza”, a „Posłuchaj” odtwarza twój wybór,
-  zanim go zatwierdzisz.
-• „Konto staje się bezczynne w grze” znaczy teraz dokładnie to.
-  Konto stojące na stronie głównej Roblox nie dostaje już
-  alertu o bezczynności — nie ma skąd go wyrzucić.
-• Trzy karty stały się jedną sekcją: wiersz na alert, miejsce
-  docelowe i częstotliwość obok siebie. Strona nazywa się
-  „Język i wygląd”, bo właśnie tam zmieniasz język.
+• „Udostępnij motyw” zapisuje stworzony przez ciebie motyw do
+  pliku, który możesz wysłać komu chcesz. „Importuj motyw” od razu
+  stosuje motyw, który przysłał ci znajomy. Oba znajdziesz w kreatorze
+  motywów.
+• „O programie” pokazuje wersję, którą naprawdę masz
+  zainstalowaną.
+• Alert o bezczynności zawsze działa z jednym z czasów, które
+  oferuje jego lista.
+• Ustawienia wyjaśniają teraz trzy rzeczy, które wcześniej
+  trzeba było zgadywać: dlaczego konto z włączoną prywatnością
+  obecności Roblox (Niewidoczny) nigdy nie dostaje alertu
+  o bezczynności, co obejmuje „Cisza” i co liczy się jako
+  aktywność.
 
-Nic poza tym się nie zmieniło. Konta, motywy, wtyczki, historia
-i wszystkie pozostałe ustawienia pozostają bez zmian.
+Nic więcej się nie zmieniło. Konta, motywy, pluginy, historia
+i wszystkie inne ustawienia zostają bez zmian.
 ```
 
 ## Copyright (single line)
