@@ -491,7 +491,7 @@
   "SettingsPage_AlertColumnWhereItGoes": "Où elle va",
   "SettingsPage_AlertSound": "Son d'alerte",
   "SettingsPage_AlertSoundHint": "Retentit une fois par alerte, quel que soit le nombre de destinations. « Silencieux » affiche toujours la notification et colore toujours la barre d'état système.",
-  "SettingsPage_AlertSoundPluginsHint": "« Silencieux » ne coupe que les alertes propres à RoRoRo. Les plugins comme Ur Score jouent leurs propres sons, réglés dans leurs propres paramètres.",
+  "SettingsPage_AlertSoundPluginsHint": "« Silencieux » ne coupe que les alertes propres à RoRoRo. Les plugins qui jouent des sons ont leurs propres réglages de son.",
   "SettingsPage_Alerts": "Alertes",
   "SettingsPage_AlertsMemory": "Alertes et mémoire",
   "SettingsPage_AlwaysShowRecycleOnRunning": "Toujours afficher Recycle sur les comptes en cours d'exécution.",

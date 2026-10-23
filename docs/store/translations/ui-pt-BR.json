@@ -491,7 +491,7 @@
   "SettingsPage_AlertColumnWhereItGoes": "Para onde vai",
   "SettingsPage_AlertSound": "Som do alerta",
   "SettingsPage_AlertSoundHint": "Toca uma vez por alerta, para quantos destinos ele for. “Silencioso” continua desenhando a notificação e continua colorindo a bandeja.",
-  "SettingsPage_AlertSoundPluginsHint": "“Silencioso” silencia só os alertas do próprio RoRoRo. Plugins como o Ur Score tocam seus próprios sons, definidos nas configurações deles.",
+  "SettingsPage_AlertSoundPluginsHint": "“Silencioso” silencia só os alertas do próprio RoRoRo. Plugins que tocam sons têm as próprias configurações de som.",
   "SettingsPage_Alerts": "Alertas",
   "SettingsPage_AlertsMemory": "Alertas e memória",
   "SettingsPage_AlwaysShowRecycleOnRunning": "Sempre mostrar Recycle nas contas em execução.",

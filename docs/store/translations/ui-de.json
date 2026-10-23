@@ -491,7 +491,7 @@
   "SettingsPage_AlertColumnWhereItGoes": "Wohin sie geht",
   "SettingsPage_AlertSound": "Benachrichtigungston",
   "SettingsPage_AlertSoundHint": "Erklingt einmal pro Benachrichtigung, egal an wie viele Orte sie geht. „Stumm“ zeichnet die Benachrichtigung weiterhin und färbt weiterhin das Tray-Symbol.",
-  "SettingsPage_AlertSoundPluginsHint": "„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins wie Ur Score spielen ihre eigenen Töne ab, eingestellt in ihren eigenen Einstellungen.",
+  "SettingsPage_AlertSoundPluginsHint": "„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins, die Töne abspielen, haben eigene Toneinstellungen.",
   "SettingsPage_Alerts": "Benachrichtigungen",
   "SettingsPage_AlertsMemory": "Benachrichtigungen & Speicher",
   "SettingsPage_AlwaysShowRecycleOnRunning": "Recycle bei laufenden Konten immer anzeigen.",

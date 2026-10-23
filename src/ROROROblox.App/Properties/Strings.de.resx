@@ -3361,7 +3361,7 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
     <value>Konten mit eingeschaltetem Roblox-Anwesenheitsschutz (Unsichtbar) bekommen nie eine Inaktivitäts-Benachrichtigung. RoRoRo sieht sie in keinem Spiel, und diese Benachrichtigung gibt es nur für Konten, die es in einem Spiel sieht.</value>
   </data>
   <data name="SettingsPage_AlertSoundPluginsHint" xml:space="preserve">
-    <value>„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins wie Ur Score spielen ihre eigenen Töne ab, eingestellt in ihren eigenen Einstellungen.</value>
+    <value>„Stumm“ schaltet nur die eigenen Benachrichtigungen von RoRoRo stumm. Plugins, die Töne abspielen, haben eigene Toneinstellungen.</value>
   </data>
   <data name="SettingsPage_IdleActivityHint" xml:space="preserve">
     <value>Aktivität zählt pro Konto und nur vom Client im Vordergrund. Wer in einem anderen Programm arbeitet, gilt für jeden Alt als inaktiv.</value>
