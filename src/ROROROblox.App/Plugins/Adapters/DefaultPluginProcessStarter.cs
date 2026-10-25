@@ -83,14 +83,19 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
             EnableRaisingEvents = true,
         };
 
-        // Capture pid in a closure so the Exited handler can fire it back; reading
-        // process.Id after the Exited event raised on the OS thread is safe.
+        // The Exited handler disposes the Process, so it must not run until Start has read the pid
+        // (#242). A plugin that dies before Start returns used to fire Exited first: the handler
+        // disposed, then process.Id threw "No process is associated with this object" and the
+        // install reported a failed start. Seen in the field when Start stalled 14 s on a first run.
+        // The gate is bounded so a path that never opens it cannot pin a thread-pool thread forever.
+        // Never call process.WaitForExit inside Start: it raises Exited on the calling thread, which
+        // would block here on a gate only Start can open.
+        var pidRead = new ManualResetEventSlim(false);
+        var pid = -1;
         var startedUtc = DateTime.UtcNow;
         process.Exited += (_, _) =>
         {
-            int pid;
-            try { pid = process.Id; }
-            catch { pid = -1; }
+            pidRead.Wait(TimeSpan.FromSeconds(10));
             // ExitCode is valid once Exited has fired; read it before Dispose. The hex
             // form is what discriminates crash class (0xE0434352 = managed exception).
             var exitCodeHex = "unknown";
@@ -101,6 +106,7 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
             try { ProcessExited?.Invoke(pid); }
             catch { /* never let a subscriber's throw take the host down */ }
             try { process.Dispose(); } catch { }
+            pidRead.Dispose();
         };
 
         try
@@ -110,18 +116,37 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
         catch (Exception ex)
         {
             _log?.LogError(ex, "Plugin process failed to start: {PluginId} ({ExePath}).", pluginId, exePath);
+            pidRead.Dispose();
             throw;
         }
-        // Assign AFTER Start — a process must exist to join a job. The window between the two is
-        // the one case this cannot cover: a host death in those microseconds still strands the
-        // child, which is why the startup sweep exists rather than being redundant.
-        var adopted = _job?.TryAssign(process.Id) ?? false;
 
-        _log?.LogInformation(
-            "Plugin process started: {PluginId} pid {Pid} ({ExePath}); reason: {Reason}; job-managed: {Adopted}.",
-            pluginId, process.Id, launchPath, reason.ToWireValue(), adopted);
-        return process.Id;
+        try
+        {
+            AfterStartForTest?.Invoke(process);
+            pid = process.Id;
+            // Assign AFTER Start — a process must exist to join a job. The window between the two is
+            // the one case this cannot cover: a host death in those microseconds still strands the
+            // child, which is why the startup sweep exists rather than being redundant.
+            var adopted = _job?.TryAssign(pid) ?? false;
+
+            _log?.LogInformation(
+                "Plugin process started: {PluginId} pid {Pid} ({ExePath}); reason: {Reason}; job-managed: {Adopted}.",
+                pluginId, pid, launchPath, reason.ToWireValue(), adopted);
+            return pid;
+        }
+        finally
+        {
+            // Opened after the started line, so a plugin that dies at launch logs "started" then "exited",
+            // never the reverse.
+            pidRead.Set();
+        }
     }
+
+    /// <summary>
+    /// Test seam: runs between <c>Process.Start</c> and reading the pid. Lets a test hold Start at the
+    /// exact point the field stall did (#242), so the race is deterministic rather than occasional.
+    /// </summary>
+    internal Action<Process>? AfterStartForTest { get; set; }
 
     public void Kill(int pid)
     {

@@ -212,6 +212,45 @@ public class DefaultPluginProcessStarterTests
     }
 
     [Fact]
+    public void Start_APluginThatDiesBeforeStartReadsItsPid_StillReturnsThePid()
+    {
+        // The field case (#242): Start stalled 14 s, the plugin died inside the stall, the Exited
+        // handler disposed the Process, and process.Id threw "No process is associated with this
+        // object". The seam holds Start until the child is dead and its Exited has had time to run,
+        // which on the old code made this throw every time.
+        var log = new CapturingLogger<DefaultPluginProcessStarter>();
+        // Waits on the raw handle, not p.WaitForExit: WaitForExit raises Exited on the calling thread,
+        // which would run the handler inside Start and wait on a gate only Start can open.
+        var starter = new DefaultPluginProcessStarter(log)
+        {
+            AfterStartForTest = p =>
+            {
+                using var dead = new ManualResetEvent(false)
+                {
+                    SafeWaitHandle = new Microsoft.Win32.SafeHandles.SafeWaitHandle(p.Handle, ownsHandle: false),
+                };
+                dead.WaitOne(10_000);
+                Thread.Sleep(300); // time for the thread-pool Exited to run, as it did in the field
+            },
+        };
+        var exitedPid = 0;
+        using var exited = new ManualResetEventSlim(false);
+        starter.ProcessExited += p => { exitedPid = p; exited.Set(); };
+
+        var pid = starter.Start("626labs.test", WhereExe, PluginLaunchReason.Install);
+
+        Assert.True(pid > 0, "Start should return the pid even when the plugin is already dead");
+        Assert.True(exited.Wait(TimeSpan.FromSeconds(10)), "the exit should still be reported");
+        Assert.Equal(pid, exitedPid);
+
+        var lines = log.Snapshot();
+        var started = lines.ToList().FindIndex(l => l.Contains("process started"));
+        var exitedAt = lines.ToList().FindIndex(l => l.Contains("process exited"));
+        Assert.True(started >= 0 && exitedAt > started, "the log should read started, then exited");
+        Assert.Contains($"pid {pid}", lines[exitedAt]);
+    }
+
+    [Fact]
     public void Start_NoLogger_StillWorks()
     {
         // The optional-logger seam must not become load-bearing: null logger,
