@@ -3402,4 +3402,25 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="ThemeShare_ImportFailed" xml:space="preserve">
     <value>Импорт не удался: {0}</value>
   </data>
+  <data name="Plugin_Health_CouldNotStart" xml:space="preserve">
+    <value>Не удалось запустить на этом ПК (код {0}). Перезапуск не поможет.</value>
+  </data>
+  <data name="Plugin_Health_CrashedWhileStarting" xml:space="preserve">
+    <value>Аварийно завершился при запуске (код {0}).</value>
+  </data>
+  <data name="Plugin_Health_ClosedAtStartup" xml:space="preserve">
+    <value>Закрылся сам сразу после запуска.</value>
+  </data>
+  <data name="Plugin_Health_Crashed" xml:space="preserve">
+    <value>Аварийно завершился (код {0}).</value>
+  </data>
+  <data name="Plugin_Health_Stopped" xml:space="preserve">
+    <value>Остановлен.</value>
+  </data>
+  <data name="Plugin_CouldNotStartBanner" xml:space="preserve">
+    <value>{0} не может запуститься на этом ПК. Перезапуск не поможет: отправьте журнал RoRoRo в 626 Labs.</value>
+  </data>
+  <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
+    <value>{0} раз за разом останавливается при запуске. Перезапуск не поможет: отправьте журнал RoRoRo в 626 Labs.</value>
+  </data>
 </root>

@@ -160,7 +160,7 @@ public class PluginProcessSupervisorTests : IDisposable
         var fake = new FakeProcessStarter();
         var supervisor = new PluginProcessSupervisor(fake);
         var fired = new List<(string id, int pid)>();
-        supervisor.PluginExited += (id, pid) => fired.Add((id, pid));
+        supervisor.PluginExited += (id, exit) => fired.Add((id, exit.Pid));
 
         supervisor.StartAutostart(new[] { MakePlugin("626labs.crash", autostart: true) });
         var pid = supervisor.RunningPids["626labs.crash"];
@@ -287,7 +287,7 @@ public class PluginProcessSupervisorTests : IDisposable
     {
         public List<(string id, string exePath)> Started { get; } = new();
         public List<int> KilledPids { get; } = new();
-        public event Action<int>? ProcessExited;
+        public event Action<PluginProcessExit>? ProcessExited;
         private int _nextPid = 1000;
         private readonly Dictionary<string, List<int>> _runningUnder = new(StringComparer.OrdinalIgnoreCase);
 
@@ -323,6 +323,6 @@ public class PluginProcessSupervisorTests : IDisposable
             return live;
         }
 
-        public void RaiseExit(int pid) => ProcessExited?.Invoke(pid);
+        public void RaiseExit(int pid) => ProcessExited?.Invoke(new PluginProcessExit(pid, 1, TimeSpan.FromMinutes(5)));
     }
 }

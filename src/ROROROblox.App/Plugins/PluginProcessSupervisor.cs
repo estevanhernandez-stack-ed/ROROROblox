@@ -15,8 +15,9 @@ public sealed class PluginProcessSupervisor
     /// The supervisor strips the PID-to-plugin-id mapping before invoking, so
     /// subscribers can safely query <see cref="RunningPids"/> for fresh state.
     /// Crash-detection sits on top of this event in later items.
+    /// <para>Carries the exit itself (code, uptime, pid) since #242, so the Plugins page can say why.</para>
     /// </summary>
-    public event Action<string, int>? PluginExited;
+    public event Action<string, PluginProcessExit>? PluginExited;
 
     public PluginProcessSupervisor(IPluginProcessStarter starter, ILogger<PluginProcessSupervisor>? log = null)
     {
@@ -222,11 +223,42 @@ public sealed class PluginProcessSupervisor
 
     private void StartOne(InstalledPlugin plugin, PluginLaunchReason reason)
     {
+        var began = DateTime.UtcNow;
         var pid = _starter.Start(plugin.Manifest.Id, plugin.ExecutablePath, reason);
-        lock (_lock) { _pidByPluginId[plugin.Manifest.Id] = pid; }
+        PluginProcessExit? alreadyGone = null;
+        lock (_lock)
+        {
+            // The plugin may have died before Start returned (#242: a first-run start stalled 14 s
+            // and the plugin died inside it). Its exit then arrived with no mapping to find, and used
+            // to be dropped: no banner, and a stale entry that read "running" for a dead process.
+            // Only an exit recorded after this start began can be this process: Windows reuses pids
+            // quickly, and an older exit with the same pid belongs to a process that no longer exists.
+            if (_earlyExits.Remove(pid, out var early) && early.AtUtc >= began)
+            {
+                alreadyGone = early.Exit;
+            }
+            else
+            {
+                _pidByPluginId[plugin.Manifest.Id] = pid;
+            }
+        }
+        if (alreadyGone is not null)
+        {
+            PluginExited?.Invoke(plugin.Manifest.Id, alreadyGone);
+        }
     }
 
-    private void OnProcessExited(int pid)
+    /// <summary>
+    /// Exits whose pid had no mapping yet, held briefly in case a <see cref="StartOne"/> is about to
+    /// claim it. Most are exits of plugins this supervisor already let go of (a <see cref="Stop"/>
+    /// drops the mapping before the kill lands), so the buffer is bounded and ages out; it only has
+    /// to outlive the gap between a plugin's death and its Start returning.
+    /// </summary>
+    private readonly Dictionary<int, (PluginProcessExit Exit, DateTime AtUtc)> _earlyExits = new();
+    private const int EarlyExitCapacity = 32;
+    private static readonly TimeSpan EarlyExitTtl = TimeSpan.FromMinutes(1);
+
+    private void OnProcessExited(PluginProcessExit exit)
     {
         // Map PID → plugin id under the lock, then drop the mapping. We hold
         // the lock just long enough to mutate state; PluginExited fires outside
@@ -237,7 +269,7 @@ public sealed class PluginProcessSupervisor
         {
             foreach (var kv in _pidByPluginId)
             {
-                if (kv.Value == pid)
+                if (kv.Value == exit.Pid)
                 {
                     pluginId = kv.Key;
                     break;
@@ -247,10 +279,23 @@ public sealed class PluginProcessSupervisor
             {
                 _pidByPluginId.Remove(pluginId);
             }
+            else
+            {
+                var now = DateTime.UtcNow;
+                foreach (var stale in _earlyExits.Where(e => now - e.Value.AtUtc > EarlyExitTtl).Select(e => e.Key).ToList())
+                {
+                    _earlyExits.Remove(stale);
+                }
+                if (_earlyExits.Count >= EarlyExitCapacity)
+                {
+                    _earlyExits.Remove(_earlyExits.MinBy(e => e.Value.AtUtc).Key);
+                }
+                _earlyExits[exit.Pid] = (exit, now);
+            }
         }
         if (pluginId is not null)
         {
-            PluginExited?.Invoke(pluginId, pid);
+            PluginExited?.Invoke(pluginId, exit);
         }
     }
 }

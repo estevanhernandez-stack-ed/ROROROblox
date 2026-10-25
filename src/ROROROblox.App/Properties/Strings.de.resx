@@ -3402,4 +3402,25 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="ThemeShare_ImportFailed" xml:space="preserve">
     <value>Import fehlgeschlagen: {0}</value>
   </data>
+  <data name="Plugin_Health_CouldNotStart" xml:space="preserve">
+    <value>Konnte auf diesem PC nicht starten (Code {0}). Ein Neustart behebt das nicht.</value>
+  </data>
+  <data name="Plugin_Health_CrashedWhileStarting" xml:space="preserve">
+    <value>Beim Starten abgestürzt (Code {0}).</value>
+  </data>
+  <data name="Plugin_Health_ClosedAtStartup" xml:space="preserve">
+    <value>Hat sich direkt nach dem Start selbst beendet.</value>
+  </data>
+  <data name="Plugin_Health_Crashed" xml:space="preserve">
+    <value>Abgestürzt (Code {0}).</value>
+  </data>
+  <data name="Plugin_Health_Stopped" xml:space="preserve">
+    <value>Gestoppt.</value>
+  </data>
+  <data name="Plugin_CouldNotStartBanner" xml:space="preserve">
+    <value>{0} kann auf diesem PC nicht starten. Ein Neustart behebt das nicht: Schick dein RoRoRo-Log an 626 Labs.</value>
+  </data>
+  <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
+    <value>{0} bricht beim Starten immer wieder ab. Ein Neustart behebt das nicht: Schick dein RoRoRo-Log an 626 Labs.</value>
+  </data>
 </root>

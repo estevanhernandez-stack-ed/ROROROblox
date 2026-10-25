@@ -3402,4 +3402,25 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   <data name="ThemeShare_ImportFailed" xml:space="preserve">
     <value>Falha na importação: {0}</value>
   </data>
+  <data name="Plugin_Health_CouldNotStart" xml:space="preserve">
+    <value>Não conseguiu iniciar neste PC (código {0}). Reiniciar não vai resolver.</value>
+  </data>
+  <data name="Plugin_Health_CrashedWhileStarting" xml:space="preserve">
+    <value>Travou ao iniciar (código {0}).</value>
+  </data>
+  <data name="Plugin_Health_ClosedAtStartup" xml:space="preserve">
+    <value>Fechou sozinho logo depois de iniciar.</value>
+  </data>
+  <data name="Plugin_Health_Crashed" xml:space="preserve">
+    <value>Travou (código {0}).</value>
+  </data>
+  <data name="Plugin_Health_Stopped" xml:space="preserve">
+    <value>Parado.</value>
+  </data>
+  <data name="Plugin_CouldNotStartBanner" xml:space="preserve">
+    <value>{0} não consegue iniciar neste PC. Reiniciar não vai resolver: mande o seu log do RoRoRo para a 626 Labs.</value>
+  </data>
+  <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
+    <value>{0} continua parando ao iniciar. Reiniciar não vai resolver: mande o seu log do RoRoRo para a 626 Labs.</value>
+  </data>
 </root>

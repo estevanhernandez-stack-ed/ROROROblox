@@ -184,7 +184,7 @@ public class PluginsViewModelLaunchConsentTests : IDisposable
     {
         private int _nextPid = 4242;
         public List<(string PluginId, string ExePath)> Started { get; } = new();
-        public event Action<int>? ProcessExited;
+        public event Action<PluginProcessExit>? ProcessExited;
 
         /// <summary>Launch reasons in call order (v1.33 item 8).</summary>
         public List<PluginLaunchReason> StartReasons { get; } = [];
@@ -196,7 +196,7 @@ public class PluginsViewModelLaunchConsentTests : IDisposable
             return _nextPid++;
         }
 
-        public void Kill(int pid) => ProcessExited?.Invoke(pid);
+        public void Kill(int pid) => ProcessExited?.Invoke(new PluginProcessExit(pid, 1, TimeSpan.FromMinutes(5)));
 
         public IReadOnlyList<int> FindRunningUnder(string dirPath) => Array.Empty<int>();
     }

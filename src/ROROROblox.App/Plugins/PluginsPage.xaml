@@ -184,6 +184,23 @@
                                                        Opacity="0.85"
                                                        Margin="0,4,0,0" />
 
+                                            <!-- Health line (#242): why the plugin last stopped, set from its
+                                                 exit code. White text with the emphasis on a magenta edge rule,
+                                                 this window's "actionable is magenta" split carried on the border
+                                                 rather than the text, so it keeps its contrast and still reads
+                                                 under flatline, where colour carries no meaning. -->
+                                            <Border BorderBrush="{DynamicResource MagentaBrush}"
+                                                    BorderThickness="2,0,0,0"
+                                                    Padding="8,1,0,1"
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,6,0,0"
+                                                    Visibility="{Binding HealthLine, Converter={StaticResource StringToVisibilityConverterLocal}}">
+                                                <TextBlock Text="{Binding HealthLine}"
+                                                           FontSize="{DynamicResource BodyFontSize}"
+                                                           Foreground="{DynamicResource WhiteBrush}"
+                                                           TextWrapping="Wrap" />
+                                            </Border>
+
                                             <Border Background="{DynamicResource NavyBrush}"
                                                     CornerRadius="4"
                                                     Padding="6,2"

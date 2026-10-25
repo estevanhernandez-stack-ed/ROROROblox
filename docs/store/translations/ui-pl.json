@@ -1121,5 +1121,12 @@
   "WelcomeWindow_TogglesWhetherThisAccountJoins": "— przełącza, czy to konto dołącza do uruchomień Uruchom wiele / Squad Launch. Zachowuje się po ponownych uruchomieniach.",
   "WelcomeWindow_WelcomeTo": "Witaj w",
   "WelcomeWindow_WelcomeToRororo": "Witaj w RoRoRo",
-  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows domyślnie ukrywa nowe ikony w zasobniku systemowym, więc ikona RoRoRo może nie pojawić się od razu."
+  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows domyślnie ukrywa nowe ikony w zasobniku systemowym, więc ikona RoRoRo może nie pojawić się od razu.",
+  "Plugin_Health_CouldNotStart": "Nie udało się uruchomić na tym komputerze (kod {0}). Ponowne uruchomienie tego nie naprawi.",
+  "Plugin_Health_CrashedWhileStarting": "Awaria podczas uruchamiania (kod {0}).",
+  "Plugin_Health_ClosedAtStartup": "Działanie zakończyło się zaraz po uruchomieniu.",
+  "Plugin_Health_Crashed": "Awaria (kod {0}).",
+  "Plugin_Health_Stopped": "Zatrzymano.",
+  "Plugin_CouldNotStartBanner": "Nie można uruchomić {0} na tym komputerze. Ponowne uruchomienie tego nie naprawi: wyślij swój log RoRoRo do 626 Labs.",
+  "Plugin_KeepsFailingBanner": "{0} raz po raz przerywa działanie przy uruchamianiu. Ponowne uruchomienie tego nie naprawi: wyślij swój log RoRoRo do 626 Labs."
 }

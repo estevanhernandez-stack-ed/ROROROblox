@@ -1121,5 +1121,12 @@
   "WelcomeWindow_TogglesWhetherThisAccountJoins": "— schaltet um, ob dieses Konto an Mehrere starten / Squad Launch-Durchläufen teilnimmt. Bleibt über Neustarts erhalten.",
   "WelcomeWindow_WelcomeTo": "Willkommen bei",
   "WelcomeWindow_WelcomeToRororo": "Willkommen bei RoRoRo",
-  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows blendet neue Infobereich-Symbole standardmäßig aus, daher zeigt sich RoRoRos Symbol möglicherweise nicht sofort."
+  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows blendet neue Infobereich-Symbole standardmäßig aus, daher zeigt sich RoRoRos Symbol möglicherweise nicht sofort.",
+  "Plugin_Health_CouldNotStart": "Konnte auf diesem PC nicht starten (Code {0}). Ein Neustart behebt das nicht.",
+  "Plugin_Health_CrashedWhileStarting": "Beim Starten abgestürzt (Code {0}).",
+  "Plugin_Health_ClosedAtStartup": "Hat sich direkt nach dem Start selbst beendet.",
+  "Plugin_Health_Crashed": "Abgestürzt (Code {0}).",
+  "Plugin_Health_Stopped": "Gestoppt.",
+  "Plugin_CouldNotStartBanner": "{0} kann auf diesem PC nicht starten. Ein Neustart behebt das nicht: Schick dein RoRoRo-Log an 626 Labs.",
+  "Plugin_KeepsFailingBanner": "{0} bricht beim Starten immer wieder ab. Ein Neustart behebt das nicht: Schick dein RoRoRo-Log an 626 Labs."
 }

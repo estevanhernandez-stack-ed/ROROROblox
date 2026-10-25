@@ -3402,4 +3402,25 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   <data name="ThemeShare_ImportFailed" xml:space="preserve">
     <value>Échec de l'import : {0}</value>
   </data>
+  <data name="Plugin_Health_CouldNotStart" xml:space="preserve">
+    <value>Impossible de démarrer sur ce PC (code {0}). Un redémarrage n'y changera rien.</value>
+  </data>
+  <data name="Plugin_Health_CrashedWhileStarting" xml:space="preserve">
+    <value>Plantage au démarrage (code {0}).</value>
+  </data>
+  <data name="Plugin_Health_ClosedAtStartup" xml:space="preserve">
+    <value>Fermé tout seul juste après le démarrage.</value>
+  </data>
+  <data name="Plugin_Health_Crashed" xml:space="preserve">
+    <value>Plantage (code {0}).</value>
+  </data>
+  <data name="Plugin_Health_Stopped" xml:space="preserve">
+    <value>Arrêté.</value>
+  </data>
+  <data name="Plugin_CouldNotStartBanner" xml:space="preserve">
+    <value>{0} ne peut pas démarrer sur ce PC. Un redémarrage n'y changera rien : envoyez votre journal RoRoRo à 626 Labs.</value>
+  </data>
+  <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
+    <value>{0} s'arrête à chaque démarrage. Un redémarrage n'y changera rien : envoyez votre journal RoRoRo à 626 Labs.</value>
+  </data>
 </root>
