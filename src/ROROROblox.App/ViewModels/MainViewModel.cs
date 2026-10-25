@@ -1220,6 +1220,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         set => SetField(ref _alwaysShowRecycle, value);
     }
 
+    private readonly TaskCompletionSource _accountsLoaded = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    /// <summary>
+    /// True once <see cref="LoadAsync"/> has read the saved accounts for the first time (#243). The
+    /// plugin pipe binds before the main window loads, so a plugin can call in while
+    /// <see cref="AccountsSnapshot"/> is still empty for that reason alone; the field report had an
+    /// agent told "Known accounts: (none)" a minute before all three came back. Set on the corrupt-
+    /// store path too: that roster is genuinely empty, and waiting would not change the answer.
+    /// </summary>
+    public bool AccountsLoaded => _accountsLoaded.Task.IsCompleted;
+
+    /// <summary>Completes when <see cref="AccountsLoaded"/> becomes true.</summary>
+    public Task WhenAccountsLoaded => _accountsLoaded.Task;
+
     /// <summary>Loads accounts + games from disk. Called once at MainWindow load.</summary>
     public async Task LoadAsync()
     {
@@ -1250,6 +1264,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (AccountStoreCorruptException)
         {
             ShowDpapiCorruptModal();
+        }
+        finally
+        {
+            // After the rows are in, so a plugin released by this never reads a half-filled list.
+            _accountsLoaded.TrySetResult();
         }
 
         // Re-apply any active filter against the freshly-loaded rows so a reload (e.g. after the

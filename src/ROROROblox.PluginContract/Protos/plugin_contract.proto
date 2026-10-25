@@ -135,6 +135,11 @@ message HostInfo {
   string install_flavour = 4;       // "store" / "sideload" / "dev"
   string process_path = 5;          // Environment.ProcessPath of the host
   string informational_version = 6; // AssemblyInformationalVersion, e.g. "1.33.0+<commit>"
+  // 0.13.0: false while RoRoRo is still loading saved accounts at startup. Until it is true,
+  // GetAccounts and the launch calls wait briefly and then refuse with "accounts-loading" rather
+  // than answer with an empty roster. Older hosts leave it false; treat a host whose version
+  // predates 1.35 as loaded.
+  bool accounts_loaded = 7;
 }
 
 message RunningAccountsList {
@@ -326,12 +331,22 @@ message StopAccountsRequest {
   // Otherwise, only these accounts. Ids RoRoRo isn't tracking come back in
   // failed_account_ids rather than failing the whole call.
   repeated string account_ids = 1;
+  // 0.13.0: return only once each stopped account's client has exited (or timeout_ms passes),
+  // instead of as soon as the stop is issued. A relaunch straight after a waited stop no longer
+  // meets "Account is already running".
+  bool wait_for_exit = 2;
+  // With wait_for_exit: how long to wait. 0 or less means 30000; capped at 120000. The stop
+  // itself asks the client to close, then forces it after a 10 s grace, so 30 s covers it.
+  int32 timeout_ms = 3;
 }
 
 message StopAccountsResult {
   int32 stopped_count = 1;
   // Unknown id, no tracked client, or the close+kill sequence failed.
   repeated string failed_account_ids = 2;
+  // 0.13.0, filled only with wait_for_exit. Every stopped account lands in exactly one of these.
+  repeated string exited_account_ids = 3;        // confirmed gone: safe to relaunch
+  repeated string still_running_account_ids = 4; // the wait ran out first
 }
 
 message SavedAccountsList {

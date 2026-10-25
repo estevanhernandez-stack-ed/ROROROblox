@@ -181,8 +181,41 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
             InstallFlavour = _buildIdentity.InstallFlavour,
             ProcessPath = _buildIdentity.ProcessPath,
             InformationalVersion = _buildIdentity.InformationalVersion,
+            // A host with no saved-accounts source has nothing to load; only a test host lacks one.
+            AccountsLoaded = _savedAccounts?.IsLoaded ?? true,
         });
     }
+
+    /// <summary>
+    /// How long account calls wait for the saved accounts to load before refusing with
+    /// <see cref="PluginLaunchReasonCodes.AccountsLoading"/> (#243). Settable for tests only.
+    /// </summary>
+    internal TimeSpan AccountsLoadWait { get; set; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// True once saved accounts are loaded, waiting up to <see cref="AccountsLoadWait"/> if they are
+    /// not. An answer given before then would describe an unread list, not the user's accounts.
+    /// </summary>
+    private async Task<bool> AccountsReadyAsync(CancellationToken ct)
+    {
+        if (_savedAccounts is null || _savedAccounts.IsLoaded) return true;
+        try
+        {
+            await _savedAccounts.WhenLoadedAsync(ct).WaitAsync(AccountsLoadWait, ct).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            // Fall through to the re-read: the wait running out is an answer, not an error.
+        }
+        return _savedAccounts.IsLoaded;
+    }
+
+    private static LaunchResult AccountsLoadingRefusal() => new()
+    {
+        Ok = false,
+        FailureReason = "RoRoRo is still loading your saved accounts. Try again in a moment.",
+        ReasonCode = PluginLaunchReasonCodes.AccountsLoading,
+    };
 
     public override Task<RunningAccountsList> GetRunningAccounts(Empty request, ServerCallContext context)
     {
@@ -217,7 +250,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         return Task.FromResult(list);
     }
 
-    public override Task<SavedAccountsList> GetAccounts(Empty request, ServerCallContext context)
+    public override async Task<SavedAccountsList> GetAccounts(Empty request, ServerCallContext context)
     {
         if (_savedAccounts is null)
         {
@@ -226,6 +259,14 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
             // the production registration.
             throw new RpcException(new Status(StatusCode.FailedPrecondition,
                 "Saved accounts are not available on this host."));
+        }
+
+        if (!await AccountsReadyAsync(context.CancellationToken).ConfigureAwait(false))
+        {
+            // Same distinction again (#243): a list not read yet is not an empty roster. Unavailable
+            // is gRPC's retryable status; the message leads with the reason code a plugin matches.
+            throw new RpcException(new Status(StatusCode.Unavailable,
+                $"{PluginLaunchReasonCodes.AccountsLoading}: RoRoRo is still loading saved accounts. Retry shortly."));
         }
 
         var list = new SavedAccountsList();
@@ -239,7 +280,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
                 IsMain = a.IsMain,
             });
         }
-        return Task.FromResult(list);
+        return list;
     }
 
     // =====================================================================
@@ -270,25 +311,71 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     // Capability gate (host.commands.stop-accounts) is enforced upstream.
     // =====================================================================
 
-    public override Task<StopAccountsResult> StopAccounts(StopAccountsRequest request, ServerCallContext context)
+    public override async Task<StopAccountsResult> StopAccounts(StopAccountsRequest request, ServerCallContext context)
     {
         var targets = request.AccountIds.Count > 0
             ? request.AccountIds.Distinct(StringComparer.Ordinal).ToList()
             : _accountStopper.TrackedAccountIds.ToList();
 
         var result = new StopAccountsResult();
+        var stopped = new List<string>();
         foreach (var accountId in targets)
         {
             if (_accountStopper.StopAccount(accountId))
             {
                 result.StoppedCount++;
+                stopped.Add(accountId);
             }
             else
             {
                 result.FailedAccountIds.Add(accountId);
             }
         }
-        return Task.FromResult(result);
+
+        if (request.WaitForExit && stopped.Count > 0)
+        {
+            await WaitForExitAsync(stopped, request.TimeoutMs, result, context.CancellationToken).ConfigureAwait(false);
+        }
+        return result;
+    }
+
+    internal static readonly TimeSpan StopWaitDefault = TimeSpan.FromSeconds(30);
+    internal static readonly TimeSpan StopWaitMax = TimeSpan.FromSeconds(120);
+
+    /// <summary>How often a waited stop re-checks. Settable for tests only.</summary>
+    internal TimeSpan StopWaitPoll { get; set; } = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>
+    /// The wait half of StopAccounts (#244). An account counts as gone only when the tracker has let
+    /// go of it AND it is out of the running snapshot. The second is what the launch check reads
+    /// (<c>AccountSummary.IsRunning</c>), and it clears on the tracker's exit event, a hop after the
+    /// tracker itself; checking only the tracker would return in the gap and the relaunch would still
+    /// meet "Account is already running", the exact failure the field report hit on every hop.
+    /// </summary>
+    private async Task WaitForExitAsync(
+        IReadOnlyList<string> stopped, int timeoutMs, StopAccountsResult result, CancellationToken ct)
+    {
+        var wait = timeoutMs <= 0 ? StopWaitDefault : TimeSpan.FromMilliseconds(timeoutMs);
+        if (wait > StopWaitMax) wait = StopWaitMax;
+        var deadline = DateTime.UtcNow + wait;
+
+        var pending = new HashSet<string>(stopped, StringComparer.Ordinal);
+        while (true)
+        {
+            var tracked = _accountStopper.TrackedAccountIds.ToHashSet(StringComparer.Ordinal);
+            var running = _runningAccounts.Snapshot().Select(a => a.AccountId).ToHashSet(StringComparer.Ordinal);
+            pending.RemoveWhere(id => !tracked.Contains(id) && !running.Contains(id));
+
+            if (pending.Count == 0 || DateTime.UtcNow >= deadline || ct.IsCancellationRequested) break;
+            try { await Task.Delay(StopWaitPoll, ct).ConfigureAwait(false); }
+            catch (OperationCanceledException) { break; }
+        }
+
+        // Reported in request order so a caller reading both lists sees a stable shape.
+        foreach (var id in stopped)
+        {
+            (pending.Contains(id) ? result.StillRunningAccountIds : result.ExitedAccountIds).Add(id);
+        }
     }
 
     // =====================================================================
@@ -573,6 +660,10 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
 
     public override async Task<LaunchResult> RequestLaunch(LaunchRequest request, ServerCallContext context)
     {
+        // Before the launcher looks the account up: during startup it would answer "No saved account
+        // with id …" for an account that is simply not read yet (#243).
+        if (!await AccountsReadyAsync(context.CancellationToken).ConfigureAwait(false)) return AccountsLoadingRefusal();
+
         var (ok, reason, pid, reasonCode) = await _launcher.RequestLaunchAsync(request.AccountId).ConfigureAwait(false);
         return new LaunchResult
         {
@@ -587,6 +678,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     {
         string? shareUrl = request.TargetCase == LaunchTargetRequest.TargetOneofCase.ShareUrl ? request.ShareUrl : null;
         long? followUserId = request.TargetCase == LaunchTargetRequest.TargetOneofCase.FollowUserId ? request.FollowUserId : null;
+        if (!await AccountsReadyAsync(context.CancellationToken).ConfigureAwait(false)) return AccountsLoadingRefusal();
+
         var (ok, reason, pid, reasonCode) = await _launcher.RequestLaunchTargetAsync(request.AccountId, shareUrl, followUserId).ConfigureAwait(false);
         return new LaunchResult
         {
