@@ -120,6 +120,97 @@ public class DefaultPluginProcessStarterTests
         Assert.Contains(missing, line);
     }
 
+    // ---- Launch by the on-disk path (#242) ----------------------------------------------------
+    //
+    // On a Store-only install the plugins folder is virtual: it exists only inside the package
+    // context, and a plugin started by that path outside it dies 0x80008085 before any of its code
+    // runs. A package context cannot be built in a unit test; a directory junction can, and to
+    // GetFinalPathNameByHandle the two are the same question (a path that is not where the file
+    // is). Each test below fails on the pre-#242 code.
+
+    private static string System32 => Environment.GetFolderPath(Environment.SpecialFolder.System);
+
+    /// <summary>A junction in temp pointing at System32. mklink /J needs no elevation.</summary>
+    private sealed class System32Junction : IDisposable
+    {
+        public string Path { get; } = System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "rororo-242-" + Guid.NewGuid().ToString("N"));
+
+        public System32Junction()
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c mklink /J \"{Path}\" \"{System32}\"")
+            {
+                UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true,
+            };
+            using var p = System.Diagnostics.Process.Start(psi)!;
+            p.WaitForExit(10_000);
+            Assert.True(Directory.Exists(Path), "test setup: mklink /J did not create the junction");
+        }
+
+        // Non-recursive on purpose: deleting a junction this way removes the link, never System32.
+        public void Dispose() { try { Directory.Delete(Path, recursive: false); } catch { } }
+    }
+
+    [Fact]
+    public void Start_ThroughAVirtualPath_LaunchesByTheOnDiskPath()
+    {
+        using var junction = new System32Junction();
+        var log = new CapturingLogger<DefaultPluginProcessStarter>();
+        var starter = new DefaultPluginProcessStarter(log);
+
+        starter.Start("626labs.test", Path.Combine(junction.Path, "where.exe"), PluginLaunchReason.Manual);
+
+        var startLine = Assert.Single(log.Snapshot(), l => l.Contains("process started"));
+        Assert.Contains(Path.Combine(System32, "where.exe"), startLine, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(junction.Path, startLine, StringComparison.OrdinalIgnoreCase);
+        // The field evidence: a log that names both paths when they differ.
+        Assert.Single(log.Snapshot(), l => l.Contains("resolves to") && l.Contains(junction.Path));
+    }
+
+    [Fact]
+    public void FindRunningUnder_AskedByTheVirtualPath_StillSeesAPluginRunningFromTheOnDiskPath()
+    {
+        // The uninstall/update wait and the orphan sweep ask by the path the host sees. Missing a
+        // live plugin here means deleting its files from under it.
+        using var junction = new System32Junction();
+        using var longRunner = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+            Path.Combine(System32, "PING.EXE"), "-n 30 127.0.0.1") { UseShellExecute = false, CreateNoWindow = true })!;
+        try
+        {
+            var hits = new DefaultPluginProcessStarter().FindRunningUnder(junction.Path);
+
+            Assert.Contains(longRunner.Id, hits);
+        }
+        finally
+        {
+            try { longRunner.Kill(); } catch { }
+        }
+    }
+
+    [Fact]
+    public void OnDiskPath_LeavesWhatItCannotResolveUnchanged()
+    {
+        var missing = Path.Combine(Path.GetTempPath(), "rororo-242-missing-" + Guid.NewGuid().ToString("N"), "x.exe");
+
+        Assert.Equal(missing, OnDiskPath.Resolve(missing));
+        Assert.Equal("", OnDiskPath.Resolve(""));
+    }
+
+    [Fact]
+    public void OnDiskPath_AnOrdinaryPathResolvesToItself()
+    {
+        Assert.Equal(System32, OnDiskPath.Resolve(System32), StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData(@"\\?\D:\data\plugins\a.exe", @"D:\data\plugins\a.exe")]
+    [InlineData(@"\\?\UNC\server\share\a.exe", @"\\server\share\a.exe")]
+    [InlineData(@"C:\plain\a.exe", @"C:\plain\a.exe")]
+    public void OnDiskPath_StripsTheDevicePrefix(string finalPath, string expected)
+    {
+        Assert.Equal(expected, OnDiskPath.StripDevicePrefix(finalPath));
+    }
+
     [Fact]
     public void Start_NoLogger_StillWorks()
     {

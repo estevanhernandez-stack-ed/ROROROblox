@@ -66,7 +66,17 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
             throw new System.IO.FileNotFoundException("Plugin executable not found.", exePath);
         }
 
-        var psi = BuildStartInfo(exePath, reason);
+        // Launch by where the exe really lives, never by a virtualized path (#242). On a Store-only
+        // install the two differ and only the real one works if the child lands outside the package.
+        var launchPath = OnDiskPath.Resolve(exePath);
+        if (!string.Equals(launchPath, exePath, StringComparison.OrdinalIgnoreCase))
+        {
+            _log?.LogInformation(
+                "Plugin {PluginId} resolves to {LaunchPath} on disk (requested {ExePath}); launching by the on-disk path.",
+                pluginId, launchPath, exePath);
+        }
+
+        var psi = BuildStartInfo(launchPath, reason);
         var process = new Process
         {
             StartInfo = psi,
@@ -109,7 +119,7 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
 
         _log?.LogInformation(
             "Plugin process started: {PluginId} pid {Pid} ({ExePath}); reason: {Reason}; job-managed: {Adopted}.",
-            pluginId, process.Id, exePath, reason.ToWireValue(), adopted);
+            pluginId, process.Id, launchPath, reason.ToWireValue(), adopted);
         return process.Id;
     }
 
@@ -140,8 +150,13 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
 
     public IReadOnlyList<int> FindRunningUnder(string dirPath)
     {
-        var prefix = Path.GetFullPath(dirPath);
-        if (!prefix.EndsWith(Path.DirectorySeparatorChar)) prefix += Path.DirectorySeparatorChar;
+        // Both spellings of the folder (#242): plugins launch by the on-disk path, but callers hand in the
+        // path the host sees, which on a Store-only install is the virtual one. Matching only that would
+        // report nothing running, and the uninstall/update wait would delete files under a live plugin.
+        var prefixes = new[] { Path.GetFullPath(dirPath), Path.GetFullPath(OnDiskPath.Resolve(dirPath)) }
+            .Select(p => p.EndsWith(Path.DirectorySeparatorChar) ? p : p + Path.DirectorySeparatorChar)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
         var hits = new List<int>();
         foreach (var process in Process.GetProcesses())
@@ -149,10 +164,13 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
             try
             {
                 var image = process.MainModule?.FileName;
-                if (image is not null &&
-                    Path.GetFullPath(image).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                if (image is not null)
                 {
-                    hits.Add(process.Id);
+                    var full = Path.GetFullPath(image);
+                    if (prefixes.Any(p => full.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        hits.Add(process.Id);
+                    }
                 }
             }
             catch
