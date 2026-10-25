@@ -13,4 +13,11 @@ public static class PluginLaunchReasonCodes
     /// follow-user-id target that isn't in a joinable game).
     /// </summary>
     public const string FollowTargetNotJoinable = "follow-target-not-joinable";
+
+    /// <summary>
+    /// RoRoRo is still loading saved accounts at startup and did not finish within the wait (#243).
+    /// Retryable: the account is probably there, the list just is not read yet. Also carried as the
+    /// prefix of <c>GetAccounts</c>' <c>Unavailable</c> status message, which has no reason field.
+    /// </summary>
+    public const string AccountsLoading = "accounts-loading";
 }

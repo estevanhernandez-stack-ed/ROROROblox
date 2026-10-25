@@ -668,6 +668,243 @@ public class PluginHostServiceTests
         Assert.Empty(stopper.Stopped);
     }
 
+    // =====================================================================
+    // StopAccounts wait_for_exit (#244). The field report's hops each needed a
+    // wait loop, a retry and a duplicate guard because stop returned on issue.
+    // =====================================================================
+
+    /// <summary>Thread-safe stopper whose clients leave the tracker a set time after the stop.</summary>
+    private sealed class ExitingAccountStopper : IPluginAccountStopper
+    {
+        private readonly object _gate = new();
+        private readonly HashSet<string> _tracked;
+        private readonly TimeSpan? _exitAfter;
+        public ExitingAccountStopper(TimeSpan? exitAfter, params string[] tracked)
+        {
+            _exitAfter = exitAfter;
+            _tracked = new HashSet<string>(tracked, StringComparer.Ordinal);
+        }
+        public IReadOnlyList<string> TrackedAccountIds { get { lock (_gate) return _tracked.ToList(); } }
+        public bool StopAccount(string accountId)
+        {
+            lock (_gate) { if (!_tracked.Contains(accountId)) return false; }
+            if (_exitAfter is { } after)
+            {
+                _ = Task.Delay(after).ContinueWith(_ => { lock (_gate) _tracked.Remove(accountId); });
+            }
+            return true;
+        }
+    }
+
+    /// <summary>Running snapshot whose rows clear on request, standing in for IsRunning.</summary>
+    private sealed class MutableRunningAccountsProvider : IRunningAccountsProvider
+    {
+        private readonly object _gate = new();
+        private readonly List<RunningAccountSnapshot> _rows;
+        public MutableRunningAccountsProvider(params string[] ids) =>
+            _rows = ids.Select(id => new RunningAccountSnapshot(id, 1, "x", 100)).ToList();
+        public void ClearAfter(string id, TimeSpan after) =>
+            _ = Task.Delay(after).ContinueWith(_ => { lock (_gate) _rows.RemoveAll(r => r.AccountId == id); });
+        public IReadOnlyList<RunningAccountSnapshot> Snapshot() { lock (_gate) return _rows.ToList(); }
+    }
+
+    private static PluginHostService WaitService(IPluginAccountStopper stopper, IRunningAccountsProvider running) =>
+        new(new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+            HostStateOff(), running, new InProcessPluginEventBus(), NoOpLauncher(),
+            NoUITranslator(), NoActivity(), NoActivityMarker(), stopper)
+        { StopWaitPoll = TimeSpan.FromMilliseconds(20) };
+
+    [Fact]
+    public async Task StopAccounts_WaitForExit_ReturnsOnlyOnceTheClientIsGone()
+    {
+        var a = Guid.NewGuid().ToString();
+        var running = new MutableRunningAccountsProvider(a);
+        running.ClearAfter(a, TimeSpan.FromMilliseconds(300));
+        var service = WaitService(new ExitingAccountStopper(TimeSpan.FromMilliseconds(300), a), running);
+
+        var request = new StopAccountsRequest { WaitForExit = true, TimeoutMs = 5000 };
+        request.AccountIds.Add(a);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var result = await service.StopAccounts(request, FakeServerCallContext.Create());
+
+        Assert.Equal(a, Assert.Single(result.ExitedAccountIds));
+        Assert.Empty(result.StillRunningAccountIds);
+        Assert.True(sw.ElapsedMilliseconds >= 250, $"returned after {sw.ElapsedMilliseconds} ms, before the client left");
+    }
+
+    [Fact]
+    public async Task StopAccounts_WaitForExit_DoesNotCallItGoneWhileTheRowStillReadsRunning()
+    {
+        // The real ordering: the tracker lets go first, and IsRunning (what the launch check reads)
+        // clears a hop later on the exit event. A wait that checked only the tracker would return in
+        // that gap, and the relaunch would meet "Account is already running" exactly as before.
+        var a = Guid.NewGuid().ToString();
+        var running = new MutableRunningAccountsProvider(a);
+        running.ClearAfter(a, TimeSpan.FromMilliseconds(400));
+        var service = WaitService(new ExitingAccountStopper(TimeSpan.Zero, a), running);
+
+        var request = new StopAccountsRequest { WaitForExit = true, TimeoutMs = 5000 };
+        request.AccountIds.Add(a);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var result = await service.StopAccounts(request, FakeServerCallContext.Create());
+
+        Assert.Equal(a, Assert.Single(result.ExitedAccountIds));
+        Assert.True(sw.ElapsedMilliseconds >= 350, $"returned after {sw.ElapsedMilliseconds} ms, while the row still read running");
+    }
+
+    [Fact]
+    public async Task StopAccounts_WaitForExit_ReportsStillRunningWhenTheWaitRunsOut()
+    {
+        var a = Guid.NewGuid().ToString();
+        var service = WaitService(new ExitingAccountStopper(exitAfter: null, a), new MutableRunningAccountsProvider(a));
+
+        var request = new StopAccountsRequest { WaitForExit = true, TimeoutMs = 200 };
+        request.AccountIds.Add(a);
+        var result = await service.StopAccounts(request, FakeServerCallContext.Create());
+
+        Assert.Equal(1, result.StoppedCount);
+        Assert.Empty(result.ExitedAccountIds);
+        Assert.Equal(a, Assert.Single(result.StillRunningAccountIds));
+    }
+
+    [Fact]
+    public async Task StopAccounts_WithoutWait_ReturnsOnIssueAndFillsNeitherList()
+    {
+        // Unchanged for every plugin built before 0.13.0.
+        var a = Guid.NewGuid().ToString();
+        var service = WaitService(new ExitingAccountStopper(exitAfter: null, a), new MutableRunningAccountsProvider(a));
+
+        var request = new StopAccountsRequest();
+        request.AccountIds.Add(a);
+        var result = await service.StopAccounts(request, FakeServerCallContext.Create());
+
+        Assert.Equal(1, result.StoppedCount);
+        Assert.Empty(result.ExitedAccountIds);
+        Assert.Empty(result.StillRunningAccountIds);
+    }
+
+    [Fact]
+    public async Task StopAccounts_WaitForExit_UntrackedIdsStayInFailedOnly()
+    {
+        var tracked = Guid.NewGuid().ToString();
+        var untracked = Guid.NewGuid().ToString();
+        var service = WaitService(new ExitingAccountStopper(TimeSpan.Zero, tracked), new MutableRunningAccountsProvider());
+
+        var request = new StopAccountsRequest { WaitForExit = true, TimeoutMs = 2000 };
+        request.AccountIds.Add(untracked);
+        request.AccountIds.Add(tracked);
+        var result = await service.StopAccounts(request, FakeServerCallContext.Create());
+
+        Assert.Equal(untracked, Assert.Single(result.FailedAccountIds));
+        Assert.Equal(tracked, Assert.Single(result.ExitedAccountIds));
+        Assert.DoesNotContain(untracked, result.StillRunningAccountIds);
+    }
+
+    // =====================================================================
+    // Accounts loading (#243). "Known accounts: (none)" a minute before all three
+    // came back cost the farm an hour offline.
+    // =====================================================================
+
+    private sealed class LoadingSavedAccountsProvider : ISavedAccountsProvider
+    {
+        private readonly TaskCompletionSource _loaded = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly IReadOnlyList<SavedAccountSnapshot> _accounts;
+        public LoadingSavedAccountsProvider(params SavedAccountSnapshot[] accounts) => _accounts = accounts;
+        public void FinishLoading() => _loaded.TrySetResult();
+        public bool IsLoaded => _loaded.Task.IsCompleted;
+        public Task WhenLoadedAsync(CancellationToken ct) => _loaded.Task.WaitAsync(ct);
+        // Empty until loaded, exactly as the real snapshot is.
+        public IReadOnlyList<SavedAccountSnapshot> Snapshot() => IsLoaded ? _accounts : Array.Empty<SavedAccountSnapshot>();
+    }
+
+    private static readonly SavedAccountSnapshot Pokey =
+        new("00000000-0000-0000-0000-000000000001", 12345, "Pokey", IsMain: true);
+
+    private static PluginHostService LoadingService(ISavedAccountsProvider saved, IPluginLaunchInvoker? launcher = null) =>
+        new(new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), launcher ?? NoOpLauncher(),
+            NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper(), savedAccounts: saved)
+        { AccountsLoadWait = TimeSpan.FromMilliseconds(200) };
+
+    [Fact]
+    public async Task GetAccounts_WhileAccountsLoad_WaitsAndAnswersWithTheRealList()
+    {
+        var saved = new LoadingSavedAccountsProvider(Pokey);
+        var service = LoadingService(saved);
+        service.AccountsLoadWait = TimeSpan.FromSeconds(5);
+
+        var call = service.GetAccounts(new Empty(), FakeServerCallContext.Create());
+        await Task.Delay(100);
+        Assert.False(call.IsCompleted, "answered before the accounts were loaded");
+        saved.FinishLoading();
+        var list = await call;
+
+        Assert.Equal("Pokey", Assert.Single(list.Accounts).DisplayName);
+    }
+
+    [Fact]
+    public async Task GetAccounts_WhenLoadingOutlastsTheWait_RefusesRetryablyRatherThanAnsweringEmpty()
+    {
+        var service = LoadingService(new LoadingSavedAccountsProvider(Pokey));
+
+        var ex = await Assert.ThrowsAsync<RpcException>(
+            () => service.GetAccounts(new Empty(), FakeServerCallContext.Create()));
+
+        Assert.Equal(StatusCode.Unavailable, ex.StatusCode);
+        Assert.StartsWith("accounts-loading", ex.Status.Detail);
+    }
+
+    [Fact]
+    public async Task RequestLaunch_WhileAccountsLoad_RefusesWithAReasonCodeAndNeverReachesTheLauncher()
+    {
+        var launcher = new FakeLaunchInvoker();
+        var service = LoadingService(new LoadingSavedAccountsProvider(Pokey), launcher);
+
+        var result = await service.RequestLaunch(new LaunchRequest { AccountId = Pokey.AccountId }, FakeServerCallContext.Create());
+
+        Assert.False(result.Ok);
+        Assert.Equal("accounts-loading", result.ReasonCode);
+        Assert.Empty(launcher.Invocations);
+    }
+
+    [Fact]
+    public async Task RequestLaunchTarget_WhileAccountsLoad_RefusesWithAReasonCodeAndNeverReachesTheLauncher()
+    {
+        var launcher = new FakeLaunchInvoker();
+        var service = LoadingService(new LoadingSavedAccountsProvider(Pokey), launcher);
+
+        var result = await service.RequestLaunchTarget(
+            new LaunchTargetRequest { AccountId = Pokey.AccountId, FollowUserId = 1 }, FakeServerCallContext.Create());
+
+        Assert.Equal("accounts-loading", result.ReasonCode);
+        Assert.Empty(launcher.TargetInvocations);
+    }
+
+    [Fact]
+    public async Task RequestLaunch_OnceLoaded_GoesThroughUnchanged()
+    {
+        var saved = new LoadingSavedAccountsProvider(Pokey);
+        saved.FinishLoading();
+        var launcher = new FakeLaunchInvoker();
+        var service = LoadingService(saved, launcher);
+
+        var result = await service.RequestLaunch(new LaunchRequest { AccountId = Pokey.AccountId }, FakeServerCallContext.Create());
+
+        Assert.True(result.Ok);
+        Assert.Equal(Pokey.AccountId, Assert.Single(launcher.Invocations));
+    }
+
+    [Fact]
+    public async Task GetHostInfo_ReportsWhetherAccountsAreLoaded()
+    {
+        var saved = new LoadingSavedAccountsProvider(Pokey);
+        var service = LoadingService(saved);
+
+        Assert.False((await service.GetHostInfo(new Empty(), FakeServerCallContext.Create())).AccountsLoaded);
+        saved.FinishLoading();
+        Assert.True((await service.GetHostInfo(new Empty(), FakeServerCallContext.Create())).AccountsLoaded);
+    }
+
     private sealed class FakeAccountStopper : IPluginAccountStopper
     {
         public HashSet<string> Tracked { get; } = new(StringComparer.Ordinal);

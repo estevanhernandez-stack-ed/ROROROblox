@@ -39,4 +39,8 @@ internal sealed class MainViewModelSavedAccountsAdapter : ISavedAccountsProvider
         }
         return saved;
     }
+
+    public bool IsLoaded => _vm.AccountsLoaded;
+
+    public Task WhenLoadedAsync(CancellationToken ct) => _vm.WhenAccountsLoaded.WaitAsync(ct);
 }

@@ -137,7 +137,7 @@ Gated by the gRPC interceptor. If you call a method whose required capability is
 | `host.queries.account-activity` | `GetAccountActivity()` — pull per-account idle time (NuGet 0.3.0+) |
 | `host.queries.accounts` | `GetAccounts()` — all saved accounts: id, Roblox user id, display name, which is main. Never cookies. (NuGet 0.9.0+) |
 | `host.commands.mark-account-active` | `MarkAccountActive(accountId)` — tell RoRoRo an account is still active after you act on its window, so idle warnings don't misfire (NuGet 0.5.0+) |
-| `host.commands.stop-accounts` | `StopAccounts(accountIds)` — close Roblox clients RoRoRo launched. Graceful close, hard kill as fallback. Destructive: unsaved in-game progress is lost (NuGet 0.6.0+) |
+| `host.commands.stop-accounts` | `StopAccounts(accountIds)` — close Roblox clients RoRoRo launched. Graceful close, hard kill as fallback. Destructive: unsaved in-game progress is lost (NuGet 0.6.0+). Returns when the stop is *issued*; set `wait_for_exit` (0.13.0+) to return once the clients are gone, with `exited_account_ids` / `still_running_account_ids` saying which |
 | `host.events.memory-pressure` | `SubscribeMemoryPressure` (server-streaming) — memory-watchdog crossings, per tracked account (NuGet 0.7.0+) |
 | `host.metrics.report` | `ReportMetric(subjectId, metricId, value, observedAtUnixMs)` — hand RoRoRo one number you gathered; RoRoRo owns the history, the rules, and the decision to alert (NuGet 0.10.0+) |
 | `host.ui.tray-menu` | `AddTrayMenuItem` — contribute a tray-menu entry |
@@ -148,6 +148,8 @@ The following need **no capability** — every plugin can call them after handsh
 `Handshake`, `GetHostInfo`, `GetRunningAccounts`, `UpdateUI`, `RemoveUI`.
 
 `GetHostInfo` returns `version`, `multi_instance_enabled`, `multi_instance_state` and, from NuGet 0.12.0, `install_flavour` (`store`, `sideload` or `dev`), `process_path` and `informational_version` (the version plus a `+commit` suffix). Older hosts leave the three new fields empty.
+
+From NuGet 0.13.0 it also returns `accounts_loaded`: false while RoRoRo is still reading saved accounts at startup. **Do not act on account calls before it is true.** Until then, `GetAccounts` waits up to 10 s and then fails with gRPC `Unavailable` and a message starting `accounts-loading`, and `RequestLaunch` / `RequestLaunchTarget` wait the same and then refuse with `reason_code = "accounts-loading"`. Both are retryable. Neither answers with an empty roster, which is what a 0.12 host did in this window and why an agent once concluded the user had no accounts. A host older than 0.13 leaves the field false; treat a host whose `version` predates 1.35 as loaded.
 
 `UpdateUI` and `RemoveUI` are ungated by *capability*, but they are **not unguarded**: they
 only accept a `UIHandle` your plugin created. Passing a handle you don't own — or one that was
@@ -348,12 +350,16 @@ await foreach (var snap in stream.ResponseStream.ReadAllAsync())
     Console.WriteLine($"{snap.AccountId} is at {snap.PrivateBytes / 1024 / 1024} MB " +
         $"({snap.GrowthMbPerHr:F0} MB/hr growth), {snap.MinsToCeiling} min to ceiling.");
 
-    // 1. Recycle: close the fat client (graceful close, hard kill as fallback).
+    // 1. Recycle: close the fat client (graceful close, hard kill as fallback), and WAIT for it
+    //    to be gone. Without wait_for_exit the call returns as soon as the stop is issued, and a
+    //    relaunch straight after it meets "Account is already running" (or, worse, races a client
+    //    that is still closing). Before NuGet 0.13.0 this example skipped the wait and had that bug.
     var stopped = await client.StopAccountsAsync(new StopAccountsRequest
     {
         AccountIds = { snap.AccountId },
+        WaitForExit = true,   // 0.13.0+; TimeoutMs 0 = 30 s, which covers the 10 s close grace
     }, callOptions);
-    if (stopped.FailedAccountIds.Contains(snap.AccountId)) continue;
+    if (!stopped.ExitedAccountIds.Contains(snap.AccountId)) continue; // failed, or still closing
 
     // 2. Relaunch — plain default launch, or back into the specific server it was in via
     //    RequestLaunchTarget if you captured the share URL from GetCurrentServer earlier.
