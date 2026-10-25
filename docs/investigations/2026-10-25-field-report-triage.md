@@ -24,6 +24,20 @@ only visible in a log.
 | 8 | No way to see the game from MCP | ur-mcp | Plugin side. Capture by pid → main window, no host change. |
 | W | `join_server(account, gameInstanceId)` | host + ur-mcp | `LaunchTargetRequest` has `share_url` and `follow_user_id`, no game instance, though the host targets server instances internally since v1.14. Server listing is a documented public endpoint and belongs in ur-mcp. |
 
+## Update, same day: #1 reproduced, and the rulings
+
+**Reproduced on Neb** with `Invoke-CommandInDesktopPackage` against the Store 1.34 package, live install
+untouched. Ur MCP was copied to a path that exists only in the package's `LocalCache`, then started by its
+virtual path. A child kept inside the package context ran normally (exit 0). **A child outside the package
+context exited `0x80008085` after 0.1 s**, the field signature. Control: the same copy started by its real
+`LocalCache` path from outside the package also ran normally. `0x80008085` is `CoreHostCurHostFindFailure`
+(dotnet/runtime `docs/design/features/host-error-codes.md`): the apphost could not resolve its own location.
+Mechanism proven. What put the real host's child outside the container on the farm machine is not proven (the
+manifest declares no breakaway), but the fix (launch by the real path) works either way.
+
+Farm machine: the 2019 MacBook Pro running Windows 11. Input and read_region: **Ur MCP owns both directly**
+(ur-mcp #11, #12); ur-task #45 and Ur-OCR #12 closed and pointed there.
+
 ## Host plan (v1.35 candidates, in order)
 
 1. **H1, packaged plugin launch (blocker).** Reproduce first, the 2026-10-11 way: park the real
