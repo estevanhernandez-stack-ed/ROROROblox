@@ -73,7 +73,7 @@ Filed in the plugin repos, each naming the host item it waits on. The repos are 
 defect and nothing about who was playing or which accounts.
 
 Host: H1 #242 (blocker), H2 #243, H3 #244, H4 #245, H5 #246, H6 #247.
-ur-mcp: #6 loading vs empty (waits H2), #7 rejoin/hop (H3), #8 stop by pid + untracked list (H3, H4),
+ur-mcp: #6 loading vs empty (waits H2), #7 rejoin/hop (H3), #8 stop by pid + untracked list (H3, H4), and
 #9 screenshot (no host change), #10 join_server (H6). Ur Task #45 input primitives, Ur OCR #12 read_region (both
 carry the ownership question below).
 
