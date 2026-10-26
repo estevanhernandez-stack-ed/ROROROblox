@@ -11,6 +11,12 @@ public enum LeftoverDisposition
 
     /// <summary>Ask. A windowed client may be a live session with something in it.</summary>
     Ask,
+
+    /// <summary>
+    /// Windows restarted us and nobody is at the keyboard (#255): clear the headless strays, leave
+    /// every windowed client running for the re-attach scan, and carry on without a dialog.
+    /// </summary>
+    ContinueUnattended,
 }
 
 /// <summary>
@@ -43,9 +49,15 @@ public static class LeftoverStartupDecision
     /// alongside windowless ones — the windowed one is the reason to ask, and a silent sweep that
     /// happened to take a live game with it would be far worse than a dialog too many.
     /// </returns>
-    public static LeftoverDisposition Decide(int windowless, int windowed)
+    /// <param name="restartedByWindows">
+    /// Windows relaunched RoRoRo after a crash or a Store update (#255). The dialog only informs
+    /// here (the singleton name is held, and its default changes nothing), but it blocks startup
+    /// and plugin autostart until someone clicks: the Oct 24 restart waited 62 minutes. So with
+    /// nobody there, windowed clients are kept, never closed, and startup continues.
+    /// </param>
+    public static LeftoverDisposition Decide(int windowless, int windowed, bool restartedByWindows = false)
     {
-        if (windowed > 0) return LeftoverDisposition.Ask;
+        if (windowed > 0) return restartedByWindows ? LeftoverDisposition.ContinueUnattended : LeftoverDisposition.Ask;
         if (windowless > 0) return LeftoverDisposition.ClearSilently;
         return LeftoverDisposition.Nothing;
     }

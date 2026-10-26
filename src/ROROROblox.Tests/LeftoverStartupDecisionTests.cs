@@ -46,4 +46,36 @@ public class LeftoverStartupDecisionTests
         // the tracker never knew them and F-103's sweeper skips empty titles on purpose.
         Assert.Equal(LeftoverDisposition.ClearSilently, LeftoverStartupDecision.Decide(windowless, windowed));
     }
+
+    // ---- #255: Windows restarted us, nobody is at the keyboard ----
+
+    [Theory]
+    [InlineData(0, 1)]
+    [InlineData(3, 2)]
+    public void AWindowsRestartWithALiveGameCarriesOnInsteadOfAsking(int windowless, int windowed)
+    {
+        // The Oct 24 restart sat on this dialog for 62 minutes. With the name held it only informs,
+        // so with nobody there the games are kept and startup continues.
+        Assert.Equal(LeftoverDisposition.ContinueUnattended,
+            LeftoverStartupDecision.Decide(windowless, windowed, restartedByWindows: true));
+    }
+
+    [Fact]
+    public void AWindowsRestartWithOnlyHeadlessStraysStillJustClears()
+    {
+        Assert.Equal(LeftoverDisposition.ClearSilently, LeftoverStartupDecision.Decide(2, 0, restartedByWindows: true));
+    }
+
+    [Fact]
+    public void AWindowsRestartWithNothingLeftOverHasNothingToDo()
+    {
+        Assert.Equal(LeftoverDisposition.Nothing, LeftoverStartupDecision.Decide(0, 0, restartedByWindows: true));
+    }
+
+    [Fact]
+    public void AHandStartedRoRoRoWithALiveGameStillAsks()
+    {
+        // A person is present, so the dialog stays exactly as it was.
+        Assert.Equal(LeftoverDisposition.Ask, LeftoverStartupDecision.Decide(0, 1, restartedByWindows: false));
+    }
 }

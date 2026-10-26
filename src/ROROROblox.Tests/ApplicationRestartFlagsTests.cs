@@ -22,6 +22,29 @@ public class ApplicationRestartFlagsTests
     }
 
     [Fact]
+    public void TheRestartArgumentIsRecognisedOnlyWhenPresent()
+    {
+        // #255: Windows hands this back on a crash or servicing restart; startup reads it to skip
+        // the leftover dialog nobody is there to answer.
+        Assert.True(ROROROblox.App.ApplicationRestart.IsWindowsRestart(["--restarted-by-windows"]));
+        Assert.True(ROROROblox.App.ApplicationRestart.IsWindowsRestart(["roblox-rororo://x", "--RESTARTED-BY-WINDOWS"]));
+        Assert.False(ROROROblox.App.ApplicationRestart.IsWindowsRestart([]));
+        Assert.False(ROROROblox.App.ApplicationRestart.IsWindowsRestart(["roblox-rororo://x"]));
+        Assert.False(ROROROblox.App.ApplicationRestart.IsWindowsRestart(null));
+    }
+
+    [Fact]
+    public void RegisterPassesTheRestartArgument()
+    {
+        // The registration, not just the constant: a restart without the argument would land on the
+        // dialog again. Source-level check, because calling Register would arm WER on the test host.
+        var root = XamlStyleScanner.FindRepoRoot();
+        Assert.False(root is null, "Could not locate ROROROblox.slnx.");
+        var src = File.ReadAllText(Path.Combine(root!, "src", "ROROROblox.App", "ApplicationRestart.cs"));
+        Assert.Matches(@"RegisterApplicationRestart\(\s*RestartArgument\s*,", src);
+    }
+
+    [Fact]
     public void OnStartupRegistersOnceAfterTheSingleInstanceGuard()
     {
         var root = XamlStyleScanner.FindRepoRoot();
