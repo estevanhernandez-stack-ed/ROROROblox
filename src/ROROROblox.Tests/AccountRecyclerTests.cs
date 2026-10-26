@@ -16,6 +16,7 @@ public class AccountRecyclerTests
         public int StopAll() => 0;
         public bool StopAccount(Guid accountId) { Stopped.Add(accountId); return true; }
         public int StopWindowless() => 0;
+        public int StopIdleTrayClients(Func<int, bool> isTracked) => 0;
     }
 
     private sealed class RecordingLauncher

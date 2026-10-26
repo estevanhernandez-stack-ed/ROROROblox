@@ -1691,6 +1691,8 @@ public class MainViewModelTests
         public int StopAll() => 0;
         public bool StopAccount(Guid accountId) { StoppedAccountIds.Add(accountId); return true; }
         public int StopWindowless() => 0;
+        public int StopIdleTrayClientsCalls;
+        public int StopIdleTrayClients(Func<int, bool> isTracked) { StopIdleTrayClientsCalls++; return 0; }
     }
 
     /// <summary>

@@ -237,6 +237,63 @@ public class RobloxInstanceStopperTests
         Assert.Empty(killed);
     }
 
+    private const string TrayCmd = "\"C:/Roblox/RobloxPlayerBeta.exe\" --launch-to-tray";
+    private const string LoaderCmd = "\"C:/Roblox/RobloxPlayerBeta.exe\" roblox-player:1+launchmode:play";
+
+    [Fact]
+    public void StopIdleTrayClients_KillsExactlyTheIdleTrayClient()
+    {
+        var killed = new List<int>();
+        var tracked = new HashSet<int> { 202, 303 };
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbeWithWindows(
+                new RobloxProcessInfo(101, false, TrayCmd),     // idle tray client
+                new RobloxProcessInfo(202, false, LoaderCmd),   // tracked loading client
+                new RobloxProcessInfo(303, false, TrayCmd),     // tracked, tray flag
+                new RobloxProcessInfo(404, true, TrayCmd),      // windowed game
+                new RobloxProcessInfo(505, false, null),        // unreadable command line
+                new RobloxProcessInfo(606, false, LoaderCmd)),  // untracked browser-started loader
+            killByPid: killed.Add, waitForExitByPid: (_, _) => true);
+
+        var count = stopper.StopIdleTrayClients(tracked.Contains);
+
+        Assert.Equal(1, count);
+        Assert.Equal(new[] { 101 }, killed);
+    }
+
+    [Fact]
+    public void StopIdleTrayClients_ReturnsZero_AndDoesNotThrow_WhenProbeFails()
+    {
+        var killed = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbeWithWindows(new InvalidOperationException("scan failed")),
+            killByPid: killed.Add, waitForExitByPid: (_, _) => true);
+
+        Assert.Equal(0, stopper.StopIdleTrayClients(_ => false));
+        Assert.Empty(killed);
+    }
+
+    [Fact]
+    public void StopIdleTrayClients_ReturnsZero_AndNeverKills_WhenNoIdleTrayClients()
+    {
+        var killed = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbeWithWindows(
+                new RobloxProcessInfo(101, true, TrayCmd),
+                new RobloxProcessInfo(202, false, LoaderCmd)),
+            killByPid: killed.Add, waitForExitByPid: (_, _) => true);
+
+        Assert.Equal(0, stopper.StopIdleTrayClients(_ => false));
+        Assert.Empty(killed);
+    }
+
+    [Fact]
+    public void StopIdleTrayClients_NullTracker_Throws()
+    {
+        var stopper = new RobloxInstanceStopper(new FakeProbeWithWindows());
+        Assert.Throws<ArgumentNullException>(() => stopper.StopIdleTrayClients(null!));
+    }
+
     [Fact]
     public void StopWindowless_ReturnsZero_WhenNoneRunning()
     {
