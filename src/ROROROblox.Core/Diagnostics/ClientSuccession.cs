@@ -48,6 +48,16 @@ public static class ClientSuccession
     /// name — worse than leaving it unlabelled, because a label gets believed. When in doubt this
     /// returns nothing and the caller falls back to whatever it does for unknowns.
     /// </para>
+    /// <para>
+    /// MORE THAN ONE CLIENT LEAVING INSIDE THE WINDOW IS ALSO A REFUSAL, whatever the orphan count.
+    /// Live 2026-10-26: a game window closed (12:42:23), then two launches were handed off to
+    /// <c>--launch-to-tray</c> clients seconds apart (12:42:56, 12:42:57), and the one orphan that
+    /// appeared had started 2 s before the FIRST exit. Timing alone made it look like that exit's
+    /// successor, the only candidate by the grace rule, and the sweeper adopted it for the wrong
+    /// account (presence showed one alt InGame and the other Offline). Handoffs, closes and real
+    /// self-restarts are indistinguishable by timing, so with two or more recent exits a label is
+    /// a guess, and a wrong label is worse than none.
+    /// </para>
     /// </summary>
     public static IReadOnlyList<(int Pid, Guid AccountId)> Attribute(
         IReadOnlyList<Exit> recentExits, IReadOnlyList<Orphan> orphans, DateTimeOffset now)
@@ -58,6 +68,9 @@ public static class ClientSuccession
         // the window is no longer a plausible predecessor.
         var live = recentExits.Where(e => now - e.At <= Window).ToList();
         if (live.Count == 0 || orphans.Count == 0) return [];
+
+        // More than one client left recently: every candidate is a coin toss (see the class docs).
+        if (live.Count > 1) return [];
 
         var results = new List<(int, Guid)>();
 
@@ -84,4 +97,12 @@ public static class ClientSuccession
 
         return results;
     }
+
+    /// <summary>
+    /// True when <see cref="Attribute"/> declines because more than one client left inside the
+    /// window, so a caller can say why it stayed silent rather than log nothing.
+    /// </summary>
+    public static bool IsAmbiguous(IReadOnlyList<Exit> recentExits, IReadOnlyList<Orphan> orphans, DateTimeOffset now)
+        => recentExits is not null && orphans is not null && orphans.Count > 0
+           && recentExits.Count(e => now - e.At <= Window) > 1;
 }

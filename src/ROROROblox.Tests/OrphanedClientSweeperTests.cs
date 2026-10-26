@@ -237,8 +237,32 @@ public class OrphanedClientSweeperTests
         Assert.Equal(2, logged.Count);
     }
 
+    [Fact]
+    public void AnAmbiguousRefusalIsExplainedOncePerOrphanSet()
+    {
+        // Two clients left, one orphan: declined (#241). The reason is logged at Information once,
+        // not every 5 s tick, and nothing is adopted.
+        var clock = new FixedClock();
+        var adopted = new List<(Guid, int)>();
+        var info = new List<string>();
+        var clients = new List<OrphanedClientSweeper.ClientSnapshot> { new(200, clock.UtcNow.AddSeconds(-1), "Roblox") };
+        var sweeper = new OrphanedClientSweeper(
+            clock, _ => false, (a, p) => adopted.Add((a, p)), () => clients, new CountingLogger([], info));
+
+        sweeper.OnClientExited(AccountA, 100);
+        sweeper.OnClientExited(AccountB, 101);
+        clock.UtcNow = clock.UtcNow.AddSeconds(5);
+        sweeper.Sweep();
+        sweeper.Sweep();
+        sweeper.Sweep();
+
+        Assert.Empty(adopted);
+        Assert.Single(info);
+        Assert.Contains("not guessing", info[0]);
+    }
+
     /// <summary>Records only the warning text, which is what the latch governs.</summary>
-    private sealed class CountingLogger(List<string> sink) : Microsoft.Extensions.Logging.ILogger<OrphanedClientSweeper>
+    private sealed class CountingLogger(List<string> sink, List<string>? infoSink = null) : Microsoft.Extensions.Logging.ILogger<OrphanedClientSweeper>
     {
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
         public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
@@ -246,6 +270,7 @@ public class OrphanedClientSweeperTests
             TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
             if (logLevel == Microsoft.Extensions.Logging.LogLevel.Warning) sink.Add(formatter(state, exception));
+            if (logLevel == Microsoft.Extensions.Logging.LogLevel.Information) infoSink?.Add(formatter(state, exception));
         }
     }
 }
