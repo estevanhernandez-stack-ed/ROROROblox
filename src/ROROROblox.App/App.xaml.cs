@@ -525,10 +525,13 @@ public partial class App : Application
             lastExit.Begin();
             _lastExit = lastExit;
             var prev = lastExit.Previous;
-            _log.LogInformation("Previous session ended: {Reason}{Detail} at {At}.",
+            // Local, like every other timestamp in the log, so a field report reads in one zone. For
+            // "unknown" nothing recorded the end, so the time is when that session started.
+            _log.LogInformation("Previous session ended: {Reason}{Detail} ({When} {At}).",
                 prev.Reason,
                 string.IsNullOrEmpty(prev.Detail) ? string.Empty : $" ({prev.Detail})",
-                prev.At?.ToString("o") ?? "n/a");
+                prev.Reason == ROROROblox.Core.Diagnostics.LastExitRecorder.Unknown ? "started" : "at",
+                prev.At?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff zzz") ?? "n/a");
         }
         catch (Exception ex)
         {
