@@ -1246,8 +1246,6 @@ public partial class App : Application
         services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
         services.AddSingleton<IRobloxInstanceStopper, RobloxInstanceStopper>();
         services.AddSingleton<IShellOpener, ShellOpener>();
-        services.AddSingleton<IRobloxTrayLauncher>(sp =>
-            new RobloxTrayLauncher(sp.GetService<ILogger<RobloxTrayLauncher>>()));
         services.AddSingleton<StartupGate>();
 
         // Memory watchdog (v1.11, Task 7) — samples per-account private bytes + projects time
@@ -2813,7 +2811,7 @@ public partial class App : Application
 
     /// <summary>
     /// Seamless takeover: when Roblox holds the singleton Event but ONLY via windowless tray
-    /// clients, close them, reclaim the name, and put a tray client back — no modal. Returns true
+    /// clients, close them and reclaim the name — no modal, and no tray client put back (#241, 2026-10-26). Returns true
     /// when RoRoRo now owns the Event; false means the caller should fall through to the BLOCKED
     /// modal (an in-game client is present, or the reclaim failed).
     ///
@@ -2863,20 +2861,11 @@ public partial class App : Application
             return false;
         }
 
-        // Preserve the user's Roblox-at-startup intent: put a tray client back. It finds our Event,
-        // fails CreateEvent, and runs to tray in multi-instance mode alongside us. Best-effort — a
-        // failure here does not undo the takeover.
-        try
-        {
-            if (_services.GetRequiredService<IRobloxTrayLauncher>().RelaunchToTray())
-            {
-                _log?.LogInformation("Seamless takeover: relaunched Roblox to tray alongside RoRoRo.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _log?.LogDebug(ex, "Seamless takeover: tray relaunch failed; RoRoRo holds the Event regardless.");
-        }
+        // No tray client is put back here (#241, live 2026-10-26): the relaunched
+        // `--launch-to-tray` client took the next roblox-player launch, so RoRoRo's launcher exited in
+        // ~4 s and the game ran in an untracked tray process. Roblox spawns its own tray client when a
+        // game window closes, so the user's tray presence returns on its own, and every launch now
+        // ends idle tray clients first anyway.
 
         var tray = _services.GetRequiredService<ITrayService>();
         tray.UpdateStatus(MultiInstanceState.On);
