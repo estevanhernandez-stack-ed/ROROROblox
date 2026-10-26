@@ -20,4 +20,12 @@ public static class PluginLaunchReasonCodes
     /// prefix of <c>GetAccounts</c>' <c>Unavailable</c> status message, which has no reason field.
     /// </summary>
     public const string AccountsLoading = "accounts-loading";
+
+    /// <summary>
+    /// The launch target was malformed and was refused before any launch: a <c>GameInstance</c>
+    /// with a place id that is not positive, or a job id that is empty or not a GUID (Roblox
+    /// server-list ids are GUIDs, and the value lands in a URL). A half pair is never degraded to
+    /// "any server": that is silent matchmaking, which #247 forbids.
+    /// </summary>
+    public const string InvalidTarget = "invalid-target";
 }

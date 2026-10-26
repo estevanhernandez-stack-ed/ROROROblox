@@ -38,7 +38,7 @@ public class MainViewModelLaunchInvokerAdapterTests
     [Fact]
     public void ValidateLaunchTargetArgs_RejectsMissingAccountId()
     {
-        var (ok, reason) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs("", "url", null);
+        var (ok, reason, _) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs("", "url", null);
         Assert.False(ok);
         Assert.Contains("account", reason!, StringComparison.OrdinalIgnoreCase);
     }
@@ -46,7 +46,7 @@ public class MainViewModelLaunchInvokerAdapterTests
     [Fact]
     public void ValidateLaunchTargetArgs_RejectsNonGuidAccountId()
     {
-        var (ok, reason) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs("not-a-guid", "url", null);
+        var (ok, reason, _) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs("not-a-guid", "url", null);
         Assert.False(ok);
         Assert.Contains("GUID", reason!, StringComparison.OrdinalIgnoreCase);
     }
@@ -54,7 +54,7 @@ public class MainViewModelLaunchInvokerAdapterTests
     [Fact]
     public void ValidateLaunchTargetArgs_RejectsNoTarget()
     {
-        var (ok, reason) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs(Guid.NewGuid().ToString(), null, null);
+        var (ok, reason, _) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs(Guid.NewGuid().ToString(), null, null);
         Assert.False(ok);
         Assert.Contains("target", reason!, StringComparison.OrdinalIgnoreCase);
     }
@@ -62,14 +62,14 @@ public class MainViewModelLaunchInvokerAdapterTests
     [Fact]
     public void ValidateLaunchTargetArgs_AcceptsShareUrl()
     {
-        var (ok, _) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs(Guid.NewGuid().ToString(), "https://x", null);
+        var (ok, _, _) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs(Guid.NewGuid().ToString(), "https://x", null);
         Assert.True(ok);
     }
 
     [Fact]
     public void ValidateLaunchTargetArgs_AcceptsFollowUserId()
     {
-        var (ok, _) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs(Guid.NewGuid().ToString(), null, 12345L);
+        var (ok, _, _) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs(Guid.NewGuid().ToString(), null, 12345L);
         Assert.True(ok);
     }
 
@@ -245,6 +245,78 @@ public class MainViewModelLaunchInvokerAdapterTests
             Assert.True(ok);
             Assert.Equal(new LaunchTarget.FollowFriend(999), Assert.Single(launcher.Launches)); // awaited, not queued
             Assert.True(ui.MaxDepth >= 2, $"the launch did not start inside the view model's dispatcher (max depth {ui.MaxDepth})");
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    // ---- #247: a plugin names one server instance. ----
+
+    [Fact]
+    public void ValidateLaunchTargetArgs_AcceptsAValidGameInstance()
+    {
+        var (ok, _, code) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs(
+            Guid.NewGuid().ToString(), null, null, new PluginGameInstance(8737899170L, Guid.NewGuid().ToString()));
+        Assert.True(ok);
+        Assert.Null(code);
+    }
+
+    [Theory]
+    [InlineData(0L, "0b6fd1e2-3c45-4a78-9d01-2e3f4a5b6c7d")]   // half pair: no place
+    [InlineData(-5L, "0b6fd1e2-3c45-4a78-9d01-2e3f4a5b6c7d")]
+    [InlineData(5L, "")]                                        // half pair: no job id
+    [InlineData(5L, "   ")]
+    [InlineData(5L, "job-1")]                                   // not a GUID
+    [InlineData(5L, "0b6fd1e2-3c45-4a78-9d01-2e3f4a5b6c7d/../x")]
+    public void ValidateLaunchTargetArgs_RefusesAMalformedGameInstance_WithInvalidTarget(long place, string job)
+    {
+        var (ok, _, code) = MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs(
+            Guid.NewGuid().ToString(), null, null, new PluginGameInstance(place, job));
+        Assert.False(ok);
+        Assert.Equal(PluginLaunchReasonCodes.InvalidTarget, code);
+    }
+
+    [Fact]
+    public async Task RequestLaunchTarget_AGameInstance_LaunchesExactlyThatServer_EvenWithNoCurrentServer()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var (_, alt) = await FlaggedLaunchTests.SeedAsync(vm, store, mainInGame: false);
+            alt.JoinViaFriend = false;
+            Assert.Null(alt.CurrentServer); // offline launcher: Upgrade would degrade this GameJob to Place
+            var job = Guid.NewGuid().ToString();
+
+            var (ok, _, _, code) = await new MainViewModelLaunchInvokerAdapter(vm)
+                .RequestLaunchTargetAsync(alt.Id.ToString(), null, null, new PluginGameInstance(8737899170L, job))
+                .WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.True(ok);
+            Assert.Null(code);
+            Assert.Equal(new LaunchTarget.GameJob(8737899170L, job), Assert.Single(launcher.Launches));
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Theory]
+    [InlineData(0L, "0b6fd1e2-3c45-4a78-9d01-2e3f4a5b6c7d")]
+    [InlineData(5L, "")]
+    [InlineData(5L, "not-a-guid")]
+    public async Task RequestLaunchTarget_AMalformedGameInstance_NeverLaunches(long place, string job)
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var (_, alt) = await FlaggedLaunchTests.SeedAsync(vm, store, mainInGame: false);
+            alt.JoinViaFriend = false;
+
+            var (ok, _, _, code) = await new MainViewModelLaunchInvokerAdapter(vm)
+                .RequestLaunchTargetAsync(alt.Id.ToString(), null, null, new PluginGameInstance(place, job));
+
+            Assert.False(ok);
+            Assert.Equal(PluginLaunchReasonCodes.InvalidTarget, code);
+            Assert.Empty(launcher.Launches);
         }
         finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
