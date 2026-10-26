@@ -535,6 +535,10 @@ public partial class App : Application
             _log.LogDebug(ex, "Last-exit recorder failed to begin; continuing without it.");
         }
 
+        // #246: ask Windows to restart us after a crash, hang or Store update. Past the single-instance
+        // guard so an early-exiting second instance never registers. Resolves nothing from DI.
+        ApplicationRestart.Register(_log);
+
         // Apply the saved theme synchronously so the first paint is already on the chosen
         // palette. The async path was deadlocking — IAppSettings.GetActiveThemeIdAsync
         // continues on the UI thread (ConfigureAwait(true)), and we were blocking the UI
