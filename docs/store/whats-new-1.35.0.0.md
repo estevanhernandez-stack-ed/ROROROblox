@@ -31,6 +31,13 @@
 > as every release since v1.26: the interface is localized, and every quoted label above names its
 > catalog key.
 >
+> **Verifier run, 2026-10-26, at a868e52, both shapes, 42 pairs.** 13 revise verdicts. 12 are the Rule 3
+> false positive above (quoted labels: `ShellWindow_Plugins`, `PluginsPage_Restart`,
+> `LeftoverProcessesWindow_LeftoverRobloxProcesses`), overruled. One was real and is fixed: Russian
+> `whatsNew.plugins` read "при установке из Microsoft Store" (while installing from the Store, the
+> act) instead of Store installs; it now reads "в версии из Microsoft Store". The verifier's own
+> suggestion, "на установках", was not taken: correct in meaning, clumsy as Russian.
+>
 > Sources: `docs/store/release-notes-1.35.0.0.md`.
 
 ---
@@ -120,7 +127,7 @@ v1.35.0.0
 
 Плагины снова запускаются
 
-• Плагины снова запускаются при установке из Microsoft Store.
+• Плагины снова запускаются в версии из Microsoft Store.
   Раньше они останавливались в течение секунды после запуска.
 • На странице «Плагины» каждый плагин сообщает, почему он
   остановился, а «Перезапустить» появляется, только когда это

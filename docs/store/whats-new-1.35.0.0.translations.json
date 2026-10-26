@@ -32,7 +32,7 @@
       "translations": {
         "fr": "• Les plugins démarrent de nouveau sur les installations Microsoft Store. Ils s'arrêtaient moins d'une seconde après leur démarrage.",
         "de": "• Plugins starten auf Microsoft-Store-Installationen wieder. Sie wurden innerhalb einer Sekunde nach dem Start beendet.",
-        "ru": "• Плагины снова запускаются при установке из Microsoft Store. Раньше они останавливались в течение секунды после запуска.",
+        "ru": "• Плагины снова запускаются в версии из Microsoft Store. Раньше они останавливались в течение секунды после запуска.",
         "pt-br": "• Os plugins voltam a iniciar nas instalações da Microsoft Store. Eles paravam menos de um segundo depois de iniciar.",
         "pl": "• Pluginy znów się uruchamiają w instalacjach z Microsoft Store. Zatrzymywały się w ciągu sekundy od startu.",
         "es": "• Los plugins vuelven a arrancar en las instalaciones de Microsoft Store. Se detenían a menos de un segundo de empezar."
