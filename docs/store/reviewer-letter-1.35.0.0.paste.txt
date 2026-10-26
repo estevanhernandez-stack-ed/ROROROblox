@@ -1,0 +1,87 @@
+Hello reviewer,
+
+RoRoRo is a launcher that runs several Roblox clients side by side, each signed
+in as a different account the user saved. This is v1.35.0.0. Certification last
+saw v1.34.0.0, so this is one version's delta. Most of it is reliability fixes
+from a four-day test run.
+
+1. WHAT CHANGED
+
+  - Plugins start on Store installs. The optional plugin programs the user
+    installs were exiting at once on a packaged install; the app now starts
+    them by their real on-disk path. Each plugin row also says why a plugin
+    stopped, and Restart is hidden when restarting cannot help.
+  - Every launch runs in its own Roblox process. Roblox leaves an idle,
+    windowless process of its own behind when a game closes, and that process
+    was taking over the app's next launch. Right before a launch the app now
+    ends such a process, using the same stop path its existing "clear strays"
+    action already uses. It only ever ends a RobloxPlayerBeta that has no
+    window, is not one the app launched, and was started with Roblox's own
+    --launch-to-tray flag.
+  - A brief loss of desktop composition no longer closes the app.
+  - The app registers with Windows to be restarted after a crash or a Store
+    update (RegisterApplicationRestart, no restart after a reboot). On such a
+    restart it continues past an informational startup dialog instead of
+    waiting for a click.
+  - The app logs an account's status when it changes, not every 25 seconds.
+
+2. PLUGIN-FACING CHANGES, STATED PLAINLY
+
+The plugin contract moves from 0.12.0 to 0.14.0. Every change is additive; a
+plugin built against an older contract keeps working unchanged. Verified
+against the diff of plugin_contract.proto: lines added, nothing removed or
+renumbered.
+
+  - Account reads and launch requests wait briefly for saved accounts to load
+    instead of answering with an empty list.
+  - StopAccounts can wait until the clients have closed (wait_for_exit).
+  - GetHostInfo adds accounts_loaded and how the previous session ended
+    (none, clean, session-ending, crash or unknown, with the exception type
+    for a crash and nothing else).
+  - A launch request can name one specific public server (game_instance:
+    place id plus server id from Roblox's public server list). It is part of
+    the existing launch-target request and capability. The consent line for
+    that capability now names it alongside links and friends.
+  - No RPC and no capability was added. The RPC capability map is unchanged.
+
+3. NEW INTEROP, ALL READ-ONLY OR LIFECYCLE
+
+  - CreateFileW and GetFinalPathNameByHandleW: resolve a plugin executable's
+    real path before starting it.
+  - OpenProcess with PROCESS_QUERY_LIMITED_INFORMATION, NtQueryInformationProcess
+    (ProcessCommandLineInformation) and CloseHandle: read the command line of
+    RobloxPlayerBeta processes, to tell Roblox's idle tray process from a game.
+    Nothing is written to any process.
+  - RegisterApplicationRestart: the restart registration above.
+
+4. NOTHING ELSE MOVED
+
+  - Package.appxmanifest differs from v1.34.0.0 by the Version attribute only.
+    Same runFullTrust capability, languages, protocols and startup task.
+  - No new network address and no new network call. No URL string appears in
+    any added line of app source.
+  - No new package dependency.
+  - No new permission, and no change to what data the app stores beyond one
+    small file recording how the last session ended.
+
+5. NO INPUT SYNTHESIS
+
+No added line calls SendInput, keybd_event, mouse_event, SetWindowsHookEx,
+PostMessage, SendMessage, WriteProcessMemory, CreateRemoteThread or
+SetCursorPos. The app still synthesizes no input and injects into no process.
+
+6. WHAT YOU CAN EXERCISE
+
+No Roblox account is needed. Most of this release is behaviour under failure,
+which a fresh install does not reach. About shows 1.35.0.0, and the Plugins
+page opens normally with no plugins installed.
+
+7. UNCHANGED, RESTATED
+
+  - Sign-in happens inside Roblox's own page in a WebView2 frame; only the
+    session cookie is captured, encrypted to the Windows user.
+  - No telemetry and no analytics.
+
+Thank you for your time.
+
+626 Labs LLC

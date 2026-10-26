@@ -1,6 +1,6 @@
 # Store listing — Polski (pl)
 
-> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-10-26 for v1.35.0.0 (what's-new only; block drafted from whats-new-1.35.0.0.md, UI labels from this culture's catalog, translation verifier run pending). Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
 > Friend Follow, Pushover, ntfy); the app UI is now localized to Polish (v1.26.0.0). Register: ty (norma dla gier).
 
@@ -67,29 +67,29 @@ Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
-## What's new in this version (v1.34.0.0, ≤1500 chars)
+## What's new in this version (v1.35.0.0, ≤1500 chars)
 
 ```
-v1.34.0.0
+v1.35.0.0
 
-Udostępniaj swoje motywy
+Pluginy znów się uruchamiają
 
-• „Udostępnij motyw” zapisuje stworzony przez ciebie motyw do
-  pliku, który możesz wysłać komu chcesz. „Importuj motyw” od razu
-  stosuje motyw, który przysłał ci znajomy. Oba znajdziesz w kreatorze
-  motywów.
-• „O programie” pokazuje wersję, którą naprawdę masz
-  zainstalowaną.
-• Alert o bezczynności zawsze działa z jednym z czasów, które
-  oferuje jego lista.
-• Ustawienia wyjaśniają teraz trzy rzeczy, które wcześniej
-  trzeba było zgadywać: dlaczego konto z włączoną prywatnością
-  obecności Roblox (Niewidoczny) nigdy nie dostaje alertu
-  o bezczynności, co obejmuje „Cisza” i co liczy się jako
-  aktywność.
+• Pluginy znów się uruchamiają w instalacjach z Microsoft Store.
+  Zatrzymywały się w ciągu sekundy od startu.
+• Na stronie „Wtyczki” każdy plugin podaje, dlaczego się
+  zatrzymał, a „Uruchom ponownie” pojawia się tylko wtedy, gdy
+  może pomóc.
+• Każde uruchomienie znów otwiera się we własnym oknie Roblox, z
+  własną nazwą, zamiast być przejmowane przez pozostały proces
+  Roblox w zasobniku.
+• Krótkie migotanie ekranu Windows nie zamyka już RoRoRo.
+• RoRoRo prosi Windows, żeby uruchomił go ponownie, jeśli
+  zamknie się nieoczekiwanie albo zaktualizuje go Store. Gdy
+  wraca przy otwartych grach, działają one dalej, bez okna
+  „Pozostałe procesy Roblox” czekającego na kliknięcie.
 
-Nic więcej się nie zmieniło. Konta, motywy, pluginy, historia
-i wszystkie inne ustawienia zostają bez zmian.
+Nic więcej się nie zmieniło. Konta, motywy, pluginy, historia i
+wszystkie inne ustawienia zostają bez zmian.
 ```
 
 ## Copyright (single line)

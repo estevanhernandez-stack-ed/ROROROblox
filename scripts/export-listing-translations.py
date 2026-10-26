@@ -25,7 +25,7 @@ LANGUAGES = ["fr", "de", "ru", "pt-br", "pl", "es"]
 # cut, which means the English what's-new in the exported dataset was v1.26's while every
 # translation beside it came from the sheets at their current version. The verifier reports that as
 # drift rather than failing, so nothing stopped. Step this with the sheets, every release.
-WHATS_NEW_VERSION = "1.32.1.0"
+WHATS_NEW_VERSION = "1.35.0.0"
 
 # (json key, heading prefix in the .md files, per-block char cap, per-line cap)
 FIELDS = [

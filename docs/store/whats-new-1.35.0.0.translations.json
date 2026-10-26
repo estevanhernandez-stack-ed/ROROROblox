@@ -1,0 +1,102 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "3c6eae22d5d5f177b6a3c8fa5a3efdf17e3f3560",
+  "generatedUtc": "2026-10-26T19:48:05+00:00",
+  "sourceOfTruth": "docs/store/whats-new-1.35.0.0.md",
+  "fields": [
+    {
+      "field": "whatsNew.headline",
+      "en": "Plugins start again",
+      "translations": {
+        "fr": "Les plugins démarrent de nouveau",
+        "de": "Plugins starten wieder",
+        "ru": "Плагины снова запускаются",
+        "pt-br": "Os plugins voltam a iniciar",
+        "pl": "Pluginy znów się uruchamiają",
+        "es": "Los plugins vuelven a arrancar"
+      }
+    },
+    {
+      "field": "whatsNew.plugins",
+      "en": "• Plugins start on Microsoft Store installs again. They were stopping within a second of starting.",
+      "translations": {
+        "fr": "• Les plugins démarrent de nouveau sur les installations Microsoft Store. Ils s'arrêtaient moins d'une seconde après leur démarrage.",
+        "de": "• Plugins starten auf Microsoft-Store-Installationen wieder. Sie wurden innerhalb einer Sekunde nach dem Start beendet.",
+        "ru": "• Плагины снова запускаются при установке из Microsoft Store. Раньше они останавливались в течение секунды после запуска.",
+        "pt-br": "• Os plugins voltam a iniciar nas instalações da Microsoft Store. Eles paravam menos de um segundo depois de iniciar.",
+        "pl": "• Pluginy znów się uruchamiają w instalacjach z Microsoft Store. Zatrzymywały się w ciągu sekundy od startu.",
+        "es": "• Los plugins vuelven a arrancar en las instalaciones de Microsoft Store. Se detenían a menos de un segundo de empezar."
+      }
+    },
+    {
+      "field": "whatsNew.healthLine",
+      "en": "• Each plugin on the Plugins page says why it stopped, and \"Restart\" only appears when it can help.",
+      "translations": {
+        "fr": "• Sur la page « Plugins », chaque plugin indique pourquoi il s'est arrêté, et « Redémarrer » n'apparaît que s'il peut servir.",
+        "de": "• Jedes Plugin auf der Seite „Plugins“ sagt, warum es gestoppt ist, und „Neu starten“ erscheint nur, wenn es helfen kann.",
+        "ru": "• На странице «Плагины» каждый плагин сообщает, почему он остановился, а «Перезапустить» появляется, только когда это может помочь.",
+        "pt-br": "• Cada plugin na página “Plugins” diz por que parou, e “Reiniciar” só aparece quando pode ajudar.",
+        "pl": "• Na stronie „Wtyczki” każdy plugin podaje, dlaczego się zatrzymał, a „Uruchom ponownie” pojawia się tylko wtedy, gdy może pomóc.",
+        "es": "• En la página «Complementos», cada plugin indica por qué se detuvo, y «Reiniciar» solo aparece cuando puede ayudar."
+      }
+    },
+    {
+      "field": "whatsNew.launch",
+      "en": "• Every launch opens in its own Roblox window again, with its name, instead of being picked up by a leftover Roblox process in the tray.",
+      "translations": {
+        "fr": "• Chaque lancement s'ouvre de nouveau dans sa propre fenêtre Roblox, avec son nom, au lieu d'être repris par un processus Roblox résiduel dans la zone de notification.",
+        "de": "• Jeder Start öffnet sich wieder in einem eigenen Roblox-Fenster, mit seinem Namen, statt von einem übrig gebliebenen Roblox-Prozess im Infobereich übernommen zu werden.",
+        "ru": "• Каждый запуск снова открывается в своём окне Roblox, с собственным именем, а не перехватывается оставшимся процессом Roblox в трее.",
+        "pt-br": "• Cada inicialização volta a abrir na própria janela do Roblox, com o nome dela, em vez de ser pega por um processo do Roblox que sobrou na bandeja.",
+        "pl": "• Każde uruchomienie znów otwiera się we własnym oknie Roblox, z własną nazwą, zamiast być przejmowane przez pozostały proces Roblox w zasobniku.",
+        "es": "• Cada inicio vuelve a abrirse en su propia ventana de Roblox, con su nombre, en lugar de que lo recoja un proceso de Roblox residual de la bandeja."
+      }
+    },
+    {
+      "field": "whatsNew.display",
+      "en": "• A brief flicker of the Windows display no longer closes RoRoRo.",
+      "translations": {
+        "fr": "• Un bref scintillement de l'affichage Windows ne ferme plus RoRoRo.",
+        "de": "• Ein kurzes Flackern der Windows-Anzeige schließt RoRoRo nicht mehr.",
+        "ru": "• Кратковременное мерцание экрана Windows больше не закрывает RoRoRo.",
+        "pt-br": "• Uma oscilação rápida da tela do Windows não fecha mais o RoRoRo.",
+        "pl": "• Krótkie migotanie ekranu Windows nie zamyka już RoRoRo.",
+        "es": "• Un parpadeo breve de la pantalla de Windows ya no cierra RoRoRo."
+      }
+    },
+    {
+      "field": "whatsNew.restart",
+      "en": "• RoRoRo asks Windows to bring it back if it closes unexpectedly or the Store updates it. When it comes back with games open, they carry on without the \"Leftover Roblox processes\" dialog waiting for a click.",
+      "translations": {
+        "fr": "• RoRoRo demande à Windows de le relancer s'il se ferme de façon inattendue ou si le Store le met à jour. Quand il revient avec des jeux ouverts, ils continuent sans que la boîte de dialogue « Processus Roblox résiduels » attende un clic.",
+        "de": "• RoRoRo bittet Windows, es wieder zu starten, wenn es unerwartet schließt oder der Store es aktualisiert. Kommt es mit offenen Spielen zurück, laufen diese weiter, ohne dass der Dialog „Übrig gebliebene Roblox-Prozesse“ auf einen Klick wartet.",
+        "ru": "• RoRoRo просит Windows запустить его снова, если он неожиданно закрылся или его обновляет Store. Когда он возвращается при открытых играх, они продолжаются без того, чтобы диалог «Оставшиеся процессы Roblox» ждал щелчка.",
+        "pt-br": "• O RoRoRo pede ao Windows para abri-lo de novo se ele fechar de forma inesperada ou a Store o atualizar. Quando volta com jogos abertos, eles continuam sem o diálogo “Processos do Roblox sobrando” esperando um clique.",
+        "pl": "• RoRoRo prosi Windows, żeby uruchomił go ponownie, jeśli zamknie się nieoczekiwanie albo zaktualizuje go Store. Gdy wraca przy otwartych grach, działają one dalej, bez okna „Pozostałe procesy Roblox” czekającego na kliknięcie.",
+        "es": "• RoRoRo le pide a Windows que lo vuelva a abrir si se cierra de forma inesperada o si la Store lo actualiza. Cuando vuelve con juegos abiertos, estos siguen sin que el diálogo «Procesos de Roblox residuales» espere un clic."
+      }
+    },
+    {
+      "field": "whatsNew.closing",
+      "en": "Nothing else moved. Accounts, themes, plugins, history and every other setting carry over untouched.",
+      "translations": {
+        "fr": "Rien d'autre n'a changé. Comptes, thèmes, plugins, historique et tous les autres réglages sont conservés tels quels.",
+        "de": "Sonst hat sich nichts geändert. Konten, Designs, Plugins, Verlauf und alle anderen Einstellungen bleiben, wie sie sind.",
+        "ru": "Больше ничего не изменилось. Аккаунты, темы, плагины, история и все остальные настройки остаются как были.",
+        "pt-br": "Nada mais mudou. Contas, temas, plugins, histórico e todas as outras configurações continuam como estavam.",
+        "pl": "Nic więcej się nie zmieniło. Konta, motywy, pluginy, historia i wszystkie inne ustawienia zostają bez zmian.",
+        "es": "Nada más cambió. Cuentas, temas, plugins, historial y todos los demás ajustes se mantienen intactos."
+      }
+    }
+  ]
+}

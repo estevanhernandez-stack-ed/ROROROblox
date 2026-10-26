@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "2fc95ae",
-  "generatedUtc": "2026-10-25T23:50:41+00:00",
+  "sourceCommit": "3c6eae2",
+  "generatedUtc": "2026-10-26T19:45:21+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -11573,14 +11573,14 @@
     },
     {
       "field": "Plugin_Cap_LaunchTarget",
-      "en": "Allow the plugin to launch one of your accounts into a Roblox server from a link or friend it provides.",
+      "en": "Allow the plugin to launch one of your accounts into a Roblox server it chooses, from a link, a friend, or one specific server.",
       "translations": {
-        "fr": "Autoriser le plugin à lancer un de vos comptes dans un serveur Roblox à partir d'un lien ou d'un ami qu'il fournit.",
-        "de": "Dem Plugin erlauben, eines deiner Konten über einen von ihm bereitgestellten Link oder Freund in einen Roblox-Server zu starten.",
-        "ru": "Разрешить плагину запускать один из ваших аккаунтов на сервер Roblox по ссылке или другу, которые он укажет.",
-        "pt-br": "Permitir que o plugin inicie uma das suas contas em um servidor do Roblox a partir de um link ou amigo que ele fornecer.",
-        "pl": "Pozwól wtyczce uruchomić jedno z twoich kont na serwerze Roblox z podanego przez nią linku lub znajomego.",
-        "es": "Permitir que el plugin inicie una de tus cuentas en un servidor de Roblox a partir de un enlace o un amigo que proporcione."
+        "fr": "Autoriser le plugin à lancer un de vos comptes dans un serveur Roblox qu'il choisit, à partir d'un lien, d'un ami ou d'un serveur précis.",
+        "de": "Dem Plugin erlauben, eines deiner Konten in einen Roblox-Server zu starten, den es auswählt: über einen Link, einen Freund oder einen bestimmten Server.",
+        "ru": "Разрешить плагину запускать один из ваших аккаунтов на выбранный им сервер Roblox: по ссылке, вслед за другом или на один конкретный сервер.",
+        "pt-br": "Permitir que o plugin inicie uma das suas contas em um servidor do Roblox que ele escolher, a partir de um link, de um amigo ou de um servidor específico.",
+        "pl": "Pozwól wtyczce uruchomić jedno z twoich kont na wybranym przez nią serwerze Roblox: z linku, dołączając do znajomego lub na jednym konkretnym serwerze.",
+        "es": "Permitir que el plugin inicie una de tus cuentas en un servidor de Roblox que elija, a partir de un enlace, un amigo o un servidor concreto."
       }
     },
     {

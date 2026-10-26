@@ -1,6 +1,6 @@
 # Store listing — Français (fr)
 
-> Paste-ready pour Partner Center → Store listings → **Français**. Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready pour Partner Center → Store listings → **Français**. Refreshed 2026-10-26 for v1.35.0.0 (what's-new only; block drafted from whats-new-1.35.0.0.md, UI labels from this culture's catalog, translation verifier run pending). Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
 > Friend Follow, Pushover, ntfy). The interface is now localized to six languages, so the
 > earlier English-interface caveat is gone. Register: vous (Store norm).
@@ -68,25 +68,28 @@ Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonc
 Rejoindre à nouveau s'il décroche — un alt expulsé ou coincé hors du jeu est fermé et rejoint à nouveau tout seul, jamais votre compte principal
 ```
 
-## What's new in this version (v1.34.0.0, ≤1500 chars)
+## What's new in this version (v1.35.0.0, ≤1500 chars)
 
 ```
-v1.34.0.0
+v1.35.0.0
 
-Partagez vos thèmes
+Les plugins démarrent de nouveau
 
-• « Partager le thème » enregistre un thème que vous avez créé
-  dans un fichier à envoyer à qui vous voulez. « Importer un
-  thème » applique aussitôt celui qu'un ami vous a envoyé. Les deux se
-  trouvent dans le créateur de thèmes.
-• « À propos » affiche la version réellement installée.
-• L'alerte d'inactivité utilise toujours l'une des durées
-  proposées par son sélecteur.
-• Les paramètres expliquent désormais trois points qu'il fallait
-  deviner : pourquoi un compte dont la confidentialité de présence
-  Roblox est activée (Invisible) ne reçoit jamais d'alerte
-  d'inactivité, ce que couvre « Silencieux » et ce qui compte
-  comme activité.
+• Les plugins démarrent de nouveau sur les installations
+  Microsoft Store. Ils s'arrêtaient moins d'une seconde après
+  leur démarrage.
+• Sur la page « Plugins », chaque plugin indique pourquoi il
+  s'est arrêté, et « Redémarrer » n'apparaît que s'il peut
+  servir.
+• Chaque lancement s'ouvre de nouveau dans sa propre fenêtre
+  Roblox, avec son nom, au lieu d'être repris par un processus
+  Roblox résiduel dans la zone de notification.
+• Un bref scintillement de l'affichage Windows ne ferme plus
+  RoRoRo.
+• RoRoRo demande à Windows de le relancer s'il se ferme de façon
+  inattendue ou si le Store le met à jour. Quand il revient avec
+  des jeux ouverts, ils continuent sans que la boîte de dialogue
+  « Processus Roblox résiduels » attende un clic.
 
 Rien d'autre n'a changé. Comptes, thèmes, plugins, historique et
 tous les autres réglages sont conservés tels quels.
