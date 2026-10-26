@@ -231,12 +231,13 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             // installer's return value is sufficient — no rescan needed.
             try
             {
-                _supervisor.Start(installed, PluginLaunchReason.Install);
-                // LoadAsync above already rebuilt Plugins. Flip the matching row's
-                // IsRunning so the Launch button on it shows disabled-state immediately.
+                // LoadAsync above already rebuilt Plugins; StartRow marks the matching row running
+                // so the Launch button disables immediately, and reports whether it still is.
                 var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == installed.Manifest.Id);
-                if (newRow is not null) newRow.IsRunning = true;
-                StatusBanner = Loc.Format("Plugin_InstalledRunning", installed.Manifest.Name);
+                if (StartRow(newRow, installed, PluginLaunchReason.Install))
+                {
+                    StatusBanner = Loc.Format("Plugin_InstalledRunning", installed.Manifest.Name);
+                }
             }
             catch (Exception startEx)
             {
@@ -288,13 +289,17 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             _log.LogInformation("Plugin {PluginId} updated to v{Version}.", updated.Manifest.Id, updated.Manifest.Version);
             _registryAdapter.Refresh();
             await LoadAsync().ConfigureAwait(true);
+            var stillUp = true;
             if (wasRunning)
             {
-                _supervisor.Start(updated, PluginLaunchReason.Update); // relaunch on the new version, only if it was running before
+                // Relaunch on the new version, only if it was running before.
                 var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == updated.Manifest.Id);
-                if (newRow is not null) newRow.IsRunning = true;
+                stillUp = StartRow(newRow, updated, PluginLaunchReason.Update);
             }
-            StatusBanner = Loc.Format("Plugin_Updated", updated.Manifest.Name, updated.Manifest.Version);
+            if (stillUp)
+            {
+                StatusBanner = Loc.Format("Plugin_Updated", updated.Manifest.Name, updated.Manifest.Version);
+            }
         }
         catch (Exception ex)
         {
@@ -375,9 +380,10 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             }
 
             StatusBanner = Loc.Format("Plugin_Launching", row.Name);
-            _supervisor.Start(row.Plugin, PluginLaunchReason.Manual);
-            row.IsRunning = true;
-            StatusBanner = Loc.Format("Plugin_Running", row.Name);
+            if (StartRow(row, row.Plugin, PluginLaunchReason.Manual))
+            {
+                StatusBanner = Loc.Format("Plugin_Running", row.Name);
+            }
         }
         catch (Exception ex)
         {
@@ -429,11 +435,16 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         }
         try
         {
-            _supervisor.Restart(match.Plugin, PluginLaunchReason.Restart);
-            _log.LogInformation("Plugin {PluginId}: restarted from exit banner.", match.Plugin.Manifest.Id);
-            StatusBanner = Loc.Format("Plugin_Restarted", match.Name);
+            // Clear the banner's claim BEFORE restarting: a plugin that dies at once reports its exit
+            // inside Restart, and clearing afterwards would wipe the banner that exit just set.
             _bannerPluginId = null;
             Raise(nameof(BannerIsRestartable));
+            var stillUp = StartRow(match, match.Plugin, PluginLaunchReason.Restart, restart: true);
+            _log.LogInformation("Plugin {PluginId}: restarted from exit banner.", match.Plugin.Manifest.Id);
+            if (stillUp)
+            {
+                StatusBanner = Loc.Format("Plugin_Restarted", match.Name);
+            }
         }
         catch (Exception ex)
         {
@@ -443,22 +454,90 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         return Task.CompletedTask;
     }
 
-    private void OnPluginExited(string pluginId, int pid)
+    /// <summary>
+    /// Start (or restart) a plugin with the row marked running FIRST, and report whether it still is
+    /// once the call returns. Since #242 a plugin that dies before its start completes reports its
+    /// exit inside the supervisor call, on this thread. Marking the row afterwards turned that dead
+    /// plugin back into a running one, and the caller's success banner painted over the exit banner.
+    /// </summary>
+    private bool StartRow(PluginRow? row, InstalledPlugin plugin, PluginLaunchReason reason, bool restart = false)
     {
-        _ = pid;
+        if (row is not null)
+        {
+            row.IsRunning = true;
+            row.HealthLine = string.Empty;
+        }
+        if (restart) _supervisor.Restart(plugin, reason);
+        else _supervisor.Start(plugin, reason);
+        return row?.IsRunning ?? true;
+    }
+
+    /// <summary>
+    /// Where exit updates are marshalled. Test seam only: under the full suite other tests construct a
+    /// real App, so <c>Application.Current</c> can belong to another STA thread and an update queued
+    /// there never runs (the same trap <c>MainViewModelLaunchInvokerAdapter</c> documents). Tests set
+    /// it to return null, which runs the update inline, as it does on the UI thread in production.
+    /// </summary>
+    internal Func<System.Windows.Threading.Dispatcher?> DispatcherSource { get; set; } = () => Application.Current?.Dispatcher;
+
+    /// <summary>Exits inside the startup window, per plugin, for the "keeps failing" rule.</summary>
+    private readonly Dictionary<string, List<DateTime>> _startupFailures = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// This many startup failures inside <see cref="StartupFailureWindow"/> and the banner stops
+    /// offering Restart. The field log had the Restart button pressed 13 times in two seconds, each
+    /// relaunch dying at once; a button that cannot help should not be the only thing on offer.
+    /// </summary>
+    internal const int StartupFailureLimit = 3;
+    internal static readonly TimeSpan StartupFailureWindow = TimeSpan.FromMinutes(1);
+
+    private void OnPluginExited(string pluginId, PluginProcessExit exit)
+    {
         // Supervisor fires from a Process.Exited handler, which lands on a worker thread.
         // Marshal to the WPF dispatcher before mutating observable state — otherwise INPC
         // raises on a non-UI thread and the binding system throws.
-        var dispatcher = Application.Current?.Dispatcher;
+        var dispatcher = DispatcherSource();
         Action update = () =>
         {
             var match = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == pluginId);
             var displayName = match?.Name ?? pluginId;
+            var kind = exit.Kind;
             // Flip the row's IsRunning so the Launch button comes back enabled. Safe when
             // match is null (uninstalled mid-exit) — null-skip the row state mutation.
-            if (match is not null) match.IsRunning = false;
-            _bannerPluginId = pluginId;
-            StatusBanner = Loc.Format("Plugin_StoppedClickRestart", displayName);
+            if (match is not null)
+            {
+                match.IsRunning = false;
+                match.HealthLine = HealthLineFor(exit);
+            }
+
+            var failuresInWindow = 0;
+            if (kind is PluginExitKind.CouldNotStart or PluginExitKind.CrashedWhileStarting or PluginExitKind.ClosedAtStartup)
+            {
+                var now = DateTime.UtcNow;
+                if (!_startupFailures.TryGetValue(pluginId, out var times))
+                {
+                    _startupFailures[pluginId] = times = new List<DateTime>();
+                }
+                times.RemoveAll(t => now - t > StartupFailureWindow);
+                times.Add(now);
+                failuresInWindow = times.Count;
+            }
+
+            if (kind == PluginExitKind.CouldNotStart)
+            {
+                _bannerPluginId = null;
+                StatusBanner = Loc.Format("Plugin_CouldNotStartBanner", displayName);
+            }
+            else if (failuresInWindow >= StartupFailureLimit)
+            {
+                _bannerPluginId = null;
+                StatusBanner = Loc.Format("Plugin_KeepsFailingBanner", displayName);
+            }
+            else
+            {
+                _bannerPluginId = pluginId;
+                StatusBanner = Loc.Format("Plugin_StoppedClickRestart", displayName);
+            }
             Raise(nameof(BannerIsRestartable));
         };
         if (dispatcher is null || dispatcher.CheckAccess())
@@ -470,6 +549,16 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             dispatcher.BeginInvoke(DispatcherPriority.Normal, update);
         }
     }
+
+    /// <summary>The row's one-line account of its last exit, in the words a user can act on.</summary>
+    internal static string HealthLineFor(PluginProcessExit exit) => exit.Kind switch
+    {
+        PluginExitKind.CouldNotStart => Loc.Format("Plugin_Health_CouldNotStart", exit.CodeHex),
+        PluginExitKind.CrashedWhileStarting => Loc.Format("Plugin_Health_CrashedWhileStarting", exit.CodeHex),
+        PluginExitKind.ClosedAtStartup => Loc.Get("Plugin_Health_ClosedAtStartup"),
+        PluginExitKind.Crashed => Loc.Format("Plugin_Health_Crashed", exit.CodeHex),
+        _ => Loc.Get("Plugin_Health_Stopped"),
+    };
 
     private static void TryDeleteInstallDir(string dir)
     {
@@ -532,6 +621,23 @@ internal sealed class PluginRow : INotifyPropertyChanged
             if (_isRunning == value) return;
             _isRunning = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsRunning)));
+        }
+    }
+
+    private string _healthLine = string.Empty;
+    /// <summary>
+    /// Why the plugin last stopped, or empty (#242). Set from the exit's code and uptime, cleared when
+    /// the plugin is started again. The only place a plugin that never reached its own code can say
+    /// anything, since it leaves no log of its own.
+    /// </summary>
+    public string HealthLine
+    {
+        get => _healthLine;
+        internal set
+        {
+            if (_healthLine == value) return;
+            _healthLine = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HealthLine)));
         }
     }
 

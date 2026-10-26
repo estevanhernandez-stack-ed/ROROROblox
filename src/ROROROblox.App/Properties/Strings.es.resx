@@ -3402,4 +3402,25 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
   <data name="ThemeShare_ImportFailed" xml:space="preserve">
     <value>Falló la importación: {0}</value>
   </data>
+  <data name="Plugin_Health_CouldNotStart" xml:space="preserve">
+    <value>No pudo iniciarse en este PC (código {0}). Reiniciarlo no lo arreglará.</value>
+  </data>
+  <data name="Plugin_Health_CrashedWhileStarting" xml:space="preserve">
+    <value>Falló al iniciarse (código {0}).</value>
+  </data>
+  <data name="Plugin_Health_ClosedAtStartup" xml:space="preserve">
+    <value>Se cerró solo justo después de iniciarse.</value>
+  </data>
+  <data name="Plugin_Health_Crashed" xml:space="preserve">
+    <value>Falló (código {0}).</value>
+  </data>
+  <data name="Plugin_Health_Stopped" xml:space="preserve">
+    <value>Detenido.</value>
+  </data>
+  <data name="Plugin_CouldNotStartBanner" xml:space="preserve">
+    <value>{0} no puede iniciarse en este PC. Reiniciarlo no lo arreglará: envía tu registro de RoRoRo a 626 Labs.</value>
+  </data>
+  <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
+    <value>{0} se detiene una y otra vez al iniciarse. Reiniciarlo no lo arreglará: envía tu registro de RoRoRo a 626 Labs.</value>
+  </data>
 </root>

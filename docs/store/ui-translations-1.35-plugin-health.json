@@ -1,0 +1,103 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "dataset": "app-ui-strings",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "2fc95ae",
+  "generatedUtc": "2026-10-25T23:50:41+00:00",
+  "sourceOfTruth": "docs/store/ui-translations.json (sliced to the #242 plugin health strings)",
+  "fields": [
+    {
+      "field": "Plugin_Health_CouldNotStart",
+      "en": "Couldn't start on this PC (code {0}). Restarting won't fix it.",
+      "translations": {
+        "fr": "Impossible de démarrer sur ce PC (code {0}). Un redémarrage n'y changera rien.",
+        "de": "Konnte auf diesem PC nicht starten (Code {0}). Ein Neustart behebt das nicht.",
+        "ru": "Не удалось запустить на этом ПК (код {0}). Перезапуск не поможет.",
+        "pt-br": "Não conseguiu iniciar neste PC (código {0}). Reiniciar não vai resolver.",
+        "pl": "Nie udało się uruchomić na tym komputerze (kod {0}). Ponowne uruchomienie tego nie naprawi.",
+        "es": "No pudo iniciarse en este PC (código {0}). Reiniciarlo no lo arreglará."
+      }
+    },
+    {
+      "field": "Plugin_Health_CrashedWhileStarting",
+      "en": "Crashed while starting (code {0}).",
+      "translations": {
+        "fr": "Plantage au démarrage (code {0}).",
+        "de": "Beim Starten abgestürzt (Code {0}).",
+        "ru": "Аварийно завершился при запуске (код {0}).",
+        "pt-br": "Travou ao iniciar (código {0}).",
+        "pl": "Awaria podczas uruchamiania (kod {0}).",
+        "es": "Falló al iniciarse (código {0})."
+      }
+    },
+    {
+      "field": "Plugin_Health_ClosedAtStartup",
+      "en": "Closed itself right after starting.",
+      "translations": {
+        "fr": "Fermé tout seul juste après le démarrage.",
+        "de": "Hat sich direkt nach dem Start selbst beendet.",
+        "ru": "Закрылся сам сразу после запуска.",
+        "pt-br": "Fechou sozinho logo depois de iniciar.",
+        "pl": "Działanie zakończyło się zaraz po uruchomieniu.",
+        "es": "Se cerró solo justo después de iniciarse."
+      }
+    },
+    {
+      "field": "Plugin_Health_Crashed",
+      "en": "Crashed (code {0}).",
+      "translations": {
+        "fr": "Plantage (code {0}).",
+        "de": "Abgestürzt (Code {0}).",
+        "ru": "Аварийно завершился (код {0}).",
+        "pt-br": "Travou (código {0}).",
+        "pl": "Awaria (kod {0}).",
+        "es": "Falló (código {0})."
+      }
+    },
+    {
+      "field": "Plugin_Health_Stopped",
+      "en": "Stopped.",
+      "translations": {
+        "fr": "Arrêté.",
+        "de": "Gestoppt.",
+        "ru": "Остановлен.",
+        "pt-br": "Parado.",
+        "pl": "Zatrzymano.",
+        "es": "Detenido."
+      }
+    },
+    {
+      "field": "Plugin_CouldNotStartBanner",
+      "en": "{0} can't start on this PC. Restarting won't fix it: send your RoRoRo log to 626 Labs.",
+      "translations": {
+        "fr": "{0} ne peut pas démarrer sur ce PC. Un redémarrage n'y changera rien : envoyez votre journal RoRoRo à 626 Labs.",
+        "de": "{0} kann auf diesem PC nicht starten. Ein Neustart behebt das nicht: Schick dein RoRoRo-Log an 626 Labs.",
+        "ru": "{0} не может запуститься на этом ПК. Перезапуск не поможет: отправьте журнал RoRoRo в 626 Labs.",
+        "pt-br": "{0} não consegue iniciar neste PC. Reiniciar não vai resolver: mande o seu log do RoRoRo para a 626 Labs.",
+        "pl": "Nie można uruchomić {0} na tym komputerze. Ponowne uruchomienie tego nie naprawi: wyślij swój log RoRoRo do 626 Labs.",
+        "es": "{0} no puede iniciarse en este PC. Reiniciarlo no lo arreglará: envía tu registro de RoRoRo a 626 Labs."
+      }
+    },
+    {
+      "field": "Plugin_KeepsFailingBanner",
+      "en": "{0} keeps stopping as it starts. Restarting won't fix it: send your RoRoRo log to 626 Labs.",
+      "translations": {
+        "fr": "{0} s'arrête à chaque démarrage. Un redémarrage n'y changera rien : envoyez votre journal RoRoRo à 626 Labs.",
+        "de": "{0} bricht beim Starten immer wieder ab. Ein Neustart behebt das nicht: Schick dein RoRoRo-Log an 626 Labs.",
+        "ru": "{0} раз за разом останавливается при запуске. Перезапуск не поможет: отправьте журнал RoRoRo в 626 Labs.",
+        "pt-br": "{0} continua parando ao iniciar. Reiniciar não vai resolver: mande o seu log do RoRoRo para a 626 Labs.",
+        "pl": "{0} raz po raz przerywa działanie przy uruchamianiu. Ponowne uruchomienie tego nie naprawi: wyślij swój log RoRoRo do 626 Labs.",
+        "es": "{0} se detiene una y otra vez al iniciarse. Reiniciarlo no lo arreglará: envía tu registro de RoRoRo a 626 Labs."
+      }
+    }
+  ]
+}

@@ -235,7 +235,7 @@ public class DefaultPluginProcessStarterTests
         };
         var exitedPid = 0;
         using var exited = new ManualResetEventSlim(false);
-        starter.ProcessExited += p => { exitedPid = p; exited.Set(); };
+        starter.ProcessExited += e => { exitedPid = e.Pid; exited.Set(); };
 
         var pid = starter.Start("626labs.test", WhereExe, PluginLaunchReason.Install);
 

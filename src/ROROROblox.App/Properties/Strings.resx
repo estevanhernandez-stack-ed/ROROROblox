@@ -3095,4 +3095,11 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="ThemeShare_ImportFailed" xml:space="preserve">
     <value>Import failed: {0}</value>
   </data>
+  <data name="Plugin_Health_CouldNotStart" xml:space="preserve"><value>Couldn't start on this PC (code {0}). Restarting won't fix it.</value><comment>Plugin row health line, the .NET host could not start the plugin; {0}=exit code like 0x80008085 (#242)</comment></data>
+  <data name="Plugin_Health_CrashedWhileStarting" xml:space="preserve"><value>Crashed while starting (code {0}).</value><comment>Plugin row health line, non-zero exit within 10 s of starting; {0}=exit code (#242)</comment></data>
+  <data name="Plugin_Health_ClosedAtStartup" xml:space="preserve"><value>Closed itself right after starting.</value><comment>Plugin row health line, exit code 0 within 10 s of starting (#242)</comment></data>
+  <data name="Plugin_Health_Crashed" xml:space="preserve"><value>Crashed (code {0}).</value><comment>Plugin row health line, non-zero exit after it had been running; {0}=exit code (#242)</comment></data>
+  <data name="Plugin_Health_Stopped" xml:space="preserve"><value>Stopped.</value><comment>Plugin row health line, exit code 0 after it had been running (#242)</comment></data>
+  <data name="Plugin_CouldNotStartBanner" xml:space="preserve"><value>{0} can't start on this PC. Restarting won't fix it: send your RoRoRo log to 626 Labs.</value><comment>Plugins-window banner with no Restart button; {0}=plugin name (#242)</comment></data>
+  <data name="Plugin_KeepsFailingBanner" xml:space="preserve"><value>{0} keeps stopping as it starts. Restarting won't fix it: send your RoRoRo log to 626 Labs.</value><comment>Plugins-window banner with no Restart button, after 3 failed starts in a minute; {0}=plugin name (#242)</comment></data>
 </root>

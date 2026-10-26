@@ -1121,5 +1121,12 @@
   "WelcomeWindow_TogglesWhetherThisAccountJoins": "— alterna se esta conta entra nas execuções de Iniciar vários / Squad Launch. Persiste entre reinícios.",
   "WelcomeWindow_WelcomeTo": "Bem-vindo ao",
   "WelcomeWindow_WelcomeToRororo": "Bem-vindo ao RoRoRo",
-  "WelcomeWindow_WindowsHidesNewTrayIcons": "O Windows oculta novos ícones da bandeja por padrão, então o ícone do RoRoRo pode não aparecer imediatamente."
+  "WelcomeWindow_WindowsHidesNewTrayIcons": "O Windows oculta novos ícones da bandeja por padrão, então o ícone do RoRoRo pode não aparecer imediatamente.",
+  "Plugin_Health_CouldNotStart": "Não conseguiu iniciar neste PC (código {0}). Reiniciar não vai resolver.",
+  "Plugin_Health_CrashedWhileStarting": "Travou ao iniciar (código {0}).",
+  "Plugin_Health_ClosedAtStartup": "Fechou sozinho logo depois de iniciar.",
+  "Plugin_Health_Crashed": "Travou (código {0}).",
+  "Plugin_Health_Stopped": "Parado.",
+  "Plugin_CouldNotStartBanner": "{0} não consegue iniciar neste PC. Reiniciar não vai resolver: mande o seu log do RoRoRo para a 626 Labs.",
+  "Plugin_KeepsFailingBanner": "{0} continua parando ao iniciar. Reiniciar não vai resolver: mande o seu log do RoRoRo para a 626 Labs."
 }

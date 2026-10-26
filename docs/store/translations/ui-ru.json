@@ -1121,5 +1121,12 @@
   "WelcomeWindow_TogglesWhetherThisAccountJoins": "— переключает, участвует ли этот аккаунт в запусках «Запустить несколько» / Squad Launch. Сохраняется между перезапусками.",
   "WelcomeWindow_WelcomeTo": "Добро пожаловать в",
   "WelcomeWindow_WelcomeToRororo": "Добро пожаловать в RoRoRo",
-  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows по умолчанию скрывает новые значки в области уведомлений, поэтому значок RoRoRo может появиться не сразу."
+  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows по умолчанию скрывает новые значки в области уведомлений, поэтому значок RoRoRo может появиться не сразу.",
+  "Plugin_Health_CouldNotStart": "Не удалось запустить на этом ПК (код {0}). Перезапуск не поможет.",
+  "Plugin_Health_CrashedWhileStarting": "Аварийно завершился при запуске (код {0}).",
+  "Plugin_Health_ClosedAtStartup": "Закрылся сам сразу после запуска.",
+  "Plugin_Health_Crashed": "Аварийно завершился (код {0}).",
+  "Plugin_Health_Stopped": "Остановлен.",
+  "Plugin_CouldNotStartBanner": "{0} не может запуститься на этом ПК. Перезапуск не поможет: отправьте журнал RoRoRo в 626 Labs.",
+  "Plugin_KeepsFailingBanner": "{0} раз за разом останавливается при запуске. Перезапуск не поможет: отправьте журнал RoRoRo в 626 Labs."
 }

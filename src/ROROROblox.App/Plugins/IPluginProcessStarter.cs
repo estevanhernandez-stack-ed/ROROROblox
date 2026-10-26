@@ -25,10 +25,12 @@ public interface IPluginProcessStarter
     /// <summary>
     /// Raised when a plugin process exits — whether it was killed, crashed, or
     /// shut down gracefully. The supervisor subscribes to this and raises its
-    /// own <c>PluginExited(pluginId, pid)</c> after mapping PID back to the
+    /// own <c>PluginExited(pluginId, exit)</c> after mapping PID back to the
     /// plugin id. Implementations must marshal the event off the OS-thread the
     /// process-exit notification lands on (e.g. the Process.Exited callback) —
     /// callers expect to be able to take the supervisor lock without re-entry.
+    /// <para>Carries the exit code and uptime as well as the pid (#242), so the Plugins page can say
+    /// why a plugin stopped instead of only that it did.</para>
     /// </summary>
-    event Action<int>? ProcessExited;
+    event Action<PluginProcessExit>? ProcessExited;
 }

@@ -3402,4 +3402,25 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   <data name="ThemeShare_ImportFailed" xml:space="preserve">
     <value>Import nie powiódł się: {0}</value>
   </data>
+  <data name="Plugin_Health_CouldNotStart" xml:space="preserve">
+    <value>Nie udało się uruchomić na tym komputerze (kod {0}). Ponowne uruchomienie tego nie naprawi.</value>
+  </data>
+  <data name="Plugin_Health_CrashedWhileStarting" xml:space="preserve">
+    <value>Awaria podczas uruchamiania (kod {0}).</value>
+  </data>
+  <data name="Plugin_Health_ClosedAtStartup" xml:space="preserve">
+    <value>Działanie zakończyło się zaraz po uruchomieniu.</value>
+  </data>
+  <data name="Plugin_Health_Crashed" xml:space="preserve">
+    <value>Awaria (kod {0}).</value>
+  </data>
+  <data name="Plugin_Health_Stopped" xml:space="preserve">
+    <value>Zatrzymano.</value>
+  </data>
+  <data name="Plugin_CouldNotStartBanner" xml:space="preserve">
+    <value>Nie można uruchomić {0} na tym komputerze. Ponowne uruchomienie tego nie naprawi: wyślij swój log RoRoRo do 626 Labs.</value>
+  </data>
+  <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
+    <value>{0} raz po raz przerywa działanie przy uruchamianiu. Ponowne uruchomienie tego nie naprawi: wyślij swój log RoRoRo do 626 Labs.</value>
+  </data>
 </root>

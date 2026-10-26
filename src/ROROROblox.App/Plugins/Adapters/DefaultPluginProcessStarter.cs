@@ -31,7 +31,7 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
         _job = job;
     }
 
-    public event Action<int>? ProcessExited;
+    public event Action<PluginProcessExit>? ProcessExited;
 
     /// <summary>
     /// The launch's <see cref="ProcessStartInfo"/>, split out so the environment contract is
@@ -98,12 +98,14 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
             pidRead.Wait(TimeSpan.FromSeconds(10));
             // ExitCode is valid once Exited has fired; read it before Dispose. The hex
             // form is what discriminates crash class (0xE0434352 = managed exception).
-            var exitCodeHex = "unknown";
-            try { exitCodeHex = "0x" + process.ExitCode.ToString("X8"); } catch { }
+            int? exitCode = null;
+            try { exitCode = process.ExitCode; } catch { }
+            var exitCodeHex = exitCode is { } c ? "0x" + c.ToString("X8") : "unknown";
+            var uptime = DateTime.UtcNow - startedUtc;
             _log?.LogInformation(
                 "Plugin process exited: {PluginId} pid {Pid} code {ExitCodeHex} after {UptimeSeconds:F1}s.",
-                pluginId, pid, exitCodeHex, (DateTime.UtcNow - startedUtc).TotalSeconds);
-            try { ProcessExited?.Invoke(pid); }
+                pluginId, pid, exitCodeHex, uptime.TotalSeconds);
+            try { ProcessExited?.Invoke(new PluginProcessExit(pid, exitCode, uptime)); }
             catch { /* never let a subscriber's throw take the host down */ }
             try { process.Dispose(); } catch { }
             pidRead.Dispose();
