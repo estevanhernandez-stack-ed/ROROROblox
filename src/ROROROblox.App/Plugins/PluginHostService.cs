@@ -82,6 +82,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     internal IMetricReportSink? MetricSinkForTests => _metricSink;
 
     private readonly IHostBuildIdentity _buildIdentity;
+    private readonly ROROROblox.Core.Diagnostics.ILastExitSource? _lastExit;
 
     public PluginHostService(
         IInstalledPluginsLookup registry,
@@ -98,7 +99,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         Adapters.IThemePaletteSource? themePalettes = null,
         ISavedAccountsProvider? savedAccounts = null,
         IMetricReportSink? metricSink = null,
-        IHostBuildIdentity? buildIdentity = null)
+        IHostBuildIdentity? buildIdentity = null,
+        ROROROblox.Core.Diagnostics.ILastExitSource? lastExit = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -117,6 +119,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         // Optional like the three above, but never null at runtime: tests that do not care get the
         // real probe (dev flavour under xUnit), so GetHostInfo always answers the new fields.
         _buildIdentity = buildIdentity ?? new HostBuildIdentity();
+        _lastExit = lastExit;
     }
 
     // =====================================================================
@@ -183,6 +186,10 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
             InformationalVersion = _buildIdentity.InformationalVersion,
             // A host with no saved-accounts source has nothing to load; only a test host lacks one.
             AccountsLoaded = _savedAccounts?.IsLoaded ?? true,
+            // No recorder (a test host) reads as a first run: nothing to report.
+            LastExitReason = _lastExit?.Previous.Reason ?? ROROROblox.Core.Diagnostics.LastExitRecorder.None,
+            LastExitDetail = _lastExit?.Previous.Detail ?? string.Empty,
+            LastExitAtUnixMs = _lastExit?.Previous.At?.ToUnixTimeMilliseconds() ?? 0,
         });
     }
 

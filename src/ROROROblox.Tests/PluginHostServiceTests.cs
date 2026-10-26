@@ -171,6 +171,40 @@ public class PluginHostServiceTests
         Assert.False(string.IsNullOrWhiteSpace(info.InformationalVersion));
     }
 
+    private sealed class FakeLastExit : ILastExitSource
+    {
+        public FakeLastExit(LastExit previous) => Previous = previous;
+        public LastExit Previous { get; }
+    }
+
+    [Fact]
+    public async Task GetHostInfo_ReportsLastExitFromProvider()
+    {
+        var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
+        var at = DateTimeOffset.FromUnixTimeMilliseconds(1_761_350_400_123);
+        var lastExit = new FakeLastExit(new LastExit(LastExitRecorder.Crash, "System.X 0x80263001 boom", at));
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper(), lastExit: lastExit);
+
+        var info = await service.GetHostInfo(new Empty(), FakeServerCallContext.Create());
+
+        Assert.Equal("crash", info.LastExitReason);
+        Assert.Equal("System.X 0x80263001 boom", info.LastExitDetail);
+        Assert.Equal(1_761_350_400_123L, info.LastExitAtUnixMs);
+    }
+
+    [Fact]
+    public async Task GetHostInfo_NoLastExitProvider_ReportsNone()
+    {
+        var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
+
+        var info = await service.GetHostInfo(new Empty(), FakeServerCallContext.Create());
+
+        Assert.Equal("none", info.LastExitReason);
+        Assert.Equal(string.Empty, info.LastExitDetail);
+        Assert.Equal(0L, info.LastExitAtUnixMs);
+    }
+
     [Fact]
     public async Task GetRunningAccounts_ReturnsListFromProvider()
     {

@@ -29,6 +29,7 @@ public partial class App : Application
     private SingleInstanceGuard? _singleInstance;
     private ServiceProvider? _services;
     private ILoggerFactory? _loggerFactory;
+    private ROROROblox.Core.Diagnostics.LastExitRecorder? _lastExit; // #246, begun in OnStartup
     private ILogger<App>? _log;
 
     /// <summary>
@@ -513,6 +514,33 @@ public partial class App : Application
         var services = new ServiceCollection();
         ConfigureServices(services, _loggerFactory);
         _services = services.BuildServiceProvider();
+
+        // #246: say how the last session ended, and mark this one running. After the single-instance
+        // guard (a second instance must not touch the record) and before the mutex name resolve /
+        // StartPluginHostListener, so GetHostInfo can answer from the first call. Resolving the
+        // recorder pulls in nothing else, so IMutexHolder stays unresolved until its own spot.
+        try
+        {
+            var lastExit = _services.GetRequiredService<ROROROblox.Core.Diagnostics.LastExitRecorder>();
+            lastExit.Begin();
+            _lastExit = lastExit;
+            var prev = lastExit.Previous;
+            // Local, like every other timestamp in the log, so a field report reads in one zone. For
+            // "unknown" nothing recorded the end, so the time is when that session started.
+            _log.LogInformation("Previous session ended: {Reason}{Detail} ({When} {At}).",
+                prev.Reason,
+                string.IsNullOrEmpty(prev.Detail) ? string.Empty : $" ({prev.Detail})",
+                prev.Reason == ROROROblox.Core.Diagnostics.LastExitRecorder.Unknown ? "started" : "at",
+                prev.At?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff zzz") ?? "n/a");
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Last-exit recorder failed to begin; continuing without it.");
+        }
+
+        // #246: ask Windows to restart us after a crash, hang or Store update. Past the single-instance
+        // guard so an early-exiting second instance never registers. Resolves nothing from DI.
+        ApplicationRestart.Register(_log);
 
         // Apply the saved theme synchronously so the first paint is already on the chosen
         // palette. The async path was deadlocking — IAppSettings.GetActiveThemeIdAsync
@@ -1266,6 +1294,10 @@ public partial class App : Application
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "ROROROblox");
 
+        // #246: last-exit.json. Registered here, begun in OnStartup right after the container builds.
+        services.AddSingleton(sp => new ROROROblox.Core.Diagnostics.LastExitRecorder(
+            dataDir, TimeProvider.System, sp.GetRequiredService<ILogger<ROROROblox.Core.Diagnostics.LastExitRecorder>>()));
+
         // Discord presence + Join config (Task 9) — DPAPI-encrypted, alongside accounts.dat and
         // consent.dat under the same data dir. Registered unconditionally, independent of whether
         // Discord:ApplicationId is configured: Preferences needs to read/write the toggle state
@@ -1524,7 +1556,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.IThemePaletteSource>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.ISavedAccountsProvider>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.IMetricReportSink>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.IMetricReportSink>(),
+            lastExit: sp.GetRequiredService<ROROROblox.Core.Diagnostics.LastExitRecorder>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).
@@ -3324,10 +3357,18 @@ public partial class App : Application
         Shutdown(0);
     }
 
+    /// <summary>#246: Windows is ending the session (logoff or shutdown); WPF still runs OnExit after this, which must not read as clean.</summary>
+    protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
+    {
+        _lastExit?.RecordSessionEnding(e.ReasonSessionEnding.ToString());
+        base.OnSessionEnding(e);
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
         IsShuttingDown = true;
         _log?.LogInformation("ROROROblox exiting (code {Code}).", e.ApplicationExitCode);
+        _lastExit?.RecordClean(); // no-op after a recorded crash or session end
 
         // Stop the plugin host BEFORE disposing the service provider. Kestrel needs the
         // logger / DI graph alive to drain in-flight calls cleanly. Wrap defensively —
@@ -3498,12 +3539,23 @@ public partial class App : Application
     /// <summary>
     /// Three nets so a stray exception writes to the log instead of vanishing into a Windows
     /// Error Reporting dialog. None of these <em>recover</em> — they record. The app still
-    /// shuts down on a true unhandled crash; we just have evidence afterward.
+    /// shuts down on a true unhandled crash; we just have evidence afterward. The one exception
+    /// is a transient DWM composition fault (#246): the dispatcher net marks that one handled.
     /// </summary>
     private void WireGlobalExceptionHandlers()
     {
         DispatcherUnhandledException += (_, args) =>
         {
+            // #246, 2026-10-24: two field crashes on v1.33.0, identical. A desktop-composition flip
+            // (0x80263001) lands in WindowChromeWorker's WM_DWMCOMPOSITIONCHANGED handler while DWM
+            // is mid-flip; the next flip re-extends the frame, so the window is fine. Warn and carry on.
+            if (CompositionFaultFilter.IsTransientCompositionFault(args.Exception.HResult, args.Exception.StackTrace))
+            {
+                _log?.LogWarning(args.Exception, "Desktop composition flipped under the window chrome; ignoring (#246).");
+                args.Handled = true;
+                return;
+            }
+
             _log?.LogError(args.Exception, "Unhandled WPF dispatcher exception.");
             // Don't mark Handled — let the app crash visibly. Silent crash is worse than loud crash.
         };
@@ -3513,6 +3565,10 @@ public partial class App : Application
             if (args.ExceptionObject is Exception ex)
             {
                 _log?.LogCritical(ex, "Unhandled AppDomain exception (terminating={IsTerminating}).", args.IsTerminating);
+                if (args.IsTerminating)
+                {
+                    _lastExit?.RecordCrash(ex);
+                }
             }
             else
             {

@@ -151,6 +151,8 @@ The following need **no capability** — every plugin can call them after handsh
 
 From NuGet 0.13.0 it also returns `accounts_loaded`: false while RoRoRo is still reading saved accounts at startup. **Do not act on account calls before it is true.** Until then, `GetAccounts` waits up to 10 s and then fails with gRPC `Unavailable` and a message starting `accounts-loading`, and `RequestLaunch` / `RequestLaunchTarget` wait the same and then refuse with `reason_code = "accounts-loading"`. Both are retryable. Neither answers with an empty roster, which is what a 0.12 host did in this window and why an agent once concluded the user had no accounts. A host older than 0.13 leaves the field false; treat a host whose `version` predates 1.35 as loaded.
 
+From NuGet 0.14.0 it also returns `last_exit_reason`, `last_exit_detail` and `last_exit_at_unix_ms`: how the *previous* RoRoRo session ended. Reason is `none` (first run), `clean`, `session-ending` (Windows logoff or shutdown; the detail says which), `crash` (the detail is the exception type, HResult and message, nothing else) or `unknown` (the host was killed, lost power, or was updated without notice). The timestamp is when that record was written, 0 for `none`. Older hosts leave all three empty.
+
 `UpdateUI` and `RemoveUI` are ungated by *capability*, but they are **not unguarded**: they
 only accept a `UIHandle` your plugin created. Passing a handle you don't own — or one that was
 never issued — throws `PermissionDenied`. Both cases return the identical error, so you cannot

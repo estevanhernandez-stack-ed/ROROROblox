@@ -640,6 +640,62 @@ public class PresenceServiceTests
         }
     }
 
+    [Fact]
+    public async Task PollOnceAsync_LogsPresenceOnChange_NotOnEveryPoll_ButStillRaisesEveryPoll()
+    {
+        // Field report 2026-10-25: the unchanged per-poll line was 97% of log volume. The log is
+        // change-only; the event is not, because the row's staleness clock rides on it.
+        var accountA = Guid.NewGuid();
+        var accountB = Guid.NewGuid();
+        const string cookieB = "FAKE_COOKIE_B_FOR_TESTS_ONLY";
+        const long userA = 501, userB = 502;
+        var store = new FakeAccountStore { CookieByAccount = { [accountA] = Cookie, [accountB] = cookieB } };
+        var api = new FakeRobloxApi
+        {
+            PresenceByCookie =
+            {
+                [Cookie] = [new UserPresence(userA, UserPresenceType.OnlineWebsite, null, null, null)],
+                [cookieB] = [new UserPresence(userB, UserPresenceType.OnlineWebsite, null, null, null)],
+            },
+            GameNameByPlaceId = { [111] = "Game", [222] = "Game" },
+        };
+        var log = new CapturingLogger<PresenceService>();
+        var targets = new[] { new PresenceTarget(accountA, userA) };
+        using var service = new PresenceService(api, store, () => targets, log,
+            pollInterval: null, maxJitter: NoJitter);
+        var events = 0;
+        service.AccountPresenceUpdated += (_, _) => events++;
+
+        int LinesFor(Guid id) => log.Snapshot().Count(l => l.Contains($"Presence for account {id}:"));
+
+        await service.PollOnceAsync();
+        await service.PollOnceAsync();
+        await service.PollOnceAsync();
+        Assert.Equal(1, LinesFor(accountA));
+        Assert.Equal(3, events);
+
+        // Type changes: second line.
+        api.PresenceByCookie[Cookie] = [new UserPresence(userA, UserPresenceType.InGame, 111, "job", "Game")];
+        await service.PollOnceAsync();
+        Assert.Equal(2, LinesFor(accountA));
+
+        // Same type, different place: third line.
+        api.PresenceByCookie[Cookie] = [new UserPresence(userA, UserPresenceType.InGame, 222, "job", "Game")];
+        await service.PollOnceAsync();
+        Assert.Equal(3, LinesFor(accountA));
+
+        // Unchanged again: no new line, event still raised.
+        await service.PollOnceAsync();
+        Assert.Equal(3, LinesFor(accountA));
+        Assert.Equal(6, events);
+
+        // A second account logs its own first line.
+        targets = [new PresenceTarget(accountB, userB)];
+        await service.PollOnceAsync();
+        Assert.Equal(1, LinesFor(accountB));
+        Assert.Equal(3, LinesFor(accountA));
+    }
+
     // ---- fakes ----
 
     private sealed class FakeAccountStore : IAccountStore

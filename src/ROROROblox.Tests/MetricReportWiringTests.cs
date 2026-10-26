@@ -99,6 +99,9 @@ public class MetricReportWiringTests
         public object? GetService(Type serviceType)
         {
             if (serviceType == typeof(IMetricReportSink)) return sink;
+            // Sealed, so a proxy cannot stand in; construction touches no disk until Begin().
+            if (serviceType == typeof(ROROROblox.Core.Diagnostics.LastExitRecorder))
+                return new ROROROblox.Core.Diagnostics.LastExitRecorder(Path.Combine(Path.GetTempPath(), "rororo-wiring-stub"));
             if (_made.TryGetValue(serviceType, out var existing)) return existing;
 
             // PluginUITranslator is the factory's one concrete dependency, and it is sealed, so a

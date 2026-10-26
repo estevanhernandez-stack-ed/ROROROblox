@@ -140,6 +140,16 @@ message HostInfo {
   // than answer with an empty roster. Older hosts leave it false; treat a host whose version
   // predates 1.35 as loaded.
   bool accounts_loaded = 7;
+  // 0.14.0: how the PREVIOUS RoRoRo session ended, so a caller that just found the host freshly
+  // started can say why. last_exit_reason is one of "none" (first run, no record), "clean",
+  // "session-ending" (Windows logoff or shutdown; detail names which), "crash" (detail is the
+  // exception type, HResult and message, nothing more) or "unknown" (the record still said
+  // running: killed, power loss, or servicing that gave no notice). last_exit_at_unix_ms is when
+  // that record was written, 0 for "none": the exit time, except for "unknown", where nothing
+  // recorded the end and it is the time that session started. Older hosts leave all three empty.
+  string last_exit_reason = 8;
+  string last_exit_detail = 9;
+  int64 last_exit_at_unix_ms = 10;
 }
 
 message RunningAccountsList {
