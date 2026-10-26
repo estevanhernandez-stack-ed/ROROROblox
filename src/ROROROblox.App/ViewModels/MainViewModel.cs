@@ -1934,6 +1934,26 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.BrowserTrackerId = generated;
             }
 
+            // #241, live 2026-10-26: a closing game window makes Roblox spawn a windowless
+            // `--launch-to-tray` child (seamless takeover spawns one too), and an idle tray client
+            // takes the NEXT roblox-player launch. The game then runs in that untracked process and
+            // our tracked launcher exits after ~4 s. End the idle tray clients right before the
+            // launch so it gets its own process. Here because this is the one site every launch path
+            // crosses (UI, plugin, Squad, auto-rejoin, Recycle); Recycle's stop has already finished
+            // by the time its relaunch reaches this line. The classifier fails closed: anything
+            // windowed, tracked, or whose command line it cannot read is left alone. Pids are
+            // snapshotted here on the UI thread (the tracker hands back a copy); the kill and its
+            // bounded exit wait run on the pool so they never block the UI. Never blocks the launch.
+            try
+            {
+                var trackedPids = _processTracker.Attached.Values.Select(p => p.Pid).ToHashSet();
+                await Task.Run(() => _instanceStopper.StopIdleTrayClients(trackedPids.Contains));
+            }
+            catch (Exception ex)
+            {
+                _log.LogDebug(ex, "Idle tray client clear failed before launch; launching anyway.");
+            }
+
             var result = await _launcher.LaunchAsync(cookie, target, fpsCap: summary.FpsCap, browserTrackerId: summary.BrowserTrackerId);
             switch (result)
             {
