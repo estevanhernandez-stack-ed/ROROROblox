@@ -29,6 +29,7 @@ public partial class App : Application
     private SingleInstanceGuard? _singleInstance;
     private ServiceProvider? _services;
     private ILoggerFactory? _loggerFactory;
+    private ROROROblox.Core.Diagnostics.LastExitRecorder? _lastExit; // #246, begun in OnStartup
     private ILogger<App>? _log;
 
     /// <summary>
@@ -3534,8 +3535,6 @@ public partial class App : Application
     /// shuts down on a true unhandled crash; we just have evidence afterward. The one exception
     /// is a transient DWM composition fault (#246): the dispatcher net marks that one handled.
     /// </summary>
-    private ROROROblox.Core.Diagnostics.LastExitRecorder? _lastExit;
-
     private void WireGlobalExceptionHandlers()
     {
         DispatcherUnhandledException += (_, args) =>
