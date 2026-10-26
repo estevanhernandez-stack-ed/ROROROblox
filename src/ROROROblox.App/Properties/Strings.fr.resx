@@ -2923,7 +2923,7 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
     <value>Autoriser le plugin à demander à RoRoRo de lancer un compte Roblox.</value>
   </data>
   <data name="Plugin_Cap_LaunchTarget" xml:space="preserve">
-    <value>Autoriser le plugin à lancer un de vos comptes dans un serveur Roblox à partir d'un lien ou d'un ami qu'il fournit.</value>
+    <value>Autoriser le plugin à lancer un de vos comptes dans un serveur Roblox qu'il choisit, à partir d'un lien, d'un ami ou d'un serveur précis.</value>
   </data>
   <data name="Plugin_Cap_MarkAccountActive" xml:space="preserve">
     <value>Permettre à ce plugin d'indiquer à RoRoRo qu'un compte est toujours actif (pour que les avertissements d'inactivité ne se déclenchent pas à tort). Il ne peut pas voir ce que vous tapez ou faites — seulement marquer un compte comme actif.</value>

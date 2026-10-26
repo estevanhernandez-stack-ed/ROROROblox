@@ -2923,7 +2923,7 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
     <value>Permitir que el plugin le pida a RoRoRo que inicie una cuenta de Roblox.</value>
   </data>
   <data name="Plugin_Cap_LaunchTarget" xml:space="preserve">
-    <value>Permitir que el plugin inicie una de tus cuentas en un servidor de Roblox a partir de un enlace o un amigo que proporcione.</value>
+    <value>Permitir que el plugin inicie una de tus cuentas en un servidor de Roblox que elija, a partir de un enlace, un amigo o un servidor concreto.</value>
   </data>
   <data name="Plugin_Cap_MarkAccountActive" xml:space="preserve">
     <value>Permitir que este plugin le indique a RoRoRo que una cuenta sigue activa (para que las advertencias de inactividad no salten sin motivo). No puede ver lo que escribes o haces, solo marcar una cuenta como activa.</value>

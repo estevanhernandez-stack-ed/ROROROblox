@@ -2923,7 +2923,7 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
     <value>Dem Plugin erlauben, RoRoRo zu bitten, ein Roblox-Konto zu starten.</value>
   </data>
   <data name="Plugin_Cap_LaunchTarget" xml:space="preserve">
-    <value>Dem Plugin erlauben, eines deiner Konten über einen von ihm bereitgestellten Link oder Freund in einen Roblox-Server zu starten.</value>
+    <value>Dem Plugin erlauben, eines deiner Konten in einen Roblox-Server zu starten, den es auswählt: über einen Link, einen Freund oder einen bestimmten Server.</value>
   </data>
   <data name="Plugin_Cap_MarkAccountActive" xml:space="preserve">
     <value>Diesem Plugin erlauben, RoRoRo mitzuteilen, dass ein Konto noch aktiv ist (damit Inaktivitätswarnungen nicht fälschlich auslösen). Es kann nicht sehen, was du tippst oder tust — nur ein Konto als aktiv markieren.</value>

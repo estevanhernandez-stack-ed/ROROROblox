@@ -381,7 +381,7 @@
   "Plugin_Cap_Accounts": "Zobacz twoje zapisane konta — nazwy i które jest główne. Nigdy nie odczytuje cookie ani haseł.",
   "Plugin_Cap_CurrentServer": "Pozwól wtyczce odczytać link prywatnego serwera, który ostatnio uruchomiłeś, aby mogła go udostępnić.",
   "Plugin_Cap_FocusForeignWindows": "Wtyczka będzie aktywować / przełączać okna innych aplikacji.",
-  "Plugin_Cap_LaunchTarget": "Pozwól wtyczce uruchomić jedno z twoich kont na serwerze Roblox z podanego przez nią linku lub znajomego.",
+  "Plugin_Cap_LaunchTarget": "Pozwól wtyczce uruchomić jedno z twoich kont na serwerze Roblox, który sama wybierze: z linku, od znajomego lub na jednym konkretnym serwerze.",
   "Plugin_Cap_MarkAccountActive": "Pozwól tej wtyczce informować RoRoRo, że konto jest nadal aktywne (aby ostrzeżenia o bezczynności nie uruchamiały się błędnie). Nie widzi, co piszesz lub robisz — może tylko oznaczyć konto jako aktywne.",
   "Plugin_Cap_MemoryPressure": "Powiadamiaj wtyczkę, gdy zużycie pamięci przez konto wzrośnie na tyle, że grozi wyczerpaniem pamięci RAM.",
   "Plugin_Cap_MetricsReport": "Przesyłać zebrane liczby, aby RoRoRo mógł Cię o nich powiadamiać",
