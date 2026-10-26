@@ -670,8 +670,23 @@ public partial class App : Application
             // minutes later. Every time. Raising a dialog about that put an interruption on the
             // ordinary path and taught the user to dismiss dialogs unread, which is a debt the
             // BLOCKED modal beside it then pays. Clear it and say so; do not ask.
-            var disposition = AppLifecycle.LeftoverStartupDecision.Decide(leftover.Windowless, leftover.Windowed);
-            if (disposition == AppLifecycle.LeftoverDisposition.ClearSilently)
+            var disposition = AppLifecycle.LeftoverStartupDecision.Decide(
+                leftover.Windowless, leftover.Windowed, ApplicationRestart.IsWindowsRestart(e.Args));
+            if (disposition == AppLifecycle.LeftoverDisposition.ContinueUnattended)
+            {
+                // #255: Windows restarted us (crash or Store update) and nobody is here to answer a
+                // dialog. Keep every live game, clear only the headless strays, and carry on; the
+                // startup scan re-attaches tagged clients by title.
+                _log.LogInformation(
+                    "Startup: restarted by Windows with {Windowed} windowed client(s) open — continuing "
+                    + "without asking; tagged clients re-attach.",
+                    leftover.Windowed);
+                if (leftover.Windowless > 0)
+                {
+                    ClearLeftoverStrays();
+                }
+            }
+            else if (disposition == AppLifecycle.LeftoverDisposition.ClearSilently)
             {
                 _log.LogInformation(
                     "Startup: {Windowless} headless Roblox stray(s) left over from a previous "
