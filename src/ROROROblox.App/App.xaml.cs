@@ -514,6 +514,26 @@ public partial class App : Application
         ConfigureServices(services, _loggerFactory);
         _services = services.BuildServiceProvider();
 
+        // #246: say how the last session ended, and mark this one running. After the single-instance
+        // guard (a second instance must not touch the record) and before the mutex name resolve /
+        // StartPluginHostListener, so GetHostInfo can answer from the first call. Resolving the
+        // recorder pulls in nothing else, so IMutexHolder stays unresolved until its own spot.
+        try
+        {
+            var lastExit = _services.GetRequiredService<ROROROblox.Core.Diagnostics.LastExitRecorder>();
+            lastExit.Begin();
+            _lastExit = lastExit;
+            var prev = lastExit.Previous;
+            _log.LogInformation("Previous session ended: {Reason}{Detail} at {At}.",
+                prev.Reason,
+                string.IsNullOrEmpty(prev.Detail) ? string.Empty : $" ({prev.Detail})",
+                prev.At?.ToString("o") ?? "n/a");
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Last-exit recorder failed to begin; continuing without it.");
+        }
+
         // Apply the saved theme synchronously so the first paint is already on the chosen
         // palette. The async path was deadlocking — IAppSettings.GetActiveThemeIdAsync
         // continues on the UI thread (ConfigureAwait(true)), and we were blocking the UI
@@ -1266,6 +1286,10 @@ public partial class App : Application
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "ROROROblox");
 
+        // #246: last-exit.json. Registered here, begun in OnStartup right after the container builds.
+        services.AddSingleton(sp => new ROROROblox.Core.Diagnostics.LastExitRecorder(
+            dataDir, TimeProvider.System, sp.GetRequiredService<ILogger<ROROROblox.Core.Diagnostics.LastExitRecorder>>()));
+
         // Discord presence + Join config (Task 9) — DPAPI-encrypted, alongside accounts.dat and
         // consent.dat under the same data dir. Registered unconditionally, independent of whether
         // Discord:ApplicationId is configured: Preferences needs to read/write the toggle state
@@ -1524,7 +1548,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.IThemePaletteSource>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.ISavedAccountsProvider>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.IMetricReportSink>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.IMetricReportSink>(),
+            lastExit: sp.GetRequiredService<ROROROblox.Core.Diagnostics.LastExitRecorder>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).
@@ -3324,10 +3349,18 @@ public partial class App : Application
         Shutdown(0);
     }
 
+    /// <summary>#246: Windows is ending the session (logoff or shutdown); WPF still runs OnExit after this, which must not read as clean.</summary>
+    protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
+    {
+        _lastExit?.RecordSessionEnding(e.ReasonSessionEnding.ToString());
+        base.OnSessionEnding(e);
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
         IsShuttingDown = true;
         _log?.LogInformation("ROROROblox exiting (code {Code}).", e.ApplicationExitCode);
+        _lastExit?.RecordClean(); // no-op after a recorded crash or session end
 
         // Stop the plugin host BEFORE disposing the service provider. Kestrel needs the
         // logger / DI graph alive to drain in-flight calls cleanly. Wrap defensively —
@@ -3501,6 +3534,8 @@ public partial class App : Application
     /// shuts down on a true unhandled crash; we just have evidence afterward. The one exception
     /// is a transient DWM composition fault (#246): the dispatcher net marks that one handled.
     /// </summary>
+    private ROROROblox.Core.Diagnostics.LastExitRecorder? _lastExit;
+
     private void WireGlobalExceptionHandlers()
     {
         DispatcherUnhandledException += (_, args) =>
@@ -3524,6 +3559,10 @@ public partial class App : Application
             if (args.ExceptionObject is Exception ex)
             {
                 _log?.LogCritical(ex, "Unhandled AppDomain exception (terminating={IsTerminating}).", args.IsTerminating);
+                if (args.IsTerminating)
+                {
+                    _lastExit?.RecordCrash(ex);
+                }
             }
             else
             {
