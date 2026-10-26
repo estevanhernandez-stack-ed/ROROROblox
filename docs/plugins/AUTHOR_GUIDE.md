@@ -317,6 +317,22 @@ if (current.Present)
 
 The host owns all link parsing, cookie handling, and the authenticated launch — your plugin only passes links and account ids around. The plaintext account cookie never leaves RoRoRo. These additions are wire-compatible: `contractVersion` stays `"1.0"`; you only need NuGet `0.2.0`.
 
+### Join one named server (host 0.14.0+)
+
+`RequestLaunchTarget` can also name a single public server. Listing servers is your plugin's job: query Roblox's public `https://games.roblox.com/v1/games/{placeId}/servers/Public` (`sortOrder=Asc` puts the fewest players first; page with `limit` and `cursor`), then pass the place id you queried plus the chosen entry's `id` as `game_instance`.
+
+```csharp
+var joined = await client.RequestLaunchTargetAsync(new LaunchTargetRequest
+{
+    AccountId = accountId,
+    GameInstance = new GameInstance { PlaceId = placeId, GameInstanceId = entry.Id },
+}, callOptions);
+```
+
+- Both halves must come from the same list entry. A half pair or a malformed id is refused with `reason_code = "invalid-target"`; a host older than 0.14.0 refuses the request as having no target.
+- A full server queues, and the launch can take minutes. The host never falls back to matchmaking.
+- Read `GetRunningAccounts` afterwards to see where the account landed. Its `place_id` can be another place in the same universe when a game teleports players.
+
 ### Read idle time — drive a keep-active policy without touching the client
 
 `GetAccountActivity()` (NuGet 0.3.0+, capability `host.queries.account-activity`) returns how long each running account has gone without activity. Timestamps only — RoRoRo never reports what a user typed or clicked, only *when* it last saw them do something.
