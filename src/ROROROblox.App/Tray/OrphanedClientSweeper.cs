@@ -48,6 +48,8 @@ internal sealed class OrphanedClientSweeper : IDisposable
     /// gets muted. Latched on the SET, so a new orphan still speaks up immediately.
     /// </summary>
     private HashSet<int> _reportedUnowned = [];
+    /// <summary>Orphan set already explained as "declined, more than one client left". Same latch idea.</summary>
+    private HashSet<int> _reportedAmbiguous = [];
     private readonly object _exitsLock = new();
     private Timer? _timer;
     private int _sweeping;
@@ -128,10 +130,29 @@ internal sealed class OrphanedClientSweeper : IDisposable
             // again means the state no longer describes reality, and a later orphan set that
             // happens to match the stale one would pass silently.
             _reportedUnowned = [];
+            _reportedAmbiguous = [];
             return;
         }
 
         var attributions = ClientSuccession.Attribute(exits, orphans, now);
+
+        if (ClientSuccession.IsAmbiguous(exits, orphans, now))
+        {
+            var orphanPids = orphans.Select(o => o.Pid).ToHashSet();
+            if (!orphanPids.SetEquals(_reportedAmbiguous))
+            {
+                _log.LogInformation(
+                    "{Exits} clients left in the last {Seconds} s; not guessing which one pid(s) {Pids} replaced.",
+                    exits.Count(e => now - e.At <= ClientSuccession.Window),
+                    (int)ClientSuccession.Window.TotalSeconds,
+                    string.Join(", ", orphanPids));
+            }
+            _reportedAmbiguous = orphanPids;
+        }
+        else
+        {
+            _reportedAmbiguous = [];
+        }
 
         foreach (var (pid, accountId) in attributions)
         {

@@ -32,4 +32,16 @@ public interface IRobloxInstanceStopper
     /// Returns the count actually stopped.
     /// </summary>
     int StopWindowless();
+
+    /// <summary>
+    /// Force-closes the idle Roblox tray clients and nothing else (#241): a client that Roblox
+    /// itself started with <c>--launch-to-tray</c>, which has no window and which RoRoRo is not
+    /// tracking. Left alive, it takes the next launch and the account lands in the tray instead
+    /// of a game. Selection runs through <see cref="TrayClient.IsIdleTrayClient"/>, which fails
+    /// CLOSED: a tracked loading client, a windowed game, a process whose command line could not
+    /// be read and a browser-started loader are never touched. <paramref name="isTracked"/> says
+    /// whether RoRoRo owns a pid. Same kill + bounded exit-wait budget as <see cref="StopAll"/>.
+    /// Degrade-safe: a probe failure resolves to 0. Returns the count actually stopped.
+    /// </summary>
+    int StopIdleTrayClients(Func<int, bool> isTracked);
 }

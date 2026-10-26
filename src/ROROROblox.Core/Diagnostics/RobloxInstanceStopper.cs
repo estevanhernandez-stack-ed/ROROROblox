@@ -84,6 +84,33 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
         return KillAndWaitAll(pids, "StopWindowless");
     }
 
+    public int StopIdleTrayClients(Func<int, bool> isTracked)
+    {
+        ArgumentNullException.ThrowIfNull(isTracked);
+
+        IReadOnlyList<RobloxProcessInfo> players;
+        try
+        {
+            players = _probe.GetRunningPlayers();
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "StopIdleTrayClients: running-process scan failed; stopped nothing.");
+            return 0;
+        }
+
+        // The safety-critical filter lives in TrayClient.IsIdleTrayClient and fails closed: an
+        // unreadable command line, a window, or a tracked pid all keep the process alive.
+        var pids = players.Where(p => TrayClient.IsIdleTrayClient(p, isTracked)).Select(p => p.Pid).ToArray();
+        if (pids.Length == 0)
+        {
+            return 0;
+        }
+
+        // KillAndWaitAll logs the signalled count at Information under this label.
+        return KillAndWaitAll(pids, "StopIdleTrayClients");
+    }
+
     /// <summary>
     /// Shared kill-and-wait teardown for <see cref="StopAll"/> and <see cref="StopWindowless"/>:
     /// best-effort kill of every pid (one failure doesn't abort the rest), then a bounded wait
