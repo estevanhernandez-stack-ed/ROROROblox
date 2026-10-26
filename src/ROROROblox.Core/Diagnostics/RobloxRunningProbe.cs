@@ -18,7 +18,7 @@ public sealed class RobloxRunningProbe : IRobloxRunningProbe
         try
         {
             return processes
-                .Select(p => new RobloxProcessInfo(p.Id, ReadHasWindow(() => p.MainWindowHandle)))
+                .Select(p => new RobloxProcessInfo(p.Id, ReadHasWindow(() => p.MainWindowHandle), ProcessCommandLine.TryRead(p.Id)))
                 .ToArray();
         }
         finally

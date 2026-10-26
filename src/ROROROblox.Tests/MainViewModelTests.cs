@@ -1080,6 +1080,91 @@ public class MainViewModelTests
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    // === #241: every launch ends idle Roblox tray clients first ===
+
+    [Fact]
+    public async Task Launch_ClearsIdleTrayClients_BeforeTheLauncherIsCalled()
+    {
+        var order = new List<string>();
+        var launcher = new RecordingSuccessLauncher { OrderLog = order };
+        var stopper = new FakeRobloxInstanceStopper { OrderLog = order };
+        var (vm, store, _, path) = Build(launcher, instanceStopper: stopper);
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(1));
+
+            Assert.Equal(new[] { "clear", "launch" }, order);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task Recycle_Relaunch_ClearsIdleTrayClientsBeforeEachLaunch()
+    {
+        // Recycle reaches LaunchAccountAsync through LaunchForRecycleAsync, the same shared path.
+        var order = new List<string>();
+        var launcher = new RecordingSuccessLauncher { OrderLog = order };
+        var stopper = new FakeRobloxInstanceStopper { OrderLog = order };
+        var (vm, store, _, path) = Build(launcher, instanceStopper: stopper, memoryWatchdog: new SpyMemoryWatchdog());
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(1));
+
+            Assert.True(await vm.RecycleAccountAsync(row));
+
+            Assert.Equal(new[] { "clear", "launch", "clear", "launch" }, order);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task Launch_StillLaunches_WhenTheTrayClientClearThrows()
+    {
+        var launcher = new RecordingSuccessLauncher();
+        var stopper = new FakeRobloxInstanceStopper { ThrowOnStopIdle = new InvalidOperationException("boom") };
+        var (vm, store, _, path) = Build(launcher, instanceStopper: stopper);
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(1));
+
+            Assert.Equal(1, stopper.StopIdleTrayClientsCalls);
+            Assert.Single(launcher.Launches);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task Launch_PassesTheStopperAnIsTrackedThatReflectsTheTracker()
+    {
+        var stopper = new FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = Build(new RecordingSuccessLauncher(), instanceStopper: stopper);
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            tracker.AttachedMap[Guid.NewGuid()] = new TrackedProcess(4242, DateTimeOffset.UtcNow);
+
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(1));
+
+            Assert.NotNull(stopper.LastIsTracked);
+            Assert.True(stopper.LastIsTracked!(4242));
+            Assert.False(stopper.LastIsTracked!(4243));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     [Fact]
     public async Task RecycleAccountCommand_FallsBackToResolvedTarget_WhenAccountNeverLaunchedThisSession()
     {
@@ -1691,6 +1776,18 @@ public class MainViewModelTests
         public int StopAll() => 0;
         public bool StopAccount(Guid accountId) { StoppedAccountIds.Add(accountId); return true; }
         public int StopWindowless() => 0;
+        public int StopIdleTrayClientsCalls;
+        public Func<int, bool>? LastIsTracked;
+        public List<string>? OrderLog;
+        public Exception? ThrowOnStopIdle;
+        public int StopIdleTrayClients(Func<int, bool> isTracked)
+        {
+            StopIdleTrayClientsCalls++;
+            LastIsTracked = isTracked;
+            OrderLog?.Add("clear");
+            if (ThrowOnStopIdle is not null) throw ThrowOnStopIdle;
+            return 0;
+        }
     }
 
     /// <summary>
@@ -1702,10 +1799,12 @@ public class MainViewModelTests
     {
         private int _nextPid = 5000;
         public readonly List<LaunchTarget> Launches = new();
+        public List<string>? OrderLog;
 
         public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
         {
             Launches.Add(target);
+            OrderLog?.Add("launch");
             return Task.FromResult<LaunchResult>(new LaunchResult.Started(_nextPid++, DateTimeOffset.UtcNow));
         }
 

@@ -104,6 +104,28 @@ public class ClientSuccessionTests
     }
 
     [Fact]
+    public void TheLive2026_10_26Case_ThreeExitsOneOrphan_AttributesNothing()
+    {
+        // Real timeline (#241). Orphan 47024 is a --launch-to-tray child of an untracked closing
+        // game; two launches were handed off to tray clients seconds apart. The old rule saw
+        // exactly one candidate (39596's exit, 2 s grace) and adopted 47024 for ELeonDog: wrong.
+        var eLeonDog = Guid.Parse("aaaaaaaa-0000-0000-0000-00000000e1e0");
+        var cElCPapa = Guid.Parse("bbbbbbbb-0000-0000-0000-00000000c1c0");
+        var day = new DateTimeOffset(2026, 10, 26, 12, 0, 0, TimeSpan.Zero);
+        var exits = new[]
+        {
+            new ClientSuccession.Exit(eLeonDog, 39596, day.Add(new TimeSpan(0, 0, 42, 23, 23))),
+            new ClientSuccession.Exit(cElCPapa, 45652, day.Add(new TimeSpan(0, 0, 42, 56, 857))),
+            new ClientSuccession.Exit(eLeonDog, 32012, day.Add(new TimeSpan(0, 0, 42, 57, 570))),
+        };
+        var orphans = new[] { new ClientSuccession.Orphan(47024, day.Add(new TimeSpan(0, 0, 42, 21, 235))) };
+        var now = day.Add(new TimeSpan(0, 0, 43, 1, 706));
+
+        Assert.Empty(ClientSuccession.Attribute(exits, orphans, now));
+        Assert.True(ClientSuccession.IsAmbiguous(exits, orphans, now));
+    }
+
+    [Fact]
     public void NullsAreNotACrashOnAPollingPath()
     {
         Assert.Empty(ClientSuccession.Attribute(null!, null!, T0));
