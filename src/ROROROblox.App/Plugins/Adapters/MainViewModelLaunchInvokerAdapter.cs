@@ -120,19 +120,30 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
         return Task.FromResult<(bool, string?, int, string?)>((true, null, 0, null));
     }
 
-    internal static (bool ok, string? reason) ValidateLaunchTargetArgs(string accountId, string? shareUrl, long? followUserId)
+    internal static (bool ok, string? reason, string? reasonCode) ValidateLaunchTargetArgs(
+        string accountId, string? shareUrl, long? followUserId, PluginGameInstance? gameInstance = null)
     {
-        if (string.IsNullOrWhiteSpace(accountId)) return (false, "accountId is required.");
-        if (!Guid.TryParse(accountId, out _)) return (false, $"accountId '{accountId}' is not a valid GUID.");
-        if (string.IsNullOrWhiteSpace(shareUrl) && followUserId is null) return (false, "A launch target (share_url or follow_user_id) is required.");
-        return (true, null);
+        if (string.IsNullOrWhiteSpace(accountId)) return (false, "accountId is required.", null);
+        if (!Guid.TryParse(accountId, out _)) return (false, $"accountId '{accountId}' is not a valid GUID.", null);
+        if (gameInstance is not null)
+        {
+            // Both halves, and the job id must be a GUID (it lands in a URL). A half pair is a
+            // refusal, never "any server".
+            if (!Guid.TryParse(gameInstance.JobId, out _) || ServerInstance.TryFrom(gameInstance.PlaceId, gameInstance.JobId) is null)
+            {
+                return (false, "game_instance needs a positive place_id and a game_instance_id that is a GUID.", PluginLaunchReasonCodes.InvalidTarget);
+            }
+            return (true, null, null);
+        }
+        if (string.IsNullOrWhiteSpace(shareUrl) && followUserId is null) return (false, "A launch target (share_url, follow_user_id or game_instance) is required.", null);
+        return (true, null, null);
     }
 
     public async Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(
-        string accountId, string? shareUrl, long? followUserId)
+        string accountId, string? shareUrl, long? followUserId, PluginGameInstance? gameInstance = null)
     {
-        var (argsOk, argsReason) = ValidateLaunchTargetArgs(accountId, shareUrl, followUserId);
-        if (!argsOk) return (false, argsReason, 0, null);
+        var (argsOk, argsReason, argsCode) = ValidateLaunchTargetArgs(accountId, shareUrl, followUserId, gameInstance);
+        if (!argsOk) return (false, argsReason, 0, argsCode);
 
         var id = Guid.Parse(accountId);
         // AccountsSnapshot: gRPC threadpool thread — never enumerate the UI-owned collection here.
@@ -159,6 +170,24 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
                 }
             }
             target = new LaunchTarget.FollowFriend(uid);
+        }
+        else if (gameInstance is not null)
+        {
+            // Validated above, so TryFrom cannot be null; built from the ONE pair the plugin sent.
+            var instance = ServerInstance.TryFrom(gameInstance.PlaceId, gameInstance.JobId)!;
+            var jobTarget = new LaunchTarget.GameJob(instance.PlaceId, instance.JobId);
+
+            // Same JoinViaFriend rule as the share-url branch; no FlaggedLaunchPrompt reachable.
+            var decision = _vm.DecideFlaggedLaunch(summary, jobTarget);
+            if (decision.Outcome is FlaggedLaunchOutcome.MainNotJoinable or FlaggedLaunchOutcome.MainNotInThatServer)
+            {
+                return (false, "This account joins through your main, and your main isn't in a joinable game.", 0, PluginLaunchReasonCodes.FollowTargetNotJoinable);
+            }
+            // Deliberately NOT ServerInstanceTargeting.Upgrade here. Upgrade reads the LAUNCHING
+            // account's own presence, which is offline (it must not be running), and with no server
+            // it degrades a GameJob to Place: silent matchmaking, the thing #247 forbids. A full
+            // server queues; it never lands the account somewhere else.
+            target = decision.Outcome == FlaggedLaunchOutcome.Follow ? decision.Target : jobTarget;
         }
         else
         {

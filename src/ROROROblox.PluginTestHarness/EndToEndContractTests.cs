@@ -1858,7 +1858,7 @@ public class EndToEndContractTests
             => Task.FromResult<(bool, string?, int, string?)>((false, "test stub", 0, null));
 
         public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(
-            string accountId, string? shareUrl, long? followUserId)
+            string accountId, string? shareUrl, long? followUserId, PluginGameInstance? gameInstance = null)
             => Task.FromResult<(bool, string?, int, string?)>((false, "test stub", 0, null));
 
         public Task<CurrentServerInfo?> GetCurrentServerAsync()

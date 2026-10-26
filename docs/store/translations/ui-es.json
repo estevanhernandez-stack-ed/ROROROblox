@@ -381,7 +381,7 @@
   "Plugin_Cap_Accounts": "Ver tus cuentas guardadas: los nombres y cuál es la principal. Nunca lee cookies ni contraseñas.",
   "Plugin_Cap_CurrentServer": "Permitir que el plugin lea el enlace del servidor privado que iniciaste más recientemente, para que pueda compartirlo.",
   "Plugin_Cap_FocusForeignWindows": "El plugin activará o enfocará las ventanas de otras aplicaciones.",
-  "Plugin_Cap_LaunchTarget": "Permitir que el plugin inicie una de tus cuentas en un servidor de Roblox a partir de un enlace o un amigo que proporcione.",
+  "Plugin_Cap_LaunchTarget": "Permitir que el plugin inicie una de tus cuentas en un servidor de Roblox que elija, a partir de un enlace, un amigo o un servidor concreto.",
   "Plugin_Cap_MarkAccountActive": "Permitir que este plugin le indique a RoRoRo que una cuenta sigue activa (para que las advertencias de inactividad no salten sin motivo). No puede ver lo que escribes o haces, solo marcar una cuenta como activa.",
   "Plugin_Cap_MemoryPressure": "Notificar al plugin cuando el uso de memoria de una cuenta sea lo bastante alto como para que la máquina corra el riesgo de quedarse sin RAM.",
   "Plugin_Cap_MetricsReport": "Enviar los números que recopila, para que RoRoRo pueda avisarte sobre ellos",

@@ -99,7 +99,7 @@ public class ReportMetricHandlerTests
             => Task.FromResult<(bool, string?, int, string?)>((true, null, 0, null));
 
         public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(
-            string accountId, string? shareUrl, long? followUserId)
+            string accountId, string? shareUrl, long? followUserId, PluginGameInstance? gameInstance = null)
             => Task.FromResult<(bool, string?, int, string?)>((true, null, 0, null));
 
         public Task<CurrentServerInfo?> GetCurrentServerAsync() => Task.FromResult<CurrentServerInfo?>(null);

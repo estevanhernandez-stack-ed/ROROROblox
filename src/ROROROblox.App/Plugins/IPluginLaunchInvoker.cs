@@ -23,16 +23,26 @@ public interface IPluginLaunchInvoker
 
     /// <summary>
     /// Launch <paramref name="accountId"/> into a target. Exactly one of
-    /// <paramref name="shareUrl"/> / <paramref name="followUserId"/> is set by the caller;
-    /// shareUrl is resolved by the host's share-URL resolver, followUserId becomes a
-    /// follow-friend launch. Same return contract as <see cref="RequestLaunchAsync"/>.
+    /// <paramref name="shareUrl"/> / <paramref name="followUserId"/> / <paramref name="gameInstance"/>
+    /// is set by the caller; shareUrl is resolved by the host's share-URL resolver, followUserId
+    /// becomes a follow-friend launch, gameInstance joins exactly that server or is refused with
+    /// <see cref="PluginLaunchReasonCodes.InvalidTarget"/> (never degraded to "any server", #247).
+    /// Same return contract as <see cref="RequestLaunchAsync"/>.
     /// </summary>
     Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(
-        string accountId, string? shareUrl, long? followUserId);
+        string accountId, string? shareUrl, long? followUserId, PluginGameInstance? gameInstance = null);
 
     /// <summary>Most-recently-launched saved private server, or null if none.</summary>
     Task<CurrentServerInfo?> GetCurrentServerAsync();
 }
+
+/// <summary>
+/// The raw halves of a <c>GameInstance</c> as a plugin sent them, unvalidated. Present means "a
+/// game instance was requested", so a half pair (place 0, empty job id) still reaches the adapter
+/// and is refused there instead of reading as "no target". Validation lives in one place:
+/// <c>MainViewModelLaunchInvokerAdapter.ValidateLaunchTargetArgs</c>.
+/// </summary>
+public sealed record PluginGameInstance(long PlaceId, string JobId);
 
 /// <summary>Host-internal DTO for the GetCurrentServer RPC (mapped to proto in the service).</summary>
 public sealed record CurrentServerInfo(

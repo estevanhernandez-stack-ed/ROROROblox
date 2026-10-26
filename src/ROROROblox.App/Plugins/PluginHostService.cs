@@ -685,9 +685,14 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     {
         string? shareUrl = request.TargetCase == LaunchTargetRequest.TargetOneofCase.ShareUrl ? request.ShareUrl : null;
         long? followUserId = request.TargetCase == LaunchTargetRequest.TargetOneofCase.FollowUserId ? request.FollowUserId : null;
+        // Raw halves, unvalidated: a half pair must reach the adapter as "game instance requested"
+        // so it is refused there, not read as "no target".
+        var gameInstance = request.TargetCase == LaunchTargetRequest.TargetOneofCase.GameInstance
+            ? new PluginGameInstance(request.GameInstance.PlaceId, request.GameInstance.GameInstanceId)
+            : null;
         if (!await AccountsReadyAsync(context.CancellationToken).ConfigureAwait(false)) return AccountsLoadingRefusal();
 
-        var (ok, reason, pid, reasonCode) = await _launcher.RequestLaunchTargetAsync(request.AccountId, shareUrl, followUserId).ConfigureAwait(false);
+        var (ok, reason, pid, reasonCode) = await _launcher.RequestLaunchTargetAsync(request.AccountId, shareUrl, followUserId, gameInstance).ConfigureAwait(false);
         return new LaunchResult
         {
             Ok = ok,

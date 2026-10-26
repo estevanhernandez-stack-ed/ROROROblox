@@ -452,6 +452,47 @@ public class PluginHostServiceTests
     }
 
     [Fact]
+    public async Task RequestLaunchTarget_PassesTheGameInstanceThrough_ToLauncher()
+    {
+        var fake = new FakeLaunchInvoker();
+        var service = new PluginHostService(
+            new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
+
+        var acct = Guid.NewGuid().ToString();
+        var job = Guid.NewGuid().ToString();
+        var result = await service.RequestLaunchTarget(new LaunchTargetRequest
+        {
+            AccountId = acct,
+            GameInstance = new GameInstance { PlaceId = 8737899170L, GameInstanceId = job },
+        }, FakeServerCallContext.Create());
+
+        Assert.True(result.Ok);
+        var inv = Assert.Single(fake.TargetInvocations);
+        Assert.Null(inv.url);
+        Assert.Null(inv.follow);
+        Assert.Equal(new PluginGameInstance(8737899170L, job), Assert.Single(fake.GameInstances));
+    }
+
+    [Fact]
+    public async Task RequestLaunchTarget_AHalfGameInstance_StillReachesTheLauncherAsRequested()
+    {
+        var fake = new FakeLaunchInvoker();
+        var service = new PluginHostService(
+            new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
+
+        await service.RequestLaunchTarget(new LaunchTargetRequest
+        {
+            AccountId = Guid.NewGuid().ToString(),
+            GameInstance = new GameInstance { PlaceId = 5L },
+        }, FakeServerCallContext.Create());
+
+        // Not null: the adapter must see "game instance requested" and refuse it, never "no target".
+        Assert.Equal(new PluginGameInstance(5L, ""), Assert.Single(fake.GameInstances));
+    }
+
+    [Fact]
     public async Task GetCurrentServer_ReturnsPresentFalse_WhenNone()
     {
         var fake = new FakeLaunchInvoker { Current = null };
@@ -969,6 +1010,7 @@ public class PluginHostServiceTests
     {
         public List<string> Invocations { get; } = new();
         public List<(string acct, string? url, long? follow)> TargetInvocations { get; } = new();
+        public List<PluginGameInstance?> GameInstances { get; } = new();
         public CurrentServerInfo? Current { get; set; }
 
         public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchAsync(string accountId)
@@ -977,9 +1019,10 @@ public class PluginHostServiceTests
             return Task.FromResult<(bool, string?, int, string?)>((true, null, 12345, null));
         }
 
-        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(string accountId, string? shareUrl, long? followUserId)
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(string accountId, string? shareUrl, long? followUserId, PluginGameInstance? gameInstance = null)
         {
             TargetInvocations.Add((accountId, shareUrl, followUserId));
+            GameInstances.Add(gameInstance);
             return Task.FromResult<(bool, string?, int, string?)>((true, null, 6789, null));
         }
 
@@ -993,7 +1036,7 @@ public class PluginHostServiceTests
         public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchAsync(string accountId)
             => Task.FromResult<(bool, string?, int, string?)>((false, "x", 0, "follow-target-not-joinable"));
 
-        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(string accountId, string? shareUrl, long? followUserId)
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(string accountId, string? shareUrl, long? followUserId, PluginGameInstance? gameInstance = null)
             => Task.FromResult<(bool, string?, int, string?)>((false, "x", 0, "follow-target-not-joinable"));
 
         public Task<CurrentServerInfo?> GetCurrentServerAsync() => Task.FromResult<CurrentServerInfo?>(null);

@@ -280,7 +280,19 @@ message LaunchTargetRequest {
     string share_url = 2;
     // Follow a friend into whatever server they're in (Roblox permission-checks).
     int64 follow_user_id = 3;
+    // 0.14.0: launch into ONE named public server. Both halves must come from the same entry of
+    // Roblox's public games.roblox.com/v1/games/{placeId}/servers/Public list for that place id:
+    // place_id is the {placeId} you queried, game_instance_id is that entry's `id`. They only mean
+    // anything together (the host's ServerInstance). A full server queues and the host never falls
+    // back to matchmaking. A half pair or a malformed id is refused with reason_code
+    // "invalid-target". A host older than 0.14.0 refuses it as having no target.
+    GameInstance game_instance = 4;
   }
+}
+
+message GameInstance {
+  int64  place_id          = 1;
+  string game_instance_id = 2;
 }
 
 message CurrentServer {

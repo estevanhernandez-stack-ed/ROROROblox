@@ -2923,7 +2923,7 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
     <value>Pozwól wtyczce poprosić RoRoRo o uruchomienie konta Roblox.</value>
   </data>
   <data name="Plugin_Cap_LaunchTarget" xml:space="preserve">
-    <value>Pozwól wtyczce uruchomić jedno z twoich kont na serwerze Roblox z podanego przez nią linku lub znajomego.</value>
+    <value>Pozwól wtyczce uruchomić jedno z twoich kont na wybranym przez nią serwerze Roblox: z linku, dołączając do znajomego lub na jednym konkretnym serwerze.</value>
   </data>
   <data name="Plugin_Cap_MarkAccountActive" xml:space="preserve">
     <value>Pozwól tej wtyczce informować RoRoRo, że konto jest nadal aktywne (aby ostrzeżenia o bezczynności nie uruchamiały się błędnie). Nie widzi, co piszesz lub robisz — może tylko oznaczyć konto jako aktywne.</value>
