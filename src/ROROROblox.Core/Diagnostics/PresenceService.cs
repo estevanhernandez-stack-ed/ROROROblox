@@ -61,6 +61,11 @@ public sealed class PresenceService : IPresenceService, IDisposable
     private readonly ConcurrentDictionary<Guid, int> _consecutiveLimited = new();
     private const int LimitedFlipThreshold = 3;
 
+    // Last presence (type, place) logged per account. The Debug line below fires only when this
+    // changes: field report 2026-10-25 had the unchanged heartbeat at 97% of log volume (#246 run).
+    // An account removed and re-added keeps its id's entry, so it won't re-log an unchanged state; fine.
+    private readonly ConcurrentDictionary<Guid, (UserPresenceType Type, long? PlaceId)> _lastLoggedPresence = new();
+
     private PeriodicTimer? _timer;
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
@@ -288,7 +293,13 @@ public sealed class PresenceService : IPresenceService, IDisposable
             gameName = await ResolveGameNameAsync(pid, ct).ConfigureAwait(false);
         }
 
-        _log.LogDebug("Presence for account {AccountId}: {PresenceType}", target.AccountId, presenceType);
+        // Log a change, not a heartbeat. The event below still raises on every poll.
+        var current = (presenceType, placeId);
+        if (!_lastLoggedPresence.TryGetValue(target.AccountId, out var lastLogged) || lastLogged != current)
+        {
+            _lastLoggedPresence[target.AccountId] = current;
+            _log.LogDebug("Presence for account {AccountId}: {PresenceType}", target.AccountId, presenceType);
+        }
 
         AccountPresenceUpdated?.Invoke(this, new AccountPresenceEventArgs(
             target.AccountId,
