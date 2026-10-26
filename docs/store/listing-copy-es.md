@@ -1,7 +1,7 @@
 # Store listing — Español (es)
 
 > Paste-ready para Partner Center → Store listings → **Español** (neutral — un solo texto para
-> España y Latinoamérica). Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from `listing-copy.md` (v1.25.0.0 state).
+> España y Latinoamérica). Refreshed 2026-10-26 for v1.35.0.0 (what's-new only; block drafted from whats-new-1.35.0.0.md, UI labels from this culture's catalog, translation verifier run pending). Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from `listing-copy.md` (v1.25.0.0 state).
 > Product nouns stay in English (RoRoRo, Squad Launch, Friend Follow, Pushover, ntfy); the
 > app UI is now localized to Spanish (v1.26.0.0). Register: tú.
 
@@ -68,24 +68,26 @@ Problemas conocidos de Roblox — problemas del lado de Roblox, qué hacer y la 
 Volver a unirse si se desconecta: un alt expulsado o atascado fuera del juego se cierra y vuelve a unirse solo, nunca tu cuenta principal
 ```
 
-## What's new in this version (v1.34.0.0, ≤1500 chars)
+## What's new in this version (v1.35.0.0, ≤1500 chars)
 
 ```
-v1.34.0.0
+v1.35.0.0
 
-Comparte tus temas
+Los plugins vuelven a arrancar
 
-• «Compartir tema» guarda un tema que hayas creado en un archivo
-  que puedes mandar a quien quieras. «Importar tema» aplica al
-  momento el que te haya enviado un amigo. Los dos están en el creador de
-  temas.
-• «Acerca de» muestra la versión que de verdad tienes instalada.
-• El aviso de inactividad siempre usa uno de los tiempos que
-  ofrece su selector.
-• La configuración ahora explica tres cosas que antes había que
-  adivinar: por qué una cuenta con la privacidad de presencia de
-  Roblox activada (Invisible) nunca recibe un aviso de
-  inactividad, qué cubre «Silencio» y qué cuenta como actividad.
+• Los plugins vuelven a arrancar en las instalaciones de
+  Microsoft Store. Se detenían a menos de un segundo de empezar.
+• En la página «Complementos», cada plugin indica por qué se
+  detuvo, y «Reiniciar» solo aparece cuando puede ayudar.
+• Cada inicio vuelve a abrirse en su propia ventana de Roblox,
+  con su nombre, en lugar de que lo recoja un proceso de Roblox
+  residual de la bandeja.
+• Un parpadeo breve de la pantalla de Windows ya no cierra
+  RoRoRo.
+• RoRoRo le pide a Windows que lo vuelva a abrir si se cierra de
+  forma inesperada o si la Store lo actualiza. Cuando vuelve con
+  juegos abiertos, estos siguen sin que el diálogo «Procesos de
+  Roblox residuales» espere un clic.
 
 Nada más cambió. Cuentas, temas, plugins, historial y todos los
 demás ajustes se mantienen intactos.

@@ -4,7 +4,7 @@
     "name": "RoRoRo Ur Task",
     "description": "Per-window-aware macro recording for RoRoRo-managed alts. Record once, play on any alt — round-robin assignments, keep-alive, window-relative mouse macros, and an action bridge for sibling plugins.",
     "publisher": "626Labs LLC",
-    "latestVersion": "0.9.1",
+    "latestVersion": "0.13.0",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-task/releases/latest/download/",
     "minHostVersion": "1.19.0"
   },
@@ -30,7 +30,7 @@
     "name": "RoRoRo Ur MCP",
     "description": "Drive RoRoRo from Claude. A stdio MCP server Claude Code / Claude Desktop launches, authorized as this consent-gated plugin: list and launch accounts, follow the main, watch presence, stop clients, and run or stop Ur Task macros. Autostart stays off — Claude owns the process.",
     "publisher": "626Labs LLC",
-    "latestVersion": "0.4.1",
+    "latestVersion": "0.5.0",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-mcp/releases/latest/download/",
     "minHostVersion": "1.22.0"
   },

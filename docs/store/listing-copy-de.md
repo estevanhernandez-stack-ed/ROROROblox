@@ -1,6 +1,6 @@
 # Store listing — Deutsch (de)
 
-> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-10-26 for v1.35.0.0 (what's-new only; block drafted from whats-new-1.35.0.0.md, UI labels from this culture's catalog, translation verifier run pending). Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md`, refreshed for v1.26.0.0. Product nouns stay in English (RoRoRo, Squad
 > Launch, Friend Follow, Pushover, ntfy); the interface is now localized to six languages, so
 > the old English-only caveat is gone. Register: du (Gaming-Store-Norm).
@@ -68,28 +68,31 @@ Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welch
 Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
-## What's new in this version (v1.34.0.0, ≤1500 chars)
+## What's new in this version (v1.35.0.0, ≤1500 chars)
 
 ```
-v1.34.0.0
+v1.35.0.0
 
-Teile deine Designs
+Plugins starten wieder
 
-• „Design teilen“ speichert ein Design, das du gebaut hast, als
-  Datei, die du an jeden schicken kannst. „Design importieren“
-  übernimmt eins, das dir ein Freund geschickt hat, sofort. Beides
-  findest du im Design-Builder.
-• „Über“ zeigt die Version, die du wirklich installiert hast.
-• Die Inaktivitäts-Warnung läuft immer mit einer der Zeiten, die
-  ihre Auswahl anbietet.
-• Die Einstellungen erklären jetzt drei Dinge, bei denen man
-  bisher raten musste: warum ein Konto mit eingeschaltetem
-  Roblox-Anwesenheitsschutz (Unsichtbar) nie eine
-  Inaktivitäts-Benachrichtigung bekommt, was „Stumm“ abdeckt und
-  was als Aktivität zählt.
+• Plugins starten auf Microsoft-Store-Installationen wieder. Sie
+  wurden innerhalb einer Sekunde nach dem Start beendet.
+• Jedes Plugin auf der Seite „Plugins“ sagt, warum es gestoppt
+  ist, und „Neu starten“ erscheint nur, wenn es helfen kann.
+• Jeder Start öffnet sich wieder in einem eigenen
+  Roblox-Fenster, mit seinem Namen, statt von einem übrig
+  gebliebenen Roblox-Prozess im Infobereich übernommen zu
+  werden.
+• Ein kurzes Flackern der Windows-Anzeige schließt RoRoRo nicht
+  mehr.
+• RoRoRo bittet Windows, es wieder zu starten, wenn es
+  unerwartet schließt oder der Store es aktualisiert. Kommt es
+  mit offenen Spielen zurück, laufen diese weiter, ohne dass der
+  Dialog „Übrig gebliebene Roblox-Prozesse“ auf einen Klick
+  wartet.
 
-Sonst hat sich nichts geändert. Konten, Designs, Plugins, Verlauf
-und alle anderen Einstellungen bleiben, wie sie sind.
+Sonst hat sich nichts geändert. Konten, Designs, Plugins,
+Verlauf und alle anderen Einstellungen bleiben, wie sie sind.
 ```
 
 ## Copyright (single line)

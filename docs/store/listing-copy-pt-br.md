@@ -1,6 +1,6 @@
 # Store listing — Português (Brasil) (pt-BR)
 
-> Paste-ready para Partner Center → Store listings → **Português (Brasil)**. Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Drafted
+> Paste-ready para Partner Center → Store listings → **Português (Brasil)**. Refreshed 2026-10-26 for v1.35.0.0 (what's-new only; block drafted from whats-new-1.35.0.0.md, UI labels from this culture's catalog, translation verifier run pending). Refreshed 2026-10-23 for v1.34.0.0 (what's-new only; the Phase 2 listing audit found nothing else to change; block verified 6/6 by the translation verifier, UI labels from this culture's catalog). Refreshed 2026-10-07 for v1.33.0.0 (idle added to the alert-kind list in the long description, plus the repeat-interval and alert-sound controls — matching the English sheet's 1c84d28 edit; idle wording taken from this culture's shipped SettingsPage_AnAccountGoesIdle). Refreshed 2026-09-29 for v1.32.0.0 (phone-alert and alert fan-out entries merged into one; new Rejoin if it drops out entry; still 20; Rejoin bullet in the long description). Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Drafted
 > 2026-09-05 from `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo,
 > Squad Launch, Friend Follow, Pushover, ntfy); the app UI is now localized to six languages
 > (v1.26.0.0). Register: você.
@@ -68,23 +68,26 @@ Problemas conhecidos do Roblox — problemas do lado do Roblox, o que fazer e o 
 Entrar de novo se cair — um alt expulso ou preso fora do jogo é fechado e entra de novo sozinho, nunca a sua conta principal
 ```
 
-## What's new in this version (v1.34.0.0, ≤1500 chars)
+## What's new in this version (v1.35.0.0, ≤1500 chars)
 
 ```
-v1.34.0.0
+v1.35.0.0
 
-Compartilhe seus temas
+Os plugins voltam a iniciar
 
-• “Compartilhar tema” salva um tema que você criou em um arquivo
-  para mandar para quem quiser. “Importar tema” aplica na hora um
-  tema que um amigo te mandou. Os dois ficam no criador de temas.
-• “Sobre” mostra a versão que você realmente tem instalada.
-• O alerta de inatividade sempre usa um dos tempos que o seletor
-  oferece.
-• As configurações agora explicam três coisas que antes eram no
-  chute: por que uma conta com a privacidade de presença do Roblox
-  ativada (Invisível) nunca recebe alerta de inatividade, o que o
-  “Silencioso” cobre e o que conta como atividade.
+• Os plugins voltam a iniciar nas instalações da Microsoft
+  Store. Eles paravam menos de um segundo depois de iniciar.
+• Cada plugin na página “Plugins” diz por que parou, e
+  “Reiniciar” só aparece quando pode ajudar.
+• Cada inicialização volta a abrir na própria janela do Roblox,
+  com o nome dela, em vez de ser pega por um processo do Roblox
+  que sobrou na bandeja.
+• Uma oscilação rápida da tela do Windows não fecha mais o
+  RoRoRo.
+• O RoRoRo pede ao Windows para abri-lo de novo se ele fechar de
+  forma inesperada ou a Store o atualizar. Quando volta com
+  jogos abertos, eles continuam sem o diálogo “Processos do
+  Roblox sobrando” esperando um clique.
 
 Nada mais mudou. Contas, temas, plugins, histórico e todas as
 outras configurações continuam como estavam.
