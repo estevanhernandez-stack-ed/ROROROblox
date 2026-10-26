@@ -3498,12 +3498,23 @@ public partial class App : Application
     /// <summary>
     /// Three nets so a stray exception writes to the log instead of vanishing into a Windows
     /// Error Reporting dialog. None of these <em>recover</em> — they record. The app still
-    /// shuts down on a true unhandled crash; we just have evidence afterward.
+    /// shuts down on a true unhandled crash; we just have evidence afterward. The one exception
+    /// is a transient DWM composition fault (#246): the dispatcher net marks that one handled.
     /// </summary>
     private void WireGlobalExceptionHandlers()
     {
         DispatcherUnhandledException += (_, args) =>
         {
+            // #246, 2026-10-24: two field crashes on v1.33.0, identical. A desktop-composition flip
+            // (0x80263001) lands in WindowChromeWorker's WM_DWMCOMPOSITIONCHANGED handler while DWM
+            // is mid-flip; the next flip re-extends the frame, so the window is fine. Warn and carry on.
+            if (CompositionFaultFilter.IsTransientCompositionFault(args.Exception.HResult, args.Exception.StackTrace))
+            {
+                _log?.LogWarning(args.Exception, "Desktop composition flipped under the window chrome; ignoring (#246).");
+                args.Handled = true;
+                return;
+            }
+
             _log?.LogError(args.Exception, "Unhandled WPF dispatcher exception.");
             // Don't mark Handled — let the app crash visibly. Silent crash is worse than loud crash.
         };
