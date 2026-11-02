@@ -70,6 +70,11 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
     private readonly Func<IReadOnlyList<AccountSummary>> _accounts;
     private readonly Func<Guid, LaunchTarget, Task> _launch;
     private readonly Action? _libraryChanged;
+    private readonly IGameIconCache? _icons;
+    private readonly IUiDispatcher? _ui;
+    private readonly Dictionary<(LibraryEntryKind Kind, long PlaceId, Guid? ServerId), LibraryItem> _itemCache = new();
+    private bool _iconsAttached;
+    private LibraryItem? _pendingRemoval;
 
     private IReadOnlyList<LibraryEntry> _entries = [];
     private LibraryView _view = LibraryView.Grid;
@@ -81,6 +86,8 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
     /// <param name="accounts">The roster, read off <c>MainViewModel.AccountsSnapshot</c> (never <c>Accounts</c>).</param>
     /// <param name="launch">Launches an account by id into a target (<c>MainViewModel.LaunchAccountByIdAsync</c>).</param>
     /// <param name="libraryChanged">Fired after a mutation, so the main window's reload runs.</param>
+    /// <param name="icons">The icon cache. A tile that comes on screen asks it for its own place and nothing else; null means no icons are ever requested.</param>
+    /// <param name="ui">Marshals the cache's worker-thread <c>IconResolved</c> onto the UI thread; null runs inline (tests).</param>
     public LibraryViewModel(
         LibraryCatalog catalog,
         IFavoriteGameStore favorites,
@@ -90,7 +97,9 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         Func<string, Task<LaunchTarget?>> resolveShareUrl,
         Func<IReadOnlyList<AccountSummary>> accounts,
         Func<Guid, LaunchTarget, Task> launch,
-        Action? libraryChanged = null)
+        Action? libraryChanged = null,
+        IGameIconCache? icons = null,
+        IUiDispatcher? ui = null)
     {
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _favorites = favorites ?? throw new ArgumentNullException(nameof(favorites));
@@ -101,6 +110,14 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
         _launch = launch ?? throw new ArgumentNullException(nameof(launch));
         _libraryChanged = libraryChanged;
+        _icons = icons;
+        _ui = ui;
+        FromRoblox.CollectionChanged += (_, _) =>
+        {
+            FromRobloxItems.Clear();
+            foreach (var r in FromRoblox) FromRobloxItems.Add(new FromRobloxItem(r));
+            RaiseShape();
+        };
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -121,6 +138,33 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         private set => Set(ref _statusText, value);
     }
 
+    /// <summary>
+    /// What the grid and the list bind: <see cref="Visible"/> as worded <see cref="LibraryItem"/>s, one stable
+    /// instance per saved entry so a keystroke moves tiles instead of rebuilding them.
+    /// </summary>
+    public ObservableCollection<LibraryItem> Items { get; } = [];
+
+    /// <summary><see cref="FromRoblox"/> as worded rows (the creator and player lines come from resx keys).</summary>
+    public ObservableCollection<FromRobloxItem> FromRobloxItems { get; } = [];
+
+    /// <summary>The Library has nothing in it at all and nothing from Roblox is showing: the invitation shows.</summary>
+    public bool ShowEmptyInvitation => _entries.Count == 0 && FromRoblox.Count == 0;
+
+    /// <summary>The Library has entries but the chips or the box hide every one, and no Roblox results are showing.</summary>
+    public bool ShowNoMatch => _entries.Count > 0 && Visible.Count == 0 && FromRoblox.Count == 0;
+
+    public bool HasFromRoblox => FromRoblox.Count > 0;
+
+    private void RaiseShape()
+    {
+        OnChanged(nameof(ShowEmptyInvitation));
+        OnChanged(nameof(ShowNoMatch));
+        OnChanged(nameof(HasFromRoblox));
+    }
+
+    /// <summary>Puts a line in the status area. For the page's catch blocks, so a failure from a click handler is shown, not swallowed.</summary>
+    public void Report(string text) => StatusText = text;
+
     /// <summary>The outcome of the last <see cref="SubmitAsync"/>.</summary>
     public LibrarySubmitOutcome LastOutcome { get; private set; } = LibrarySubmitOutcome.Empty;
 
@@ -133,8 +177,24 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
             if (_view == value) return;
             _view = value;
             OnChanged();
+            OnChanged(nameof(IsGridView));
+            OnChanged(nameof(IsListView));
             Persist(() => _settings.SetLibraryViewAsync(value == LibraryView.List ? "list" : "grid"));
         }
+    }
+
+    /// <summary>The Grid radio. Setting it true selects the grid; setting it false is the radio group un-checking it and changes nothing.</summary>
+    public bool IsGridView
+    {
+        get => _view == LibraryView.Grid;
+        set { if (value) View = LibraryView.Grid; }
+    }
+
+    /// <summary>The List radio, the mirror of <see cref="IsGridView"/>.</summary>
+    public bool IsListView
+    {
+        get => _view == LibraryView.List;
+        set { if (value) View = LibraryView.List; }
     }
 
     /// <summary>The selected kind chips. Setting it re-filters and persists it.</summary>
@@ -146,9 +206,39 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
             if (_filters == value) return;
             _filters = value;
             OnChanged();
+            RaiseChips();
             ApplyFilter();
             Persist(() => _settings.SetLibraryFiltersAsync(FormatFilters(value)));
         }
+    }
+
+    /// <summary>The Recent chip. The check glyph on the chip binds to this, never to a style trigger on the button.</summary>
+    public bool IsRecentOn
+    {
+        get => _filters.HasFlag(LibraryFilter.Recent);
+        set => SetFilter(LibraryFilter.Recent, value);
+    }
+
+    public bool IsFavouritesOn
+    {
+        get => _filters.HasFlag(LibraryFilter.Favourites);
+        set => SetFilter(LibraryFilter.Favourites, value);
+    }
+
+    public bool IsPrivateServersOn
+    {
+        get => _filters.HasFlag(LibraryFilter.PrivateServers);
+        set => SetFilter(LibraryFilter.PrivateServers, value);
+    }
+
+    private void SetFilter(LibraryFilter flag, bool on)
+        => Filters = on ? _filters | flag : _filters & ~flag;
+
+    private void RaiseChips()
+    {
+        OnChanged(nameof(IsRecentOn));
+        OnChanged(nameof(IsFavouritesOn));
+        OnChanged(nameof(IsPrivateServersOn));
     }
 
     /// <summary>Instant local filter on <see cref="LibraryEntry.Name"/> and <see cref="LibraryEntry.LocalName"/>.</summary>
@@ -161,6 +251,8 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
             if (_query == value) return;
             _query = value;
             OnChanged();
+            // Roblox results answer the text that was submitted; once the text changes they are stale.
+            if (FromRoblox.Count > 0) FromRoblox.Clear();
             ApplyFilter();
         }
     }
@@ -171,7 +263,11 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         _view = ParseView(await _settings.GetLibraryViewAsync().ConfigureAwait(true));
         _filters = ParseFilters(await _settings.GetLibraryFiltersAsync().ConfigureAwait(true));
         OnChanged(nameof(View));
+        OnChanged(nameof(IsGridView));
+        OnChanged(nameof(IsListView));
         OnChanged(nameof(Filters));
+        RaiseChips();
+        AttachIcons();
         await ReloadAsync(ct).ConfigureAwait(true);
     }
 
@@ -179,6 +275,8 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
     public async Task ReloadAsync(CancellationToken ct = default)
     {
         _entries = await _catalog.ListAsync(ct).ConfigureAwait(true);
+        var live = _entries.Select(LibraryItem.KeyOf).ToHashSet();
+        foreach (var gone in _itemCache.Keys.Where(k => !live.Contains(k)).ToList()) _itemCache.Remove(gone);
         ApplyFilter();
     }
 
@@ -237,9 +335,84 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         }
 
         // Touch the collection only where it differs, so a keystroke that changes nothing repaints nothing.
-        if (Visible.Count == next.Count && Visible.SequenceEqual(next)) return;
+        if (Visible.Count == next.Count && Visible.SequenceEqual(next))
+        {
+            RaiseShape();
+            return;
+        }
+
         Visible.Clear();
         foreach (var e in next) Visible.Add(e);
+        SyncItems();
+        RaiseShape();
+    }
+
+    /// <summary>
+    /// Makes <see cref="Items"/> match <see cref="Visible"/> with the fewest moves: items that stay keep their
+    /// instance (and their realised tile); only the ones that enter or leave are added or removed.
+    /// </summary>
+    private void SyncItems()
+    {
+        var next = new List<LibraryItem>(Visible.Count);
+        foreach (var e in Visible)
+        {
+            var key = LibraryItem.KeyOf(e);
+            if (_itemCache.TryGetValue(key, out var item)) item.Update(e);
+            else _itemCache[key] = item = new LibraryItem(e);
+            next.Add(item);
+        }
+
+        var keep = next.ToHashSet();
+        for (var i = Items.Count - 1; i >= 0; i--)
+        {
+            if (!keep.Contains(Items[i])) Items.RemoveAt(i);
+        }
+
+        for (var i = 0; i < next.Count; i++)
+        {
+            if (i < Items.Count && ReferenceEquals(Items[i], next[i])) continue;
+            var at = Items.IndexOf(next[i]);
+            if (at >= 0) Items.Move(at, i);
+            else Items.Insert(i, next[i]);
+        }
+    }
+
+    // ---- icons: a tile that comes on screen asks for its own place, and nothing else is fetched ----
+
+    private void AttachIcons()
+    {
+        if (_icons is null || _iconsAttached) return;
+        _iconsAttached = true;
+        _icons.IconResolved += OnIconResolved;
+    }
+
+    /// <summary>Stops listening to the icon cache. The page calls it when it leaves the screen.</summary>
+    public void Detach()
+    {
+        if (_icons is null || !_iconsAttached) return;
+        _iconsAttached = false;
+        _icons.IconResolved -= OnIconResolved;
+    }
+
+    /// <summary>A tile was realised: if it has no icon, ask the cache for that one place. Does nothing for a tile that is not on screen, because only a realised tile calls it.</summary>
+    public void NoteOnScreen(LibraryItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        if (_icons is null || !string.IsNullOrWhiteSpace(item.IconUrl)) return;
+        _icons.Request(item.PlaceId);
+    }
+
+    private void OnIconResolved(object? sender, GameIconResolvedEventArgs e)
+    {
+        void Apply()
+        {
+            foreach (var item in _itemCache.Values)
+            {
+                if (item.PlaceId == e.PlaceId && string.IsNullOrWhiteSpace(item.IconUrl)) item.IconUrl = e.Info.IconUrl;
+            }
+        }
+
+        if (_ui is null) Apply(); else _ui.Invoke(Apply);
     }
 
     /// <summary>
@@ -367,7 +540,12 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
     {
         ArgumentNullException.ThrowIfNull(entry);
         var id = accountId ?? ResolveDefaultAccount();
-        if (id is null) return false;
+        if (id is null)
+        {
+            StatusText = Loc.Get("Library_NoAccount");
+            return false;
+        }
+
         await _launch(id.Value, entry.Target).ConfigureAwait(true);
         return true;
     }
@@ -402,6 +580,54 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
     public Task RemoveAsync(LibraryEntry e) => ThenReloadAsync(() => e.Kind == LibraryEntryKind.PrivateServer && e.PrivateServerId is { } id
         ? _servers.RemoveAsync(id)
         : _favorites.RemoveAsync(e.PlaceId));
+
+    // ---- the themed remove confirm: an in-page bar, not a window and not a stock dialog ----
+
+    /// <summary>The entry the user asked to remove and has not yet confirmed. Null when no confirm is open.</summary>
+    public LibraryItem? PendingRemoval
+    {
+        get => _pendingRemoval;
+        private set
+        {
+            if (ReferenceEquals(_pendingRemoval, value)) return;
+            _pendingRemoval = value;
+            OnChanged();
+            OnChanged(nameof(IsRemoveConfirmOpen));
+            OnChanged(nameof(RemoveConfirmText));
+        }
+    }
+
+    public bool IsRemoveConfirmOpen => _pendingRemoval is not null;
+
+    /// <summary>"Remove {name} from your saved games?" (or servers). Empty while no confirm is open.</summary>
+    public string RemoveConfirmText => _pendingRemoval is null
+        ? string.Empty
+        : Loc.Format(_pendingRemoval.IsPrivate ? "Shell_Games_RemoveServerConfirm" : "Shell_Games_RemoveGameConfirm", _pendingRemoval.DisplayName);
+
+    /// <summary>Opens the confirm for a saved entry. A Recent place is not saved, so there is nothing to remove and nothing opens.</summary>
+    public void RequestRemove(LibraryItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        if (item.IsSaved) PendingRemoval = item;
+    }
+
+    public void CancelRemove() => PendingRemoval = null;
+
+    /// <summary>Removes the pending entry. The confirm closes first, so a double click cannot remove twice.</summary>
+    public async Task ConfirmRemoveAsync()
+    {
+        if (_pendingRemoval is not { } item) return;
+        PendingRemoval = null;
+        try
+        {
+            await RemoveAsync(item.Entry).ConfigureAwait(true);
+            StatusText = Loc.Get("Shell_Games_Removed");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            StatusText = Loc.Format("Shell_Games_CouldntRemove", ex.Message);
+        }
+    }
 
     private async Task ThenReloadAsync(Func<Task> mutate)
     {

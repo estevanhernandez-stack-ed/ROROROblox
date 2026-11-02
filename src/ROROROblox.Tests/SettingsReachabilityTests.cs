@@ -183,18 +183,6 @@ public class SettingsReachabilityTests
             + "for a saving of one bool. Its checkbox came off the page in item 6, so this entry "
             + "is live rather than inert as of that commit."),
 
-        // THE TWO v1.36 LIBRARY ENTRIES. LibraryView and LibraryFilters land in item 8 (the
-        // settings, the view model that persists them) ahead of the page that shows them. EXPIRES
-        // WITH v1.36 ITEM 9, which adds LibraryViewToggle and LibraryFiltersRow to the Library page
-        // and DELETES BOTH ENTRIES in the same commit. If item 9 has shipped and these are still
-        // here, they are the stale-permission defect this file exists to catch.
-        new("LibraryView",
-            "EXPIRES AT v1.36 ITEM 9. Persisted by LibraryViewModel since item 8; the grid/list "
-            + "toggle (LibraryViewToggle) is item 9's XAML, and item 9 deletes this entry."),
-        new("LibraryFilters",
-            "EXPIRES AT v1.36 ITEM 9. Persisted by LibraryViewModel since item 8; the kind chips "
-            + "(LibraryFiltersRow) are item 9's XAML, and item 9 deletes this entry."),
-
         // MetricAlertsEnabled's entry was RETIRED 2026-09-11 by the metric-alert routing plan,
         // which gave the setting the Settings section the entry said it was waiting for:
         // MetricAlertsEnabledToggle in SettingsPage.xaml, writing through
@@ -577,5 +565,23 @@ public class SettingsReachabilityTests
         var appXaml = Path.Combine(root!, "src", "ROROROblox.App", "App.xaml");
         Assert.True(File.Exists(appXaml), $"{CompositionRoot}'s markup is missing; the exclusion is unverifiable.");
         Assert.Equal("Application", XDocument.Load(appXaml).Root!.Name.LocalName);
+    }
+
+    /// <summary>
+    /// v1.36 item 9 deleted the two "EXPIRES AT ITEM 9" exemptions. <c>LibraryViewModel</c> calls the accessors, which
+    /// would keep both settings green by itself, so this pins the other road the spec asked for: the Library page names
+    /// a control for each setting by the fence's own control-edge rule, so a user can change them there.
+    /// </summary>
+    [Theory]
+    [InlineData("LibraryView", "LibraryViewToggle")]
+    [InlineData("LibraryFilters", "LibraryFiltersRow")]
+    public void TheLibrarysSettingsAreReachableByAControlNamedForThem(string setting, string controlName)
+    {
+        Assert.DoesNotContain(Exemptions, e => e.Property == setting);
+
+        var xaml = File.ReadAllText(Path.Combine(XamlStyleScanner.AppSourceDirectory()!, "Games", "GamesPage.xaml"));
+        var declaration = $"x:Name=\"{controlName}\"";
+        Assert.Contains(declaration, xaml);
+        Assert.Matches(ControlEdge(setting), controlName); // the name is one the control-edge rule accepts
     }
 }

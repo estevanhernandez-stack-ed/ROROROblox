@@ -55,6 +55,11 @@ public class AccessibleNamingFenceTests
     /// named app forever — the same vacuity trap the colour-literal clause keeps a floor for.
     /// <para>212 to 217 with v1.36 item 7: the panel's expander, NoteBox, Open Roblox home, the one entry
     /// template's launch button and its Save, every one named.</para>
+    /// <para>217 to 217 with v1.36 item 9, re-measured by raising the floor until it failed: the Library page swapped
+    /// its 13 scanned controls (two boxes, five old buttons per template) for 13 new ones (the one ui:TextBox, three
+    /// chips, two Play, two Play as, two more, the search result's Add, Remove and Cancel on the confirm bar). The two
+    /// layout RadioButtons and the flyout's MenuItems are not Kinds here, so they do not move the count;
+    /// LibraryPageXamlTests names them.</para>
     /// </summary>
     private const int ScannedFloor = 217;
 

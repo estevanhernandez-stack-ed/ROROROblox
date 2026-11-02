@@ -1417,7 +1417,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
         // Saved private servers join the per-account dropdown as FavoriteGame-shaped entries
         // carrying the PS code/kind + stable PS Id (v1.6.0). They render with the server's
-        // RenderName so renames show, plus a "(private server)" suffix via DropdownLabel. NOT
+        // RenderName so renames show, plus a "(private server)" suffix drawn by the row picker's item template. NOT
         // added to WidgetGames — the default-game widget is for games, not one-off PS launches
         // (same exclusion the JoinByLink sentinel gets).
         foreach (var server in privateServers)

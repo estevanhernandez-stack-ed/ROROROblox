@@ -3579,4 +3579,118 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
   <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
     <value>{0} se detiene una y otra vez al iniciarse. Reiniciarlo no lo arreglará: envía tu registro de RoRoRo a 626 Labs.</value>
   </data>
+  <data name="Library_Box_Placeholder" xml:space="preserve">
+    <value>Busca tus juegos o pega un enlace de Roblox</value>
+  </data>
+  <data name="Library_Box_Name" xml:space="preserve">
+    <value>Buscar en la Biblioteca o pegar un enlace de Roblox</value>
+  </data>
+  <data name="Library_Box_Tip" xml:space="preserve">
+    <value>Escribe para filtrar. Intro añade un juego, un id de lugar o un enlace de servidor privado pegado, o busca en Roblox.</value>
+  </data>
+  <data name="Library_View_Name" xml:space="preserve">
+    <value>Vista de la Biblioteca</value>
+  </data>
+  <data name="Library_View_Grid" xml:space="preserve">
+    <value>Cuadrícula</value>
+  </data>
+  <data name="Library_View_List" xml:space="preserve">
+    <value>Lista</value>
+  </data>
+  <data name="Library_Filters_Name" xml:space="preserve">
+    <value>Mostrar estos tipos</value>
+  </data>
+  <data name="Library_Chip_Recent" xml:space="preserve">
+    <value>Recientes</value>
+  </data>
+  <data name="Library_Chip_Favourites" xml:space="preserve">
+    <value>Favoritos</value>
+  </data>
+  <data name="Library_Chip_PrivateServers" xml:space="preserve">
+    <value>Servidores privados</value>
+  </data>
+  <data name="Library_Play" xml:space="preserve">
+    <value>Jugar</value>
+  </data>
+  <data name="Library_PlayAs" xml:space="preserve">
+    <value>Jugar como</value>
+  </data>
+  <data name="Library_Play_Name" xml:space="preserve">
+    <value>Jugar a {0}</value>
+  </data>
+  <data name="Library_PlayAs_Name" xml:space="preserve">
+    <value>Jugar a {0} con otra cuenta</value>
+  </data>
+  <data name="Library_More_Name" xml:space="preserve">
+    <value>Más acciones para {0}</value>
+  </data>
+  <data name="Library_Meta_NeverPlayed" xml:space="preserve">
+    <value>Nunca jugado</value>
+  </data>
+  <data name="Library_Meta_Played" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Library_Kind_Favourite" xml:space="preserve">
+    <value>Favorito</value>
+  </data>
+  <data name="Library_Kind_PrivateServer" xml:space="preserve">
+    <value>Servidor privado</value>
+  </data>
+  <data name="Library_Kind_Recent" xml:space="preserve">
+    <value>Reciente</value>
+  </data>
+  <data name="Library_Col_Game" xml:space="preserve">
+    <value>Juego</value>
+  </data>
+  <data name="Library_Col_Kind" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="Library_Col_LastPlayed" xml:space="preserve">
+    <value>Última partida</value>
+  </data>
+  <data name="Library_Col_Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="GamesPage_EmptyLibrary" xml:space="preserve">
+    <value>Tu Biblioteca está vacía.</value>
+  </data>
+  <data name="GamesPage_EmptyLibrary_Hint" xml:space="preserve">
+    <value>Busca un juego arriba o pega el enlace de un juego o de un servidor privado. Los juegos guardados aparecen en el panel de cada cuenta.</value>
+  </data>
+  <data name="Library_NoMatch" xml:space="preserve">
+    <value>Nada en tu Biblioteca coincide. Pulsa Intro para buscar en Roblox.</value>
+  </data>
+  <data name="Library_FromRoblox" xml:space="preserve">
+    <value>Desde Roblox</value>
+  </data>
+  <data name="Library_By" xml:space="preserve">
+    <value>de {0}</value>
+  </data>
+  <data name="Library_Playing" xml:space="preserve">
+    <value>{0} jugando</value>
+  </data>
+  <data name="Library_PlaceId" xml:space="preserve">
+    <value>ID de lugar {0}</value>
+  </data>
+  <data name="Library_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Library_PlayAs_Menu_Name" xml:space="preserve">
+    <value>Elige una cuenta con la que jugar</value>
+  </data>
+  <data name="Library_PlayAs_ExpiredReason" xml:space="preserve">
+    <value>Sesión caducada. Vuelve a autenticar esta cuenta en la ventana principal.</value>
+  </data>
+  <data name="Library_PlayAs_Item_Name" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Library_NoAccount" xml:space="preserve">
+    <value>Añade primero una cuenta y luego juega.</value>
+  </data>
+  <data name="Shell_Games_PrivateSuffix" xml:space="preserve">
+    <value>(servidor privado)</value>
+  </data>
+  <data name="Library_Add_Name" xml:space="preserve">
+    <value>Añadir {0} a la Biblioteca</value>
+  </data>
 </root>

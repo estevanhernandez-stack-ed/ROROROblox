@@ -1077,10 +1077,21 @@
                             <ComboBox AutomationProperties.Name="{loc:Loc MainWindow_GameOrPrivateServerTo}"
                                       ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
-                                      DisplayMemberPath="DropdownLabel"
                                       VerticalAlignment="Center"
                                       SelectionChanged="OnGameComboBoxSelectionChanged"
                                       ToolTip="{loc:Loc MainWindow_GameOrSavedPrivateServer}">
+                                <!-- The name, then a quiet "(private server)" suffix on a saved server (v1.36 item 9). The suffix
+                                     used to be English prose hardcoded in Core and read through a display-member path;
+                                     it is a resx key now. -->
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding RenderName}" />
+                                            <TextBlock Text="{loc:Loc Shell_Games_PrivateSuffix}" Margin="4,0,0,0"
+                                                       Visibility="{Binding IsPrivateServer, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
                                 <!-- v1.3.x — right-click any item in the dropdown for Rename / Reset.
                                      Skips the JoinByLink sentinel because BuildRenameTarget guards on
                                      PlaceId > 0 and returns null for the sentinel. -->

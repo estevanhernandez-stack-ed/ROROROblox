@@ -1,0 +1,110 @@
+<ContextMenu x:Class="ROROROblox.App.Games.AccountPickerFlyout"
+             x:ClassModifier="internal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:ROROROblox.App.Localization"
+             xmlns:vm="clr-namespace:ROROROblox.App.ViewModels"
+             AutomationProperties.Name="{loc:Loc Library_PlayAs_Menu_Name}"
+             Placement="Bottom"
+             MinWidth="260"
+             MaxWidth="340"
+             HasDropShadow="False">
+
+    <!--
+        The Library's Play as picker (v1.36 item 9, the D2 pick: two lines, the status under the name).
+        A ContextMenu over MainViewModel.Accounts, opened at the Play as button by the page. It is not a
+        window, so it adds nothing to WindowChromeFenceTests or the modal fence.
+
+        THEMED BY HAND, on purpose. Both templates below draw only from the app's DynamicResource brushes,
+        so the menu follows the active theme (flatline included) and not the OS menu chrome. The highlight
+        is a fill AND an edge: a fill alone is one step of grey under flatline.
+
+        The item reads the masked properties (RenderName, AvatarDisplaySource), so streamer mode shows
+        fake names and avatars with no code here. An expired account is disabled with the reason as its
+        tooltip (ToolTipService.ShowOnDisabled, or a disabled item would never explain itself). A
+        follow-marked account is NOT filtered out: the launch path decides it follows.
+    -->
+    <ContextMenu.Template>
+        <ControlTemplate TargetType="ContextMenu">
+            <Border Background="{DynamicResource NavyBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="4"
+                    SnapsToDevicePixels="True">
+                <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" />
+            </Border>
+        </ControlTemplate>
+    </ContextMenu.Template>
+
+    <ContextMenu.ItemTemplate>
+        <DataTemplate DataType="{x:Type vm:AccountSummary}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Width="28" Height="28" CornerRadius="14" ClipToBounds="True"
+                        Background="{DynamicResource RowBgBrush}"
+                        BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                        VerticalAlignment="Center">
+                    <Image Source="{Binding AvatarDisplaySource}" Stretch="UniformToFill" />
+                </Border>
+
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding RenderName}"
+                                   FontSize="{DynamicResource BodyFontSize}"
+                                   Foreground="{DynamicResource WhiteBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="170" />
+                        <Border BorderBrush="{DynamicResource MutedTextBrush}" BorderThickness="1" CornerRadius="3"
+                                Padding="5,0" Margin="8,0,0,0" VerticalAlignment="Center"
+                                Visibility="{Binding IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{loc:Loc Badge_Main}"
+                                       FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
+                                       Foreground="{DynamicResource WhiteBrush}" />
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Text="{Binding PlayAsStatusText}"
+                               FontSize="{DynamicResource MetaFontSize}"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+    </ContextMenu.ItemTemplate>
+
+    <ContextMenu.ItemContainerStyle>
+        <Style TargetType="MenuItem">
+            <Setter Property="AutomationProperties.Name" Value="{Binding PlayAsItemName}" />
+            <Setter Property="IsEnabled" Value="{Binding CanPlayAs}" />
+            <Setter Property="ToolTip" Value="{Binding PlayAsDisabledReason}" />
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <EventSetter Event="Click" Handler="OnItemClick" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Chrome" Padding="{TemplateBinding Padding}" CornerRadius="4"
+                                Background="Transparent" BorderBrush="Transparent" BorderThickness="1"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="False" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource DividerBrush}" />
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </ContextMenu.ItemContainerStyle>
+</ContextMenu>

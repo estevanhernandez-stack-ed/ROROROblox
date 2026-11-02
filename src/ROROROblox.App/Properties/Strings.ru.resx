@@ -3579,4 +3579,118 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
     <value>{0} раз за разом останавливается при запуске. Перезапуск не поможет: отправьте журнал RoRoRo в 626 Labs.</value>
   </data>
+  <data name="Library_Box_Placeholder" xml:space="preserve">
+    <value>Ищите свои игры или вставьте ссылку Roblox</value>
+  </data>
+  <data name="Library_Box_Name" xml:space="preserve">
+    <value>Поиск по Библиотеке или вставка ссылки Roblox</value>
+  </data>
+  <data name="Library_Box_Tip" xml:space="preserve">
+    <value>Печатайте для фильтрации. Enter добавляет вставленную игру, ID места или ссылку на приватный сервер либо запускает поиск в Roblox.</value>
+  </data>
+  <data name="Library_View_Name" xml:space="preserve">
+    <value>Вид Библиотеки</value>
+  </data>
+  <data name="Library_View_Grid" xml:space="preserve">
+    <value>Сетка</value>
+  </data>
+  <data name="Library_View_List" xml:space="preserve">
+    <value>Список</value>
+  </data>
+  <data name="Library_Filters_Name" xml:space="preserve">
+    <value>Показывать эти типы</value>
+  </data>
+  <data name="Library_Chip_Recent" xml:space="preserve">
+    <value>Недавние</value>
+  </data>
+  <data name="Library_Chip_Favourites" xml:space="preserve">
+    <value>Избранное</value>
+  </data>
+  <data name="Library_Chip_PrivateServers" xml:space="preserve">
+    <value>Приватные серверы</value>
+  </data>
+  <data name="Library_Play" xml:space="preserve">
+    <value>Играть</value>
+  </data>
+  <data name="Library_PlayAs" xml:space="preserve">
+    <value>Играть как</value>
+  </data>
+  <data name="Library_Play_Name" xml:space="preserve">
+    <value>Играть в {0}</value>
+  </data>
+  <data name="Library_PlayAs_Name" xml:space="preserve">
+    <value>Играть в {0} с другого аккаунта</value>
+  </data>
+  <data name="Library_More_Name" xml:space="preserve">
+    <value>Другие действия для {0}</value>
+  </data>
+  <data name="Library_Meta_NeverPlayed" xml:space="preserve">
+    <value>Ещё не играли</value>
+  </data>
+  <data name="Library_Meta_Played" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Library_Kind_Favourite" xml:space="preserve">
+    <value>Избранное</value>
+  </data>
+  <data name="Library_Kind_PrivateServer" xml:space="preserve">
+    <value>Приватный сервер</value>
+  </data>
+  <data name="Library_Kind_Recent" xml:space="preserve">
+    <value>Недавняя</value>
+  </data>
+  <data name="Library_Col_Game" xml:space="preserve">
+    <value>Игра</value>
+  </data>
+  <data name="Library_Col_Kind" xml:space="preserve">
+    <value>Тип</value>
+  </data>
+  <data name="Library_Col_LastPlayed" xml:space="preserve">
+    <value>Последняя игра</value>
+  </data>
+  <data name="Library_Col_Total" xml:space="preserve">
+    <value>Всего</value>
+  </data>
+  <data name="GamesPage_EmptyLibrary" xml:space="preserve">
+    <value>Ваша Библиотека пуста.</value>
+  </data>
+  <data name="GamesPage_EmptyLibrary_Hint" xml:space="preserve">
+    <value>Найдите игру выше или вставьте ссылку на игру или приватный сервер. Сохранённые игры появятся на панели каждого аккаунта.</value>
+  </data>
+  <data name="Library_NoMatch" xml:space="preserve">
+    <value>В вашей Библиотеке ничего не найдено. Нажмите Enter, чтобы искать в Roblox.</value>
+  </data>
+  <data name="Library_FromRoblox" xml:space="preserve">
+    <value>Из Roblox</value>
+  </data>
+  <data name="Library_By" xml:space="preserve">
+    <value>автор: {0}</value>
+  </data>
+  <data name="Library_Playing" xml:space="preserve">
+    <value>играют: {0}</value>
+  </data>
+  <data name="Library_PlaceId" xml:space="preserve">
+    <value>ID места {0}</value>
+  </data>
+  <data name="Library_Cancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="Library_PlayAs_Menu_Name" xml:space="preserve">
+    <value>Выберите аккаунт для игры</value>
+  </data>
+  <data name="Library_PlayAs_ExpiredReason" xml:space="preserve">
+    <value>Сессия истекла. Пройдите аутентификацию для этого аккаунта заново в главном окне.</value>
+  </data>
+  <data name="Library_PlayAs_Item_Name" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Library_NoAccount" xml:space="preserve">
+    <value>Сначала добавьте аккаунт, потом играйте.</value>
+  </data>
+  <data name="Shell_Games_PrivateSuffix" xml:space="preserve">
+    <value>(приватный сервер)</value>
+  </data>
+  <data name="Library_Add_Name" xml:space="preserve">
+    <value>Добавить {0} в Библиотеку</value>
+  </data>
 </root>

@@ -536,6 +536,31 @@ public sealed class AccountSummary : INotifyPropertyChanged
 
     public string FollowMarkBadgeName => AccountHealthInfo.BadgeName(AccountHealth.FollowMarked);
 
+    // ---- v1.36 item 9: the Library's Play as picker (spec 4.4) ---------------------------------
+
+    /// <summary>
+    /// False for an expired session: the picker disables the item rather than let a launch fail on a
+    /// dead cookie. Limited and Needs-verification accounts stay pickable (they can recover on their own),
+    /// and a follow-marked account is pickable too: the launch path, not the picker, decides it follows.
+    /// </summary>
+    public bool CanPlayAs => !_sessionExpired;
+
+    /// <summary>
+    /// The item's second line (the D2 pick): the health glyph and word for anything that is not Ok
+    /// ("Session expired", "Limited by Roblox", "Joins by following"), else the row's own status text
+    /// ("Ready", "In {game}"). The word is the short health one, not the row's long sentence, because
+    /// the picker is 260 px wide.
+    /// </summary>
+    public string PlayAsStatusText
+        => Health == AccountHealth.Ok ? SecondaryStatusText : HealthBadgeText;
+
+    /// <summary>Tooltip of a disabled picker item: why it cannot be picked. Null when it can be, so no empty tooltip box appears.</summary>
+    public string? PlayAsDisabledReason => CanPlayAs ? null : Loc.Get("Library_PlayAs_ExpiredReason");
+
+    /// <summary>Accessible name of the picker item: "{name}, {status}", streamer-aware through <see cref="RenderName"/>.</summary>
+    public string PlayAsItemName => Loc.Format("Library_PlayAs_Item_Name", RenderName,
+        Health == AccountHealth.Ok ? SecondaryStatusText : HealthWord);
+
     private void RaiseHealthChanged()
     {
         OnPropertyChanged(nameof(Health));

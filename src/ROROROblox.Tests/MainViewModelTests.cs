@@ -2679,6 +2679,106 @@ public class MainViewModelTests
         }
     }
 
+    // ---- v1.36 item 9: the Library's Play as goes through LaunchAccountByIdAsync, the one launch path ----
+
+    [Fact]
+    public async Task PlayAs_AccountB_RecordsTheSessionUnderB_AndBsPanelRefreshesOnExit()
+    {
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-playas-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        var history = new RecordingSessionHistoryStore();
+        var launcher = new RecordingSuccessLauncher();
+        var (vm, store, tracker, path) = Build(launcher: launcher, sessionHistory: history, favorites: favorites);
+        try
+        {
+            await SeedAsync(store, 2);
+            await LoadRowsAsync(vm);
+            var a = vm.Accounts.Single(x => x.IsMain);
+            var b = vm.Accounts.Single(x => !x.IsMain);
+            a.Panel!.IsExpanded = false;
+            b.Panel!.IsExpanded = false; // so a refresh below can only come from the exit
+            var target = new LaunchTarget.Place(PlaceId: 8737899170);
+
+            // What GamesPage's Play as does for account B: the delegate App.CreateShellPage hands the view model.
+            await vm.LaunchAccountByIdAsync(b.Id, target);
+
+            Assert.Equal(target, Assert.Single(launcher.Launches));
+            var session = Assert.Single(history.Added);
+            Assert.Equal(b.Id, session.AccountId);          // recorded under B, not under the main
+            Assert.Equal(8737899170, session.PlaceId);
+            Assert.Empty(b.Panel.Recent);                   // not refreshed yet: the session is still running
+
+            tracker.RaiseExited(new RobloxProcessEventArgs(b.Id, 9001));
+            await WaitForAsync(() => Task.FromResult(b.Panel.Recent.Count == 1));
+
+            Assert.Single(history.Ended);                   // B's row ended, and B's panel re-read it
+            Assert.Equal(8737899170, b.Panel.Recent[0].Entry.PlaceId);
+            Assert.NotNull(b.Panel.LastPlayed);
+            Assert.Null(a.Panel.LastPlayed);                // the main's panel was never involved
+            Assert.Empty(a.Panel.Recent);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    [Fact]
+    public async Task PlayAs_OnAnExpiredAccount_ForcedThroughTheViewModel_ReturnsCookieExpired_AndRecordsNothing()
+    {
+        var history = new RecordingSessionHistoryStore();
+        var launcher = new CookieExpiredLauncher();
+        var (vm, store, _, path) = Build(launcher: launcher, sessionHistory: history);
+        try
+        {
+            await SeedAsync(store, 2);
+            await LoadRowsAsync(vm);
+            var b = vm.Accounts.Single(x => !x.IsMain);
+            b.SessionExpired = true;
+            Assert.False(b.CanPlayAs); // the picker disables this item, so the UI never gets here...
+
+            await vm.LaunchAccountByIdAsync(b.Id, new LaunchTarget.Place(PlaceId: 8737899170)); // ...but a forced call is answered
+
+            Assert.Equal(1, launcher.Calls);                // the launch path asked, and was told CookieExpired
+            Assert.True(b.SessionExpired);
+            Assert.Empty(history.Added);                    // no session for a launch that never started
+            Assert.False(b.IsLaunching);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task PlayAs_OnAFollowMarkedAccount_LaunchesByFollow_BecauseTheLaunchPathDecides()
+    {
+        var launcher = new RecordingSuccessLauncher();
+        var (vm, store, _, path) = Build(launcher);
+        try
+        {
+            var (_, alt) = await FlaggedLaunchTests.SeedAsync(vm, store, mainInGame: true);
+            vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException("must not ask");
+
+            await vm.LaunchAccountByIdAsync(alt.Id, new LaunchTarget.Place(PlaceId: 8737899170));
+
+            Assert.Equal(new LaunchTarget.FollowFriend(111), Assert.Single(launcher.Launches)); // the main's user id, not the place
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    private sealed class CookieExpiredLauncher : IRobloxLauncher
+    {
+        public int Calls;
+
+        public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
+        {
+            Calls++;
+            return Task.FromResult<LaunchResult>(new LaunchResult.CookieExpired());
+        }
+
+        public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
+            => throw new NotImplementedException();
+    }
+
     private sealed class NullShellOpener : IShellOpener
     {
         public void Open(string path) { }

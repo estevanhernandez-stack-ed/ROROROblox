@@ -1712,13 +1712,7 @@ public partial class App : Application
         ArgumentNullException.ThrowIfNull(_services);
         return page switch
         {
-            Shell.ShellPage.Games => new Games.GamesPage(
-                _services.GetRequiredService<IFavoriteGameStore>(),
-                _services.GetRequiredService<IPrivateServerStore>(),
-                _services.GetRequiredService<IRobloxApi>(),
-                // The refresh the modal did on close, now done when the data changes.
-                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync(),
-                launchAccount: (accountId, target) => _services.GetRequiredService<MainViewModel>().LaunchAccountByIdAsync(accountId, target)),
+            Shell.ShellPage.Games => BuildLibraryPage(),
             Shell.ShellPage.Settings => BuildSettingsPage(),
             Shell.ShellPage.History => new History.SessionHistoryPage(
                 _services.GetRequiredService<ISessionHistoryStore>(),
@@ -1742,6 +1736,32 @@ public partial class App : Application
                 _services.GetRequiredService<IShellOpener>()),
             _ => throw new ArgumentOutOfRangeException(nameof(page), page, null),
         };
+    }
+
+    /// <summary>
+    /// The Library page (v1.36 item 9): the view model is built here, beside <c>MainViewModel</c>, so the page
+    /// is wiring. Paste routing needs the main view model's share-link resolver; Play and Play as go through
+    /// <c>LaunchAccountByIdAsync</c>, the one launch path; the Play as picker lists the live roster.
+    /// </summary>
+    private Games.GamesPage BuildLibraryPage()
+    {
+        ArgumentNullException.ThrowIfNull(_services);
+        var main = _services.GetRequiredService<MainViewModel>();
+        var viewModel = new Games.LibraryViewModel(
+            _services.GetRequiredService<LibraryCatalog>(),
+            _services.GetRequiredService<IFavoriteGameStore>(),
+            _services.GetRequiredService<IPrivateServerStore>(),
+            _services.GetRequiredService<IRobloxApi>(),
+            _services.GetRequiredService<IAppSettings>(),
+            url => main.ResolveShareUrlAsync(url),
+            // AccountsSnapshot, never Accounts: PlayAsync may resolve off the UI thread.
+            () => main.AccountsSnapshot,
+            (accountId, target) => main.LaunchAccountByIdAsync(accountId, target),
+            // The refresh the modal did on close, now done when the data changes.
+            libraryChanged: () => _ = main.ReloadGamesAsync(),
+            icons: _services.GetRequiredService<IGameIconCache>(),
+            ui: new Threading.WpfUiDispatcher());
+        return new Games.GamesPage(viewModel, main.Accounts);
     }
 
     /// <summary>Where a known issue's "RoRoRo can help" button goes (spec §4).</summary>

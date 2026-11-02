@@ -12,9 +12,11 @@
     "Stop",
     "Recycle",
     "Stop all",
-    "Open Roblox home"
+    "Open Roblox home",
+    "Play",
+    "Play as"
   ],
-  "_note_denyAids": "The deny list above is ENGLISH DISPLAY TEXT and stops working the moment the app runs in another language -- a Polish 'Zatrzymaj' is not in it. These AutomationIds are the language-independent form of the same guard, and are what the resolver actually enforces on localized runs. Added 2026-09-09 with the language parameter; the name list is kept because it still catches an English-run route that names a destructive control directly. DangerPanelLaunch is shared by every account-panel entry, which are named by game and so have no fixed name for the list above to catch: the id is their real guard (a route naming it also matches many elements, which the resolver treats as an error).",
+  "_note_denyAids": "The deny list above is ENGLISH DISPLAY TEXT and stops working the moment the app runs in another language -- a Polish 'Zatrzymaj' is not in it. These AutomationIds are the language-independent form of the same guard, and are what the resolver actually enforces on localized runs. Added 2026-09-09 with the language parameter; the name list is kept because it still catches an English-run route that names a destructive control directly. DangerPanelLaunch is shared by every account-panel entry, which are named by game and so have no fixed name for the list above to catch: the id is their real guard (a route naming it also matches many elements, which the resolver treats as an error). DangerPlay and DangerPlayAs (v1.36 item 9) are the Library's per-entry launch buttons, each named by its game (\"Play Pet Simulator 99\"), so the id is the guard that holds in every language; the English list above carries the bare words Play and Play as.",
   "denyAids": [
     "DangerStop",
     "DangerRemove",
@@ -24,7 +26,9 @@
     "DangerLaunchMultiple",
     "DangerStopAll",
     "DangerPanelLaunch",
-    "DangerOpenRobloxHome"
+    "DangerOpenRobloxHome",
+    "DangerPlay",
+    "DangerPlayAs"
   ],
   "surfaces": [
     {

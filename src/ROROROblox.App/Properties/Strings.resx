@@ -3154,4 +3154,42 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Plugin_Health_Stopped" xml:space="preserve"><value>Stopped.</value><comment>Plugin row health line, exit code 0 after it had been running (#242)</comment></data>
   <data name="Plugin_CouldNotStartBanner" xml:space="preserve"><value>{0} can't start on this PC. Restarting won't fix it: send your RoRoRo log to 626 Labs.</value><comment>Plugins-window banner with no Restart button; {0}=plugin name (#242)</comment></data>
   <data name="Plugin_KeepsFailingBanner" xml:space="preserve"><value>{0} keeps stopping as it starts. Restarting won't fix it: send your RoRoRo log to 626 Labs.</value><comment>Plugins-window banner with no Restart button, after 3 failed starts in a minute; {0}=plugin name (#242)</comment></data>
+  <data name="Library_Box_Placeholder" xml:space="preserve"><value>Search your games or paste a Roblox link</value><comment>Library one-box placeholder (v1.36 item 9)</comment></data>
+  <data name="Library_Box_Name" xml:space="preserve"><value>Search the Library or paste a Roblox link</value><comment>Library one-box accessible name (v1.36 item 9)</comment></data>
+  <data name="Library_Box_Tip" xml:space="preserve"><value>Type to filter. Enter adds a pasted game, place id or private-server link, or searches Roblox.</value><comment>Library one-box tooltip (v1.36 item 9)</comment></data>
+  <data name="Library_View_Name" xml:space="preserve"><value>Library layout</value><comment>Accessible name of the grid/list toggle (v1.36 item 9)</comment></data>
+  <data name="Library_View_Grid" xml:space="preserve"><value>Grid</value><comment>Library layout toggle (v1.36 item 9)</comment></data>
+  <data name="Library_View_List" xml:space="preserve"><value>List</value><comment>Library layout toggle (v1.36 item 9)</comment></data>
+  <data name="Library_Filters_Name" xml:space="preserve"><value>Show these kinds</value><comment>Accessible name of the kind chips group (v1.36 item 9)</comment></data>
+  <data name="Library_Chip_Recent" xml:space="preserve"><value>Recent</value><comment>Library kind chip (v1.36 item 9)</comment></data>
+  <data name="Library_Chip_Favourites" xml:space="preserve"><value>Favourites</value><comment>Library kind chip (v1.36 item 9)</comment></data>
+  <data name="Library_Chip_PrivateServers" xml:space="preserve"><value>Private servers</value><comment>Library kind chip (v1.36 item 9)</comment></data>
+  <data name="Library_Play" xml:space="preserve"><value>Play</value><comment>Library entry button, launches as the main account (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs" xml:space="preserve"><value>Play as</value><comment>Library entry button, opens the account picker (v1.36 item 9)</comment></data>
+  <data name="Library_Play_Name" xml:space="preserve"><value>Play {0}</value><comment>Accessible name of Play; {0}=game or server name (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs_Name" xml:space="preserve"><value>Play {0} as another account</value><comment>Accessible name of Play as; {0}=game or server name (v1.36 item 9)</comment></data>
+  <data name="Library_More_Name" xml:space="preserve"><value>More actions for {0}</value><comment>Accessible name of the entry's more-actions button; {0}=name (v1.36 item 9)</comment></data>
+  <data name="Library_Meta_NeverPlayed" xml:space="preserve"><value>Never played</value><comment>Library entry meta line when RoRoRo never launched it (v1.36 item 9)</comment></data>
+  <data name="Library_Meta_Played" xml:space="preserve"><value>{0} · {1}</value><comment>Library entry meta line; {0}=age, {1}=total time (v1.36 item 9)</comment></data>
+  <data name="Library_Kind_Favourite" xml:space="preserve"><value>Favourite</value><comment>List view kind column (v1.36 item 9)</comment></data>
+  <data name="Library_Kind_PrivateServer" xml:space="preserve"><value>Private server</value><comment>List view kind column (v1.36 item 9)</comment></data>
+  <data name="Library_Kind_Recent" xml:space="preserve"><value>Recent</value><comment>List view kind column (v1.36 item 9)</comment></data>
+  <data name="Library_Col_Game" xml:space="preserve"><value>Game</value><comment>List view column header (v1.36 item 9)</comment></data>
+  <data name="Library_Col_Kind" xml:space="preserve"><value>Kind</value><comment>List view column header (v1.36 item 9)</comment></data>
+  <data name="Library_Col_LastPlayed" xml:space="preserve"><value>Last played</value><comment>List view column header (v1.36 item 9)</comment></data>
+  <data name="Library_Col_Total" xml:space="preserve"><value>Total</value><comment>List view column header (v1.36 item 9)</comment></data>
+  <data name="GamesPage_EmptyLibrary" xml:space="preserve"><value>Your Library is empty.</value><comment>Library empty state, first sentence (v1.36 item 9)</comment></data>
+  <data name="GamesPage_EmptyLibrary_Hint" xml:space="preserve"><value>Search for a game or paste a game or private-server link above. Saved games show up in every account's panel.</value><comment>Library empty state, the invitation (v1.36 item 9)</comment></data>
+  <data name="Library_NoMatch" xml:space="preserve"><value>Nothing in your Library matches. Press Enter to search Roblox.</value><comment>Library line when chips or the box hide everything (v1.36 item 9)</comment></data>
+  <data name="Library_FromRoblox" xml:space="preserve"><value>From Roblox</value><comment>Heading of the Roblox search results group (v1.36 item 9)</comment></data>
+  <data name="Library_By" xml:space="preserve"><value>by {0}</value><comment>Search result creator; {0}=creator name (v1.36 item 9)</comment></data>
+  <data name="Library_Playing" xml:space="preserve"><value>{0} playing</value><comment>Search result player count; {0}=formatted number (v1.36 item 9)</comment></data>
+  <data name="Library_PlaceId" xml:space="preserve"><value>Place ID {0}</value><comment>Tooltip line of an entry; {0}=place id (v1.36 item 9)</comment></data>
+  <data name="Library_Cancel" xml:space="preserve"><value>Cancel</value><comment>Cancel button of the Library's inline remove confirm (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs_Menu_Name" xml:space="preserve"><value>Choose an account to play as</value><comment>Accessible name of the Play as account picker (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs_ExpiredReason" xml:space="preserve"><value>Session expired. Re-authenticate this account in the main window.</value><comment>Tooltip of a disabled (expired) account in the Play as picker (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs_Item_Name" xml:space="preserve"><value>{0}, {1}</value><comment>Accessible name of a Play as picker item; {0}=account name, {1}=status (v1.36 item 9)</comment></data>
+  <data name="Library_NoAccount" xml:space="preserve"><value>Add an account first, then play.</value><comment>Status when Play has no account to launch (v1.36 item 9)</comment></data>
+  <data name="Shell_Games_PrivateSuffix" xml:space="preserve"><value>(private server)</value><comment>Suffix on a saved private server in a row's game picker (v1.36 item 9, was hardcoded in Core)</comment></data>
+  <data name="Library_Add_Name" xml:space="preserve"><value>Add {0} to the Library</value><comment>Accessible name of the Add button on a search result; {0}=game name (v1.36 item 9)</comment></data>
 </root>
