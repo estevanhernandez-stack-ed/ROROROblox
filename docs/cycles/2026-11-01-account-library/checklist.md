@@ -176,27 +176,29 @@ corrected in the same commit. `MainViewModel.ApplyFacts(Guid, AccountFacts)` key
 lesson (`App.xaml.cs:899-914`) quoted in the service's class comment.
 
 **Acceptance:**
-- [ ] `AccountFactsSchemaTests` (copy of `LocalNameSchemaTests`): round-trip of `Facts`, `Note`,
+- [x] `AccountFactsSchemaTests` (copy of `LocalNameSchemaTests`): round-trip of `Facts`, `Note`,
       `PanelExpanded`; null omitted; a v1.35 blob loads all three null.
-- [ ] `AccountFactsServiceTests`: `RequestCount == 0` after construction, start and the load of eight
+- [x] `AccountFactsServiceTests`: `RequestCount == 0` after construction, start and the load of eight
       accounts, until an expand or a tick; one account's three calls complete before the next account
       starts; consecutive accounts are 2.0–3.0 s apart on a fake clock; an expand on facts younger than
       60 s enqueues nothing; a tick picks the oldest account older than 10 min and only one; an expired
       account is never picked; a 401/403 from any call leaves the previous values standing, sets
       `LastError`, and the fake `PresenceService` sees no health change.
-- [ ] `TypedHttpClientRegistrationTests` gains the `AccountFactsApi` row and the single-ctor guard
+- [x] `TypedHttpClientRegistrationTests` gains the `AccountFactsApi` row and the single-ctor guard
       passes; one new assertion reads the registration's primary handler and requires
       `UseCookies == false` for **both** `RobloxApi` and `AccountFactsApi` (CLAUDE.md says no test guards
       this today; this cycle adds a second place to get it wrong, so the guard arrives with it).
-- [ ] `AccountStoreTransportTests`: `Note` round-trips through export and import; the sibling of `:57`
+- [x] `AccountStoreTransportTests`: `Note` round-trips through export and import; the sibling of `:57`
       asserts the export record carries **no** `Facts`.
-- [ ] `MainViewModelTests`: a row's `RobloxUserId` is set after `AccountUserIdResolved`; `ApplyFacts`
+- [x] `MainViewModelTests`: a row's `RobloxUserId` is set after `AccountUserIdResolved`; `ApplyFacts`
       for id A never changes row B.
-- [ ] `AccountUserIdBackfillServiceTests` green and unedited after the constant lift.
-- [ ] The `dpapi-cookie-blast-radius` agent run over `AccountFactsApi`, `AccountFactsService`,
+- [x] `AccountUserIdBackfillServiceTests` green and unedited after the constant lift.
+- [x] The `dpapi-cookie-blast-radius` agent run over `AccountFactsApi`, `AccountFactsService`,
       `AccountStore` and `tools/EndpointProbe`: no path logs, throws with, or serialises a cookie value;
       each finding fixed in this commit or named in its message.
-- [ ] No XAML in this commit.
+- [x] No XAML in this commit.
+
+*Built: 0f7ad4d (facts lane), 2b2bf9a (audit fixes: no redirects on the facts client, control-character cookies refused at the store door and skipped on import, redacted ToString on the three cookie records with a fence, validate-membership off until C1). 3,107 unit + 27/1 harness green. Blast-radius audit: no reachable leak; every finding fixed in 2b2bf9a except RobloxApi's redirect handling, deferred outside the cycle (dashboard OqR5dQUIXq4ALHKc7aaQ). The two-minute dev-build log grep moves to C2; its grep must exclude the System.Net.Http.HttpClient.IAccountFactsApi category.*
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~AccountFacts|FullyQualifiedName~TypedHttpClientRegistrationTests|FullyQualifiedName~AccountStoreTransportTests|FullyQualifiedName~AccountUserIdBackfill"`
 → all passed. `dotnet build ROROROblox.slnx -c Release` → 0 errors. Dev build with eight accounts, wait
