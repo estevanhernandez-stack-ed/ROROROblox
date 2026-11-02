@@ -381,6 +381,8 @@ internal sealed class ThemeService : IThemeAppliedSource
         // does not grow), and so a user theme already on disk gets four distinct health colours.
         ApplySlot(resources, ThemeSlots.HealthVerify,
             ContrastGuard.Flatten(theme.RowExpiredAccent, theme.Magenta, 0.5));
+        ApplySlot(resources, ThemeSlots.HealthLimited,
+            ContrastGuard.EnsureTextAgainstAll([theme.Bg, theme.RowBg], theme.Magenta, ContrastGuard.MinimumTextRatio));
 
         // WPF-UI's checkbox accent, taken over. See ThemeSlots' block comment above these four keys
         // for why they are keys of the library's rather than ours, and why they are written here

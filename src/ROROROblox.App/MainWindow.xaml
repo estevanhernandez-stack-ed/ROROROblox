@@ -497,7 +497,7 @@
                                                     <Setter Property="Foreground" Value="{DynamicResource HealthVerifyBrush}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding HealthKind}" Value="limited">
-                                                    <Setter Property="Foreground" Value="{DynamicResource MagentaBrush}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource HealthLimitedBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

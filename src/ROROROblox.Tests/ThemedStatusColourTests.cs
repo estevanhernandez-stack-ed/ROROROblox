@@ -475,6 +475,10 @@ public class ThemedStatusColourTests
     /// adding one.
     /// </para>
     /// </summary>
+    // 26 -> 27 on 2026-11-01 (v1.36 item 2 follow-up): HealthLimitedBrush's pre-startup fallback in App.xaml,
+    // the Limited badge text, derived by ThemeService (Magenta nudged to 4.5:1). Same kind as the two above.
+    // DERIVED, counted against the tree: App.xaml 18 + AboutWindow 9 = 27.
+    //
     // 25 -> 26 on 2026-11-01 (v1.36 item 2): HealthVerifyBrush's pre-startup fallback in App.xaml, the
     // "Needs verification" colour. Derived by ThemeService.ApplySlot on every theme change as the
     // midpoint of RowExpiredAccent and Magenta, so the literal is the same kind as OnMagentaBrush's:
@@ -511,7 +515,7 @@ public class ThemedStatusColourTests
     // went clean while that entry stayed, so it now grants permission almost nothing uses. Left in
     // place rather than retired blind: one literal is a real literal and retiring the entry is a
     // separate measurement, recorded as a register row instead of done in passing here.
-    private const int AllowedXamlLiteralCeiling = 26;
+    private const int AllowedXamlLiteralCeiling = 27;
 
     /// <summary>
     /// Vacuity floor — it catches a repo-root walk that found nothing, and nothing else.

@@ -180,6 +180,44 @@ public static class ContrastGuard
         return ToHex(target);
     }
 
+    /// <summary>
+    /// Text version of <see cref="EnsureAgainstAll"/>: returns <paramref name="candidate"/> unchanged when
+    /// it already clears <paramref name="minimumRatio"/> on every surface, otherwise walks it toward
+    /// white (all surfaces dark) or black (all light) only as far as it takes, measuring the snapped
+    /// bytes it returns. Surfaces that pull opposite ways fall back to the first surface alone.
+    /// </summary>
+    public static string EnsureTextAgainstAll(IReadOnlyList<string?> surfaces, string? candidate, double minimumRatio)
+    {
+        var fields = new List<(double R, double G, double B)>();
+        foreach (var s in surfaces)
+        {
+            if (TryParse(s, out var parsed, out _)) fields.Add(parsed);
+        }
+        if (fields.Count == 0 || !TryParse(candidate, out var raw, out var alpha)) return candidate ?? "";
+
+        if (fields.All(bg => Ratio(bg, Composite(raw, alpha, bg)) >= minimumRatio)) return candidate!;
+
+        (double, double, double) TargetFor((double R, double G, double B) bg) =>
+            Luminance(bg) > 0.179 ? (0.0, 0.0, 0.0) : (1.0, 1.0, 1.0);
+        var target = TargetFor(fields[0]);
+        if (fields.Any(bg => TargetFor(bg) != target))
+        {
+            return EnsureTextAgainstAll([FormatSurface(fields[0])], candidate, minimumRatio);
+        }
+
+        var start = Composite(raw, alpha, fields[0]);
+        for (var step = 1; step <= 100; step++)
+        {
+            var t = step / 100.0;
+            var snapped = Snap((
+                start.R + (target.Item1 - start.R) * t,
+                start.G + (target.Item2 - start.G) * t,
+                start.B + (target.Item3 - start.B) * t));
+            if (fields.All(bg => Ratio(bg, snapped) >= minimumRatio)) return ToHex(snapped);
+        }
+        return ToHex(target);
+    }
+
     /// <summary>Round-trips a parsed surface back to hex so the single-surface fallback can reuse
     /// the public entry point instead of duplicating the walk.</summary>
     private static string FormatSurface((double R, double G, double B) c) => ToHex(c);

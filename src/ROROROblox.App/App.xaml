@@ -74,6 +74,10 @@
                  midpoint, the pre-startup fallback only. -->
             <SolidColorBrush x:Key="HealthVerifyBrush" Color="#F2705E" />
 
+            <!-- DERIVED (v1.36): the "Limited by Roblox" badge text, Magenta nudged toward White until
+                 it clears 4.5:1 on Bg and RowBg. Value here is the brand pre-startup fallback. -->
+            <SolidColorBrush x:Key="HealthLimitedBrush" Color="#F44897" />
+
             <!-- WPF-UI'S CHECKBOX ACCENT, TAKEN OVER. These four keys are the library's, not ours,
                  and they are declared here for the same reason the ten slots above are: an entry
                  written directly into Application.Resources outranks every merged dictionary,
