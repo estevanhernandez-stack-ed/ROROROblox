@@ -36,7 +36,6 @@ internal static class PanelWindowFixtures
         string? note = "Farm alt, keep at 20 FPS. Clan bank on Fridays.",
         string firstName = "NovaFake",
         bool savedGames = false,
-        double layoutDpi = 96,
         Func<AccountSummary, AccountPanelViewModel, Task>? beforeOpen = null)
     {
         var built = MainViewModelTests.Build();
@@ -73,9 +72,12 @@ internal static class PanelWindowFixtures
             built.Vm.Accounts.Add(row);
         }
 
-        var window = new ROROROblox.App.MainWindow(built.Vm);
-        if (layoutDpi != 96) VisualTreeHelper.SetRootDpi(window, new DpiScale(layoutDpi / 96.0, layoutDpi / 96.0));
-        return window;
+        // No SetRootDpi here, ever (2026-11-02). Every window render shares one STA host thread, and a root DPI set on
+        // one window leaked into the next layout on that thread: the account row's ~91.3 DIP height then rounded to 91
+        // instead of 92, so the height pins failed whenever test order put a 120 case first (every CI x64 run, and
+        // locally under load). It also changed nothing this fixture's callers measured. A guard in
+        // AccountRowCollapsedRenderTests fails any test source that calls it.
+        return new ROROROblox.App.MainWindow(built.Vm);
     }
 
     private static IReadOnlyList<LaunchSession> History(Guid account, DateTimeOffset now, PanelContent content)

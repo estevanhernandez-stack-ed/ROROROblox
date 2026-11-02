@@ -12,9 +12,10 @@ namespace ROROROblox.Tests.Rendering;
 /// <para>
 /// 96 AND 120 DPI. The window is laid out in device-independent units, so the same 900x600 holds at any scale;
 /// what 125% changes is text metrics and layout rounding. The harness cannot reproduce a real 125% display's
-/// layout (see <see cref="AccountRowCollapsedRenderTests"/>), so the 120 case sets the window's root DPI before
-/// layout and the numbers are read back from that layout, order-independent because each case builds its own
-/// window and sets its own scale. Layout rounding on a real display stays on the C2 eyes-on walk.
+/// layout (see <see cref="AccountRowCollapsedRenderTests"/>), so these gates lay out at 96 only. A 120 case that set
+/// the window's root DPI was removed on 2026-11-02: it measured the same numbers as 96 and leaked its scale into the
+/// shared render thread, which broke the row-height pins whenever it ran first. Layout rounding on a real 125%
+/// display stays on the C2 eyes-on walk.
 /// </para>
 /// </summary>
 public class MainWindowOneAccountFitsTests
@@ -42,7 +43,7 @@ public class MainWindowOneAccountFitsTests
         ThemedWindowRender.Inspect(
             BuiltIn("brand"),
             $"MainWindow {accounts} account(s), panel open @{dpi}dpi",
-            () => PanelWindowFixtures.Build(accounts, expanded: true, content, savedGames: savedGames, layoutDpi: dpi),
+            () => PanelWindowFixtures.Build(accounts, expanded: true, content, savedGames: savedGames),
             content =>
             {
                 var scroller = PanelWindowFixtures.RosterScroller(content);
@@ -69,7 +70,6 @@ public class MainWindowOneAccountFitsTests
     /// </summary>
     [WindowRenderTheory]
     [InlineData(96)]
-    [InlineData(120)]
     public void OneAccountWithALightPanel_FitsWithoutARosterScrollbar(double dpi)
     {
         var fit = Measure(dpi, accounts: 1, savedGames: true);
@@ -83,7 +83,6 @@ public class MainWindowOneAccountFitsTests
 
     [WindowRenderTheory]
     [InlineData(96)]
-    [InlineData(120)]
     public void TheFreshInstall_OnePanelOpenWithThreeEmptyStates_FitsWithoutARosterScrollbar(double dpi)
     {
         // The promise of spec 3.8: Add account on an empty profile, the new row's panel opens, no games saved, no
@@ -97,13 +96,12 @@ public class MainWindowOneAccountFitsTests
 
     [WindowRenderTheory]
     [InlineData(96)]
-    [InlineData(120)]
     public void TheBatchSurfaces_AreHiddenWithOneAccount_AndBackWithTwo(double dpi)
     {
         bool[] Visible(int accounts) => ThemedWindowRender.Inspect(
             BuiltIn("brand"),
             $"MainWindow {accounts} account(s), batch surfaces @{dpi}dpi",
-            () => PanelWindowFixtures.Build(accounts, expanded: true, savedGames: true, layoutDpi: dpi),
+            () => PanelWindowFixtures.Build(accounts, expanded: true, savedGames: true),
             content =>
             {
                 bool Shown(FrameworkElement fe) => PanelWindowFixtures.EffectivelyVisible(fe) && fe.ActualWidth > 0;

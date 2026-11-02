@@ -155,4 +155,29 @@ public class AccountRowCollapsedRenderTests
         var sample = RenderHeader(96, () => BuildWindow(new AccountFacts(null, null, null, null, "403"), null));
         Assert.Equal(V135RowHeight96, sample.Height);
     }
+
+    /// <summary>
+    /// The pins above hold only if nothing changes a window's root DPI on the shared render thread. On
+    /// 2026-11-02 one fixture did (a 120 DPI fit case): the scale leaked into the next layout on that thread,
+    /// the row's ~91.3 DIP height rounded to 91, and these pins failed on every CI x64 run and locally under
+    /// load, in whatever order put the 120 case first. A call in a comment is fine; a call in code is not.
+    /// </summary>
+    [Fact]
+    public void NoTestSetsARootDpi_OnTheSharedRenderThread()
+    {
+        var root = XamlStyleScanner.FindRepoRoot();
+        Assert.NotNull(root);
+        var call = "SetRoot" + "Dpi("; // assembled, so this file's own needle is not a match
+        var offenders = Directory.EnumerateFiles(Path.Combine(root!, "src", "ROROROblox.Tests"), "*.cs", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                     && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar))
+            .SelectMany(f => File.ReadLines(f).Select((line, i) => (File: Path.GetFileName(f), Line: i + 1, Text: line.Trim())))
+            .Where(x => !x.Text.StartsWith("//", StringComparison.Ordinal)
+                     && x.Text.Contains(call, StringComparison.Ordinal))
+            .Select(x => $"{x.File}:{x.Line}")
+            .ToList();
+        Assert.True(offenders.Count == 0,
+            "These test sources call SetRootDpi, which leaks into the shared render thread and breaks the row-height pins: "
+            + string.Join(", ", offenders));
+    }
 }
