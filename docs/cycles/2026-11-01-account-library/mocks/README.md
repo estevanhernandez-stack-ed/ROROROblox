@@ -44,3 +44,19 @@ What the results decide (recorded in `docs/decisions.md`):
 - **Needs verification ships** only if the captcha account's 403 carries a `rblx-challenge-type` that the limited account's 403 does not.
 - **Membership ships** (as "Plus") only if `validate-membership` answers for the Plus cookie. Otherwise the fact is dropped from the row and from the privacy line.
 - **Limited and Follow-marked never merge** unless the triples prove they are the same condition.
+
+## Picks, 2026-11-02
+
+| # | Pick |
+|---|---|
+| 0a | keep: the follow mark stays on the name line |
+| 0b | cyan, as built |
+| A | A1: a new line, collapsed when it has nothing to say |
+| B | pending |
+| C | C1: square icon tiles |
+| D | D2: two lines, status under the name |
+| E | keep: a played place with only a saved private server still shows in Recent |
+
+One ruling inside A1: last played comes from local history and is primed at load, so it counts as something to say. An account with history shows the facts line (last played alone) from the first paint. The "looks like v1.35 until the first refresh" property holds only for an account with no history and no note.
+
+Probes: not run yet. Needs verification stays unset and membership stays off. Both are re-checked at C2.

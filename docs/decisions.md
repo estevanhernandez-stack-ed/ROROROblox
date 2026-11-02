@@ -790,3 +790,13 @@ Export writes exactly what `ThemeStore.SaveUserThemeAsync` writes for a custom t
 **Consequences:** Sixteen items and three halts (C1 after 5, C2 after 7, C3 after 9), above the usual Cart count and stated as the honest size. An autonomous build can start tonight without Este's hands; the two states that need his measurements ship or drop at C1/C2 on evidence. Assumptions 21-28 in the checklist are his to reverse.
 
 **Evidence:** `docs/cycles/2026-11-01-account-library/checklist.md` (header, items 1-3, C1, assumptions); spec §1.2, §2.2, §6; `docs/cycles/2026-10-05-alerts/checklist.md` (the halt pattern and item 6b, the mid-build catalog sweep this plan schedules as item 13 instead).
+
+### 2026-11-02 — C1 picks: the facts line is A1, the Library is tiles, Play as is two lines
+
+**Context:** The v1.36 build halted at C1 for Este's picks against `docs/cycles/2026-11-01-account-library/mocks/c1-mocks.html`. The plan's assumption 21 said the facts line collapses when every fact is null and the note is empty, "so an upgraded roster matches v1.35 to the pixel until the first refresh". Item 5 primes last played from local history at load, before any network refresh.
+
+**Decision:** 0a keep (the follow mark stays on the name line), 0b cyan (a marked account at rest keeps the cyan dot), A1 (the facts line is its own line under the status line), C1 (square icon tiles), D2 (Play as rows on two lines, status under the name), E keep (a played place with only a saved private server still shows in Recent). B, the panel layout, is still open. Inside A1: last played counts as something to say, so an account with history shows the line from the first paint with last played alone.
+
+**Consequences:** The pixel-identical-to-v1.35 property narrows to accounts with no history and no note; `AccountRowCollapsedRenderTests` pins that case and a second constant for the populated line. The probes have not run, so Needs verification stays unset, the membership badge stays absent, and C2 re-checks both.
+
+**Evidence:** `docs/cycles/2026-11-01-account-library/mocks/README.md` (Picks, 2026-11-02); checklist items 6, 7, 9.
