@@ -48,10 +48,8 @@ Treat this as a rough anchor, not the 10% bar. n=1 cannot support a percentage; 
 
 Both A/B builds exist, built in Release and not launched:
 
-- **A, v1.35:** a detached `5a8fe61` worktree at `..\_scratchororo-v135-ab\`, exe under `src\ROROROblox.Appin\Release
-et10.0-windows10.0.19041.0\`.
-- **B, the branch:** this repo's `src\ROROROblox.Appin\Release
-et10.0-windows10.0.19041.0\` (the `net10.0-windows` folder beside it is a stale August build; ignore it).
+- **A, v1.35:** a detached `5a8fe61` worktree at `../_scratch/rororo-v135-ab/`, exe under `src/ROROROblox.App/bin/Release/net10.0-windows10.0.19041.0/`.
+- **B, the branch:** this repo's `src/ROROROblox.App/bin/Release/net10.0-windows10.0.19041.0/` (the `net10.0-windows` folder beside it is a stale August build; ignore it).
 
 1. **Probes**, any time, Store RoRoRo may stay up: `mocks/README.md`, Half 2.
 2. **Quiet the machine:** close every Roblox client, quit the Store RoRoRo from the tray.
