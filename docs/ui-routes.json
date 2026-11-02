@@ -11,9 +11,10 @@
     "Squad Launch",
     "Stop",
     "Recycle",
-    "Stop all"
+    "Stop all",
+    "Open Roblox home"
   ],
-  "_note_denyAids": "The deny list above is ENGLISH DISPLAY TEXT and stops working the moment the app runs in another language -- a Polish 'Zatrzymaj' is not in it. These AutomationIds are the language-independent form of the same guard, and are what the resolver actually enforces on localized runs. Added 2026-09-09 with the language parameter; the name list is kept because it still catches an English-run route that names a destructive control directly.",
+  "_note_denyAids": "The deny list above is ENGLISH DISPLAY TEXT and stops working the moment the app runs in another language -- a Polish 'Zatrzymaj' is not in it. These AutomationIds are the language-independent form of the same guard, and are what the resolver actually enforces on localized runs. Added 2026-09-09 with the language parameter; the name list is kept because it still catches an English-run route that names a destructive control directly. DangerPanelLaunch is shared by every account-panel entry, which are named by game and so have no fixed name for the list above to catch: the id is their real guard (a route naming it also matches many elements, which the resolver treats as an error).",
   "denyAids": [
     "DangerStop",
     "DangerRemove",
@@ -21,7 +22,9 @@
     "DangerRecycle",
     "DangerSquadLaunch",
     "DangerLaunchMultiple",
-    "DangerStopAll"
+    "DangerStopAll",
+    "DangerPanelLaunch",
+    "DangerOpenRobloxHome"
   ],
   "surfaces": [
     {

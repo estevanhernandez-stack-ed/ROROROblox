@@ -2470,7 +2470,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         ? DispatchBatchAsync(cleared, overrideTarget: null, launchingBanner)
                         : ReleaseBatchAsync(cleared, overrideTarget: null, launchingBanner, startIndex: 0));
             }
-            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"), HasMultipleAccounts ? plan.FollowMarkedCount : 0);
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"), plan.FollowMarkedCount, suppressFollowClause: !HasMultipleAccounts);
         }
         finally
         {
@@ -3003,7 +3003,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                             waitForLanding: careful));
             }
 
-            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"), HasMultipleAccounts ? plan.FollowMarkedCount : 0);
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"), plan.FollowMarkedCount, suppressFollowClause: !HasMultipleAccounts);
 
             // Everyone was aimed at one specific server — check with presence who actually made it.
             // Fire-and-forget: the verdict is up to four minutes out (ServerLandingGate.MaxWait,

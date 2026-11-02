@@ -19,7 +19,34 @@ namespace ROROROblox.App.ViewModels;
 /// <param name="PlaceName">For a saved private server, the game it lives in as the icon cache knows it (no fetch), or null. Shown beside the age.</param>
 public sealed record PanelEntry(
     LibraryEntry Entry, DateTimeOffset? LastPlayedUtc, TimeSpan? TotalPlayed, bool IsSaved, bool CanLaunch = true, string? PlaceName = null)
+    : INotifyPropertyChanged
 {
+    /// <summary>
+    /// Copy constructor written out so a <c>with</c> clone does NOT inherit the original's
+    /// <see cref="PropertyChanged"/> handlers (the synthesized one would copy the event's backing field, and
+    /// the clone would then notify views bound to the entry it replaced).
+    /// </summary>
+    private PanelEntry(PanelEntry original)
+    {
+        Entry = original.Entry;
+        LastPlayedUtc = original.LastPlayedUtc;
+        TotalPlayed = original.TotalPlayed;
+        IsSaved = original.IsSaved;
+        CanLaunch = original.CanLaunch;
+        PlaceName = original.PlaceName;
+    }
+
+    /// <summary>Raised only by <see cref="RaiseTimesChanged"/>: the data is immutable, but its wording drifts with the clock.</summary>
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>The age in <see cref="MetaText"/> (and the tooltip and accessible name built from it) is now stale: say so, without touching the data.</summary>
+    public void RaiseTimesChanged()
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MetaText)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TooltipText)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AccessibleName)));
+    }
+
     /// <summary>The name the entry shows: the Library's rename when there is one.</summary>
     public string DisplayName => Entry.RenderName;
 
@@ -286,6 +313,18 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         {
             // A failed save leaves the entry unsaved; the user can press Save again.
         }
+    }
+
+    /// <summary>
+    /// The row's 30 s tick: re-raise the entries' time-derived text so an open panel never shows a frozen age.
+    /// Raises on the existing entries only; no rebuild, no history read, no network. A closed panel has
+    /// nothing bound, so this is cheap there.
+    /// </summary>
+    public void RefreshRelativeTimes()
+    {
+        foreach (var e in Recent) e.RaiseTimesChanged();
+        foreach (var e in Favourites) e.RaiseTimesChanged();
+        foreach (var e in PrivateServers) e.RaiseTimesChanged();
     }
 
     /// <summary>Drop the icon subscription. Called when the row leaves the roster (the cache is a long-lived singleton).</summary>

@@ -100,6 +100,58 @@ public class AccountPanelSurfaceTests
     public void TheIconTileFallsBackToInitials(string name, string expected)
         => Assert.Equal(expected, new PanelEntry(Fav(name), null, null, IsSaved: true).Initials);
 
+    [Fact]
+    public async Task TheMinuteTick_RefreshesAnOpenPanelsAges_WithoutRebuildingOrReadingHistory()
+    {
+        var owner = new AccountSummary(new Account(Guid.NewGuid(), "Alt", "", Now, null));
+        var historyReads = 0;
+        var played = new LaunchSession(Guid.NewGuid(), owner.Id, "Alt", null, "Some Game", 111, false, Now.AddHours(-2), Now.AddHours(-1), null);
+        var panel = new AccountPanelViewModel(
+            owner,
+            () => { historyReads++; return Task.FromResult<IReadOnlyList<LaunchSession>>([played]); },
+            () => Task.FromResult<IReadOnlyList<LibraryEntry>>([]),
+            _ => Task.CompletedTask,
+            () => Task.CompletedTask);
+        owner.AttachPanel(panel);
+        await panel.RefreshAsync();
+        var entry = Assert.Single(panel.Recent);
+        var readsBefore = historyReads;
+        var metaBefore = entry.MetaText;
+        var lastBefore = owner.LastPlayedText;
+        var raised = new List<string?>();
+        entry.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+        Assert.StartsWith("2 hr ago", metaBefore);
+
+        AccountSummary.ClockOverride.Value = () => DateTimeOffset.UtcNow.AddHours(3); // three hours pass
+        try
+        {
+            owner.RefreshRelativeTimes();
+
+            Assert.NotEqual(metaBefore, entry.MetaText);
+            Assert.StartsWith("5 hr ago", entry.MetaText);
+            Assert.NotEqual(lastBefore, owner.LastPlayedText);
+            Assert.Contains(nameof(PanelEntry.MetaText), raised);
+            Assert.Contains(nameof(PanelEntry.AccessibleName), raised);
+        }
+        finally { AccountSummary.ClockOverride.Value = null; }
+
+        Assert.Same(entry, panel.Recent[0]);            // the same entry object: raised on, not rebuilt
+        Assert.Equal(readsBefore, historyReads);        // and no history read
+    }
+
+    [Fact]
+    public void AWithClone_DoesNotInheritTheOriginalsHandlers()
+    {
+        var a = new PanelEntry(Fav("G"), Now, null, IsSaved: false);
+        var raised = 0;
+        a.PropertyChanged += (_, _) => raised++;
+
+        var clone = a with { IsSaved = true };
+        clone.RaiseTimesChanged();
+
+        Assert.Equal(0, raised);
+    }
+
     // ------------------------------------------------------------------ the one launch path
 
     private static string ReadSource(string relative)

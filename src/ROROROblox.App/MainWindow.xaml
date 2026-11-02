@@ -184,7 +184,9 @@
             </Border>
         </DataTemplate>
 
-        <!-- v1.36 panel entry (one template for Recent, Favourites and Private servers). A Ghost Button is the
+        <!-- v1.36 panel entry (one template for Recent, Favourites and Private servers). Every entry's launch button
+             shares the AutomationId DangerPanelLaunch on purpose: entries are named by game, so the id is their guard
+             (docs/ui-routes.json denyAids), and a route that names it resolves to many matches, which is an error. A Ghost Button is the
              launch surface (hover sheen, keyboard focus, the entry's whole name) and the visible content sits
              over it, not hit-testable: the shared button template centres its content and sizes it to fit, which
              would never trim a long name to the column. The name and meta TextBlocks trim with an ellipsis, and
@@ -199,6 +201,7 @@
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="0"
                         AutomationProperties.Name="{Binding AccessibleName}"
+                        AutomationProperties.AutomationId="DangerPanelLaunch"
                         Command="{Binding DataContext.Panel.LaunchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                         CommandParameter="{Binding}"
                         ToolTip="{Binding TooltipText}"
@@ -1271,7 +1274,7 @@
                         <Border Style="{StaticResource FactBadgeStyle}"
                                 AutomationProperties.Name="{Binding LastPlayedAccessibleName}"
                                 Visibility="{Binding ShowLastPlayedBadge, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <TextBlock Text="{Binding LastPlayedText}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding LastPlayedText}" MaxWidth="240" TextTrimming="CharacterEllipsis" />
                         </Border>
                         <Border Style="{StaticResource FactBadgeStyle}"
                                 AutomationProperties.Name="{Binding NoteAccessibleName}"
@@ -1333,6 +1336,7 @@
                         <Button Grid.Column="1"
                                 Content="{loc:Loc Shell_Panel_OpenHome}"
                                 AutomationProperties.Name="{Binding PanelOpenHomeName}"
+                                AutomationProperties.AutomationId="DangerOpenRobloxHome"
                                 Command="{Binding Panel.OpenHomeCommand}"
                                 Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="{DynamicResource BodyFontSize}"

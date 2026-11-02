@@ -93,6 +93,21 @@ public class UiRoutesSchemaTests
     }
 
     [Fact]
+    public void EveryDenyAidIsDeclared_AndThePanelsLaunchControlsAreAmongThem()
+    {
+        var doc = LoadRoutes();
+        var aids = doc.GetProperty("denyAids").EnumerateArray().Select(x => x.GetString()!).ToList();
+        Assert.Equal(9, aids.Count);
+        Assert.Contains("DangerPanelLaunch", aids);
+        Assert.Contains("DangerOpenRobloxHome", aids);
+
+        // Each id is a real AutomationId in the main window, so a rename cannot leave a dead guard behind.
+        var xaml = File.ReadAllText(Path.Combine(XamlStyleScanner.FindRepoRoot()!, "src", "ROROROblox.App", "MainWindow.xaml"));
+        foreach (var aid in aids)
+            Assert.Contains($"AutomationProperties.AutomationId=\"{aid}\"", xaml);
+    }
+
+    [Fact]
     public void NoRouteTargetsADeniedName()
     {
         var doc = LoadRoutes();
@@ -108,7 +123,8 @@ public class UiRoutesSchemaTests
         Assert.Contains("Stop", deny);
         Assert.Contains("Recycle", deny);
         Assert.Contains("Stop all", deny);
-        Assert.Equal(8, deny.Count);
+        Assert.Contains("Open Roblox home", deny); // v1.36 item 7: the panel's launch button
+        Assert.Equal(9, deny.Count);
 
         var problems = new List<string>();
         foreach (var surface in Surfaces(doc))

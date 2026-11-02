@@ -1172,6 +1172,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// </summary>
     public void RefreshRelativeTimes()
     {
+        Panel?.RefreshRelativeTimes();
         OnPropertyChanged(nameof(SecondaryStatusText));
         OnPropertyChanged(nameof(LastPlayedText));
         OnPropertyChanged(nameof(LastPlayedAccessibleName));
@@ -1221,9 +1222,14 @@ public sealed class AccountSummary : INotifyPropertyChanged
         return Loc.Format("Shell_Age_Days", (int)span.TotalDays);
     }
 
+    /// <summary>Test seam: a clock for relative-age wording, per async flow, so a test can advance time without touching other tests.</summary>
+    internal static readonly AsyncLocal<Func<DateTimeOffset>?> ClockOverride = new();
+
+    internal static DateTimeOffset UtcNow => ClockOverride.Value?.Invoke() ?? DateTimeOffset.UtcNow;
+
     internal static string RelativeAgo(DateTimeOffset when)
     {
-        var span = DateTimeOffset.UtcNow - when;
+        var span = UtcNow - when;
         if (span < TimeSpan.Zero) return Loc.Get("Shell_Ago_InFuture"); // clock skew safety
         if (span < TimeSpan.FromSeconds(30)) return Loc.Get("Shell_Ago_JustNow");
         if (span < TimeSpan.FromMinutes(1)) return Loc.Get("Shell_Ago_LessThanMinute");

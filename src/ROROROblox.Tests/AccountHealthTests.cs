@@ -180,6 +180,15 @@ public class AccountHealthTests
     }
 
     [Fact]
+    public void TheFollowMarkedClause_IsSuppressedForAOneAccountRoster_AndOnlyThen()
+    {
+        var result = LaunchEligibility.Compute([Cand()]);
+
+        Assert.Contains("1 will follow the main", result.PartialBanner(1, "Launch all finished", followMarked: 1));
+        Assert.DoesNotContain("follow", result.PartialBanner(1, "Launch all finished", followMarked: 1, suppressFollowClause: true));
+    }
+
+    [Fact]
     public void LaunchAll_NoMarkedAccounts_SaysNothingAboutFollowing()
     {
         var banner = LaunchEligibility.Compute([Cand()]).PartialBanner(1, "Launch all finished", followMarked: 0);

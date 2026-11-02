@@ -60,10 +60,17 @@ public class MainWindowOneAccountFitsTests
                     origin.X + actions.ActualWidth);
             });
 
+    /// <summary>
+    /// THE LIGHT-PANEL CASE, not the cap. One account, panel open, three Recent entries, two Favourites, one
+    /// private server: it fits (extent 320.8 against a 327.2 viewport at the declared 900x600). Four or more
+    /// Recent entries do NOT fit: with four the extent measured 363.2, so the roster scrolls, and Recent is
+    /// capped at eight, not three. Read the 3/2/1 fixture as "a light panel fits", never as the capacity. The
+    /// promise spec 3.8 makes is the fresh install, below.
+    /// </summary>
     [WindowRenderTheory]
     [InlineData(96)]
     [InlineData(120)]
-    public void OneAccountWithAnOpenPanel_FitsWithoutARosterScrollbar(double dpi)
+    public void OneAccountWithALightPanel_FitsWithoutARosterScrollbar(double dpi)
     {
         var fit = Measure(dpi, accounts: 1, savedGames: true);
         _output.WriteLine($"@{dpi}dpi: scrollbar {fit.ScrollBar}, viewport {fit.ViewportHeight:F1}, extent {fit.ExtentHeight:F1}");
@@ -77,10 +84,14 @@ public class MainWindowOneAccountFitsTests
     [WindowRenderTheory]
     [InlineData(96)]
     [InlineData(120)]
-    public void OneAccountWithAnEmptyPanel_AlsoFits(double dpi)
+    public void TheFreshInstall_OnePanelOpenWithThreeEmptyStates_FitsWithoutARosterScrollbar(double dpi)
     {
-        // The fresh-profile state: panel open, all three groups on their empty-state line.
+        // The promise of spec 3.8: Add account on an empty profile, the new row's panel opens, no games saved, no
+        // history, no note, all three groups on their one-line empty state. This is the state a first-time user sees.
         var fit = Measure(dpi, accounts: 1, savedGames: false, PanelContent.Empty);
+        _output.WriteLine($"@{dpi}dpi fresh install: scrollbar {fit.ScrollBar}, viewport {fit.ViewportHeight:F1}, extent {fit.ExtentHeight:F1}");
+        Assert.True(fit.ExtentHeight <= fit.ViewportHeight + 0.5,
+            $"@{dpi}dpi: the fresh-install panel needs {fit.ExtentHeight:F1} DIP of roster against a {fit.ViewportHeight:F1} viewport.");
         Assert.Equal(Visibility.Collapsed, fit.ScrollBar);
     }
 
