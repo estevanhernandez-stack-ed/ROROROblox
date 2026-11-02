@@ -42,19 +42,19 @@ public class AccountRowCollapsedRenderTests
 
     /// <summary>
     /// Rendered <c>AccountRowBorder</c> height at 96 DPI, in device pixels, with the v1.36 facts line
-    /// VISIBLE (Robux, friends online, a note and a fresh age hint). Measured on the item-6 commit.
-    /// <para>82 px over the collapsed 92, and that is NOT one line. At the declared 900 px the name
-    /// column is only about 160 px wide (the actions column takes the rest), so the WrapPanel breaks the
-    /// four items onto separate lines. A one-line variant (clipped) measured 21 px over (113 at 96, 141
-    /// at 120), but silently dropped last played, the note and the age hint; wrapping was kept on the
-    /// F-119 precedent and the choice is flagged for Este.</para> It is the SECOND bar, beside
-    /// <see cref="V135RowHeight96"/>, which stays the collapsed row: a populated row is allowed to be
-    /// taller by exactly the facts line and no more, so a stray margin or a second line trips this.
+    /// VISIBLE (Robux, friends online, a note and a fresh age hint). Measured on the item-6 rework
+    /// commit. It is the SECOND bar, beside <see cref="V135RowHeight96"/>, which stays the collapsed row.
+    /// <para>22 px over the collapsed 92: one line. These constants MOVED from the first cut (174 at
+    /// 96, 218 at 120) because the line used to sit inside the name column, which at the declared
+    /// 900 px is only about 160 px wide, so four items wrapped onto four lines (+82 px). The line now
+    /// lives in grid row 1 and spans the name and actions columns, so the same populated row fits on
+    /// one line. (The one-line clipped variant of the first cut measured +21.) Row 0 is a Star row, not
+    /// Auto: an Auto row 0 made the collapsed row 8 px taller than v1.35.</para>
     /// </summary>
-    internal const int PopulatedRowHeight96 = 174;
+    internal const int PopulatedRowHeight96 = 114;
 
-    /// <summary>Same row at 120 DPI; see <see cref="PopulatedRowHeight96"/>. 103 px over the collapsed 115.</summary>
-    internal const int PopulatedRowHeight120 = 218;
+    /// <summary>Same row at 120 DPI; see <see cref="PopulatedRowHeight96"/>. 27 px over the collapsed 115.</summary>
+    internal const int PopulatedRowHeight120 = 142;
 
     private readonly Xunit.Abstractions.ITestOutputHelper _output;
 

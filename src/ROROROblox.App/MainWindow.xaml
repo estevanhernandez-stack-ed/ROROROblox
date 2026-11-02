@@ -359,6 +359,16 @@
                 </Border.ContextMenu>
 
                 <Grid>
+                    <!-- Row 0 is everything the row was in v1.35 and is Star, not Auto: it replaces the
+                         implicit single star row, and an Auto row 0 measured the collapsed row 8 px taller
+                         than v1.35 (AccountRowCollapsedRenderTests). Row 1 is the v1.36 facts line and is
+                         zero height while its panel is Collapsed. The expired rule, the grip and the
+                         avatar span both rows (they draw the row's full height, centred); the name and
+                         actions columns stay in row 0 so the actions never overlap the facts line. -->
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <!-- Expired rule + the gap that used to be the Border's left padding.
                              Reserved whether or not the rule is showing, so a session going stale
@@ -390,7 +400,7 @@
                          The Hidden default lives in the Style setter, not on the element: a local
                          Visibility="Hidden" would outrank the DataTrigger and the rule would never
                          appear. -->
-                    <Rectangle Grid.Column="0"
+                    <Rectangle Grid.Column="0" Grid.RowSpan="2"
                                Width="3"
                                HorizontalAlignment="Left"
                                RadiusX="1.5" RadiusY="1.5"
@@ -410,7 +420,7 @@
                     <!-- Drag-grip — visual cue that the row is reorderable. Press-and-drag the
                          grip to move the row; drop on another row to swap. Tag={Binding} so the
                          Window-level handler knows which AccountSummary started the drag. -->
-                    <Border Grid.Column="1" Width="14" Margin="0,0,4,0"
+                    <Border Grid.Column="1" Grid.RowSpan="2" Width="14" Margin="0,0,4,0"
                             Background="Transparent"
                             Cursor="SizeAll"
                             Tag="{Binding}"
@@ -429,7 +439,7 @@
                     <!-- Avatar — wrapped in a colored ring driven by the per-account caption color.
                          The ring is what makes the per-account color visible inside the app even
                          when Roblox's window chrome refuses the DWM caption tint. -->
-                    <Grid Grid.Column="2" Width="52" Height="52" VerticalAlignment="Center">
+                    <Grid Grid.Column="2" Grid.RowSpan="2" Width="52" Height="52" VerticalAlignment="Center">
                         <Ellipse>
                             <Ellipse.Fill>
                                 <MultiBinding Converter="{StaticResource CaptionColorBrushConverter}">
@@ -640,64 +650,6 @@
                                 </TextBlock.Style>
                             </TextBlock>
                         </StackPanel>
-
-                        <!-- v1.36 facts line (A1, picked 2026-11-02): its own line under the status line, inside this
-             column. Collapsed, not Hidden, when it has nothing to say, so an account with no facts, no
-             history and no note renders exactly as it did in v1.35. Last played comes from local
-             history and counts as something to say; the age hint alone never opens the line. Each
-             badge shows only when its own fact is known (the dash and "unknown" live on the
-             summary for the accessible name). Robux, membership and friends online read "••••"
-             under streamer mode and the note is hidden; last played and the age are not masked.
-             The panel WRAPS rather than clips (F-119 precedent, the Follow strip below): at the declared
-             900 px the name column is about 160 px wide, and a clipped line silently drops last played,
-             the note and the age hint. A line that wraps costs height only when there is a lot to say.
-             Membership is built but collapsed whenever membership is not a membership: the probes
-             have not run. -->
-        <WrapPanel Orientation="Horizontal" Margin="0,4,0,0"
-                    Visibility="{Binding HasFactsLine, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Border Style="{StaticResource FactBadgeStyle}"
-                    AutomationProperties.Name="{Binding RobuxAccessibleName}"
-                    Visibility="{Binding ShowRobuxBadge, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock Text="{Binding RobuxText}" />
-            </Border>
-            <Border Style="{StaticResource FactBadgeStyle}"
-                    AutomationProperties.Name="{Binding MembershipAccessibleName}"
-                    Visibility="{Binding ShowMembershipBadge, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock Text="{Binding MembershipText}" />
-            </Border>
-            <Border Style="{StaticResource FactBadgeStyle}"
-                    AutomationProperties.Name="{Binding FriendsOnlineAccessibleName}"
-                    Visibility="{Binding ShowFriendsOnlineBadge, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock Text="{Binding FriendsOnlineText}" />
-            </Border>
-            <Border Style="{StaticResource FactBadgeStyle}"
-                    AutomationProperties.Name="{Binding LastPlayedAccessibleName}"
-                    Visibility="{Binding ShowLastPlayedBadge, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock Text="{Binding LastPlayedText}" TextTrimming="CharacterEllipsis" />
-            </Border>
-            <Border Style="{StaticResource FactBadgeStyle}"
-                    AutomationProperties.Name="{Binding NoteAccessibleName}"
-                    Visibility="{Binding ShowNoteBadge, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock Text="{Binding NoteFirstLine}" MaxWidth="240"
-                           TextTrimming="CharacterEllipsis"
-                           Foreground="{DynamicResource MutedTextBrush}" />
-            </Border>
-            <TextBlock Text="{Binding FactsAgeText}" Margin="0,0,0,3" TextWrapping="Wrap"
-                       FontSize="{DynamicResource MetaFontSize}"
-                       VerticalAlignment="Center"
-                       Visibility="{Binding ShowFactsAge, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding FactsFailed}" Value="True">
-                                <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-        </WrapPanel>
 
         <!-- Follow strip — "Follow:" label + chips of OTHER accounts. Click a chip to
                              launch THIS row's account into that account's current Roblox server
@@ -1159,6 +1111,63 @@
                                 Padding="10,6"
                                 Style="{StaticResource DestructiveButtonStyle}" />
                     </StackPanel>
+
+                    <!-- v1.36 facts line (A1, picked 2026-11-02): its own line under the whole row, in grid row 1 and
+                         spanning the name and actions columns, so it has the row's width rather than the 160 px name
+                         column. Row 1 is Auto and the panel is Collapsed (not Hidden) when it has nothing to say, so an
+                         account with no facts, no history and no note renders exactly as in v1.35. Last played comes
+                         from local history and counts as something to say; the age hint alone never opens the line.
+                         Each badge shows only when its own fact is known. Robux, membership and friends online read the
+                         masked placeholder under streamer mode and the note is hidden; last played and the age are not
+                         masked. A WrapPanel, so it is one line in the common case and wraps only on a very narrow row or
+                         a long language (F-119 precedent). Membership is built but collapsed whenever membership is not
+                         a membership: the probes have not run. -->
+                    <WrapPanel Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2"
+                               Orientation="Horizontal" Margin="14,2,0,0"
+                               Visibility="{Binding HasFactsLine, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Border Style="{StaticResource FactBadgeStyle}"
+                                AutomationProperties.Name="{Binding RobuxAccessibleName}"
+                                Visibility="{Binding ShowRobuxBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding RobuxText}" />
+                        </Border>
+                        <Border Style="{StaticResource FactBadgeStyle}"
+                                AutomationProperties.Name="{Binding MembershipAccessibleName}"
+                                Visibility="{Binding ShowMembershipBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding MembershipText}" />
+                        </Border>
+                        <Border Style="{StaticResource FactBadgeStyle}"
+                                AutomationProperties.Name="{Binding FriendsOnlineAccessibleName}"
+                                Visibility="{Binding ShowFriendsOnlineBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding FriendsOnlineText}" />
+                        </Border>
+                        <Border Style="{StaticResource FactBadgeStyle}"
+                                AutomationProperties.Name="{Binding LastPlayedAccessibleName}"
+                                Visibility="{Binding ShowLastPlayedBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding LastPlayedText}" TextTrimming="CharacterEllipsis" />
+                        </Border>
+                        <Border Style="{StaticResource FactBadgeStyle}"
+                                AutomationProperties.Name="{Binding NoteAccessibleName}"
+                                Visibility="{Binding ShowNoteBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding NoteFirstLine}" MaxWidth="240"
+                                       TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource MutedTextBrush}" />
+                        </Border>
+                        <TextBlock Text="{Binding FactsAgeText}" Margin="0,0,0,3" TextWrapping="Wrap"
+                                   FontSize="{DynamicResource MetaFontSize}"
+                                   VerticalAlignment="Center"
+                                   Visibility="{Binding ShowFactsAge, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FactsFailed}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </WrapPanel>
                 </Grid>
             </Border>
             </StackPanel>
