@@ -163,6 +163,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     // Accounts whose open history row was written with no place (a follow launch); the first in-game
     // presence names the place and patches the row (v1.36 spec 3.7).
     private readonly HashSet<Guid> _sessionsAwaitingPlace = new();
+    // v1.36 panel wiring: the facts lane (launch-end trigger), the Library join and the icon cache.
+    private readonly AccountFactsService? _factsService;
+    private readonly LibraryCatalog? _libraryCatalog;
+    private readonly IGameIconCache? _gameIcons;
 
     /// <summary>
     /// Live appStorage identity defenders keyed by account id (v1.6.0 item 9). Tracked
@@ -221,8 +225,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         DiscordConfigService? discordConfigService = null,
         ILogger<MainViewModel>? log = null,
         AccountFactsService? factsService = null,
-        AccountUserIdBackfillService? userIdBackfill = null)
+        AccountUserIdBackfillService? userIdBackfill = null,
+        LibraryCatalog? libraryCatalog = null,
+        IGameIconCache? gameIcons = null)
     {
+        (_factsService, _libraryCatalog, _gameIcons) = (factsService, libraryCatalog, gameIcons);
         _cookieCapture = cookieCapture;
         _api = api;
         _accountStore = accountStore;
@@ -1316,6 +1323,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 WireAccountSummary(summary);
                 Accounts.Add(summary);
             }
+            // Open state: the persisted choice, else the main's panel, else (no main) the first row's.
+            var firstRow = Accounts.Any(a => a.IsMain) ? null : Accounts.FirstOrDefault();
+            foreach (var row in Accounts) row.Panel?.ResolveExpanded(row.IsMain || ReferenceEquals(row, firstRow));
         }
         catch (AccountStoreCorruptException)
         {
@@ -1697,6 +1707,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
         WireAccountSummary(summary);
         Accounts.Insert(0, summary);
+        if (Accounts.Count == 1 && summary.Panel is { } firstPanel) firstPanel.IsExpanded = true; // a one-account install opens on its panel
         RefreshFpsCapWarning();
         _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId}, isMain={IsMain})",
             account.Id, captured.Username, captured.UserId, account.IsMain);
@@ -3406,6 +3417,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             _log.LogDebug(ex, "Stamping session end threw for account {AccountId}; continuing.", accountId);
         }
+        // v1.36: the row is stamped, so the panel's Recent and last played are current, and Robux
+        // is the thing a session most likely changed (facts trigger 2, still gated by MinRefreshAge).
+        _factsService?.Enqueue(accountId);
+        var panel = AccountsSnapshot.FirstOrDefault(a => a.Id == accountId)?.Panel;
+        if (panel is not null) await panel.RefreshAsync();
+    }
+
+    private async Task PersistPanelExpandedAsync(Guid accountId, bool open)
+    {
+        try { await _accountStore.SetPanelExpandedAsync(accountId, open); }
+        catch (Exception ex) { _log.LogDebug(ex, "Persisting panel state threw for account {AccountId}; continuing.", accountId); }
     }
 
     /// <summary>
@@ -4850,6 +4872,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private void WireAccountSummary(AccountSummary summary)
     {
+        var panel = new AccountPanelViewModel(summary, _sessionHistory.ListAsync,
+            () => _libraryCatalog is null ? Task.FromResult<IReadOnlyList<LibraryEntry>>([]) : _libraryCatalog.ListAsync(),
+            target => LaunchAccountAsync(summary, target),
+            () => { _factsService?.Enqueue(summary.Id); return Task.CompletedTask; },
+            _gameIcons, _favorites, _ui);
+        panel.UserToggled += (_, open) => _ = PersistPanelExpandedAsync(summary.Id, open);
+        summary.AttachPanel(panel);
         summary.PropertyChanged += OnAccountSummaryPropertyChanged;
         summary.Tags.CollectionChanged += (_, _) => OnAccountTagsChanged(summary);
         if (_streamerIdentity is not null)

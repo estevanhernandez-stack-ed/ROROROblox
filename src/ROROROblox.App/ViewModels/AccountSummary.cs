@@ -61,6 +61,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _localName = account.LocalName;
         _facts = account.Facts;
         _note = account.Note;
+        PersistedPanelExpanded = account.PanelExpanded;
         RobloxUserId = account.RobloxUserId;
         BrowserTrackerId = account.BrowserTrackerId;
         // Seed tags from the persisted record BEFORE any CollectionChanged subscriber is attached
@@ -83,6 +84,39 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _facts;
         set => SetField(ref _facts, value);
+    }
+
+    /// <summary>The panel's saved open/closed state, null until the user first toggles it (the panel resolves the default at load).</summary>
+    internal bool? PersistedPanelExpanded { get; }
+
+    /// <summary>This account's panel (recent games, favourites, private servers). Set once by <c>MainViewModel.WireAccountSummary</c>.</summary>
+    public AccountPanelViewModel? Panel { get; private set; }
+
+    internal void AttachPanel(AccountPanelViewModel panel)
+    {
+        Panel = panel;
+        panel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AccountPanelViewModel.LastPlayed))
+            {
+                OnPropertyChanged(nameof(LastPlayedText));
+                OnPropertyChanged(nameof(LastPlayedUtc));
+            }
+        };
+    }
+
+    /// <summary>When this account last launched a game, from the panel's own object so row and panel cannot disagree. Null until the panel has read history.</summary>
+    public DateTimeOffset? LastPlayedUtc => Panel?.LastPlayed?.AtUtc;
+
+    /// <summary>"{game} · {age}" for the row's last-played badge; empty when the panel has no history for this account (the view picks the dash).</summary>
+    public string LastPlayedText
+    {
+        get
+        {
+            if (Panel?.LastPlayed is not { } lp) return string.Empty;
+            var ago = RelativeAgo(lp.AtUtc);
+            return string.IsNullOrEmpty(lp.Name) ? ago : $"{lp.Name} · {ago}";
+        }
     }
 
     /// <summary>The account's free-text note (trimmed, at most <see cref="Account.MaxNoteLength"/> characters), or null.</summary>
@@ -176,6 +210,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// </summary>
     public void DetachIdentityProvider()
     {
+        Panel?.Detach();
         if (_identity is not null)
         {
             _identity.Changed -= OnIdentityChanged;
@@ -954,7 +989,11 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// Force the secondary text to recompute (relative timestamps drift). Called on a tick from
     /// MainViewModel's clock.
     /// </summary>
-    public void RefreshRelativeTimes() => OnPropertyChanged(nameof(SecondaryStatusText));
+    public void RefreshRelativeTimes()
+    {
+        OnPropertyChanged(nameof(SecondaryStatusText));
+        OnPropertyChanged(nameof(LastPlayedText));
+    }
 
     public void StampLaunched(DateTimeOffset at)
     {

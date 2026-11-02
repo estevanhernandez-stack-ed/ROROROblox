@@ -42,9 +42,10 @@ public class MainViewModelTests
         ISessionHistoryStore? sessionHistory = null,
         Microsoft.Extensions.Logging.ILogger<MainViewModel>? log = null,
         AccountFactsService? factsService = null,
-        AccountUserIdBackfillService? userIdBackfill = null)
+        AccountUserIdBackfillService? userIdBackfill = null,
+        string? accountStorePath = null)
     {
-        var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
+        var path = accountStorePath ?? Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
         var vmStore = wrapStore?.Invoke(accountStore) ?? (IAccountStore)accountStore;
         var processTracker = new FakeRobloxProcessTracker();
@@ -2140,7 +2141,12 @@ public class MainViewModelTests
         public Task<IReadOnlyList<LaunchSession>> ListAsync() => Task.FromResult<IReadOnlyList<LaunchSession>>(Added);
         public Task AddAsync(LaunchSession session) { Added.Add(session); return Task.CompletedTask; }
         public Task MarkEndedAsync(Guid sessionId, DateTimeOffset endedAtUtc, string? outcomeHint = null)
-        { Ended.Add((sessionId, endedAtUtc, outcomeHint)); return Task.CompletedTask; }
+        {
+            Ended.Add((sessionId, endedAtUtc, outcomeHint));
+            var i = Added.FindIndex(r => r.Id == sessionId); // like the real store: the row itself carries the end
+            if (i >= 0) Added[i] = Added[i] with { EndedAtUtc = endedAtUtc, OutcomeHint = outcomeHint ?? Added[i].OutcomeHint };
+            return Task.CompletedTask;
+        }
         public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint)
         { Outcomes.Add((sessionId, outcomeHint)); return Task.CompletedTask; }
         public readonly List<(Guid Id, string? GameName, long? PlaceId, Guid? ServerId)> Updated = new();
@@ -2290,6 +2296,277 @@ public class MainViewModelTests
     {
         public IReadOnlyList<int> GetRunningPlayerPids() => Array.Empty<int>();
         public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
+    }
+
+    // ---- v1.36 item 5: the panel's open state, its wiring, and the launch-end hook ----
+
+    /// <summary>
+    /// Delegates to the real store; records every <see cref="SetPanelExpandedAsync"/> call, and can
+    /// list every account as not-main (the no-main roster the real store cannot produce on its own).
+    /// </summary>
+    private sealed class PanelProbeStore(IAccountStore inner, bool hideMain = false) : IAccountStore
+    {
+        public readonly List<(Guid Id, bool Expanded)> PanelWrites = new();
+
+        public Task SetPanelExpandedAsync(Guid id, bool expanded) { PanelWrites.Add((id, expanded)); return inner.SetPanelExpandedAsync(id, expanded); }
+        public async Task<IReadOnlyList<Account>> ListAsync()
+        {
+            var all = await inner.ListAsync();
+            return hideMain ? all.Select(a => a with { IsMain = false }).ToList() : all;
+        }
+
+        public Task UpdateRobloxUserIdAsync(Guid accountId, long userId) => inner.UpdateRobloxUserIdAsync(accountId, userId);
+        public Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId) => inner.UpdateBrowserTrackerIdAsync(accountId, browserTrackerId);
+        public int GetCookieGeneration(Guid id) => inner.GetCookieGeneration(id);
+        public Task<Account> AddAsync(string displayName, string avatarUrl, string cookie) => inner.AddAsync(displayName, avatarUrl, cookie);
+        public Task RemoveAsync(Guid id) => inner.RemoveAsync(id);
+        public Task<string> RetrieveCookieAsync(Guid id) => inner.RetrieveCookieAsync(id);
+        public Task UpdateCookieAsync(Guid id, string newCookie) => inner.UpdateCookieAsync(id, newCookie);
+        public Task TouchLastLaunchedAsync(Guid id) => inner.TouchLastLaunchedAsync(id);
+        public Task SetMainAsync(Guid id) => inner.SetMainAsync(id);
+        public Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder) => inner.UpdateSortOrderAsync(idsInOrder);
+        public Task SetSelectedAsync(Guid id, bool isSelected) => inner.SetSelectedAsync(id, isSelected);
+        public Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend) => inner.SetJoinViaFriendAsync(id, joinViaFriend);
+        public Task SetAutoRejoinAsync(Guid id, bool autoRejoin) => inner.SetAutoRejoinAsync(id, autoRejoin);
+        public Task SetCaptionColorAsync(Guid id, string? hex) => inner.SetCaptionColorAsync(id, hex);
+        public Task SetFpsCapAsync(Guid id, int? fps) => inner.SetFpsCapAsync(id, fps);
+        public Task UpdateLocalNameAsync(Guid accountId, string? localName) => inner.UpdateLocalNameAsync(accountId, localName);
+        public Task UpdateStreamerIdentityAsync(Guid accountId, string fakeName, string fakeAvatarId) => inner.UpdateStreamerIdentityAsync(accountId, fakeName, fakeAvatarId);
+        public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => inner.SetTagsAsync(id, tags);
+        public Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids) => inner.ExportAccountsAsync(ids);
+        public Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<AccountExportRecord> records) => inner.ImportMergeAsync(records);
+        public Task SetFactsAsync(Guid id, AccountFacts facts) => inner.SetFactsAsync(id, facts);
+        public Task UpdateNoteAsync(Guid id, string? note) => inner.UpdateNoteAsync(id, note);
+    }
+
+    /// <summary>LoadAsync ends at the presence fake's Start(), which this harness rejects; the rows are in by then.</summary>
+    private static async Task LoadRowsAsync(MainViewModel vm)
+    {
+        try { await vm.LoadAsync(); }
+        catch (NotImplementedException) { }
+    }
+
+    private static async Task SeedAsync(IAccountStore store, int count)
+    {
+        for (var i = 0; i < count; i++) await store.AddAsync($"Alt{i}", "", $"FAKE-COOKIE-panel-{i}");
+    }
+
+    [Fact]
+    public async Task AtLoad_WithAMain_OnlyTheMainsPanelResolvesExpanded()
+    {
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-panel-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        PanelProbeStore? probe = null;
+        var (vm, store, _, path) = Build(favorites: favorites, wrapStore: inner => probe = new PanelProbeStore(inner));
+        try
+        {
+            await SeedAsync(store, 3);
+
+            await LoadRowsAsync(vm);
+
+            var main = Assert.Single(vm.Accounts, a => a.IsMain);
+            Assert.True(main.Panel!.IsExpanded);
+            Assert.All(vm.Accounts.Where(a => !a.IsMain), a => Assert.False(a.Panel!.IsExpanded));
+            Assert.Empty(probe!.PanelWrites); // resolving the default writes nothing
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    [Fact]
+    public async Task AtLoad_WithNoMain_OnlyTheFirstRowsPanelResolvesExpanded()
+    {
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-panel-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        var (vm, store, _, path) = Build(favorites: favorites, wrapStore: inner => new PanelProbeStore(inner, hideMain: true));
+        try
+        {
+            await SeedAsync(store, 3);
+
+            await LoadRowsAsync(vm);
+
+            Assert.DoesNotContain(vm.Accounts, a => a.IsMain);
+            Assert.True(vm.Accounts[0].Panel!.IsExpanded);
+            Assert.False(vm.Accounts[1].Panel!.IsExpanded);
+            Assert.False(vm.Accounts[2].Panel!.IsExpanded);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    [Fact]
+    public async Task APersistedPanelState_SurvivesReload_AndBeatsTheDefault()
+    {
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-panel-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        var (vm, store, _, path) = Build(favorites: favorites);
+        try
+        {
+            await SeedAsync(store, 3);
+            await LoadRowsAsync(vm);
+            var main = vm.Accounts.Single(a => a.IsMain);
+            var other = vm.Accounts.First(a => !a.IsMain);
+
+            other.Panel!.Expand();           // the user opens a non-main panel
+            main.Panel!.IsExpanded = false;  // and closes the main's
+            await WaitForAsync(async () =>
+            {
+                var list = await store.ListAsync();
+                return list.Single(a => a.Id == other.Id).PanelExpanded == true && list.Single(a => a.Id == main.Id).PanelExpanded == false;
+            });
+
+            await LoadRowsAsync(vm);
+
+            Assert.True(vm.Accounts.Single(a => a.Id == other.Id).Panel!.IsExpanded);
+            Assert.False(vm.Accounts.Single(a => a.Id == main.Id).Panel!.IsExpanded);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    [Fact]
+    public async Task CompactMode_OnAndOff_NeverWritesPanelExpanded_AndTheStateComesBack()
+    {
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-panel-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        PanelProbeStore? probe = null;
+        var (vm, store, _, path) = Build(favorites: favorites, wrapStore: inner => probe = new PanelProbeStore(inner));
+        try
+        {
+            await SeedAsync(store, 2);
+            await LoadRowsAsync(vm);
+            var main = vm.Accounts.Single(a => a.IsMain);
+            Assert.True(main.Panel!.IsExpanded);
+
+            vm.IsCompact = true;
+            vm.IsCompact = false;
+            await Task.Delay(100);
+
+            Assert.Empty(probe!.PanelWrites);
+            Assert.True(main.Panel.IsExpanded);
+            Assert.All(await store.ListAsync(), a => Assert.Null(a.PanelExpanded));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    [Fact]
+    public async Task AddAccount_OnAnEmptyRoster_OpensTheNewPanel_AndPersistsIt()
+    {
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
+            new CookieCaptureResult.Success("FAKE-COOKIE-first", 555, "FirstUser")));
+        try
+        {
+            Assert.Empty(vm.Accounts);
+
+            vm.AddAccountCommand.Execute(null);
+            await WaitForAsync(async () => (await store.ListAsync()).SingleOrDefault()?.PanelExpanded == true);
+
+            var row = Assert.Single(vm.Accounts);
+            Assert.True(row.Panel!.IsExpanded);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task AddAccount_OnANonEmptyRoster_LeavesTheNewPanelClosed()
+    {
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
+            new CookieCaptureResult.Success("FAKE-COOKIE-second", 556, "SecondUser")));
+        try
+        {
+            var existing = new AccountSummary(await store.AddAsync("Existing", "", "FAKE-COOKIE-existing"));
+            vm.Accounts.Add(existing);
+
+            vm.AddAccountCommand.Execute(null);
+            await WaitForAsync(() => Task.FromResult(vm.Accounts.Count == 2));
+
+            Assert.False(vm.Accounts[0].Panel!.IsExpanded);
+            Assert.All(await store.ListAsync(), a => Assert.Null(a.PanelExpanded));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task LoadingEightAccounts_AsksForNoFacts_EvenWithTheMainsPanelOpen()
+    {
+        var factsPath = Path.Combine(Path.GetTempPath(), $"rororo-panel-facts-{Guid.NewGuid():N}.dat");
+        using var factsStore = new AccountStore(factsPath);
+        var api = new FactsApiStub();
+        using var service = new AccountFactsService(factsStore, api, () => [], interAccountDelayMs: 0);
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-panel-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        var (vm, store, _, path) = Build(factsService: service, favorites: favorites);
+        try
+        {
+            await SeedAsync(store, 8);
+
+            await LoadRowsAsync(vm);
+            service.Start();
+            await Task.Delay(100);
+
+            Assert.Equal(8, vm.Accounts.Count);
+            Assert.True(vm.Accounts.Single(a => a.IsMain).Panel!.IsExpanded);
+            Assert.Equal(0, service.RequestCount);
+            Assert.Equal(0, api.CallCount);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(factsPath)) File.Delete(factsPath);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    [Fact]
+    public async Task WhenASessionEnds_ThePanelRefreshesAfterTheRowIsStamped_AndFactsAreEnqueued()
+    {
+        var sharedPath = Path.Combine(Path.GetTempPath(), $"rororo-panel-shared-{Guid.NewGuid():N}.dat");
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-panel-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        using var factsStore = new AccountStore(sharedPath);
+        var seeded = await factsStore.AddAsync("Alt", "", "FAKE-COOKIE-exit-AAAA");
+        var api = new FactsApiStub();
+        var targets = new List<FactsTarget> { new(seeded.Id, null, null, false) };
+        using var service = new AccountFactsService(factsStore, api, () => targets, interAccountDelayMs: 0);
+        var history = new RecordingSessionHistoryStore();
+        var (vm, _, tracker, path) = Build(
+            launcher: new RecordingSuccessLauncher(), sessionHistory: history, favorites: favorites,
+            factsService: service, accountStorePath: sharedPath);
+        try
+        {
+            await LoadRowsAsync(vm);
+            var row = Assert.Single(vm.Accounts);
+            row.Panel!.IsExpanded = false; // the main resolves open; close it so the refresh below can only come from the exit
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(PlaceId: 8737899170));
+            Assert.Empty(row.Panel.Recent);
+            Assert.Equal(0, api.CallCount);
+
+            tracker.RaiseExited(new RobloxProcessEventArgs(row.Id, 9001));
+            await WaitForAsync(() => Task.FromResult(row.Panel.Recent.Count == 1 && api.CallCount > 0));
+
+            Assert.Single(history.Ended);
+            Assert.Equal(8737899170, row.Panel.Recent[0].Entry.PlaceId);
+            Assert.NotNull(row.Panel.Recent[0].TotalPlayed); // the end stamp was already in the history the refresh read
+            Assert.False(string.IsNullOrEmpty(row.LastPlayedText));
+        }
+        finally
+        {
+            if (File.Exists(sharedPath)) File.Delete(sharedPath);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
     }
 
     private sealed class NullShellOpener : IShellOpener
