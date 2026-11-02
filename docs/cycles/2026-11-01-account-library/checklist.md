@@ -470,24 +470,26 @@ Code-behind shrinks to wiring, `RenameWindow` and focus-on-load. Item 8's two re
 deleted.
 
 **Acceptance:**
-- [ ] `LibraryGridRenderTests` (new): 100 entries at 96 DPI realise fewer containers than entries; grid
+- [x] `LibraryGridRenderTests` (new): 100 entries at 96 DPI realise fewer containers than entries; grid
       and list both render the Default and Private words, not fills alone.
-- [ ] `UiRoutesSchemaTests` green with `DangerPlay` and `DangerPlayAs` in `denyAids`.
-- [ ] `NoRawXamlProseFenceTests` green: no English `StringFormat` left in `GamesPage.xaml`.
-- [ ] `SettingsReachabilityTests`: both item 8 exemptions deleted in this commit; keys reachable by
+- [x] `UiRoutesSchemaTests` green with `DangerPlay` and `DangerPlayAs` in `denyAids`.
+- [x] `NoRawXamlProseFenceTests` green: no English `StringFormat` left in `GamesPage.xaml`.
+- [x] `SettingsReachabilityTests`: both item 8 exemptions deleted in this commit; keys reachable by
       control name.
-- [ ] `AccessibleNamingFenceTests` floor moved; ceiling stays 1; every chip, button and the box named;
+- [x] `AccessibleNamingFenceTests` floor moved; ceiling stays 1; every chip, button and the box named;
       every flyout `MenuItem` named although the fence does not scan them yet.
-- [ ] `ModalDefaultButtonSafetyTests` and `WindowChromeFenceTests` unchanged: the flyout is a
+- [x] `ModalDefaultButtonSafetyTests` and `WindowChromeFenceTests` unchanged: the flyout is a
       `ContextMenu`, not a window. `grep -rn "MessageBox" src/ROROROblox.App/Games/` → 0.
-- [ ] `LibraryViewModelTests` or `MainViewModelTests`: Play as for account B records the session under B
+- [x] `LibraryViewModelTests` or `MainViewModelTests`: Play as for account B records the session under B
       and B's panel `RefreshAsync` fires on exit; Play as on an expired account is disabled in the picker
       and returns `CookieExpired` if forced through the VM; a marked account launches by follow.
-- [ ] Streamer mode on: the flyout shows masked names and avatars (one test on the item template's
+- [x] Streamer mode on: the flyout shows masked names and avatars (one test on the item template's
       bindings, plus eyes at C3).
-- [ ] Keyboard-only: chips toggle with Space, the box takes focus on load, Enter submits, every entry's
+- [x] Keyboard-only: chips toggle with Space, the box takes focus on load, Enter submits, every entry's
       Play and Play as is reachable, the flyout walks with arrows.
-- [ ] Screenshot compare against the C1 Library mock (grid, list, empty, flyout) under `mocks/compare/`.
+- [x] Screenshot compare against the C1 Library mock (grid, list, empty, flyout) under `mocks/compare/`.
+
+*Built: e2a6ce4. GamesPage rewritten to C1 tiles (ListBox over ui:VirtualizingWrapPanel, whose Orientation axes are inverted: Vertical lays out rows) and D2 Play as (AccountPickerFlyout, a themed ContextMenu; only Expired is disabled). Chip check glyphs are bound TextBlocks, not trigger setters; 13 mutations watched failing. Deviations: no themed confirm existed (History uses a stock MessageBox), so Remove asks in an in-page bar; NoRawXamlProseFenceTests never read StringFormat inside a binding, LibraryPageXamlTests is the real guard; the grid is 4 across at 900 px, not the mock's 6, because the content area is 684 px and German 'Spielen als' needs a 144 px tile (C3 call); AccessibleNamingFenceTests floor unmoved at 217 (13 scanned controls swapped for 13); denyAids 9 to 11 (DangerPlay, DangerPlayAs). For C3: the 100-favourite dev-build walk, the real keyboard walk, the more-button menu, live icons, streamer mode on the real roster, 125%. Suite: 3,340 unit + 5 opt-in skips; harness 27 + 1.*
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~LibraryGridRenderTests|FullyQualifiedName~UiRoutesSchemaTests|FullyQualifiedName~NoRawXamlProseFenceTests|FullyQualifiedName~SettingsReachabilityTests|FullyQualifiedName~LibraryViewModelTests"`
 → all passed. Dev build with 100 favourites seeded into `favorites.json`: scroll the grid, type three
