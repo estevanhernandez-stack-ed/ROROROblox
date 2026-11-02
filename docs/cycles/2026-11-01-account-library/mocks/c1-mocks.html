@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RoRoRo v1.36 — C1 mocks</title>
+<style>
+  :root {
+    --bg:#0F1F31; --cyan:#17D4FA; --magenta:#F22F89; --white:#FFFFFF; --muted:#9AA8B8;
+    --divider:#1F3149; --rowbg:#15263A; --expbg:#3A2D14; --expacc:#F1B232; --navy:#0F1F31;
+    --oncyan:#0F1F31;
+  }
+  body[data-theme="midnight"] { --bg:#0A1320; --cyan:#3FB8D9; --magenta:#C0407E; --white:#E6EDF5; --muted:#768598; --divider:#162232; --rowbg:#0F1B2B; --expbg:#241B0E; --expacc:#C99A2D; --navy:#0A1320; --oncyan:#0A1320; }
+  body[data-theme="magenta-heat"] { --bg:#1A0F1F; --cyan:#F22F89; --magenta:#F22F89; --white:#FFE9F4; --muted:#B091A2; --divider:#2D1832; --rowbg:#241432; --expbg:#3A2D14; --expacc:#F1B232; --navy:#1A0F1F; --oncyan:#1A0F1F; }
+  body[data-theme="flatline"] { --bg:#101010; --cyan:#D4D4D4; --magenta:#6E6E6E; --white:#F5F5F5; --muted:#989898; --divider:#333333; --rowbg:#2A2A2A; --expbg:#3D3D3D; --expacc:#D4D4D4; --navy:#101010; --oncyan:#101010; }
+
+  body { --verify: color-mix(in srgb, var(--expacc) 50%, var(--magenta)); }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#05080f; color:#e8eef5; font-family:"Segoe UI Variable Text","Segoe UI",Inter,system-ui,sans-serif; font-size:12px; }
+  .chrome { position:sticky; top:0; z-index:5; background:#05080f; border-bottom:1px solid #1d2a3a; padding:10px 24px; display:flex; gap:16px; align-items:center; }
+  .chrome h1 { font-family:"Space Grotesk","Segoe UI Variable Display",sans-serif; font-size:18px; margin:0 16px 0 0; }
+  .chrome button { background:#111a27; color:#e8eef5; border:1px solid #2a3a50; border-radius:4px; padding:5px 10px; cursor:pointer; font:inherit; }
+  .chrome button.on { border-color:#17D4FA; color:#17D4FA; }
+  main { padding:8px 24px 80px; max-width:1500px; }
+  section { margin:28px 0 8px; }
+  section > h2 { font-family:"Space Grotesk","Segoe UI Variable Display",sans-serif; font-size:20px; margin:0 0 4px; }
+  section > p.q { color:#9fb0c3; margin:0 0 14px; max-width:900px; font-size:13px; line-height:1.45; }
+  .opts { display:flex; flex-wrap:wrap; gap:22px; }
+  .opt { flex:0 0 auto; }
+  .opt > .lbl { font-family:"JetBrains Mono",Consolas,monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#17D4FA; margin:0 0 6px; }
+  .opt > .lbl b { color:#F22F89; font-weight:700; margin-right:6px; }
+  .opt > .note { color:#9fb0c3; font-size:12px; margin:6px 0 0; max-width:900px; line-height:1.4; }
+
+  /* app surface */
+  .win { width:900px; background:var(--bg); color:var(--white); border:1px solid #000; border-radius:6px; overflow:hidden; }
+  .win.narrow { width:420px; }
+  .pad { padding:12px 16px; }
+  .row { background:var(--rowbg); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .row.expired { background:var(--expbg); }
+  .grip { color:var(--muted); font-size:14px; width:12px; }
+  .ava { width:56px; height:56px; border-radius:50%; border:3px solid var(--cap,#F22F89); display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.06); font-weight:700; font-size:18px; color:var(--white); flex:0 0 auto; }
+  .who { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .nameline { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+  .name { font-size:15px; font-weight:600; }
+  .pill { background:var(--magenta); color:var(--white); font-size:11px; font-weight:700; padding:1px 6px; border-radius:3px; letter-spacing:.04em; }
+  .status { display:flex; align-items:center; gap:6px; color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex:0 0 auto; }
+  .dot.green { background:#3ddc84; }
+  body[data-theme="flatline"] .dot.green { background:var(--white); }
+  .dot.cyan { background:var(--cyan); }
+  .dot.amber { background:var(--expacc); }
+  .dot.mag { background:var(--magenta); }
+  .dot.verify { background:var(--verify); }
+  .facts { display:flex; align-items:center; gap:6px; white-space:nowrap; overflow:hidden; font-size:11px; }
+  .fb { border:1px solid var(--divider); border-radius:3px; padding:0 6px; line-height:17px; color:var(--white); }
+  .fb.dim { color:var(--muted); }
+  .age { color:var(--muted); font-size:11px; }
+  .age.fail { color:var(--expacc); }
+  .inline-facts { color:var(--white); }
+  .sep { color:var(--muted); }
+  .ctrls { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+  .sw { width:22px; height:16px; border-radius:3px; background:var(--cap,#F22F89); }
+  .star { color:var(--magenta); font-size:15px; }
+  .star.off { color:var(--white); }
+  .btn { border:1px solid var(--muted); color:var(--white); background:transparent; border-radius:4px; padding:5px 10px; font:inherit; font-size:12px; white-space:nowrap; }
+  .cta { background:var(--cyan); color:var(--oncyan); border:none; border-radius:4px; padding:7px 14px; font:inherit; font-size:12px; font-weight:600; white-space:nowrap; }
+  .combo { border:1px solid var(--divider); background:var(--navy); color:var(--white); border-radius:4px; padding:5px 8px; width:92px; font-size:12px; display:flex; justify-content:space-between; }
+  .ghost { background:transparent; border:none; padding:0 6px; font:inherit; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .ghost.exp { color:var(--expacc); } .ghost.lim { color:color-mix(in srgb, var(--magenta) 60%, var(--white)); } .ghost.ver { color:var(--verify); } .ghost.fol { color:var(--cyan); }
+  .xp { width:24px; height:24px; border:1px solid var(--muted); border-radius:4px; color:var(--white); background:transparent; font-size:11px; display:flex; align-items:center; justify-content:center; }
+  .xp.on { border-color:var(--cyan); color:var(--cyan); }
+
+  /* panel */
+  .panel { background:color-mix(in srgb, var(--rowbg) 70%, var(--bg)); border:1px solid var(--divider); border-top:none; border-radius:0 0 8px 8px; margin:-10px 0 8px; padding:12px 14px 12px 44px; }
+  .row.open { border-radius:8px 8px 0 0; margin-bottom:10px; }
+  .phead { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .notebox { flex:1; border:1px solid var(--divider); background:var(--navy); border-radius:4px; padding:5px 8px; color:var(--muted); font-size:12px; }
+  .notebox.filled { color:var(--white); }
+  .groups3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  .gh { font-family:"JetBrains Mono",Consolas,monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:0 0 6px; }
+  .entry { display:flex; align-items:center; gap:8px; padding:4px 6px; border-radius:4px; }
+  .entry:hover { background:rgba(255,255,255,.04); }
+  .ico { width:28px; height:28px; border-radius:5px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; color:#fff; }
+  .ico.l { width:100%; height:auto; aspect-ratio:1; border-radius:8px; font-size:22px; }
+  .ico.m { width:56px; height:56px; border-radius:7px; font-size:16px; }
+  .et { display:flex; flex-direction:column; min-width:0; flex:1; }
+  .en { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .em { font-size:11px; color:var(--muted); white-space:nowrap; }
+  .tag { font-size:10px; font-weight:700; letter-spacing:.06em; padding:0 5px; border:1px solid var(--muted); border-radius:3px; color:var(--white); }
+  .save { font-size:11px; color:var(--cyan); background:transparent; border:1px solid var(--cyan); border-radius:3px; padding:0 6px; }
+  .empty { color:var(--muted); font-size:12px; padding:4px 6px; }
+  .stack .grp { margin-bottom:10px; }
+  .strip { display:flex; gap:10px; }
+  .tile-s { width:96px; display:flex; flex-direction:column; gap:4px; }
+
+  /* library */
+  .lib { padding:16px 18px; }
+  .lt { font-family:"Space Grotesk","Segoe UI Variable Display",sans-serif; font-size:24px; font-weight:700; margin:0 0 12px; }
+  .lt span { color:var(--cyan); }
+  .bar { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+  .box { flex:1; border:1px solid var(--divider); background:var(--navy); border-radius:4px; padding:7px 10px; color:var(--muted); }
+  .chip { border:1px solid var(--muted); border-radius:14px; padding:4px 10px; font-size:12px; color:var(--white); background:transparent; white-space:nowrap; }
+  .chip.on { border-color:var(--cyan); color:var(--cyan); }
+  .vt { display:flex; border:1px solid var(--divider); border-radius:4px; overflow:hidden; }
+  .vt span { padding:4px 10px; font-size:12px; color:var(--muted); }
+  .vt span.on { background:var(--divider); color:var(--white); }
+  .grid4 { display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; }
+  .tile { background:var(--rowbg); border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:6px; }
+  .tile .tn { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile .acts { display:flex; gap:6px; }
+  .tile .acts .cta, .tile .acts .btn { padding:4px 8px; font-size:11px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .card { background:var(--rowbg); border-radius:8px; padding:8px; display:flex; gap:10px; align-items:center; }
+  .list .lr { display:grid; grid-template-columns:36px 1fr 110px 110px 90px 74px 70px; align-items:center; gap:10px; padding:6px 8px; border-bottom:1px solid var(--divider); }
+  .list .lh { font-family:"JetBrains Mono",Consolas,monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  .from { margin-top:12px; }
+
+  /* flyout */
+  .fly { width:260px; background:var(--navy); border:1px solid var(--divider); border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.5); padding:4px; }
+  .mi { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:4px; }
+  .mi:hover, .mi.hl { background:var(--divider); }
+  .mi.dis { opacity:.5; }
+  .mi .av { width:24px; height:24px; border-radius:50%; border:2px solid var(--cap,#888); background:rgba(255,255,255,.08); font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .mi .nm { flex:1; font-size:12px; }
+  .mi .hw { font-size:11px; color:var(--muted); }
+  .mi .two { display:flex; flex-direction:column; flex:1; }
+  .mi .two .s { font-size:11px; color:var(--muted); }
+  .scene { position:relative; }
+  .tip { position:absolute; left:0; top:200px; background:#000; color:#fff; font-size:11px; padding:3px 6px; border-radius:3px; white-space:nowrap; }
+</style>
+</head>
+<body data-theme="brand">
+<div class="chrome">
+  <h1>RoRoRo v1.36, C1 mocks</h1>
+  <span style="color:#9fb0c3">Theme:</span>
+  <button data-t="brand" class="on">Brand</button>
+  <button data-t="midnight">Midnight</button>
+  <button data-t="magenta-heat">Magenta Heat</button>
+  <button data-t="flatline">Flatline</button>
+  <span style="color:#9fb0c3;margin-left:auto">Fake accounts and games. Pick one option per section.</span>
+</div>
+<main>
+
+<!-- ============================================================ 0 -->
+<section>
+  <h2>0. Already built in item 2: health badges and the follow mark</h2>
+  <p class="q">These shipped to the branch before this halt because they sit on existing lines and the 92 px row pin holds. Two calls are yours to veto: <b>(a)</b> the follow mark is a permanent cyan badge on the name line, and <b>(b)</b> a marked account at rest gets a <b>cyan</b> status dot instead of grey. The health badge is one button: its word, glyph and action change with the state. Limited's word is drawn lighter than raw magenta here; raw magenta text measured under AA on the row in three themes, and the fix lands before you see the build.</p>
+  <div class="opts"><div class="opt">
+    <div class="win"><div class="pad">
+      <div class="row" style="--cap:#F22F89">
+        <span class="grip">☰</span><div class="ava">N</div>
+        <div class="who"><div class="nameline"><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+          <div class="status"><span class="dot green"></span>In Pet Simulator 99 · 2 h</div></div>
+        <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div>
+      </div>
+      <div class="row" style="--cap:#2a6fdb">
+        <span class="grip">☰</span><div class="ava">P</div>
+        <div class="who"><div class="nameline"><span class="name">PetGrinder07</span><button class="ghost fol">⇢ Joins by following</button></div>
+          <div class="status"><span class="dot green"></span>In Pet Simulator 99 · 41 min</div></div>
+        <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div>
+      </div>
+      <div class="row" style="--cap:#16a37f">
+        <span class="grip">☰</span><div class="ava">A</div>
+        <div class="who"><div class="nameline"><span class="name">AltThree</span><button class="ghost fol">⇢ Joins by following</button></div>
+          <div class="status"><span class="dot cyan"></span>Joins by following · Ready</div></div>
+        <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div>
+      </div>
+      <div class="row" style="--cap:#a35bd6">
+        <span class="grip">☰</span><div class="ava">G</div>
+        <div class="who"><div class="nameline"><span class="name">GardenKeeper</span><button class="ghost ver">⚿ Needs verification</button></div>
+          <div class="status"><span class="dot verify"></span>Needs verification · open Roblox for this account</div></div>
+        <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div>
+      </div>
+      <div class="row" style="--cap:#e0a020">
+        <span class="grip">☰</span><div class="ava">L</div>
+        <div class="who"><div class="nameline"><span class="name">LimitedLarry</span><button class="ghost lim">⏳ Limited by Roblox</button></div>
+          <div class="status"><span class="dot mag"></span>Limited by Roblox · re-authenticate</div></div>
+        <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div>
+      </div>
+      <div class="row expired" style="--cap:#888">
+        <span class="grip">☰</span><div class="ava">O</div>
+        <div class="who"><div class="nameline"><span class="name">OldAlt2024</span><button class="ghost exp">⚠ Session expired</button></div>
+          <div class="status"><span class="dot amber"></span>Session expired · re-authenticate</div></div>
+        <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div>
+      </div>
+    </div></div>
+    <p class="note">Row 3 is the call: cyan dot at rest (built), or keep the grey dot and let the badge carry the mark alone.</p>
+  </div></div>
+</section>
+
+<!-- ============================================================ A -->
+<section>
+  <h2>A. The row's facts line</h2>
+  <p class="q">Robux, friends online, last played, the first line of your note, and how fresh the facts are. Membership is off until the probe measures it, so it is not drawn. The plan's default is <b>A1</b>. A1 and A2 add one line under the status line; A3 adds no height.</p>
+  <div class="opts">
+    <div class="opt"><div class="lbl"><b>A1</b>new line, collapses when it has nothing to say</div>
+      <div class="win"><div class="pad">
+        <div class="row" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot green"></span>In Pet Simulator 99 · 2 h</div>
+            <div class="facts"><span class="fb">R$ 1,240</span><span class="fb">3 friends online</span><span class="fb">Pet Simulator 99 · 2 h ago</span><span class="fb dim">Farm alt, keep at 20 FPS</span><span class="age">Updated 3 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="xp">▸</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+        <div class="row" style="--cap:#2a6fdb"><span class="grip">☰</span><div class="ava">P</div>
+          <div class="who"><div class="nameline"><span class="name">PetGrinder07</span></div>
+            <div class="status"><span class="dot"></span>Last launched 1 day ago</div>
+            <div class="facts"><span class="fb">R$ 85</span><span class="fb">0 friends online</span><span class="fb">Grow a Garden · 1 d ago</span><span class="age fail">Updated 2 h ago · last try failed (403)</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="xp">▸</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+        <div class="row" style="--cap:#16a37f"><span class="grip">☰</span><div class="ava">A</div>
+          <div class="who"><div class="nameline"><span class="name">AltThree</span></div>
+            <div class="status"><span class="dot"></span>Ready</div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="xp">▸</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+      </div></div>
+      <p class="note">Row 3 has never been refreshed, so it looks exactly like v1.35. The line appears after the first refresh (open its panel, end a launch, or the one-a-minute timer).</p>
+    </div>
+
+    <div class="opt"><div class="lbl"><b>A2</b>new line, always shown, dashes when unknown</div>
+      <div class="win"><div class="pad">
+        <div class="row" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot green"></span>In Pet Simulator 99 · 2 h</div>
+            <div class="facts"><span class="fb">R$ 1,240</span><span class="fb">3 friends online</span><span class="fb">Pet Simulator 99 · 2 h ago</span><span class="fb dim">Farm alt, keep at 20 FPS</span><span class="age">Updated 3 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="xp">▸</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+        <div class="row" style="--cap:#16a37f"><span class="grip">☰</span><div class="ava">A</div>
+          <div class="who"><div class="nameline"><span class="name">AltThree</span></div>
+            <div class="status"><span class="dot"></span>Ready</div>
+            <div class="facts"><span class="fb dim">R$ —</span><span class="fb dim">— friends online</span><span class="fb dim">Not played yet</span><span class="age">Not updated yet</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="xp">▸</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+      </div></div>
+      <p class="note">Every row is one line taller from the first launch of v1.36, facts or not. Consistent, but the upgrade moves every row.</p>
+    </div>
+
+    <div class="opt"><div class="lbl"><b>A3</b>inline on the status line, no new line</div>
+      <div class="win"><div class="pad">
+        <div class="row" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot green"></span>In Pet Simulator 99 · 2 h <span class="sep">·</span> <span class="inline-facts">R$ 1,240</span> <span class="sep">·</span> <span class="inline-facts">3 online</span> <span class="sep">·</span> <span class="age">3 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="xp">▸</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+        <div class="row" style="--cap:#2a6fdb"><span class="grip">☰</span><div class="ava">P</div>
+          <div class="who"><div class="nameline"><span class="name">PetGrinder07</span></div>
+            <div class="status"><span class="dot"></span>Last launched 1 day ago <span class="sep">·</span> <span class="inline-facts">R$ 85</span> <span class="sep">·</span> <span class="inline-facts">0 online</span> <span class="sep">·</span> <span class="age fail">2 h ago, failed (403)</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="xp">▸</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+      </div></div>
+      <p class="note">Zero added height, but the status line gets crowded and truncates first at 125%. Last played and the note live only in the panel.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ B -->
+<section>
+  <h2>B. The panel under the row</h2>
+  <p class="q">Opened with the ▸ expander. Recent is this account's own history (up to 8); Favourites and Private servers are the shared Library with this account's last-played age. The header holds your private note and <b>Open Roblox home</b>. Every entry launches as this account.</p>
+  <div class="opts">
+    <div class="opt"><div class="lbl"><b>B1</b>three columns</div>
+      <div class="win"><div class="pad">
+        <div class="row open" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot"></span>Last launched 2 h ago</div>
+            <div class="facts"><span class="fb">R$ 1,240</span><span class="fb">3 friends online</span><span class="fb">Pet Simulator 99 · 2 h ago</span><span class="age">Updated 3 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="xp on">▾</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+        <div class="panel">
+          <div class="phead"><div class="notebox filled">Farm alt, keep at 20 FPS. Clan bank on Fridays.</div><button class="btn">Open Roblox home</button></div>
+          <div class="groups3">
+            <div><div class="gh">Recent</div>
+              <div class="entry"><div class="ico" style="background:#d9822b">PS</div><div class="et"><span class="en">Pet Simulator 99</span><span class="em">2 h ago · 14 h in recent sessions</span></div></div>
+              <div class="entry"><div class="ico" style="background:#3f9d4a">GG</div><div class="et"><span class="en">Grow a Garden</span><span class="em">1 d ago · 3 h</span></div><button class="save">Save</button></div>
+              <div class="entry"><div class="ico" style="background:#6b4fd6">BF</div><div class="et"><span class="en">Blox Fruits</span><span class="em">4 d ago · 40 min</span></div><button class="save">Save</button></div></div>
+            <div><div class="gh">Favourites</div>
+              <div class="entry"><div class="ico" style="background:#d9822b">PS</div><div class="et"><span class="en">Pet Simulator 99</span><span class="em">2 h ago</span></div><span class="tag">DEFAULT</span></div>
+              <div class="entry"><div class="ico" style="background:#e04f7a">AM</div><div class="et"><span class="en">Adopt Me!</span><span class="em">Not played by this account</span></div></div></div>
+            <div><div class="gh">Private servers</div>
+              <div class="entry"><div class="ico" style="background:#d9822b">PS</div><div class="et"><span class="en">Clan base</span><span class="em">Pet Simulator 99 · 5 h ago</span></div><span class="tag">PRIVATE</span></div></div>
+          </div>
+        </div>
+        <div class="row" style="--cap:#2a6fdb"><span class="grip">☰</span><div class="ava">P</div>
+          <div class="who"><div class="nameline"><span class="name">PetGrinder07</span></div><div class="status"><span class="dot"></span>Last launched 1 day ago</div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="xp">▸</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+      </div></div>
+      <p class="note">Most compact: everything above the fold with one account. Columns get narrow under German at 125%.</p>
+    </div>
+
+    <div class="opt"><div class="lbl"><b>B2</b>stacked groups</div>
+      <div class="win"><div class="pad">
+        <div class="row open" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot"></span>Last launched 2 h ago</div>
+            <div class="facts"><span class="fb">R$ 1,240</span><span class="fb">3 friends online</span><span class="fb">Pet Simulator 99 · 2 h ago</span><span class="age">Updated 3 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="xp on">▾</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+        <div class="panel stack">
+          <div class="phead"><div class="notebox filled">Farm alt, keep at 20 FPS. Clan bank on Fridays.</div><button class="btn">Open Roblox home</button></div>
+          <div class="grp"><div class="gh">Recent</div>
+            <div class="entry"><div class="ico" style="background:#d9822b">PS</div><div class="et"><span class="en">Pet Simulator 99</span></div><span class="em">2 h ago · 14 h in recent sessions</span></div>
+            <div class="entry"><div class="ico" style="background:#3f9d4a">GG</div><div class="et"><span class="en">Grow a Garden</span></div><span class="em">1 d ago · 3 h</span><button class="save">Save</button></div></div>
+          <div class="grp"><div class="gh">Favourites</div>
+            <div class="entry"><div class="ico" style="background:#d9822b">PS</div><div class="et"><span class="en">Pet Simulator 99 <span class="tag">DEFAULT</span></span></div><span class="em">2 h ago</span></div>
+            <div class="entry"><div class="ico" style="background:#e04f7a">AM</div><div class="et"><span class="en">Adopt Me!</span></div><span class="em">Not played by this account</span></div></div>
+          <div class="grp"><div class="gh">Private servers</div>
+            <div class="empty">No private servers saved. Paste a server link in the Library to add one.</div></div>
+        </div>
+      </div></div>
+      <p class="note">Reads top to bottom, wraps well in long languages, and the empty state has room to say what to do. Taller: a full panel pushes the next row below the fold.</p>
+    </div>
+
+    <div class="opt"><div class="lbl"><b>B3</b>icon strips</div>
+      <div class="win"><div class="pad">
+        <div class="row open" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot"></span>Last launched 2 h ago</div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="xp on">▾</button><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button></div></div>
+        <div class="panel">
+          <div class="phead"><div class="notebox">Add a private note for this account…</div><button class="btn">Open Roblox home</button></div>
+          <div class="gh">Recent</div>
+          <div class="strip">
+            <div class="tile-s"><div class="ico m" style="background:#d9822b">PS</div><span class="en">Pet Simulator 99</span><span class="em">2 h ago</span></div>
+            <div class="tile-s"><div class="ico m" style="background:#3f9d4a">GG</div><span class="en">Grow a Garden</span><span class="em">1 d ago</span></div>
+            <div class="tile-s"><div class="ico m" style="background:#6b4fd6">BF</div><span class="en">Blox Fruits</span><span class="em">4 d ago</span></div>
+            <div class="tile-s"><div class="ico m" style="background:#e04f7a">AM</div><span class="en">Adopt Me!</span><span class="em">6 d ago</span></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="note">Icon-first, matches the Library grid. Favourites and Private servers would be two more strips, so this is the tallest of the three.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ C -->
+<section>
+  <h2>C. The Library</h2>
+  <p class="q">One box searches your saved games or takes a pasted game, place or private-server link. Chips filter by kind (several at once, none means everything). <b>Play</b> launches as your main; <b>Play as</b> opens the account picker. Pick the grid shape; the list view is shared.</p>
+  <div class="opts">
+    <div class="opt"><div class="lbl"><b>C1</b>grid, square icon tiles</div>
+      <div class="win"><div class="lib">
+        <div class="lt"><span>RoRoRo /</span> Library</div>
+        <div class="bar"><div class="box">Search your games or paste a Roblox link</div><div class="vt"><span class="on">Grid</span><span>List</span></div></div>
+        <div class="bar"><button class="chip on">✓ Recent</button><button class="chip on">✓ Favourites</button><button class="chip">Private servers</button></div>
+        <div class="grid4">
+          <div class="tile"><div class="ico l" style="background:#d9822b">PS</div><span class="tn">Pet Simulator 99</span><span class="em"><span class="tag">DEFAULT</span> 2 h ago · 61 h</span><div class="acts"><button class="cta">Play</button><button class="btn">Play as</button></div></div>
+          <div class="tile"><div class="ico l" style="background:#d9822b">CB</div><span class="tn">Clan base</span><span class="em"><span class="tag">PRIVATE</span> 5 h ago · 9 h</span><div class="acts"><button class="cta">Play</button><button class="btn">Play as</button></div></div>
+          <div class="tile"><div class="ico l" style="background:#3f9d4a">GG</div><span class="tn">Grow a Garden</span><span class="em">1 d ago · 3 h</span><div class="acts"><button class="cta">Play</button><button class="btn">Play as</button></div></div>
+          <div class="tile"><div class="ico l" style="background:#e04f7a">AM</div><span class="tn">Adopt Me!</span><span class="em">Never played</span><div class="acts"><button class="cta">Play</button><button class="btn">Play as</button></div></div>
+<div class="tile"><div class="ico l" style="background:#6b4fd6">BF</div><span class="tn">Blox Fruits</span><span class="em">4 d ago · 40 min</span><div class="acts"><button class="cta">Play</button><button class="btn">Play as</button></div></div>
+          <div class="tile"><div class="ico l" style="background:#2b8fd9">MM</div><span class="tn">Murder Mystery 2</span><span class="em">Never played</span><div class="acts"><button class="cta">Play</button><button class="btn">Play as</button></div></div>
+        </div>
+      </div></div>
+      <p class="note">Most visual; about 12 tiles above the fold at 900×600.</p>
+    </div>
+
+    <div class="opt"><div class="lbl"><b>C2</b>grid, wide cards</div>
+      <div class="win"><div class="lib">
+        <div class="lt"><span>RoRoRo /</span> Library</div>
+        <div class="bar"><div class="box">Search your games or paste a Roblox link</div><div class="vt"><span class="on">Grid</span><span>List</span></div></div>
+        <div class="bar"><button class="chip on">✓ Recent</button><button class="chip on">✓ Favourites</button><button class="chip">Private servers</button></div>
+        <div class="grid2">
+          <div class="card"><div class="ico m" style="background:#d9822b">PS</div><div class="et"><span class="tn" style="font-size:13px;font-weight:600">Pet Simulator 99 <span class="tag">DEFAULT</span></span><span class="em">2 h ago · 61 h total</span><div class="acts" style="display:flex;gap:6px;margin-top:4px"><button class="cta">Play</button><button class="btn">Play as</button></div></div></div>
+          <div class="card"><div class="ico m" style="background:#d9822b">CB</div><div class="et"><span class="tn" style="font-size:13px;font-weight:600">Clan base <span class="tag">PRIVATE</span></span><span class="em">Pet Simulator 99 · 5 h ago</span><div class="acts" style="display:flex;gap:6px;margin-top:4px"><button class="cta">Play</button><button class="btn">Play as</button></div></div></div>
+          <div class="card"><div class="ico m" style="background:#3f9d4a">GG</div><div class="et"><span class="tn" style="font-size:13px;font-weight:600">Grow a Garden</span><span class="em">1 d ago · 3 h total</span><div class="acts" style="display:flex;gap:6px;margin-top:4px"><button class="cta">Play</button><button class="btn">Play as</button></div></div></div>
+          <div class="card"><div class="ico m" style="background:#e04f7a">AM</div><div class="et"><span class="tn" style="font-size:13px;font-weight:600">Adopt Me!</span><span class="em">Never played</span><div class="acts" style="display:flex;gap:6px;margin-top:4px"><button class="cta">Play</button><button class="btn">Play as</button></div></div></div>
+        </div>
+      </div></div>
+      <p class="note">More text room: private-server cards can name the game under the server name. Fewer entries above the fold.</p>
+    </div>
+
+    <div class="opt"><div class="lbl"><b>List</b>shared by C1 and C2</div>
+      <div class="win"><div class="lib list">
+        <div class="lt"><span>RoRoRo /</span> Library</div>
+        <div class="bar"><div class="box">Search your games or paste a Roblox link</div><div class="vt"><span>Grid</span><span class="on">List</span></div></div>
+        <div class="lr lh"><span></span><span>Game</span><span>Kind</span><span>Last played</span><span>Total</span><span></span><span></span></div>
+        <div class="lr"><div class="ico" style="background:#d9822b">PS</div><span>Pet Simulator 99 <span class="tag">DEFAULT</span></span><span class="em">Favourite</span><span class="em">2 h ago</span><span class="em">61 h</span><button class="cta">Play</button><button class="btn">Play as</button></div>
+        <div class="lr"><div class="ico" style="background:#d9822b">CB</div><span>Clan base <span class="tag">PRIVATE</span></span><span class="em">Private server</span><span class="em">5 h ago</span><span class="em">9 h</span><button class="cta">Play</button><button class="btn">Play as</button></div>
+        <div class="lr"><div class="ico" style="background:#3f9d4a">GG</div><span>Grow a Garden</span><span class="em">Recent</span><span class="em">1 d ago</span><span class="em">3 h</span><button class="cta">Play</button><button class="btn">Play as</button></div>
+      </div></div>
+    </div>
+
+    <div class="opt"><div class="lbl"><b>Empty</b>fresh install</div>
+      <div class="win"><div class="lib">
+        <div class="lt"><span>RoRoRo /</span> Library</div>
+        <div class="bar"><div class="box">Search your games or paste a Roblox link</div><div class="vt"><span class="on">Grid</span><span>List</span></div></div>
+        <div style="padding:60px 20px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6">Your Library is empty.<br>Search for a game or paste a game or private-server link above.<br>Saved games show up in every account's panel.</div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ D -->
+<section>
+  <h2>D. Play as</h2>
+  <p class="q">A menu at the Play as button, listing every account with its avatar and health. Expired accounts are greyed out, with the reason on hover. A follow-marked account still launches by following, because the launch path decides that, not the picker. Masked under streamer mode.</p>
+  <div class="opts">
+    <div class="opt"><div class="lbl"><b>D1</b>one line, health word on the right</div>
+      <div class="win narrow" style="padding:16px;height:260px"><div class="scene">
+        <div class="fly">
+          <div class="mi hl" style="--cap:#F22F89"><span class="av">N</span><span class="nm">NovaBuilds</span><span class="hw">Main</span></div>
+          <div class="mi" style="--cap:#2a6fdb"><span class="av">P</span><span class="nm">PetGrinder07</span><span class="hw">⇢ Follows</span></div>
+          <div class="mi" style="--cap:#16a37f"><span class="av">A</span><span class="nm">AltThree</span><span class="hw">Ready</span></div>
+          <div class="mi" style="--cap:#e0a020"><span class="av">L</span><span class="nm">LimitedLarry</span><span class="hw">⏳ Limited</span></div>
+          <div class="mi dis" style="--cap:#888"><span class="av">O</span><span class="nm">OldAlt2024</span><span class="hw">⚠ Expired</span></div>
+        </div>
+        <div class="tip">Session expired. Re-authenticate it on the Accounts page.</div>
+      </div></div>
+    </div>
+    <div class="opt"><div class="lbl"><b>D2</b>two lines, live status under the name</div>
+      <div class="win narrow" style="padding:16px;height:300px"><div class="scene">
+        <div class="fly">
+          <div class="mi hl" style="--cap:#F22F89"><span class="av">N</span><span class="two"><span>NovaBuilds</span><span class="s">Main · In Pet Simulator 99</span></span></div>
+          <div class="mi" style="--cap:#2a6fdb"><span class="av">P</span><span class="two"><span>PetGrinder07</span><span class="s">⇢ Joins by following</span></span></div>
+          <div class="mi" style="--cap:#16a37f"><span class="av">A</span><span class="two"><span>AltThree</span><span class="s">Ready</span></span></div>
+          <div class="mi" style="--cap:#e0a020"><span class="av">L</span><span class="two"><span>LimitedLarry</span><span class="s">⏳ Limited by Roblox</span></span></div>
+          <div class="mi dis" style="--cap:#888"><span class="av">O</span><span class="two"><span>OldAlt2024</span><span class="s">⚠ Session expired</span></span></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+</main>
+<script>
+  document.querySelectorAll('.chrome button[data-t]').forEach(b => b.addEventListener('click', () => {
+    document.body.dataset.theme = b.dataset.t;
+    document.querySelectorAll('.chrome button[data-t]').forEach(x => x.classList.toggle('on', x === b));
+  }));
+</script>
+</body>
+</html>

@@ -269,19 +269,21 @@ row is stamped, and the facts enqueue (§2.3 trigger 2) placed there too. `HomeT
 gains the wiring and the two hooks and nothing else.
 
 **Acceptance:**
-- [ ] `AccountPanelViewModelTests`: two accounts that played different games never see each other's rows
+- [x] `AccountPanelViewModelTests`: two accounts that played different games never see each other's rows
       (the PRD's named test); nine distinct games yield eight entries; a private-server row groups by
       server id, not place; an unsaved Recent entry has `IsSaved == false` and its `Save` calls
       `IFavoriteGameStore.AddAsync` with the icon cache's universe id; `Favourites` order equals the
       catalog's order; `Expand()` with facts 30 s old does not call `requestFacts`, 61 s old does.
-- [ ] `MainViewModelTests`: with a main set, only the main's panel resolves expanded at load; with no
+- [x] `MainViewModelTests`: with a main set, only the main's panel resolves expanded at load; with no
       main, the first row's; a persisted `PanelExpanded = true` survives reload; compact mode on and off
       never calls `SetPanelExpandedAsync`; after Add account on an empty roster the new panel is expanded
       without a click.
-- [ ] `MainViewModel` grew by delegates, events and hooks only: no new `ObservableCollection` on it, and
+- [x] `MainViewModel` grew by delegates, events and hooks only: no new `ObservableCollection` on it, and
       `git diff --stat main -- src/ROROROblox.App/ViewModels/MainViewModel.cs` under 150 lines added for
       items 3-5 combined.
-- [ ] No XAML in this commit.
+- [x] No XAML in this commit.
+
+*Built: ecbf904 (panel VM), 53c2189 (unsaved private-server Recent groups never launch the public place; every row's last played primed at load from one disk read; open panels request icons only after the backfill, App.xaml.cs:952). 3,168 unit + 27/1 harness green. MainViewModel +104/-5 for items 3-5 measured from 3974579 (item 2's +53 sits before that point; from main the figure is +157). Deviations accepted: three optional ctor dependencies beyond the four delegates, public types, the refresh hook at the end of RecordSessionEndAsync (dashboard h0KDE5em5ZSzwhgLxsPe).*
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~AccountPanelViewModelTests|FullyQualifiedName~MainViewModelTests"`
 → all passed. `dotnet test ROROROblox.slnx -c Release --no-build` → 0 failed, 1 skipped.
@@ -604,6 +606,13 @@ the top only.
 **Spec ref:** `spec.md > §4.1`, `§5`, CLAUDE.md's generated-resx rule, `§11`
 (`CultureKeyParityFenceTests`). **Depends on:** 2, 4, 6, 7, 8, 9, 10, 12 (every item that added a key).
 **Effort:** M.
+
+> **Revised at build time (2026-11-01, dashboard `dZevmkvgsfVYYF9asVwO`).** `CultureKeyParityFenceTests`
+> fails the suite the moment a neutral key is missing from any culture resx, so one sweep here would leave
+> items 2 to 12 red. Each key-adding item now writes its keys into all seven files as it lands, through
+> the cumulative `scripts/add-v136-translations.py` (created in item 2) and `gen-culture-resx.py`. This
+> item shrinks to the verifier run over every key that script holds, the wrap measurement and the German
+> build. The first acceptance line is then a re-check, not new work.
 
 **What to build:** The catalog pipeline for the whole cycle's delta, planned here rather than discovered
 mid-build as the alerts cycle's 6b was: `python scripts/export-ui-translations.py`, slice
