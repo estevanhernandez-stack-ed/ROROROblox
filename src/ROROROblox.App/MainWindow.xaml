@@ -184,6 +184,104 @@
             </Border>
         </DataTemplate>
 
+        <!-- v1.36 panel entry (one template for Recent, Favourites and Private servers). A Ghost Button is the
+             launch surface (hover sheen, keyboard focus, the entry's whole name) and the visible content sits
+             over it, not hit-testable: the shared button template centres its content and sizes it to fit, which
+             would never trim a long name to the column. The name and meta TextBlocks trim with an ellipsis, and
+             the full text lives in the tooltip and the accessible name. Save is its own button beside it (a
+             Button cannot nest in a Button), shown only on an unsaved Recent entry. The click calls the panel's
+             LaunchCommand, which calls the main view model's launch path and nothing else. -->
+        <DataTemplate x:Key="PanelEntryTemplate" DataType="{x:Type vm:PanelEntry}">
+            <Grid Margin="0,0,0,1" MinHeight="36">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                        AutomationProperties.Name="{Binding AccessibleName}"
+                        Command="{Binding DataContext.Panel.LaunchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        CommandParameter="{Binding}"
+                        ToolTip="{Binding TooltipText}"
+                        ToolTipService.ShowOnDisabled="True"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataContext.IsLaunching, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="True">
+                                    <Setter Property="IsEnabled" Value="False" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DataContext.SessionLimited, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="True">
+                                    <Setter Property="IsEnabled" Value="False" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Grid Grid.Column="0" Margin="6,4" IsHitTestVisible="False">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CanLaunch}" Value="False">
+                                    <Setter Property="Opacity" Value="0.6" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Border Grid.Column="0" Width="28" Height="28" CornerRadius="5" ClipToBounds="True"
+                            Background="{DynamicResource NavyBrush}" VerticalAlignment="Center">
+                        <Grid>
+                            <TextBlock Text="{Binding Initials}"
+                                       FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Image Source="{Binding Entry.IconUrl}" Stretch="UniformToFill" />
+                        </Grid>
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="8,0,6,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DisplayName}"
+                                   FontSize="{DynamicResource BodyFontSize}"
+                                   Foreground="{DynamicResource WhiteBrush}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding MetaText}"
+                                   FontSize="{DynamicResource MetaFontSize}"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border BorderBrush="{DynamicResource MutedTextBrush}" BorderThickness="1" CornerRadius="3"
+                                Padding="5,0" Margin="0,0,4,0"
+                                Visibility="{Binding IsPrivate, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{loc:Loc Shell_Panel_Tag_Private}"
+                                       FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
+                                       Foreground="{DynamicResource WhiteBrush}" />
+                        </Border>
+                        <Border BorderBrush="{DynamicResource MutedTextBrush}" BorderThickness="1" CornerRadius="3"
+                                Padding="5,0"
+                                Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{loc:Loc Shell_Panel_Tag_Default}"
+                                       FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
+                                       Foreground="{DynamicResource WhiteBrush}" />
+                        </Border>
+                    </StackPanel>
+                </Grid>
+                <Button Grid.Column="1" Content="{loc:Loc Shell_Panel_Save}"
+                        AutomationProperties.Name="{Binding SaveAccessibleName}"
+                        Command="{Binding DataContext.Panel.SaveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        CommandParameter="{Binding}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        FontSize="{DynamicResource MetaFontSize}"
+                        Padding="8,2" Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding ShowSave, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </Grid>
+        </DataTemplate>
+
         <!-- Account row template -->
         <DataTemplate DataType="{x:Type vm:AccountSummary}">
             <!-- AllowDrop + Tag={Binding} together with the Window-level drag handlers (in
@@ -213,7 +311,6 @@
                  11px of gap is the same 14px inset it always had. -->
             <Border x:Name="AccountRowBorder"
                     Padding="0,10,14,10"
-                    CornerRadius="8"
                     AllowDrop="True"
                     Tag="{Binding}"
                     DragEnter="OnAccountRowDragEnter"
@@ -223,7 +320,13 @@
                     Background="{DynamicResource RowBgBrush}">
                 <Border.Style>
                     <Style TargetType="Border">
+                        <!-- CornerRadius is a Style setter, not an attribute, so the open panel's trigger can
+                             square the bottom corners (a local value would outrank it). -->
+                        <Setter Property="CornerRadius" Value="8" />
                         <Style.Triggers>
+                            <DataTrigger Binding="{Binding Panel.IsExpanded}" Value="True">
+                                <Setter Property="CornerRadius" Value="8,8,0,0" />
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding SessionExpired}" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource RowExpiredBgBrush}" />
                                 <Setter Property="BorderBrush" Value="{DynamicResource RowExpiredAccentBrush}" />
@@ -631,9 +734,11 @@
                                           IsChecked="{Binding IsSelected}"
                                           Margin="12,0,4,0"
                                           VerticalAlignment="Center"
+                                          Visibility="{Binding DataContext.HasMultipleAccounts, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}"
                                           ToolTip="{loc:Loc MainWindow_IncludeThisAccountInLaunch_2}" />
                             <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                        VerticalAlignment="Center"
+                                       Visibility="{Binding DataContext.HasMultipleAccounts, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}"
                                        ToolTip="{loc:Loc MainWindow_WhetherThisAccountJoinsLaunch}">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -853,6 +958,29 @@
 
                     <!-- Actions -->
                     <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- v1.36 panel expander (spec 3.6): first in the actions column, left of the swatch. A
+                             ToggleButton on SecondaryToggleButtonStyle via BasedOn (SecondaryButtonStyle targets
+                             Button and throws on a ToggleButton at XAML load); the style carries the glyph, so the
+                             tag sets no colour. Named from the account, so a screen reader hears whose games it
+                             opens, and keyboard-reachable like every other button in this column. -->
+                        <ToggleButton AutomationProperties.Name="{Binding PanelExpanderName}"
+                                      ToolTip="{Binding PanelExpanderName}"
+                                      IsChecked="{Binding Panel.IsExpanded, Mode=TwoWay}"
+                                      Width="24" Height="24" Padding="0" Margin="0,0,8,0"
+                                      FontSize="{DynamicResource BodyFontSize}"
+                                      Cursor="Hand">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton" BasedOn="{StaticResource SecondaryToggleButtonStyle}">
+                                    <Setter Property="Content" Value="&#x25B8;" />
+                                    <Style.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter Property="Content" Value="&#x25BE;" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+
                         <!-- Title-bar color swatch. Click opens a popup with the 8-palette + Auto +
                              custom hex. The swatch shows whatever color the Roblox window's title
                              bar currently uses (manual override OR auto-derived from Id hash). -->
@@ -1169,6 +1297,89 @@
                         </TextBlock>
                     </WrapPanel>
                 </Grid>
+            </Border>
+            <!-- v1.36 account panel (B1, three columns; spec 3.6). The THIRD child of the row's outer StackPanel,
+                 below AccountRowBorder and not inside it: the drag ghost and the drop targets still capture the
+                 header only, the panel gets the row's full width, and FindRowAccountSummary / FocusAccountRow still
+                 resolve because the panel is inside the same item container. Collapsed (so out of layout and out
+                 of the tab order) while the panel is closed; FallbackValue keeps a row with no panel closed.
+                 The header holds the private note (hidden under streamer mode) and Open Roblox home, which is
+                 the one-account install's two-click path from Add account to a client. -->
+            <Border x:Name="AccountPanelBorder"
+                    Padding="44,12,14,12"
+                    CornerRadius="0,0,8,8"
+                    Background="{DynamicResource RowBgBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
+                    BorderThickness="0,1,0,0"
+                    Visibility="{Binding Panel.IsExpanded, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox x:Name="NoteBox"
+                                    Grid.Column="0"
+                                    AutomationProperties.Name="{Binding PanelNoteName}"
+                                    PlaceholderText="{loc:Loc Shell_Panel_Note_Placeholder}"
+                                    Text="{Binding NoteText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                    MaxLength="200"
+                                    FontSize="{DynamicResource BodyFontSize}"
+                                    Padding="8,5"
+                                    Margin="0,0,10,0"
+                                    VerticalContentAlignment="Center"
+                                    KeyDown="OnNoteBoxKeyDown"
+                                    Visibility="{Binding ShowNoteBox, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Button Grid.Column="1"
+                                Content="{loc:Loc Shell_Panel_OpenHome}"
+                                AutomationProperties.Name="{Binding PanelOpenHomeName}"
+                                Command="{Binding Panel.OpenHomeCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                FontSize="{DynamicResource BodyFontSize}"
+                                Padding="10,6"
+                                VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,14,0">
+                            <TextBlock Text="{loc:Loc Shell_Panel_Heading_Recent}"
+                                       FontFamily="{DynamicResource MonoFontFamily}"
+                                       FontSize="{DynamicResource MetaFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,6" />
+                            <ItemsControl ItemsSource="{Binding Panel.Recent}" ItemTemplate="{StaticResource PanelEntryTemplate}" />
+                            <TextBlock Text="{loc:Loc Shell_Panel_Empty_Recent}" TextWrapping="Wrap"
+                                       FontSize="{DynamicResource BodyFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" Margin="6,4"
+                                       Visibility="{Binding Panel.Recent.Count, Converter={StaticResource ZeroToVisibilityConverter}, FallbackValue=Collapsed}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                            <TextBlock Text="{loc:Loc Shell_Panel_Heading_Favourites}"
+                                       FontFamily="{DynamicResource MonoFontFamily}"
+                                       FontSize="{DynamicResource MetaFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,6" />
+                            <ItemsControl ItemsSource="{Binding Panel.Favourites}" ItemTemplate="{StaticResource PanelEntryTemplate}" />
+                            <TextBlock Text="{loc:Loc Shell_Panel_Empty_Favourites}" TextWrapping="Wrap"
+                                       FontSize="{DynamicResource BodyFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" Margin="6,4"
+                                       Visibility="{Binding Panel.Favourites.Count, Converter={StaticResource ZeroToVisibilityConverter}, FallbackValue=Collapsed}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{loc:Loc Shell_Panel_Heading_PrivateServers}"
+                                       FontFamily="{DynamicResource MonoFontFamily}"
+                                       FontSize="{DynamicResource MetaFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,6" />
+                            <ItemsControl ItemsSource="{Binding Panel.PrivateServers}" ItemTemplate="{StaticResource PanelEntryTemplate}" />
+                            <TextBlock Text="{loc:Loc Shell_Panel_Empty_PrivateServers}" TextWrapping="Wrap"
+                                       FontSize="{DynamicResource BodyFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" Margin="6,4"
+                                       Visibility="{Binding Panel.PrivateServers.Count, Converter={StaticResource ZeroToVisibilityConverter}, FallbackValue=Collapsed}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
             </Border>
             </StackPanel>
         </DataTemplate>
@@ -1644,6 +1855,7 @@
                         <Button Content="{loc:Loc MainWindow_LaunchMultiple}"
                                 AutomationProperties.AutomationId="DangerLaunchMultiple"
                                 Command="{Binding LaunchAllCommand}"
+                                Visibility="{Binding HasMultipleAccounts, Converter={StaticResource BoolToVisibilityConverter}}"
                                 Padding="14,6" Margin="0,0,8,0"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 FontSize="{DynamicResource BodyFontSize}"
@@ -1656,6 +1868,7 @@
                         <Button Style="{StaticResource AccentActionButtonStyle}" Content="{loc:Loc MainWindow_SquadLaunch}"
                                 AutomationProperties.AutomationId="DangerSquadLaunch"
                                 Command="{Binding OpenSquadLaunchCommand}"
+                                Visibility="{Binding HasMultipleAccounts, Converter={StaticResource BoolToVisibilityConverter}}"
                                 Padding="14,6"
                                 FontSize="{DynamicResource BodyFontSize}"
                                 ToolTip="{loc:Loc MainWindow_SendEverySelectedAccountInto}"

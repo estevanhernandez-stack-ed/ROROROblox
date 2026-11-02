@@ -1959,6 +1959,72 @@
   <data name="Shell_Fact_NeverUpdatedFailed" xml:space="preserve">
     <value>Ainda não atualizado · a última tentativa falhou ({0})</value>
   </data>
+  <data name="Shell_Panel_Expander_Name" xml:space="preserve">
+    <value>Mostrar jogos recentes de {0}</value>
+  </data>
+  <data name="Shell_Panel_Heading_Recent" xml:space="preserve">
+    <value>RECENTES</value>
+  </data>
+  <data name="Shell_Panel_Heading_Favourites" xml:space="preserve">
+    <value>FAVORITOS</value>
+  </data>
+  <data name="Shell_Panel_Heading_PrivateServers" xml:space="preserve">
+    <value>SERVIDORES PRIVADOS</value>
+  </data>
+  <data name="Shell_Panel_Empty_Recent" xml:space="preserve">
+    <value>Nada jogado ainda. Inicie um jogo e ele aparece aqui.</value>
+  </data>
+  <data name="Shell_Panel_Empty_Favourites" xml:space="preserve">
+    <value>Nenhum favorito ainda. Salve um de Recentes ou adicione jogos na Biblioteca.</value>
+  </data>
+  <data name="Shell_Panel_Empty_PrivateServers" xml:space="preserve">
+    <value>Nenhum servidor privado salvo. Cole um link de servidor na Biblioteca para adicionar um.</value>
+  </data>
+  <data name="Shell_Panel_OpenHome" xml:space="preserve">
+    <value>Abrir a página inicial do Roblox</value>
+  </data>
+  <data name="Shell_Panel_OpenHome_Name" xml:space="preserve">
+    <value>Abrir a página inicial do Roblox como {0}</value>
+  </data>
+  <data name="Shell_Panel_Note_Placeholder" xml:space="preserve">
+    <value>Nota privada, só você vê</value>
+  </data>
+  <data name="Shell_Panel_Note_Name" xml:space="preserve">
+    <value>Nota privada para {0}</value>
+  </data>
+  <data name="Shell_Panel_Save" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Shell_Panel_Save_Name" xml:space="preserve">
+    <value>Salvar {0} nos favoritos</value>
+  </data>
+  <data name="Shell_Panel_Entry_Name" xml:space="preserve">
+    <value>Iniciar {0}, {1}</value>
+  </data>
+  <data name="Shell_Panel_Tag_Default" xml:space="preserve">
+    <value>PADRÃO</value>
+  </data>
+  <data name="Shell_Panel_Tag_Private" xml:space="preserve">
+    <value>PRIVADO</value>
+  </data>
+  <data name="Shell_Panel_Meta_NotPlayed" xml:space="preserve">
+    <value>Não jogado por esta conta</value>
+  </data>
+  <data name="Shell_Panel_Meta_InRecent" xml:space="preserve">
+    <value>{0} em sessões recentes</value>
+  </data>
+  <data name="Shell_Panel_Duration_Minutes" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Shell_Panel_Duration_Hours" xml:space="preserve">
+    <value>{0} h</value>
+  </data>
+  <data name="Shell_Panel_Duration_LessThanMinute" xml:space="preserve">
+    <value>&lt;1 min</value>
+  </data>
+  <data name="Shell_Panel_Entry_PrivateUnsaved" xml:space="preserve">
+    <value>Este servidor privado não está salvo, então não dá para reiniciá-lo daqui. Salve o link dele na Biblioteca.</value>
+  </data>
   <data name="Shell_Status_NeedsVerification" xml:space="preserve">
     <value>Requer verificação — abra o Roblox para esta conta</value>
   </data>

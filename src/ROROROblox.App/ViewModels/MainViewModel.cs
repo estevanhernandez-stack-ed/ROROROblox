@@ -307,6 +307,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // Mirror must exist before any off-thread reader (presence loop, plugin host) can
         // resolve this VM — the ctor runs on the UI thread, so wiring it here is race-free.
         _accountsMirror = new ObservableCollectionMirror<AccountSummary>(Accounts);
+        // The one-account window (spec 3.8): the batch surfaces appear when a second account does.
+        Accounts.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasMultipleAccounts));
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
@@ -579,6 +581,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     });
 
     public ObservableCollection<AccountSummary> Accounts { get; } = [];
+
+    /// <summary>
+    /// More than one saved account. The batch surfaces (Launch multiple, Squad Launch, the row's selection
+    /// dot with its In batches / Skipped label, and the follow-marked clause of a batch banner) have nothing
+    /// to do with one account, so they bind to this and stay out of a one-account user's first screen
+    /// (spec 2026-11-01 section 3.8). They still exist and work the moment a second account is added.
+    /// </summary>
+    public bool HasMultipleAccounts => Accounts.Count > 1;
 
     private readonly ObservableCollectionMirror<AccountSummary> _accountsMirror;
 
@@ -2460,7 +2470,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         ? DispatchBatchAsync(cleared, overrideTarget: null, launchingBanner)
                         : ReleaseBatchAsync(cleared, overrideTarget: null, launchingBanner, startIndex: 0));
             }
-            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"), plan.FollowMarkedCount);
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"), HasMultipleAccounts ? plan.FollowMarkedCount : 0);
         }
         finally
         {
@@ -2993,7 +3003,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                             waitForLanding: careful));
             }
 
-            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"), plan.FollowMarkedCount);
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"), HasMultipleAccounts ? plan.FollowMarkedCount : 0);
 
             // Everyone was aimed at one specific server — check with presence who actually made it.
             // Fire-and-forget: the verdict is up to four minutes out (ServerLandingGate.MaxWait,
@@ -4983,6 +4993,23 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         else if (e.PropertyName == nameof(AccountSummary.CaptionColorHex))
         {
             _ = PersistCaptionColorAsync(summary.Id, summary.CaptionColorHex);
+        }
+        else if (e.PropertyName == nameof(AccountSummary.Note))
+        {
+            _ = PersistNoteAsync(summary.Id, summary.Note);
+        }
+    }
+
+    /// <summary>The panel's NoteBox committed (LostFocus or Enter): persist the normalized note. A write failure is logged and the next edit reconverges.</summary>
+    private async Task PersistNoteAsync(Guid accountId, string? note)
+    {
+        try
+        {
+            await _accountStore.UpdateNoteAsync(accountId, note);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Persisting the note for {AccountId} failed.", accountId);
         }
     }
 

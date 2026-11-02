@@ -53,8 +53,10 @@ public class AccessibleNamingFenceTests
     /// <summary>
     /// Guards the walk itself. If the regex stops matching, a broken scan would report a perfectly
     /// named app forever — the same vacuity trap the colour-literal clause keeps a floor for.
+    /// <para>212 to 217 with v1.36 item 7: the panel's expander, NoteBox, Open Roblox home, the one entry
+    /// template's launch button and its Save, every one named.</para>
     /// </summary>
-    private const int ScannedFloor = 212;
+    private const int ScannedFloor = 217;
 
     /// <summary>
     /// A Content/Text value names its control when it is a literal with letters OR an

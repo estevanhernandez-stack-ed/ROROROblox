@@ -139,6 +139,35 @@ public sealed class AccountSummary : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// The note as the panel's <c>NoteBox</c> edits it: empty when there is none. The setter trims, turns
+    /// empty into null and caps at <see cref="Account.MaxNoteLength"/> (the same rule the store applies), then
+    /// sets <see cref="Note"/>, which <c>MainViewModel</c> persists. The box commits on LostFocus and Enter, so
+    /// this is written once per edit, not per keystroke. Raised even when <see cref="Note"/> did not change so
+    /// the box re-reads the trimmed text.
+    /// </summary>
+    public string NoteText
+    {
+        get => _note ?? string.Empty;
+        set
+        {
+            Note = Account.NormalizeNote(value);
+            OnPropertyChanged(nameof(NoteText));
+        }
+    }
+
+    /// <summary>False under streamer mode: the note is hidden entirely, so the panel's NoteBox collapses with it (spec 2.5).</summary>
+    public bool ShowNoteBox => !FactsMasked;
+
+    /// <summary>Accessible name and tooltip of the expander: "Show recent games for {name}", streamer-aware through <see cref="RenderName"/>.</summary>
+    public string PanelExpanderName => Loc.Format("Shell_Panel_Expander_Name", RenderName);
+
+    /// <summary>Accessible name of the panel's note box.</summary>
+    public string PanelNoteName => Loc.Format("Shell_Panel_Note_Name", RenderName);
+
+    /// <summary>Accessible name of the panel's Open Roblox home button.</summary>
+    public string PanelOpenHomeName => Loc.Format("Shell_Panel_OpenHome_Name", RenderName);
+
     // ---- v1.36 item 6: the facts line (spec 2.1, 2.4, 2.5) -----------------------------------
 
     /// <summary>The placeholder for a fact nobody has measured yet. Not prose, so not a resource.</summary>
@@ -251,6 +280,12 @@ public sealed class AccountSummary : INotifyPropertyChanged
         OnPropertyChanged(nameof(MembershipText));
         OnPropertyChanged(nameof(FriendsOnlineText));
         OnPropertyChanged(nameof(NoteFirstLine));
+        // NoteText is deliberately NOT raised here: this runs on every facts refresh, and a re-read would
+        // overwrite text the user is typing in the panel's NoteBox (it commits on LostFocus).
+        OnPropertyChanged(nameof(ShowNoteBox));
+        OnPropertyChanged(nameof(PanelExpanderName));
+        OnPropertyChanged(nameof(PanelNoteName));
+        OnPropertyChanged(nameof(PanelOpenHomeName));
         OnPropertyChanged(nameof(ShowRobuxBadge));
         OnPropertyChanged(nameof(ShowMembershipBadge));
         OnPropertyChanged(nameof(ShowFriendsOnlineBadge));
@@ -285,6 +320,9 @@ public sealed class AccountSummary : INotifyPropertyChanged
             if (SetField(ref _localName, value))
             {
                 OnPropertyChanged(nameof(RenderName));
+                OnPropertyChanged(nameof(PanelExpanderName));
+                OnPropertyChanged(nameof(PanelNoteName));
+                OnPropertyChanged(nameof(PanelOpenHomeName));
             }
         }
     }
@@ -1183,7 +1221,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
         return Loc.Format("Shell_Age_Days", (int)span.TotalDays);
     }
 
-    private static string RelativeAgo(DateTimeOffset when)
+    internal static string RelativeAgo(DateTimeOffset when)
     {
         var span = DateTimeOffset.UtcNow - when;
         if (span < TimeSpan.Zero) return Loc.Get("Shell_Ago_InFuture"); // clock skew safety

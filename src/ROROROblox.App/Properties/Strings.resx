@@ -2405,6 +2405,28 @@
   <data name="Shell_Fact_Updated" xml:space="preserve"><value>Updated {0}</value><comment>Facts age hint; {0}=relative age such as '3 min ago' (v1.36)</comment></data>
   <data name="Shell_Fact_UpdatedFailed" xml:space="preserve"><value>Updated {0} · last try failed ({1})</value><comment>Facts age hint after a failed refresh; {0}=age {1}=short reason such as 403 (v1.36)</comment></data>
   <data name="Shell_Fact_NeverUpdatedFailed" xml:space="preserve"><value>Not updated yet · last try failed ({0})</value><comment>Facts age hint when no refresh has ever succeeded; {0}=short reason (v1.36)</comment></data>
+  <data name="Shell_Panel_Expander_Name" xml:space="preserve"><value>Show recent games for {0}</value><comment>Accessible name and tooltip of the row's panel expander; {0}=account name (v1.36)</comment></data>
+  <data name="Shell_Panel_Heading_Recent" xml:space="preserve"><value>RECENT</value><comment>Panel column heading, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_Heading_Favourites" xml:space="preserve"><value>FAVOURITES</value><comment>Panel column heading, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_Heading_PrivateServers" xml:space="preserve"><value>PRIVATE SERVERS</value><comment>Panel column heading, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_Empty_Recent" xml:space="preserve"><value>Nothing played yet. Launch a game and it shows up here.</value><comment>Panel empty state, Recent column (v1.36)</comment></data>
+  <data name="Shell_Panel_Empty_Favourites" xml:space="preserve"><value>No favourites yet. Save one from Recent, or add games in the Library.</value><comment>Panel empty state, Favourites column; 'Library' is the renamed Games window (v1.36)</comment></data>
+  <data name="Shell_Panel_Empty_PrivateServers" xml:space="preserve"><value>No private servers saved. Paste a server link in the Library to add one.</value><comment>Panel empty state, Private servers column; 'Library' is the renamed Games window (v1.36)</comment></data>
+  <data name="Shell_Panel_OpenHome" xml:space="preserve"><value>Open Roblox home</value><comment>Panel header button; 'Roblox' stays English (v1.36)</comment></data>
+  <data name="Shell_Panel_OpenHome_Name" xml:space="preserve"><value>Open Roblox home as {0}</value><comment>Accessible name of the panel's Open Roblox home button; {0}=account name (v1.36)</comment></data>
+  <data name="Shell_Panel_Note_Placeholder" xml:space="preserve"><value>Private note, only you see it</value><comment>Placeholder of the panel's note box (v1.36)</comment></data>
+  <data name="Shell_Panel_Note_Name" xml:space="preserve"><value>Private note for {0}</value><comment>Accessible name of the panel's note box; {0}=account name (v1.36)</comment></data>
+  <data name="Shell_Panel_Save" xml:space="preserve"><value>Save</value><comment>Inline Save on an unsaved Recent entry (v1.36)</comment></data>
+  <data name="Shell_Panel_Save_Name" xml:space="preserve"><value>Save {0} to favourites</value><comment>Accessible name of an entry's Save button; {0}=game name (v1.36)</comment></data>
+  <data name="Shell_Panel_Entry_Name" xml:space="preserve"><value>Launch {0}, {1}</value><comment>Accessible name of a panel entry's launch button; {0}=game or server name {1}=age line (v1.36)</comment></data>
+  <data name="Shell_Panel_Tag_Default" xml:space="preserve"><value>DEFAULT</value><comment>Tag on the Library's default entry, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_Tag_Private" xml:space="preserve"><value>PRIVATE</value><comment>Tag on a private-server entry, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_Meta_NotPlayed" xml:space="preserve"><value>Not played by this account</value><comment>Second line of a saved entry this account never launched (v1.36)</comment></data>
+  <data name="Shell_Panel_Meta_InRecent" xml:space="preserve"><value>{0} in recent sessions</value><comment>Second line of a Recent entry; {0}=time spent such as '14 hr' (the history window is 100 rows, not all time) (v1.36)</comment></data>
+  <data name="Shell_Panel_Duration_Minutes" xml:space="preserve"><value>{0} min</value><comment>Time spent, minutes; unit symbol (v1.36)</comment></data>
+  <data name="Shell_Panel_Duration_Hours" xml:space="preserve"><value>{0} hr</value><comment>Time spent, hours; unit symbol (v1.36)</comment></data>
+  <data name="Shell_Panel_Duration_LessThanMinute" xml:space="preserve"><value>&lt;1 min</value><comment>Time spent, under a minute; unit symbol (v1.36)</comment></data>
+  <data name="Shell_Panel_Entry_PrivateUnsaved" xml:space="preserve"><value>This private server is not saved, so it cannot be relaunched from here. Save its link in the Library.</value><comment>Tooltip on a disabled Recent entry whose private server was never saved (v1.36)</comment></data>
   <data name="Shell_Status_NeedsVerification" xml:space="preserve"><value>Needs verification — open Roblox for this account</value><comment>AccountSummary secondary line; "Roblox" stays English (v1.36)</comment></data>
   <data name="Shell_Status_FollowMarkedReady" xml:space="preserve"><value>Joins by following · Ready</value><comment>AccountSummary secondary line for a follow-marked account at rest (v1.36)</comment></data>
   <data name="Shell_Launch_Clause_FollowMarked_one" xml:space="preserve"><value>{0} will follow the main</value><comment>Batch banner clause via Loc.Plural; {0}=count (v1.36)</comment></data>

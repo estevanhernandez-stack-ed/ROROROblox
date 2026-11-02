@@ -222,6 +222,26 @@ public class StreamerIdentityProviderTests
     }
 
     [Fact]
+    public async Task Active_HidesThePanelsNoteBox_AndNamesStayWithTheMaskedName()
+    {
+        var p = Make(active: false);
+        var row = FactsRow(p);
+        Assert.True(row.ShowNoteBox);
+        Assert.Equal("Farm alt", row.NoteText);
+
+        var raised = new List<string?>();
+        row.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+        await p.SetActiveAsync(true);
+
+        Assert.False(row.ShowNoteBox);                                  // item 7: the box goes with the note
+        Assert.Contains(nameof(ROROROblox.App.ViewModels.AccountSummary.ShowNoteBox), raised);
+        Assert.DoesNotContain("FakeAlt", row.PanelExpanderName);        // the expander's name follows RenderName, so it never leaks the real one
+        Assert.Contains(row.RenderName, row.PanelExpanderName);
+        Assert.Contains(row.RenderName, row.PanelOpenHomeName);
+        Assert.Contains(row.RenderName, row.PanelNoteName);
+    }
+
+    [Fact]
     public async Task Active_DoesNotMaskTheAgeHint()
     {
         var p = Make(active: false);

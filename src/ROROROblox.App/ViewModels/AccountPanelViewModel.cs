@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Input;
+using ROROROblox.App.Localization;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.ViewModels;
@@ -15,7 +16,71 @@ namespace ROROROblox.App.ViewModels;
 /// <param name="TotalPlayed">Sum of this account's session durations over the history window ("in recent sessions"). Null if none ended.</param>
 /// <param name="IsSaved">True when the place or server is in the Library (a favourite or a saved private server).</param>
 /// <param name="CanLaunch">False for a Recent private-server group with no saved server behind it: the history row has no access code, and launching its place would join the PUBLIC game.</param>
-public sealed record PanelEntry(LibraryEntry Entry, DateTimeOffset? LastPlayedUtc, TimeSpan? TotalPlayed, bool IsSaved, bool CanLaunch = true);
+/// <param name="PlaceName">For a saved private server, the game it lives in as the icon cache knows it (no fetch), or null. Shown beside the age.</param>
+public sealed record PanelEntry(
+    LibraryEntry Entry, DateTimeOffset? LastPlayedUtc, TimeSpan? TotalPlayed, bool IsSaved, bool CanLaunch = true, string? PlaceName = null)
+{
+    /// <summary>The name the entry shows: the Library's rename when there is one.</summary>
+    public string DisplayName => Entry.RenderName;
+
+    /// <summary>Up to two letters of the name, drawn on the icon tile until (or unless) the real icon arrives.</summary>
+    public string Initials
+    {
+        get
+        {
+            var letters = DisplayName.Split([' ', '-', '_', ':', '!', '.'], StringSplitOptions.RemoveEmptyEntries)
+                                     .Select(w => w.FirstOrDefault(char.IsLetterOrDigit))
+                                     .Where(c => c != default)
+                                     .Take(2)
+                                     .ToArray();
+            return letters.Length == 0 ? string.Empty : new string(letters).ToUpper(CultureInfo.CurrentCulture);
+        }
+    }
+
+    /// <summary>True for a saved private server and for a Recent group that was a private server (saved or not).</summary>
+    public bool IsPrivate => Entry.Kind == LibraryEntryKind.PrivateServer || Entry.PrivateServerId is not null || !CanLaunch;
+
+    /// <summary>True for the Library's default entry (the one the Launch button uses).</summary>
+    public bool IsDefault => Entry.IsDefault;
+
+    /// <summary>The inline Save affordance: an unsaved Recent entry that can be launched (so it has a public place to save).</summary>
+    public bool ShowSave => !IsSaved && CanLaunch;
+
+    /// <summary>
+    /// The second line: how long ago THIS account last played it, then (Recent only) the time it spent
+    /// there "in recent sessions" (the window is 100 history rows, not all time); a saved entry this
+    /// account never launched says so. A private server leads with its game when the icon cache knows it.
+    /// </summary>
+    public string MetaText
+    {
+        get
+        {
+            var parts = new List<string>(3);
+            if (Entry.Kind == LibraryEntryKind.PrivateServer && !string.IsNullOrWhiteSpace(PlaceName)) parts.Add(PlaceName!);
+            parts.Add(LastPlayedUtc is { } at ? ROROROblox.App.ViewModels.AccountSummary.RelativeAgo(at) : Loc.Get("Shell_Panel_Meta_NotPlayed"));
+            if (Entry.Kind == LibraryEntryKind.Recent && TotalPlayed is { } total && total > TimeSpan.Zero)
+                parts.Add(Loc.Format("Shell_Panel_Meta_InRecent", FormatDuration(total)));
+            return string.Join(" · ", parts);
+        }
+    }
+
+    /// <summary>Tooltip: the full name over the full meta line, for the day the column trims either with an ellipsis; a disabled entry adds why.</summary>
+    public string TooltipText => DisplayName + "\n" + MetaText + (CanLaunch ? string.Empty : "\n" + DisabledHint);
+
+    /// <summary>Accessible name of the entry's launch button: the full name and meta, never the trimmed text.</summary>
+    public string AccessibleName => Loc.Format("Shell_Panel_Entry_Name", DisplayName, MetaText);
+
+    /// <summary>Accessible name of the inline Save button.</summary>
+    public string SaveAccessibleName => Loc.Format("Shell_Panel_Save_Name", DisplayName);
+
+    /// <summary>Why a disabled entry is disabled, or empty when it is not.</summary>
+    public string DisabledHint => CanLaunch ? string.Empty : Loc.Get("Shell_Panel_Entry_PrivateUnsaved");
+
+    private static string FormatDuration(TimeSpan d)
+        => d < TimeSpan.FromMinutes(1) ? Loc.Get("Shell_Panel_Duration_LessThanMinute")
+         : d < TimeSpan.FromHours(1) ? Loc.Format("Shell_Panel_Duration_Minutes", (int)d.TotalMinutes)
+         : Loc.Format("Shell_Panel_Duration_Hours", (int)d.TotalHours);
+}
 
 /// <summary>This account's most recent session with a place: the name to show and when it started.</summary>
 public sealed record PanelLastPlayed(string? Name, DateTimeOffset AtUtc);
@@ -277,7 +342,8 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
             var entry = saved ?? Synthesize(latest, placeId);
             var unsavedPrivate = saved is null && latest.IsPrivateServer; // Favourites cannot hold a private server
             recent.Add(new PanelEntry(entry, latest.LaunchedAtUtc, TotalOf(g),
-                IsSaved: saved is not null || (!unsavedPrivate && _savedHere.Contains(placeId)), CanLaunch: !unsavedPrivate));
+                IsSaved: saved is not null || (!unsavedPrivate && _savedHere.Contains(placeId)), CanLaunch: !unsavedPrivate,
+                PlaceName: saved?.Kind == LibraryEntryKind.PrivateServer ? GameNameOf(g, saved) : null));
         }
 
         var favourites = favs.Select(f =>
@@ -289,7 +355,8 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         var serverEntries = servers.Select(s =>
         {
             var rows = mine.Where(r => r.PrivateServerId == s.PrivateServerId).ToList();
-            return new PanelEntry(s, rows.Count > 0 ? rows[0].LaunchedAtUtc : null, TotalOf(rows), IsSaved: true);
+            return new PanelEntry(s, rows.Count > 0 ? rows[0].LaunchedAtUtc : null, TotalOf(rows), IsSaved: true,
+                PlaceName: GameNameOf(rows, s) ?? _icons?.TryGet(s.PlaceId)?.Name);
         }).ToList();
 
         // Last played (§2.1): the newest row with a place or a private server; the Library's rename wins.
@@ -304,6 +371,11 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
 
         return new Model(recent, favourites, serverEntries, last);
     }
+
+    /// <summary>The game a private server lives in, from this account's own history rows for it; null when the row only carries the server's own name.</summary>
+    private static string? GameNameOf(IEnumerable<LaunchSession> rows, LibraryEntry server)
+        => rows.Select(r => r.GameName)
+               .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n) && !string.Equals(n, server.RenderName, StringComparison.OrdinalIgnoreCase));
 
     private LibraryEntry Synthesize(LaunchSession latest, long placeId)
     {

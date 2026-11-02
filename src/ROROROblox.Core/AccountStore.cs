@@ -310,16 +310,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
-    /// <summary>Trim; empty or whitespace becomes null; cap at <see cref="Account.MaxNoteLength"/>. Applied on every path a note enters the store.</summary>
-    private static string? NormalizeNote(string? note)
-    {
-        if (string.IsNullOrWhiteSpace(note))
-        {
-            return null;
-        }
-        var trimmed = note.Trim();
-        return trimmed.Length > Account.MaxNoteLength ? trimmed[..Account.MaxNoteLength].TrimEnd() : trimmed;
-    }
+    private static string? NormalizeNote(string? note) => Account.NormalizeNote(note);
 
     public async Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder)
     {

@@ -571,6 +571,30 @@ internal partial class MainWindow : FluentWindow
         summary.IsAddingTag = false;
     }
 
+    /// <summary>
+    /// The panel's note box commits on LostFocus (the binding) and on Enter, the AddTagBox pattern: Enter pushes
+    /// the text to the row now and moves focus on, so the next Tab lands somewhere useful and the LostFocus that
+    /// follows has nothing left to write. Escape throws away what was typed and re-reads the saved note.
+    /// </summary>
+    private void OnNoteBoxKeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not Wpf.Ui.Controls.TextBox box) return;
+        var binding = box.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty);
+
+        if (e.Key == Key.Escape)
+        {
+            binding?.UpdateTarget();
+            box.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key != Key.Enter && e.Key != Key.Return) return;
+        binding?.UpdateSource();
+        box.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+        e.Handled = true;
+    }
+
     private static AccountSummary? FindRowAccountSummary(DependencyObject start)
     {
         var current = start;
