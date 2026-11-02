@@ -85,25 +85,29 @@ public class TypedHttpClientRegistrationTests
     }
 
     /// <summary>
-    /// F1 (dpapi-cookie-blast-radius): the facts client attaches a cookie per request, so a followed 3xx
-    /// would re-send it to wherever the redirect points. It must see the 3xx itself. Only the facts
-    /// client: RobloxApi's handler is untouched this cycle (share-link resolution may rely on redirects).
+    /// F1 (dpapi-cookie-blast-radius): both cookie-carrying clients attach the cookie per request, so a
+    /// followed 3xx would re-send it to wherever the redirect points. Each must see the 3xx itself. The
+    /// facts client closed it in v1.36 item 3; RobloxApi followed on 2026-11-02, once reading it showed
+    /// every cookie-carrying call goes to a fixed roblox.com API endpoint and share links resolve by an
+    /// API POST, not a redirect chase.
     /// </summary>
-    [Fact]
-    public void AccountFactsClient_PrimaryHandler_DoesNotFollowRedirects()
+    [Theory]
+    [InlineData(typeof(IRobloxApi))]
+    [InlineData(typeof(IAccountFactsApi))]
+    public void CookieCarryingClients_PrimaryHandler_DoNotFollowRedirects(Type clientInterface)
     {
         var services = new ServiceCollection();
         global::ROROROblox.App.App.ConfigureServices(services, NullLoggerFactory.Instance);
         using var provider = services.BuildServiceProvider();
 
-        HttpMessageHandler handler = provider.GetRequiredService<IHttpMessageHandlerFactory>().CreateHandler(typeof(IAccountFactsApi).Name);
+        HttpMessageHandler handler = provider.GetRequiredService<IHttpMessageHandlerFactory>().CreateHandler(clientInterface.Name);
         while (handler is DelegatingHandler delegating)
         {
             handler = delegating.InnerHandler ?? throw new InvalidOperationException("A delegating handler has no inner handler.");
         }
 
         var primary = Assert.IsType<SocketsHttpHandler>(handler);
-        Assert.False(primary.AllowAutoRedirect, "IAccountFactsApi follows redirects: the Cookie header would travel with them.");
+        Assert.False(primary.AllowAutoRedirect, $"{clientInterface.Name} follows redirects: the Cookie header would travel with them.");
     }
 
     [Theory]

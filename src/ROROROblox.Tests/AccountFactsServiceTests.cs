@@ -56,7 +56,7 @@ public class AccountFactsServiceTests
         Assert.Same(service, provider.GetRequiredService<AccountFactsService>()); // one lane for the process
         Assert.Equal(0, service.RequestCount);
         Assert.False(service.TimerArmed);
-        Assert.False(service.MembershipEnabled); // C1 flips this, on a measured answer
+        Assert.True(service.MembershipEnabled); // flipped 2026-11-02 on the measured answer (docs/decisions.md); Core's default stays false
         Assert.NotNull(provider.GetRequiredService<IAccountFactsApi>());
     }
 

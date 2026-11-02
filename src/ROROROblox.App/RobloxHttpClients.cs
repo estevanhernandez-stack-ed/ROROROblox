@@ -33,16 +33,21 @@ internal static class RobloxHttpClients
             var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         })
+        // AllowAutoRedirect = false (2026-11-02): every cookie-carrying call here goes to a fixed
+        // roblox.com API endpoint and share links resolve by an API POST, so nothing relies on a
+        // redirect, and a followed 3xx would re-send the Cookie header to wherever it points. A moved
+        // endpoint now fails visibly through the existing non-success paths instead.
         .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
         {
             UseCookies = false,
+            AllowAutoRedirect = false,
         });
 
         // Account facts (Robux, friends online, membership): its own typed client, its own handler,
         // the same load-bearing UseCookies line as above, plus AllowAutoRedirect = false: this client
         // only ever expects a direct answer, and a redirect would re-send the Cookie header to
         // wherever the 3xx points. A 3xx surfaces as AccountFactsRequestException(3xx) -> LastError.
-        // RobloxApi's handler is deliberately unchanged (share-link resolution may rely on redirects).
+        // RobloxApi's handler matches it since 2026-11-02.
         // Deliberately NOT a shared factory.
         services.AddHttpClient<IAccountFactsApi, AccountFactsApi>(client =>
         {

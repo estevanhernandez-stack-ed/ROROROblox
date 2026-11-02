@@ -1296,6 +1296,10 @@ public partial class App : Application
                     .Select(a => new FactsTarget(a.Id, a.RobloxUserId, a.Facts, a.SessionExpired))
                     .ToList(),
             sp.GetRequiredService<ILogger<AccountFactsService>>(),
+            // Membership on (2026-11-02): the C1 probe measured validate-membership answering for
+            // every cookie, true only for the account Este confirmed is on Plus. Core keeps it off by
+            // default so a construction site that has not measured it cannot turn it on by accident.
+            membershipEnabled: true,
             icons: sp.GetRequiredService<IGameIconCache>()));
 
         // Library join (v1.36): favourites + saved servers + Recent. ListAsync is a pure read; icon
