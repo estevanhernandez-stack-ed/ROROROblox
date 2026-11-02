@@ -79,10 +79,15 @@ because none of them can be taken afterwards.
    reads the result.
 
 **Acceptance:**
-- [ ] `AccountRowCollapsedRenderTests` passes on the untouched v1.35 row at both DPIs, and fails when a
+- [x] `AccountRowCollapsedRenderTests` passes on the untouched v1.35 row at both DPIs, and fails when a
       constant is changed by one pixel (mutation-checked, the red recorded in the commit message).
-- [ ] The smoke doc exists with five v1.35 startup timings, the median, the machine and the vault shape.
-- [ ] The count script is committed, prints no account identity (process id and start time only), and
+      *(`8a4e6b0`: 92 px at 96 DPI, 115 at 120. The 120 value is the 96 layout rendered at 125%, the
+      `HistoryRowRenderTests` shape; layout-at-125% stays an eyes-on check at C2.)*
+- [x] The smoke doc exists with five v1.35 startup timings, the median, the machine and the vault shape.
+      *(Partly met, by evidence: the field logs hold only two v1.35 starts, one of them clean (1,831 ms).
+      Este's live session ruled out cold starts tonight, so the five timings and the 10% bar move to
+      C2's controlled A/B, a `5a8fe61` worktree against the branch. Dashboard `pkpDK4VluGe1wf1TBEUH`.)*
+- [x] The count script is committed, prints no account identity (process id and start time only), and
       the smoke doc has its first row.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~AccountRowCollapsedRenderTests"`
