@@ -1447,5 +1447,8 @@ public class AutoRejoinWiringTests
         public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => inner.SetTagsAsync(id, tags);
         public Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids) => inner.ExportAccountsAsync(ids);
         public Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<AccountExportRecord> records) => inner.ImportMergeAsync(records);
+        public Task SetFactsAsync(Guid id, AccountFacts facts) => inner.SetFactsAsync(id, facts);
+        public Task UpdateNoteAsync(Guid id, string? note) => inner.UpdateNoteAsync(id, note);
+        public Task SetPanelExpandedAsync(Guid id, bool expanded) => inner.SetPanelExpandedAsync(id, expanded);
     }
 }

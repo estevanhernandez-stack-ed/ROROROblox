@@ -24,6 +24,7 @@ namespace ROROROblox.Core.Transport;
 /// </param>
 /// <param name="StreamerName">Account-side fake streamer display name, or null. Cosmetic, not a secret — travels with the bundle like <see cref="LocalName"/>.</param>
 /// <param name="StreamerAvatarId">Account-side fake streamer avatar id, or null. Cosmetic, not a secret — travels with the bundle like <see cref="LocalName"/>.</param>
+/// <param name="Note">Free-text account note (up to <see cref="Account.MaxNoteLength"/> characters), or null. Travels like <see cref="Tags"/>; the cached <see cref="Account.Facts"/> deliberately does not.</param>
 public sealed record AccountExportRecord(
     string DisplayName,
     string AvatarUrl,
@@ -38,4 +39,5 @@ public sealed record AccountExportRecord(
     bool IsSelected,
     bool JoinViaFriend = false,
     string? StreamerName = null,
-    string? StreamerAvatarId = null);
+    string? StreamerAvatarId = null,
+    string? Note = null);

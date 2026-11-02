@@ -26,14 +26,22 @@ public sealed class AccountUserIdBackfillService
     private readonly int _interAccountDelayMs;
 
     /// <summary>
-    /// Production constructor — stagger 2.5s between accounts (±500ms jitter applied at the
-    /// call site). Tests pass <paramref name="interAccountDelayMs"/>=0 to skip the wait.
+    /// Raised after each <see cref="IAccountStore.UpdateRobloxUserIdAsync"/> that persisted a
+    /// resolved id, so the live row and the presence poll's target list learn it in the same
+    /// session instead of after a restart (spec 2026-11-01 §2.6). Raised on the worker thread;
+    /// subscribers marshal. A throwing subscriber never fails the backfill.
+    /// </summary>
+    public event EventHandler<AccountUserIdResolvedEventArgs>? AccountUserIdResolved;
+
+    /// <summary>
+    /// Production constructor — stagger <see cref="BackfillPacing.InterAccountDelayMs"/> between accounts
+    /// (±<see cref="BackfillPacing.JitterMs"/> jitter applied at the call site). Tests pass <paramref name="interAccountDelayMs"/>=0 to skip the wait.
     /// </summary>
     public AccountUserIdBackfillService(
         IAccountStore store,
         IRobloxApi api,
         ILogger<AccountUserIdBackfillService>? log = null,
-        int interAccountDelayMs = 2500)
+        int interAccountDelayMs = BackfillPacing.InterAccountDelayMs)
     {
         _store = store;
         _api = api;
@@ -87,6 +95,7 @@ public sealed class AccountUserIdBackfillService
                 }
                 await _store.UpdateRobloxUserIdAsync(account.Id, profile.UserId).ConfigureAwait(false);
                 _log.LogDebug("Backfilled RobloxUserId={UserId} for {AccountId}", profile.UserId, account.Id);
+                RaiseResolved(account.Id, profile.UserId);
             }
             catch (OperationCanceledException)
             {
@@ -101,9 +110,34 @@ public sealed class AccountUserIdBackfillService
             // on an empty trailing wait. ±500ms jitter avoids exactly-rhythmic API calls.
             if (i < missing.Count - 1 && _interAccountDelayMs > 0)
             {
-                var jittered = _interAccountDelayMs + Random.Shared.Next(-500, 500);
+                var jittered = _interAccountDelayMs + Random.Shared.Next(-BackfillPacing.JitterMs, BackfillPacing.JitterMs);
                 await Task.Delay(Math.Max(0, jittered), ct).ConfigureAwait(false);
             }
         }
     }
+
+    private void RaiseResolved(Guid accountId, long userId)
+    {
+        try
+        {
+            AccountUserIdResolved?.Invoke(this, new AccountUserIdResolvedEventArgs(accountId, userId));
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Backfill: an AccountUserIdResolved subscriber threw for {AccountId}; continuing.", accountId);
+        }
+    }
+}
+
+/// <summary>Payload for <see cref="AccountUserIdBackfillService.AccountUserIdResolved"/>.</summary>
+public sealed class AccountUserIdResolvedEventArgs : EventArgs
+{
+    public AccountUserIdResolvedEventArgs(Guid accountId, long userId)
+    {
+        AccountId = accountId;
+        UserId = userId;
+    }
+
+    public Guid AccountId { get; }
+    public long UserId { get; }
 }

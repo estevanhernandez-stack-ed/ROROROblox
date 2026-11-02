@@ -55,7 +55,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId, a.JoinViaFriend, a.StreamerName, a.StreamerAvatarId, a.AutoRejoin))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId, a.JoinViaFriend, a.StreamerName, a.StreamerAvatarId, a.AutoRejoin, a.Facts, a.Note, a.PanelExpanded))
                 .ToList();
         }
         finally
@@ -98,7 +98,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 JoinViaFriend: false); // a fresh account is never flagged
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId, JoinViaFriend: false, StreamerName: stored.StreamerName, StreamerAvatarId: stored.StreamerAvatarId, AutoRejoin: false);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId, JoinViaFriend: false, StreamerName: stored.StreamerName, StreamerAvatarId: stored.StreamerAvatarId, AutoRejoin: false, Facts: stored.Facts, Note: stored.Note, PanelExpanded: stored.PanelExpanded);
         }
         finally
         {
@@ -231,6 +231,93 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             _gate.Release();
         }
+    }
+
+    public async Task SetFactsAsync(Guid id, AccountFacts facts)
+    {
+        ArgumentNullException.ThrowIfNull(facts);
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (Equals(blob.Accounts[idx].Facts, facts))
+            {
+                return; // no-op write avoidance: a refresh that changed nothing costs no DPAPI roundtrip.
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { Facts = facts };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task UpdateNoteAsync(Guid id, string? note)
+    {
+        var normalized = NormalizeNote(note);
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (string.Equals(blob.Accounts[idx].Note, normalized, StringComparison.Ordinal))
+            {
+                return; // no-op write avoidance.
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { Note = normalized };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetPanelExpandedAsync(Guid id, bool expanded)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (blob.Accounts[idx].PanelExpanded == expanded)
+            {
+                return; // no-op write avoidance. Null (never chosen) is not equal to either value, so the first choice persists.
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { PanelExpanded = expanded };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <summary>Trim; empty or whitespace becomes null; cap at <see cref="Account.MaxNoteLength"/>. Applied on every path a note enters the store.</summary>
+    private static string? NormalizeNote(string? note)
+    {
+        if (string.IsNullOrWhiteSpace(note))
+        {
+            return null;
+        }
+        var trimmed = note.Trim();
+        return trimmed.Length > Account.MaxNoteLength ? trimmed[..Account.MaxNoteLength].TrimEnd() : trimmed;
     }
 
     public async Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder)
@@ -612,7 +699,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
                     IsSelected: stored.IsSelected,
                     JoinViaFriend: stored.JoinViaFriend,
                     StreamerName: stored.StreamerName,
-                    StreamerAvatarId: stored.StreamerAvatarId));
+                    StreamerAvatarId: stored.StreamerAvatarId,
+                    Note: stored.Note)); // Facts and PanelExpanded never travel: a cache, and a per-machine view state.
             }
 
             return new AccountExportResult(records, skipped);
@@ -670,7 +758,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
                     Tags: record.Tags is { Count: > 0 } ? record.Tags : null,
                     JoinViaFriend: record.JoinViaFriend,
                     StreamerName: record.StreamerName,
-                    StreamerAvatarId: record.StreamerAvatarId));
+                    StreamerAvatarId: record.StreamerAvatarId,
+                    Note: NormalizeNote(record.Note)));
                 imported++;
             }
 
@@ -783,7 +872,10 @@ public sealed class AccountStore : IAccountStore, IDisposable
         bool JoinViaFriend = false,
         string? StreamerName = null,
         string? StreamerAvatarId = null,
-        bool AutoRejoin = false);
+        bool AutoRejoin = false,
+        AccountFacts? Facts = null,
+        string? Note = null,
+        bool? PanelExpanded = null);
 
     internal sealed record StoredAccountsBlob(
         int Version,

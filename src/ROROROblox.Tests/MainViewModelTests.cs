@@ -40,7 +40,9 @@ public class MainViewModelTests
         FakeActivityMonitor? activityMonitor = null,
         Core.IUiDispatcher? uiDispatcher = null,
         ISessionHistoryStore? sessionHistory = null,
-        Microsoft.Extensions.Logging.ILogger<MainViewModel>? log = null)
+        Microsoft.Extensions.Logging.ILogger<MainViewModel>? log = null,
+        AccountFactsService? factsService = null,
+        AccountUserIdBackfillService? userIdBackfill = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -76,7 +78,9 @@ public class MainViewModelTests
             shellOpener: shellOpener ?? new NullShellOpener(),
             tray: trayService,
             uiDispatcher: uiDispatcher,
-            log: log);
+            log: log,
+            factsService: factsService,
+            userIdBackfill: userIdBackfill);
 
         // MainViewModel never disposes the window decorator (App.xaml.cs's DI container owns
         // that lifetime in production); its ctor starts a real 1.5s reapply Timer that would
@@ -936,6 +940,9 @@ public class MainViewModelTests
         public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => inner.SetTagsAsync(id, tags);
         public Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids) => inner.ExportAccountsAsync(ids);
         public Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<AccountExportRecord> records) => inner.ImportMergeAsync(records);
+        public Task SetFactsAsync(Guid id, AccountFacts facts) => inner.SetFactsAsync(id, facts);
+        public Task UpdateNoteAsync(Guid id, string? note) => inner.UpdateNoteAsync(id, note);
+        public Task SetPanelExpandedAsync(Guid id, bool expanded) => inner.SetPanelExpandedAsync(id, expanded);
     }
 
     /// <summary>
@@ -968,6 +975,196 @@ public class MainViewModelTests
         public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => inner.SetTagsAsync(id, tags);
         public Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids) => inner.ExportAccountsAsync(ids);
         public Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<AccountExportRecord> records) => inner.ImportMergeAsync(records);
+        public Task SetFactsAsync(Guid id, AccountFacts facts) => inner.SetFactsAsync(id, facts);
+        public Task UpdateNoteAsync(Guid id, string? note) => inner.UpdateNoteAsync(id, note);
+        public Task SetPanelExpandedAsync(Guid id, bool expanded) => inner.SetPanelExpandedAsync(id, expanded);
+    }
+
+    // ---- v1.36 item 3: facts and the backfill's resolved ids reach the live row ----
+
+    private static AccountSummary FactsRow(string name = "alt") =>
+        new(new Account(Guid.NewGuid(), DisplayName: name, AvatarUrl: "", CreatedAt: DateTimeOffset.UtcNow, LastLaunchedAt: null));
+
+    [Fact]
+    public async Task AccountUserIdResolved_SetsTheLiveRowsRobloxUserId()
+    {
+        // The gap this closes: the backfill wrote the store only, so a legacy account's row kept a
+        // null RobloxUserId (and presence ignored it) until a restart. Driven through the REAL event.
+        var backfillPath = Path.Combine(Path.GetTempPath(), $"rororo-backfill-test-{Guid.NewGuid():N}.dat");
+        using var backfillStore = new AccountStore(backfillPath);
+        var saved = await backfillStore.AddAsync("Legacy", "", "FAKE-COOKIE-legacy-AAAA");
+        var backfill = new AccountUserIdBackfillService(
+            backfillStore, new StubProfileApi(_ => new UserProfile(4242, "legacy", "Legacy")), interAccountDelayMs: 0);
+        var (vm, _, _, path) = Build(userIdBackfill: backfill);
+        try
+        {
+            var row = new AccountSummary(saved);
+            vm.Accounts.Add(row);
+            Assert.Null(row.RobloxUserId);
+
+            await backfill.RunAsync();
+
+            Assert.Equal(4242L, row.RobloxUserId);
+            Assert.Equal(4242L, vm.AccountsSnapshot.Single(a => a.Id == saved.Id).RobloxUserId);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(backfillPath)) File.Delete(backfillPath);
+        }
+    }
+
+    [Fact]
+    public void ApplyUserIdResolved_ForAnUnknownId_ChangesNoRow()
+    {
+        var (vm, _, _, path) = Build();
+        try
+        {
+            var row = FactsRow();
+            vm.Accounts.Add(row);
+
+            vm.ApplyUserIdResolved(Guid.NewGuid(), 99);
+
+            Assert.Null(row.RobloxUserId);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void ApplyFacts_ForAccountA_NeverChangesRowB()
+    {
+        var (vm, _, _, path) = Build();
+        try
+        {
+            var a = FactsRow("A");
+            var b = FactsRow("B");
+            vm.Accounts.Add(a);
+            vm.Accounts.Add(b);
+            var bFacts = new AccountFacts(7, "none", 1, DateTimeOffset.UtcNow, null);
+            vm.ApplyFacts(b.Id, bFacts);
+
+            var aFacts = new AccountFacts(1240, "plus", 3, DateTimeOffset.UtcNow, null);
+            vm.ApplyFacts(a.Id, aFacts);
+
+            Assert.Equal(aFacts, a.Facts);
+            Assert.Equal(bFacts, b.Facts);
+
+            vm.ApplyFacts(Guid.NewGuid(), new AccountFacts(1, null, null, null, null)); // unknown id
+            Assert.Equal(aFacts, a.Facts);
+            Assert.Equal(bFacts, b.Facts);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task FactsRaisedByTheService_ReachOnlyTheMatchingRow_ThroughTheRealEvent()
+    {
+        var targets = new List<FactsTarget>();
+        var api = new FactsApiStub();
+        var factsPath = Path.Combine(Path.GetTempPath(), $"rororo-facts-vm-{Guid.NewGuid():N}.dat");
+        using var factsStore = new AccountStore(factsPath);
+        var one = await factsStore.AddAsync("One", "", "FAKE-COOKIE-vm-AAAA");
+        var two = await factsStore.AddAsync("Two", "", "FAKE-COOKIE-vm-BBBB");
+        targets.Add(new FactsTarget(one.Id, null, null, false));
+        using var service = new AccountFactsService(factsStore, api, () => targets, interAccountDelayMs: 0);
+        var (vm, _, _, path) = Build(factsService: service);
+        try
+        {
+            var rowOne = new AccountSummary(one);
+            var rowTwo = new AccountSummary(two);
+            vm.Accounts.Add(rowOne);
+            vm.Accounts.Add(rowTwo);
+
+            Assert.True(service.Enqueue(one.Id));
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (rowOne.Facts is null && DateTime.UtcNow < deadline) { await Task.Delay(10); }
+
+            Assert.Equal(321L, rowOne.Facts?.Robux);
+            Assert.Null(rowTwo.Facts);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(factsPath)) File.Delete(factsPath);
+        }
+    }
+
+    [Fact]
+    public void ApplyFacts_WithAFailedRefresh_NeverTouchesTheRowsHealth()
+    {
+        // A 401 or 403 from the facts lane is a reason shown beside the age hint and nothing more:
+        // presence is the only authority on Expired / Limited / Needs verification.
+        var (vm, _, _, path) = Build();
+        try
+        {
+            var row = FactsRow();
+            vm.Accounts.Add(row);
+            var healthBefore = row.Health;
+
+            foreach (var code in new[] { "401", "403" })
+            {
+                vm.ApplyFacts(row.Id, new AccountFacts(50, "none", 2, DateTimeOffset.UtcNow, code));
+            }
+
+            Assert.False(row.SessionExpired);
+            Assert.False(row.SessionLimited);
+            Assert.False(row.SessionNeedsVerification);
+            Assert.Equal(healthBefore, row.Health);
+            Assert.Equal("403", row.Facts!.LastError);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task LoadingEightAccounts_MakesNoFactsRequest_AndArmsNoTimer()
+    {
+        var factsPath = Path.Combine(Path.GetTempPath(), $"rororo-facts-load-{Guid.NewGuid():N}.dat");
+        using var factsStore = new AccountStore(factsPath);
+        var api = new FactsApiStub();
+        using var service = new AccountFactsService(factsStore, api, () => [], interAccountDelayMs: 0);
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-facts-load-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        var (vm, store, _, path) = Build(factsService: service, favorites: favorites);
+        try
+        {
+            for (var i = 0; i < 8; i++)
+            {
+                await store.AddAsync($"Alt{i}", "", $"FAKE-COOKIE-load-{i}");
+            }
+
+            try
+            {
+                await vm.LoadAsync();
+            }
+            catch (NotImplementedException)
+            {
+                // This harness's presence fake rejects Start(), the last step of LoadAsync. The
+                // eight rows are in by then, which is the part under test.
+            }
+            service.Start();
+            await Task.Delay(100);
+
+            Assert.Equal(8, vm.Accounts.Count);
+            Assert.Equal(0, service.RequestCount);
+            Assert.Equal(0, api.CallCount);
+            Assert.False(service.TimerArmed);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(factsPath)) File.Delete(factsPath);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    /// <summary>Answers every lookup with Robux 321 and records how many were made.</summary>
+    private sealed class FactsApiStub : IAccountFactsApi
+    {
+        private int _calls;
+        public int CallCount => Volatile.Read(ref _calls);
+        public Task<long?> GetRobuxAsync(string cookie, CancellationToken ct) { Interlocked.Increment(ref _calls); return Task.FromResult<long?>(321); }
+        public Task<int?> GetFriendsOnlineCountAsync(string cookie, long userId, CancellationToken ct) { Interlocked.Increment(ref _calls); return Task.FromResult<int?>(0); }
+        public Task<MembershipProbe> GetMembershipAsync(string cookie, long userId, CancellationToken ct) { Interlocked.Increment(ref _calls); return Task.FromResult(new MembershipProbe(200, "false")); }
     }
 
     private sealed class FakeRobloxApi : IRobloxApi

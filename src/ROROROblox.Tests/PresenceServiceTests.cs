@@ -736,6 +736,9 @@ public class PresenceServiceTests
         public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => throw new NotImplementedException();
         public Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids) => throw new NotImplementedException();
         public Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<ROROROblox.Core.Transport.AccountExportRecord> records) => throw new NotImplementedException();
+        public Task SetFactsAsync(Guid id, AccountFacts facts) => throw new NotImplementedException();
+        public Task UpdateNoteAsync(Guid id, string? note) => throw new NotImplementedException();
+        public Task SetPanelExpandedAsync(Guid id, bool expanded) => throw new NotImplementedException();
     }
 
     private sealed class FakeRobloxApi : IRobloxApi

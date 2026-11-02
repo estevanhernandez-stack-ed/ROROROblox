@@ -42,6 +42,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private bool _joinViaFriend;
     private bool _autoRejoin;
     private bool _alertsMuted;
+    private AccountFacts? _facts;
+    private string? _note;
     private IStreamerIdentityProvider? _identity;
 
     public AccountSummary(Account account)
@@ -57,6 +59,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _joinViaFriend = account.JoinViaFriend;
         _autoRejoin = account.AutoRejoin;
         _localName = account.LocalName;
+        _facts = account.Facts;
+        _note = account.Note;
         RobloxUserId = account.RobloxUserId;
         BrowserTrackerId = account.BrowserTrackerId;
         // Seed tags from the persisted record BEFORE any CollectionChanged subscriber is attached
@@ -69,6 +73,24 @@ public sealed class AccountSummary : INotifyPropertyChanged
 
     public Guid Id { get; }
     public string DisplayName { get; }
+
+    /// <summary>
+    /// The cached Robux / membership / friends-online facts for THIS account, seeded from the store
+    /// and replaced only through <c>MainViewModel.ApplyFacts</c>, keyed by id (v1.36). Null until the
+    /// first refresh. Nothing renders it yet; the row's badges arrive with the surface items.
+    /// </summary>
+    public AccountFacts? Facts
+    {
+        get => _facts;
+        set => SetField(ref _facts, value);
+    }
+
+    /// <summary>The account's free-text note (trimmed, at most <see cref="Account.MaxNoteLength"/> characters), or null.</summary>
+    public string? Note
+    {
+        get => _note;
+        set => SetField(ref _note, value);
+    }
     public string AvatarUrl { get; }
     public DateTimeOffset? LastLaunchedAt { get; private set; }
 

@@ -66,6 +66,68 @@ public class AccountStoreTransportTests : IDisposable
         Assert.DoesNotContain("BrowserTrackerId", props);
     }
 
+    [Fact]
+    public void AccountExportRecord_DoesNotCarryFacts()
+    {
+        // Facts are a cache of three numbers Roblox answers per account, rewritten about once a
+        // minute and stale the moment they leave the machine. The note travels (like tags); the
+        // facts and the panel's expanded state do not. Enforced only by omission, so this goes red
+        // if someone adds them to the record "for completeness".
+        var props = typeof(AccountExportRecord).GetProperties().Select(p => p.Name).ToList();
+        Assert.DoesNotContain("Facts", props);
+        Assert.DoesNotContain("PanelExpanded", props);
+        Assert.Contains("Note", props);
+    }
+
+    [Fact]
+    public async Task Note_RoundTripsThroughExportAndImport_AndFactsStayBehind()
+    {
+        const string cookie = "FAKE-COOKIE-note-AAAA";
+        using var a = new AccountStore(PathFor("a.dat"));
+        var acc = await a.AddAsync("Alpha", "https://avatar/a", cookie);
+        await a.UpdateRobloxUserIdAsync(acc.Id, 111L);
+        await a.UpdateNoteAsync(acc.Id, "  clan farm alt, do not trade  ");
+        await a.SetFactsAsync(acc.Id, new AccountFacts(1240, "plus", 3, DateTimeOffset.UtcNow, null));
+        await a.SetPanelExpandedAsync(acc.Id, true);
+
+        var export = await a.ExportAccountsAsync(new[] { acc.Id });
+        Assert.Equal("clan farm alt, do not trade", Assert.Single(export.Records).Note);
+
+        // Through the real bundle crypto, so the field is proven to survive serialization too.
+        var bundle = new AccountTransportService().Export(export.Records, "a-strong-passphrase-123");
+        var records = new AccountTransportService().Import(bundle, "a-strong-passphrase-123");
+
+        using var b = new AccountStore(PathFor("b.dat"));
+        await b.ImportMergeAsync(records);
+
+        var imported = Assert.Single(await b.ListAsync());
+        Assert.Equal("clan farm alt, do not trade", imported.Note);
+        Assert.Null(imported.Facts);          // a cache: the destination starts empty
+        Assert.Null(imported.PanelExpanded);  // per-machine view state
+    }
+
+    [Fact]
+    public async Task Import_NormalizesAnOverlongOrBlankNote()
+    {
+        using var store = new AccountStore(PathFor("n.dat"));
+        var records = new List<AccountExportRecord>
+        {
+            Rec(1, new string('x', Account.MaxNoteLength + 50)),
+            Rec(2, "   "),
+        };
+
+        await store.ImportMergeAsync(records);
+
+        var list = await store.ListAsync();
+        Assert.Equal(Account.MaxNoteLength, list.Single(x => x.RobloxUserId == 1).Note!.Length);
+        Assert.Null(list.Single(x => x.RobloxUserId == 2).Note);
+
+        static AccountExportRecord Rec(long userId, string? note) => new(
+            DisplayName: $"U{userId}", AvatarUrl: "", RobloxUserId: userId, Cookie: $"FAKE-COOKIE-n{userId}",
+            Tags: [], FpsCap: null, CaptionColorHex: null, LocalName: null, IsMain: false,
+            SortOrder: 0, IsSelected: true, Note: note);
+    }
+
     // ---------- At-rest encryption (item-4 security gate) ----------
 
     [Fact]

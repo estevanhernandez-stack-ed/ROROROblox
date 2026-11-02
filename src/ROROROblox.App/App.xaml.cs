@@ -943,6 +943,11 @@ public partial class App : Application
             var backfill = _services.GetRequiredService<AccountUserIdBackfillService>();
             await Task.Delay(5_000).ConfigureAwait(false);
             await backfill.RunAsync().ConfigureAwait(false);
+
+            // Account facts: the slow timer is armed only now, after the backfill has finished, and
+            // its first tick is a full TimerTick (60 s) from here. Nothing about facts runs before
+            // this line except a user's own panel expand.
+            _services.GetRequiredService<AccountFactsService>().StartTimer();
         }
         catch (Exception ex)
         {
@@ -1101,22 +1106,9 @@ public partial class App : Application
                 : new StartupRegistration());
         services.AddSingleton<IProcessStarter, ProcessStarter>();
 
-        // RobloxApi over a managed HttpClient (factory handles lifetime + DNS rotation).
-        // UseCookies=false is load-bearing: RobloxApi sets the .ROBLOSECURITY cookie manually
-        // per-request via request.Headers.Add("Cookie", ...). With the default cookie container
-        // enabled, the first auth-ticket request leaks its account's cookie into the container
-        // and every subsequent Launch As routes through that same account — every alt opens as
-        // the first user. This is the actual root cause of the multi-instance bug v1.2 saw.
-        services.AddHttpClient<IRobloxApi, RobloxApi>(client =>
-        {
-            client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
-            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
-        })
-        .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
-        {
-            UseCookies = false,
-        });
+        // RobloxApi and AccountFactsApi, each over its own managed HttpClient with UseCookies=false
+        // (load-bearing; see RobloxHttpClients for why, and for the test that reads both handlers).
+        services.AddRobloxHttpClients();
 
         // Compat checker uses its own HttpClient — different UA + different host pattern.
         services.AddHttpClient<IRobloxCompatChecker, RobloxCompatChecker>(client =>
@@ -1288,6 +1280,20 @@ public partial class App : Application
         // any saved account where RobloxUserId is null. Triggered post-MainWindow.Show in
         // RunStartupChecksAsync; idempotent on subsequent runs. Lives in Core for testability.
         services.AddSingleton<AccountUserIdBackfillService>();
+
+        // Account facts lane (v1.36): Robux, friends online, membership. Constructing this does
+        // NOTHING: no request, no timer, no thread. The slow timer is armed by RunStartupChecksAsync
+        // only after the backfill above has finished (the v1.1.2 anti-fraud lesson, quoted in the
+        // service). The roster delegate reads AccountsSnapshot lazily, never Accounts: it fires on
+        // the worker's threadpool thread, and MainViewModel depends on this service, so resolving
+        // MainViewModel here eagerly would form a construction cycle (same shape as PresenceService).
+        services.AddSingleton(sp => new AccountFactsService(
+            sp.GetRequiredService<IAccountStore>(),
+            sp.GetRequiredService<IAccountFactsApi>(),
+            () => sp.GetRequiredService<MainViewModel>().AccountsSnapshot
+                    .Select(a => new FactsTarget(a.Id, a.RobloxUserId, a.Facts, a.SessionExpired))
+                    .ToList(),
+            sp.GetRequiredService<ILogger<AccountFactsService>>()));
 
         // Tray avatar painter — owns its own HttpClient (default UA fine for public Roblox CDN
         // avatar URLs). TrayService is registered as ITrayService elsewhere; the painter takes

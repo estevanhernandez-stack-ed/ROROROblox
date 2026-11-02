@@ -216,7 +216,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IGlobalBasicSettingsWriter? globalBasicSettings = null,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         DiscordConfigService? discordConfigService = null,
-        ILogger<MainViewModel>? log = null)
+        ILogger<MainViewModel>? log = null,
+        AccountFactsService? factsService = null,
+        AccountUserIdBackfillService? userIdBackfill = null)
     {
         _cookieCapture = cookieCapture;
         _api = api;
@@ -368,6 +370,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _presenceService.AccountPresenceUpdated += OnAccountPresenceUpdated;
         _presenceService.AccountSessionExpired += OnAccountSessionExpired;
         _presenceService.AccountSessionLimited += OnAccountSessionLimited;
+
+        // v1.36 account facts + the backfill's resolved ids. Both raise on a worker thread, so each
+        // marshals through _ui like the presence events above; the services guard their own raise.
+        if (factsService is not null)
+        {
+            factsService.AccountFactsUpdated += (_, e) => _ui.Invoke(() => ApplyFacts(e.AccountId, e.Facts));
+        }
+        if (userIdBackfill is not null)
+        {
+            userIdBackfill.AccountUserIdResolved += (_, e) => _ui.Invoke(() => ApplyUserIdResolved(e.AccountId, e.UserId));
+        }
 
         // v1.8 idle awareness — coalesced, edge-triggered crossing when accounts newly pass the
         // warn threshold. The monitor itself (Task 5) already runs its own sample timer; this
@@ -1336,8 +1349,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // v1.5.0 — start the presence poll loop now that Accounts is populated, so the first
         // tick has targets. Start() is idempotent (no-op if already running), so the repeated
         // LoadAsync calls on Games-dialog close don't spin up a second loop. Accounts that get
-        // their RobloxUserId backfilled after this point enter the poll snapshot automatically —
-        // the snapshot provider re-reads Accounts on every tick.
+        // their RobloxUserId backfilled after this point reach the poll snapshot only because the
+        // backfill raises AccountUserIdResolved and ApplyUserIdResolved sets the live row's id (the
+        // provider re-reads AccountsSnapshot every tick, but the backfill itself writes the store
+        // only; the old "enter the poll snapshot automatically" was wrong until v1.36).
         _presenceService.Start();
     }
 
@@ -3498,6 +3513,32 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private void OnAccountPresenceUpdated(object? sender, AccountPresenceEventArgs e)
         => _ui.Invoke(() => ApplyPresence(e));
+
+    /// <summary>
+    /// UI-thread body of the facts handler (internal for tests). Keyed by id: a row is only ever
+    /// touched by the facts fetched with ITS cookie, so facts for account A cannot land on row B.
+    /// </summary>
+    internal void ApplyFacts(Guid accountId, AccountFacts facts)
+    {
+        var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (summary is not null)
+        {
+            summary.Facts = facts;
+        }
+    }
+
+    /// <summary>
+    /// UI-thread body of the backfill handler (internal for tests): the live row learns its
+    /// resolved Roblox user id, so presence starts polling it this session instead of after a restart.
+    /// </summary>
+    internal void ApplyUserIdResolved(Guid accountId, long userId)
+    {
+        var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (summary is not null)
+        {
+            summary.RobloxUserId = userId;
+        }
+    }
 
     /// <summary>
     /// UI-thread body of the presence handler (internal for tests — <see cref="OnAccountPresenceUpdated"/>
