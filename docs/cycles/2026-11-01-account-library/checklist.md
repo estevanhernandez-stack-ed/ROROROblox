@@ -118,27 +118,29 @@ and `validate-membership`, writing a redacted markdown report under
 output and never a hand-typed request with a cookie in a shell history.
 
 **Acceptance:**
-- [ ] `RobloxApiTests` pins the header read both ways: a 403 carrying `rblx-challenge-type: captcha` →
+- [x] `RobloxApiTests` pins the header read both ways: a 403 carrying `rblx-challenge-type: captcha` →
       `ChallengeType == "captcha"`; a bare 403 → null; a 401 → `CookieExpiredException` as before.
-- [ ] Four states are four colours from three slots: `ContrastPairGateTests` passes `HealthVerifyBrush`
+- [x] Four states are four colours from three slots: `ContrastPairGateTests` passes `HealthVerifyBrush`
       against Bg and RowBg in all four themes; `ThemedStatusColourTests` offenders stay 0 (the seed is
       one more allow-listed literal; the ceiling moves only if the allowed count passes 25, in this commit).
-- [ ] Under flatline the four states differ with colour removed: a `[Theory]` over the four asserts
+- [x] Under flatline the four states differ with colour removed: a `[Theory]` over the four asserts
       distinct `(Glyph, Word)` pairs.
-- [ ] `NeedsVerification` has exactly one setter path (`LaunchAccountAsync` on
+- [x] `NeedsVerification` has exactly one setter path (`LaunchAccountAsync` on
       `LaunchResult.NeedsVerification`); a 403 without the header still flips `SessionLimited` through
       `PresenceService` only; **a 403 never sets `JoinViaFriend`** (test).
-- [ ] A marked account in a game reads "In `<game>` · `<time>`" in the secondary line; a marked account
+- [x] A marked account in a game reads "In `<game>` · `<time>`" in the secondary line; a marked account
       at rest reads "Joins by following · Ready" (`AccountSummaryTests`).
-- [ ] `AccessibleNamingFenceTests`: the badge is named "`<word>`, `<action>`"; `UnnamedCeiling` stays 1;
+- [x] `AccessibleNamingFenceTests`: the badge is named "`<word>`, `<action>`"; `UnnamedCeiling` stays 1;
       `ScannedFloor` rises to the new count in this commit.
-- [ ] `AccountRowCollapsedRenderTests` from item 1 still passes: the badge sits on existing lines and
+- [x] `AccountRowCollapsedRenderTests` from item 1 still passes: the badge sits on existing lines and
       adds no height.
-- [ ] The probe prints no cookie under any flag: run against a fake vault holding an obviously fake
+- [x] The probe prints no cookie under any flag: run against a fake vault holding an obviously fake
       cookie and grep stdout and the report for it; the report lands under `probes/` where the pre-commit
       cookie-prefix scan sees it like any other file.
-- [ ] Launch all with two marked accounts and a joinable main shows "2 will follow the main"; held with
+- [x] Launch all with two marked accounts and a joinable main shows "2 will follow the main"; held with
       a reason when the main is not joinable, as today (`LaunchEligibilityTests`).
+
+*Built: 5b9c0b7 (probe), b6cbab7 (health), 1adebae (one HealthActionCommand, no Command setter in the badge style). 3,005 unit + 27/1 harness green. ScannedFloor 120 to 212, status-literal ceiling 25 to 26. Badges on the name line; the cyan at-rest dot is Este's to veto at C1. Strings ride scripts/add-v136-translations.py per item (dashboard dZevmkvgsfVYYF9asVwO).*
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~RobloxApiTests|FullyQualifiedName~AccountSummaryTests|FullyQualifiedName~LaunchEligibilityTests|FullyQualifiedName~ContrastPairGateTests|FullyQualifiedName~AccessibleNamingFenceTests"`
 → all passed. `dotnet run --project tools/EndpointProbe -- --list` → local names and ids only; the
