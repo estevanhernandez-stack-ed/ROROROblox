@@ -324,23 +324,25 @@ colour of its own. `OnIdentityChanged` raises the new properties and their names
 reads **Plus** for any `true`, and is absent entirely if C1 dropped the fact.
 
 **Acceptance:**
-- [ ] `FactBadgeNamingFenceTests` (new): every element carrying `FactBadgeStyle` sets
+- [x] `FactBadgeNamingFenceTests` (new): every element carrying `FactBadgeStyle` sets
       `AutomationProperties.Name`; vacuity floor 5; watched failing first by removing one name.
-- [ ] `StreamerIdentityProviderTests`: one `[Theory]` row per masked fact (Robux, membership, friends
+- [x] `StreamerIdentityProviderTests`: one `[Theory]` row per masked fact (Robux, membership, friends
       online → "••••"; note → empty) and two rows asserting the age hint and last played are **not**
       masked; the harness's `streamer-mode-masks` scenario gains one comment line saying where these live.
-- [ ] `AccountSummaryTests`: null facts render the dash and the name reads "unknown"; a `LastError` of
+- [x] `AccountSummaryTests`: null facts render the dash and the name reads "unknown"; a `LastError` of
       "403" renders the previous Robux beside the failed age hint; facts for id A can only reach row A
       (through `ApplyFacts`).
-- [ ] `AccountRowCollapsedRenderTests`: a collapsed row with every fact null and no note matches item 1's
+- [x] `AccountRowCollapsedRenderTests`: a collapsed row with every fact null and no note matches item 1's
       constants exactly at both DPIs; a row with facts populated is taller by exactly the delta the C1
       mock set, pinned as a second constant **(default — confirm on next interactive run: the facts line
       collapses when it has nothing to say, so an upgraded roster looks like v1.35 until the first
       refresh)**.
-- [ ] `AccessibleNamingFenceTests` floor moved in this commit; `TypeLadderFenceTests` unmoved
+- [x] `AccessibleNamingFenceTests` floor moved in this commit; `TypeLadderFenceTests` unmoved
       (`MetaFontSize` only); `ThemedStatusColourTests` unmoved.
-- [ ] Screenshots of the row with facts at 100% and 125%, in all four themes and under flatline,
+- [x] Screenshots of the row with facts at 100% and 125%, in all four themes and under flatline,
       compared against the C1 mock and saved under `mocks/compare/`.
+
+*Built: 3997bde + 6ddfaa0. The facts line is a second grid row spanning the name and actions columns (the mock's slimmer actions column hid that one line cannot fit in the 160 px name column); populated row 114/142 px, collapsed still 92/115. AccessibleNamingFenceTests floor did not move: the badges are Borders, which that fence does not scan; FactBadgeNamingFenceTests (floor 5, watched failing) covers them. FactBadgeStyle is excluded from RenderedStyleGateTests with a reason (it paints no fill; its text is the measured text pairs). Membership badge built, collapsed until the probes. Eyes-on Verify (dev build, eight accounts, streamer mode) moves to C2. Suite: 3,195 unit + 1 opt-in skip; harness 27 + 1.*
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~FactBadgeNamingFenceTests|FullyQualifiedName~StreamerIdentityProviderTests|FullyQualifiedName~AccountRowCollapsedRenderTests|FullyQualifiedName~AccessibleNamingFenceTests|FullyQualifiedName~TypeLadderFenceTests"`
 → all passed. Dev build, eight accounts, streamer mode on: every Robux badge reads "••••" and no note is

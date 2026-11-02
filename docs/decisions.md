@@ -800,3 +800,13 @@ Export writes exactly what `ThemeStore.SaveUserThemeAsync` writes for a custom t
 **Consequences:** The pixel-identical-to-v1.35 property narrows to accounts with no history and no note; `AccountRowCollapsedRenderTests` pins that case and a second constant for the populated line. The probes have not run, so Needs verification stays unset, the membership badge stays absent, and C2 re-checks both.
 
 **Evidence:** `docs/cycles/2026-11-01-account-library/mocks/README.md` (Picks, 2026-11-02); checklist items 6, 7, 9.
+
+### 2026-11-02 — The panel is B1, and the facts line spans the row instead of the name column
+
+**Context:** Este's first C1 reply named no B option; asked separately, he picked B1 (three columns). Item 6's first build (`3997bde`) put A1's facts line inside the name column, as the mock drew it. The mock's row had a slimmer actions column than the real one (no games box, no rightmost button), so at the declared 900 px the real name column sits at its 160 px minimum: every badge wrapped onto its own line and a populated row measured 174 px against the collapsed 92.
+
+**Decision:** The facts line is a second grid row inside `AccountRowBorder`, spanning the name and actions columns (`6ddfaa0`). Row 0 is `*`, not `Auto`: an `Auto` row 0 measured the collapsed row at 100 px, and the star row reproduces v1.35's implicit single row exactly. The expired rule, grip and avatar span both rows; the name and actions stay in row 0. B1 is the panel layout for item 7.
+
+**Consequences:** A populated row is one line taller (114 px at 96 DPI, 142 at 120) and the collapsed row is still v1.35's 92 / 115. On rows that show the Follow strip or tags, the facts line sits below them rather than directly under the status line; Este sees it at C2 and can overrule. B1's columns get narrow in German at 125%, so item 7 wraps or trims rather than clips. Mocks for later items are built from the real row's actions inventory.
+
+**Evidence:** `docs/cycles/2026-11-01-account-library/mocks/compare/item6-facts-row-*.png`; `AccountRowCollapsedRenderTests` (`PopulatedRowHeight96/120`); `src/ROROROblox.App/MainWindow.xaml` (the row Grid's `RowDefinitions`).

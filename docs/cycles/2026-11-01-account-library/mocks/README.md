@@ -52,7 +52,7 @@ What the results decide (recorded in `docs/decisions.md`):
 | 0a | keep: the follow mark stays on the name line |
 | 0b | cyan, as built |
 | A | A1: a new line, collapsed when it has nothing to say |
-| B | pending |
+| B | B1: three columns (asked separately the same morning; the first reply named no B option) |
 | C | C1: square icon tiles |
 | D | D2: two lines, status under the name |
 | E | keep: a played place with only a saved private server still shows in Recent |
