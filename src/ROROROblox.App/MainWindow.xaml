@@ -963,7 +963,8 @@
                     <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- v1.36 panel expander (spec 3.6): first in the actions column, left of the swatch. A
                              ToggleButton on SecondaryToggleButtonStyle via BasedOn (SecondaryButtonStyle targets
-                             Button and throws on a ToggleButton at XAML load); the style carries the glyph, so the
+                             Button and throws on a ToggleButton at XAML load); the glyph is bound from the row
+                             (PanelExpanderGlyph) because a button's trigger style carries Visibility/IsEnabled setters only, and the
                              tag sets no colour. Named from the account, so a screen reader hears whose games it
                              opens, and keyboard-reachable like every other button in this column. -->
                         <ToggleButton AutomationProperties.Name="{Binding PanelExpanderName}"
@@ -971,18 +972,9 @@
                                       IsChecked="{Binding Panel.IsExpanded, Mode=TwoWay}"
                                       Width="24" Height="24" Padding="0" Margin="0,0,8,0"
                                       FontSize="{DynamicResource BodyFontSize}"
-                                      Cursor="Hand">
-                            <ToggleButton.Style>
-                                <Style TargetType="ToggleButton" BasedOn="{StaticResource SecondaryToggleButtonStyle}">
-                                    <Setter Property="Content" Value="&#x25B8;" />
-                                    <Style.Triggers>
-                                        <Trigger Property="IsChecked" Value="True">
-                                            <Setter Property="Content" Value="&#x25BE;" />
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ToggleButton.Style>
-                        </ToggleButton>
+                                      Style="{StaticResource SecondaryToggleButtonStyle}"
+                                      Content="{Binding PanelExpanderGlyph}"
+                                      Cursor="Hand" />
 
                         <!-- Title-bar color swatch. Click opens a popup with the 8-palette + Auto +
                              custom hex. The swatch shows whatever color the Roblox window's title

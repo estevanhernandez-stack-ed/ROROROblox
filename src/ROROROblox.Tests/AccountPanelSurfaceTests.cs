@@ -140,6 +140,28 @@ public class AccountPanelSurfaceTests
     }
 
     [Fact]
+    public void TheExpanderGlyph_FollowsThePanel_AndRaisesWhenItFlips()
+    {
+        var owner = new AccountSummary(new Account(Guid.NewGuid(), "Alt", "", Now, null));
+        var panel = new AccountPanelViewModel(
+            owner,
+            () => Task.FromResult<IReadOnlyList<LaunchSession>>([]),
+            () => Task.FromResult<IReadOnlyList<LibraryEntry>>([]),
+            _ => Task.CompletedTask,
+            () => Task.CompletedTask);
+        owner.AttachPanel(panel);
+        var raised = new List<string?>();
+        owner.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        Assert.Equal("\u25B8", owner.PanelExpanderGlyph);
+        panel.IsExpanded = true;
+        Assert.Equal("\u25BE", owner.PanelExpanderGlyph);
+        Assert.Contains(nameof(AccountSummary.PanelExpanderGlyph), raised);
+        panel.IsExpanded = false;
+        Assert.Equal("\u25B8", owner.PanelExpanderGlyph);
+    }
+
+    [Fact]
     public void AWithClone_DoesNotInheritTheOriginalsHandlers()
     {
         var a = new PanelEntry(Fav("G"), Now, null, IsSaved: false);

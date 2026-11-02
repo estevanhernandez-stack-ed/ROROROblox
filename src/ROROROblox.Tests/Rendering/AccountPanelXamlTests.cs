@@ -33,6 +33,11 @@ public class AccountPanelXamlTests
         List<(string Kind, string Name, bool Shown, bool Focusable)> PanelControls,
         bool NoteBoxShown);
 
+    private static IEnumerable<Style> StyleChain(Style? style)
+    {
+        for (var st = style; st is not null; st = st.BasedOn) yield return st;
+    }
+
     private static Snapshot Inspect(bool expanded, int accounts = 1, Func<Window>? build = null) =>
         ThemedWindowRender.Inspect(
             MainWindowOneAccountFitsTests.BuiltIn("brand"),
@@ -90,11 +95,19 @@ public class AccountPanelXamlTests
                     ExpanderFocusable: expander.Focusable && expander.IsTabStop,
                     ExpanderIsToggle: true,
                     ExpanderName: AutomationProperties.GetName(expander),
-                    // BasedOn a ToggleButton style that carries the app's template (the theme dictionary may hand back its own
-                    // copy of the style, so identity with the resource is the wrong test).
-                    ExpanderStyledFromSecondaryToggle: expander.Style.BasedOn is { } basedOn
-                                                       && basedOn.TargetType == typeof(ToggleButton)
-                                                       && basedOn.Setters.OfType<Setter>().Any(x => x.Property == Control.TemplateProperty),
+                    // Styled from a ToggleButton style that carries the app's template, either directly or through BasedOn
+                    // (the theme dictionary may hand back its own copy of the style, so identity with the resource is the
+                    // wrong test). The expander takes SecondaryToggleButtonStyle directly: its glyph is bound, so it needs no
+                    // derived style, and a derived button style may carry Visibility/IsEnabled setters only. The style must be
+                    // set EXPLICITLY (by the row template or locally): with none, WPF falls back to an implicit ToggleButton
+                    // style that also carries a template, and a chain-only check passed with the Style attribute deleted (found
+                    // by breaking it, 2026-11-02). ReadLocalValue is the wrong probe inside a DataTemplate: a template-set
+                    // Style is BaseValueSource.ParentTemplate, not Local.
+                    ExpanderStyledFromSecondaryToggle: DependencyPropertyHelper.GetValueSource(expander, FrameworkElement.StyleProperty).BaseValueSource
+                                                           is BaseValueSource.ParentTemplate or BaseValueSource.Local
+                                                       && StyleChain(expander.Style).Any(st =>
+                                                           st.TargetType == typeof(ToggleButton)
+                                                           && st.Setters.OfType<Setter>().Any(x => x.Property == Control.TemplateProperty)),
                     controls,
                     NoteBoxShown: PanelWindowFixtures.EffectivelyVisible(noteBox));
             });
@@ -130,7 +143,7 @@ public class AccountPanelXamlTests
         var open = Inspect(expanded: true);
         Assert.True(open.ExpanderChecked);
         Assert.True(open.ExpanderFocusable);
-        Assert.True(open.ExpanderStyledFromSecondaryToggle, "the expander's style must be BasedOn SecondaryToggleButtonStyle");
+        Assert.True(open.ExpanderStyledFromSecondaryToggle, "the expander must be styled from SecondaryToggleButtonStyle (directly or BasedOn)");
         Assert.Equal("Show recent games for NovaFake", open.ExpanderName);
 
         Assert.False(Inspect(expanded: false).ExpanderChecked);

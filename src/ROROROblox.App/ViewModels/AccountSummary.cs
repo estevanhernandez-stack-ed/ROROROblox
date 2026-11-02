@@ -109,8 +109,16 @@ public sealed class AccountSummary : INotifyPropertyChanged
                 OnPropertyChanged(nameof(LastPlayedUtc));
                 RaiseFactProperties();
             }
+            else if (e.PropertyName == nameof(AccountPanelViewModel.IsExpanded))
+            {
+                OnPropertyChanged(nameof(PanelExpanderGlyph));
+            }
         };
+        OnPropertyChanged(nameof(PanelExpanderGlyph));
     }
+
+    /// <summary>The expander's glyph: ▾ while this row's panel is open, ▸ while closed. A bound property, not a style trigger, because a button's trigger style carries Visibility/IsEnabled setters only.</summary>
+    public string PanelExpanderGlyph => Panel?.IsExpanded == true ? "\u25BE" : "\u25B8";
 
     /// <summary>When this account last launched a game, from the panel's own object so row and panel cannot disagree. Null until the panel has read history.</summary>
     public DateTimeOffset? LastPlayedUtc => Panel?.LastPlayed?.AtUtc;
