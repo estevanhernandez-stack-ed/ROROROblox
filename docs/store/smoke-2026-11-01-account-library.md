@@ -44,6 +44,25 @@ because the builder's live Store RoRoRo and Roblox client were running.
 
 Treat this as a rough anchor, not the 10% bar. n=1 cannot support a percentage; the bar is set by the controlled A/B below.
 
+## C2 run order (prepared 2026-11-02, items 1-7 built)
+
+Both A/B builds exist, built in Release and not launched:
+
+- **A, v1.35:** a detached `5a8fe61` worktree at `..\_scratchororo-v135-ab\`, exe under `src\ROROROblox.Appin\Release
+et10.0-windows10.0.19041.0\`.
+- **B, the branch:** this repo's `src\ROROROblox.Appin\Release
+et10.0-windows10.0.19041.0\` (the `net10.0-windows` folder beside it is a stale August build; ignore it).
+
+1. **Probes**, any time, Store RoRoRo may stay up: `mocks/README.md`, Half 2.
+2. **Quiet the machine:** close every Roblox client, quit the Store RoRoRo from the tray.
+3. **Startup A/B:** the protocol below. Este starts and quits; the session reads the two log lines per start.
+4. **Eyes-on walk, build B:** checklist C2 (a), (b) and (d), plus three open calls:
+   - **Remove clips at 900 px.** Measured in the render harness, v1.35 already cuts it by 15 px with games saved and 64 px with none (the empty games box widens to fit its hint); the panel expander adds 32. Confirm with real fonts, then pick: cap the empty games box's width, move the expander into the name column, or move Remove to the right-click menu.
+   - **One-account fit.** A fresh install and a light panel (3 Recent) fit at 900x600; 4 or more Recent entries scroll the roster, and Recent caps at 8. Keep, or lower what the panel shows.
+   - **The expander's open state** is the house grey press fill, not the mock's cyan outline.
+5. **One-account path:** park the data folder aside, start build B, Add account: the panel opens with three empty states and Open Roblox home launches that account. Restore the folder.
+6. **Probe gate (e):** whatever step 1 measured decides Needs verification and the Plus badge.
+
 ## Controlled A/B, pending C2
 
 The 10% startup bar (spec §6) is decided here, on a machine with no live session:
