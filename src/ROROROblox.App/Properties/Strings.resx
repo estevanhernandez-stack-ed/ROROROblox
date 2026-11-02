@@ -2382,6 +2382,20 @@
   <data name="Shell_Launch_Clause_Expired" xml:space="preserve"><value>{0} expired</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
   <data name="Shell_Launch_Clause_Limited" xml:space="preserve"><value>{0} limited</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
   <data name="Shell_Launch_Clause_Deselected" xml:space="preserve"><value>{0} deselected</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
+  <data name="Shell_Health_Expired" xml:space="preserve"><value>Session expired</value><comment>Health badge word, expired cookie (v1.36)</comment></data>
+  <data name="Shell_Health_NeedsVerification" xml:space="preserve"><value>Needs verification</value><comment>Health badge word, Roblox asked for a step-up check (v1.36)</comment></data>
+  <data name="Shell_Health_Limited" xml:space="preserve"><value>Limited by Roblox</value><comment>Health badge word, plain 403 limit; "Roblox" stays English (v1.36)</comment></data>
+  <data name="Shell_Health_FollowMarked" xml:space="preserve"><value>Joins by following</value><comment>Health badge word, the join-via-friend mark (v1.36)</comment></data>
+  <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve"><value>Re-authenticate</value><comment>Health badge action, same word as the row button (v1.36)</comment></data>
+  <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve"><value>Open Roblox for this account</value><comment>Health badge action for Needs verification; "Roblox" stays English (v1.36)</comment></data>
+  <data name="Shell_Health_Action_ToggleMark" xml:space="preserve"><value>Toggle the mark</value><comment>Health badge action for the follow mark (v1.36)</comment></data>
+  <data name="Shell_Health_BadgeName" xml:space="preserve"><value>{0}, {1}</value><comment>Health badge accessible name; {0}=word {1}=action (v1.36)</comment></data>
+  <data name="Shell_Status_NeedsVerification" xml:space="preserve"><value>Needs verification — open Roblox for this account</value><comment>AccountSummary secondary line; "Roblox" stays English (v1.36)</comment></data>
+  <data name="Shell_Status_FollowMarkedReady" xml:space="preserve"><value>Joins by following · Ready</value><comment>AccountSummary secondary line for a follow-marked account at rest (v1.36)</comment></data>
+  <data name="Shell_Launch_Clause_FollowMarked_one" xml:space="preserve"><value>{0} will follow the main</value><comment>Batch banner clause via Loc.Plural; {0}=count (v1.36)</comment></data>
+  <data name="Shell_Launch_Clause_FollowMarked_other" xml:space="preserve"><value>{0} will follow the main</value><comment>Batch banner clause via Loc.Plural (v1.36)</comment></data>
+  <data name="Shell_Launch_Clause_FollowMarked_few" xml:space="preserve"><value>{0} will follow the main</value><comment>few-form (ru/pl) mirrors other in English (v1.36)</comment></data>
+  <data name="Shell_Launch_Clause_FollowMarked_many" xml:space="preserve"><value>{0} will follow the main</value><comment>many-form (ru/pl) mirrors other in English (v1.36)</comment></data>
   <data name="Shell_Leftover_Windowless_one" xml:space="preserve"><value>{0} leftover Roblox process with no window</value><comment>LeftoverSummary via Loc.Plural; "Roblox" stays English (localized Phase D step 3)</comment></data>
   <data name="Shell_Leftover_Windowless_other" xml:space="preserve"><value>{0} leftover Roblox processes with no window</value><comment>LeftoverSummary via Loc.Plural (localized Phase D step 3)</comment></data>
   <data name="Shell_Leftover_Windowless_few" xml:space="preserve"><value>{0} leftover Roblox processes with no window</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>

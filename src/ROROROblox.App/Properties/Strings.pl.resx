@@ -1890,6 +1890,48 @@
   <data name="Shell_Launch_Clause_Deselected" xml:space="preserve">
     <value>{0} odznaczonych</value>
   </data>
+  <data name="Shell_Health_Expired" xml:space="preserve">
+    <value>Sesja wygasła</value>
+  </data>
+  <data name="Shell_Health_NeedsVerification" xml:space="preserve">
+    <value>Wymaga weryfikacji</value>
+  </data>
+  <data name="Shell_Health_Limited" xml:space="preserve">
+    <value>Ograniczone przez Roblox</value>
+  </data>
+  <data name="Shell_Health_FollowMarked" xml:space="preserve">
+    <value>Dołącza przez podążanie</value>
+  </data>
+  <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve">
+    <value>Uwierzytelnij ponownie</value>
+  </data>
+  <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve">
+    <value>Otwórz Roblox dla tego konta</value>
+  </data>
+  <data name="Shell_Health_Action_ToggleMark" xml:space="preserve">
+    <value>Przełącz oznaczenie</value>
+  </data>
+  <data name="Shell_Health_BadgeName" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Shell_Status_NeedsVerification" xml:space="preserve">
+    <value>Wymaga weryfikacji — otwórz Roblox dla tego konta</value>
+  </data>
+  <data name="Shell_Status_FollowMarkedReady" xml:space="preserve">
+    <value>Dołącza przez podążanie · Gotowe</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_one" xml:space="preserve">
+    <value>{0} podąży za kontem głównym</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_other" xml:space="preserve">
+    <value>{0} podąży za kontem głównym</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_few" xml:space="preserve">
+    <value>{0} podążą za kontem głównym</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_many" xml:space="preserve">
+    <value>{0} podąży za kontem głównym</value>
+  </data>
   <data name="Shell_Leftover_Windowless_one" xml:space="preserve">
     <value>{0} pozostały proces Roblox bez okna</value>
   </data>

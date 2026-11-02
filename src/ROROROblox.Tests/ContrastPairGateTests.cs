@@ -166,6 +166,8 @@ public class ContrastPairGateTests
         (ThemeSlots.CheckedAccent, ThemeSlots.OnCheckedAccent, "the check glyph on a ticked box"),
         (ThemeSlots.CheckedAccentHover, ThemeSlots.OnCheckedAccent, "the check glyph, hovered"),
         (ThemeSlots.CheckedAccentPressed, ThemeSlots.OnCheckedAccent, "the check glyph, pressed"),
+        (ThemeSlots.Bg, ThemeSlots.HealthVerify, "the Needs-verification badge text on the page field (v1.36)"),
+        (ThemeSlots.RowBg, ThemeSlots.HealthVerify, "the Needs-verification badge text on a row (v1.36)"),
     ];
 
     private sealed record Pair(string Fill, string Text, int Sites);

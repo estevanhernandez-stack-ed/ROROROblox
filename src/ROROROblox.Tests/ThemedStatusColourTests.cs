@@ -475,6 +475,12 @@ public class ThemedStatusColourTests
     /// adding one.
     /// </para>
     /// </summary>
+    // 25 -> 26 on 2026-11-01 (v1.36 item 2): HealthVerifyBrush's pre-startup fallback in App.xaml, the
+    // "Needs verification" colour. Derived by ThemeService.ApplySlot on every theme change as the
+    // midpoint of RowExpiredAccent and Magenta, so the literal is the same kind as OnMagentaBrush's:
+    // a pre-startup value of a brush the theme owns, covered by the existing App.xaml entry.
+    // DERIVED, counted against the tree: App.xaml 17 + AboutWindow 9 = 26.
+    //
     // 21 -> 25 on 2026-10-06, and it is the same KIND of move as the +1 for OnMagentaBrush below:
     // the governed path grew by four brushes and its origin in App.xaml grew with it. The four are
     // WPF-UI's own checkbox accent keys — CheckBoxCheckBackgroundFillChecked and its two checked
@@ -505,7 +511,7 @@ public class ThemedStatusColourTests
     // went clean while that entry stayed, so it now grants permission almost nothing uses. Left in
     // place rather than retired blind: one literal is a real literal and retiring the entry is a
     // separate measurement, recorded as a register row instead of done in passing here.
-    private const int AllowedXamlLiteralCeiling = 25;
+    private const int AllowedXamlLiteralCeiling = 26;
 
     /// <summary>
     /// Vacuity floor — it catches a repo-root walk that found nothing, and nothing else.

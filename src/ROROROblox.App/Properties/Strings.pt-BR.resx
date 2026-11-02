@@ -1890,6 +1890,48 @@
   <data name="Shell_Launch_Clause_Deselected" xml:space="preserve">
     <value>{0} desmarcadas</value>
   </data>
+  <data name="Shell_Health_Expired" xml:space="preserve">
+    <value>Sessão expirada</value>
+  </data>
+  <data name="Shell_Health_NeedsVerification" xml:space="preserve">
+    <value>Requer verificação</value>
+  </data>
+  <data name="Shell_Health_Limited" xml:space="preserve">
+    <value>Limitado pelo Roblox</value>
+  </data>
+  <data name="Shell_Health_FollowMarked" xml:space="preserve">
+    <value>Entra seguindo</value>
+  </data>
+  <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve">
+    <value>Reautenticar</value>
+  </data>
+  <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve">
+    <value>Abrir o Roblox para esta conta</value>
+  </data>
+  <data name="Shell_Health_Action_ToggleMark" xml:space="preserve">
+    <value>Alternar a marcação</value>
+  </data>
+  <data name="Shell_Health_BadgeName" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Shell_Status_NeedsVerification" xml:space="preserve">
+    <value>Requer verificação — abra o Roblox para esta conta</value>
+  </data>
+  <data name="Shell_Status_FollowMarkedReady" xml:space="preserve">
+    <value>Entra seguindo · Pronto</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_one" xml:space="preserve">
+    <value>{0} seguirá a conta principal</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_other" xml:space="preserve">
+    <value>{0} seguirão a conta principal</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_few" xml:space="preserve">
+    <value>{0} seguirão a conta principal</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_many" xml:space="preserve">
+    <value>{0} seguirão a conta principal</value>
+  </data>
   <data name="Shell_Leftover_Windowless_one" xml:space="preserve">
     <value>{0} processo do Roblox restante sem janela</value>
   </data>

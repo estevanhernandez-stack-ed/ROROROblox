@@ -43,6 +43,10 @@ public abstract record LaunchResult
     public sealed record CookieExpired : LaunchResult;
     public sealed record Limited : LaunchResult;
 
+    /// <summary>A 403 that carried <c>rblx-challenge-type</c>: Roblox wants a step-up, not a plain limit.
+    /// <paramref name="ChallengeType"/> is the header value, recorded for diagnostics.</summary>
+    public sealed record NeedsVerification(string ChallengeType) : LaunchResult;
+
     /// <summary><paramref name="Detail"/> is diagnostic data (an exception's text), not a
     /// sentence — it lands after the catalog's headline, and may be logged verbatim.</summary>
     public sealed record Failed(LaunchFailureKind Kind, string? Detail = null) : LaunchResult;

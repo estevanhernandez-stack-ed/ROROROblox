@@ -269,6 +269,17 @@ public class RobloxLauncherTests
     }
 
     [Fact]
+    public async Task LaunchAsync_TypedApi_SessionLimitedWithChallenge_ReturnsNeedsVerification()
+    {
+        var api = new StubRobloxApi(_ => throw new SessionLimitedException("captcha"));
+        var launcher = new RobloxLauncher(api, new InMemoryAppSettings(), new RecordingProcessStarter(_ => 1));
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42));
+
+        Assert.Equal("captcha", Assert.IsType<LaunchResult.NeedsVerification>(result).ChallengeType);
+    }
+
+    [Fact]
     public async Task LaunchAsync_TypedApi_SessionLimited_ReturnsLimitedResult()
     {
         var api = new StubRobloxApi(_ => throw new SessionLimitedException());

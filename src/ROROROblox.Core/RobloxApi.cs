@@ -90,7 +90,7 @@ public sealed class RobloxApi : IRobloxApi
             if (secondResponse.StatusCode == HttpStatusCode.Forbidden)
             {
                 // Still forbidden with a valid CSRF token → flagged / soft-locked session.
-                throw new SessionLimitedException();
+                throw new SessionLimitedException(ReadChallengeType(secondResponse));
             }
             if (!secondResponse.IsSuccessStatusCode)
             {
@@ -700,8 +700,24 @@ public sealed class RobloxApi : IRobloxApi
     {
         if (response.StatusCode == HttpStatusCode.Forbidden)
         {
-            throw new SessionLimitedException();
+            throw new SessionLimitedException(ReadChallengeType(response));
         }
+    }
+
+    /// <summary>
+    /// The step-up challenge type Roblox names on a post-CSRF 403 (<c>rblx-challenge-type</c>), or null
+    /// when the header is absent or blank. Never called on the CSRF-handshake 403: that one is the dance,
+    /// not a refusal.
+    /// </summary>
+    private static string? ReadChallengeType(HttpResponseMessage response)
+    {
+        if (response.Headers.TryGetValues("rblx-challenge-type", out var values)
+            && values.FirstOrDefault() is { } raw
+            && !string.IsNullOrWhiteSpace(raw))
+        {
+            return raw.Trim();
+        }
+        return null;
     }
 
     private static void ThrowOnContentTypeRejection(HttpResponseMessage response)

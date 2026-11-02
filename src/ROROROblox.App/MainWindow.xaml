@@ -466,6 +466,61 @@
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
+                            <!-- v1.36 health badge: one Button for the three states that stop a launch (expired,
+                                 needs verification, limited). Word, glyph and action differ per state, so flatline
+                                 can tell them apart with colour removed; colour is only the third carrier. It sits on
+                                 the name line, which is the tallest line of the row, so it adds no height. The face
+                                 colour is the child TextBlock's (a Button may not paint itself). The command swaps by
+                                 state: Needs verification opens Roblox, the other two re-authenticate. -->
+                            <Button AutomationProperties.Name="{Binding HealthBadgeName}"
+                                    CommandParameter="{Binding}"
+                                    Padding="6,0" Margin="8,2,0,0" MinHeight="0"
+                                    VerticalAlignment="Center">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Setter Property="Command" Value="{Binding DataContext.ReauthenticateCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowHealthBadge}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HealthKind}" Value="verify">
+                                                <Setter Property="Command" Value="{Binding DataContext.OpenRobloxHomeCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <TextBlock Text="{Binding HealthBadgeText}"
+                                           FontSize="{DynamicResource MetaFontSize}" FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HealthKind}" Value="verify">
+                                                    <Setter Property="Foreground" Value="{DynamicResource HealthVerifyBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding HealthKind}" Value="limited">
+                                                    <Setter Property="Foreground" Value="{DynamicResource MagentaBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+                            <!-- v1.36 Follow-marked badge: the per-account Join via friend flag, named as a health
+                                 state. Permanent while the mark is set (it coexists with the three states above);
+                                 clicking it toggles the mark, the same command the context menu carries. -->
+                            <Button Command="{Binding DataContext.ToggleJoinViaFriendCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"
+                                    AutomationProperties.Name="{Binding FollowMarkBadgeName}"
+                                    Style="{StaticResource GhostButtonStyle}"
+                                    Padding="6,0" Margin="8,2,0,0" MinHeight="0"
+                                    VerticalAlignment="Center"
+                                    Visibility="{Binding ShowFollowMarkBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="{Binding FollowMarkBadgeText}"
+                                           FontSize="{DynamicResource MetaFontSize}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource CyanBrush}" />
+                            </Button>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                             <!-- Live status dot. Every state resolves from a theme slot, so the dot

@@ -8,5 +8,17 @@ namespace ROROROblox.Core;
 /// </summary>
 public sealed class SessionLimitedException : Exception
 {
-    public SessionLimitedException() : base("Roblox returned 403 — session is rate-limited / flagged.") { }
+    public SessionLimitedException() : this(null) { }
+
+    public SessionLimitedException(string? challengeType)
+        : base("Roblox returned 403 — session is rate-limited / flagged.")
+    {
+        ChallengeType = challengeType;
+    }
+
+    /// <summary>
+    /// The <c>rblx-challenge-type</c> header on the 403 (for example <c>captcha</c>), or null when the
+    /// 403 carried none. Present means Roblox wants a step-up; absent means today's plain limit.
+    /// </summary>
+    public string? ChallengeType { get; }
 }

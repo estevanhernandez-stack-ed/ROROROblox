@@ -17,6 +17,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
 {
     private bool _sessionExpired;
     private bool _sessionLimited;
+    private bool _sessionNeedsVerification;
     private bool _isLaunching;
     private string _statusText = string.Empty;
     private FavoriteGame? _selectedGame;
@@ -205,6 +206,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(StatusDot));
                 OnPropertyChanged(nameof(SecondaryStatusText));
+                RaiseHealthChanged();
             }
         }
     }
@@ -223,8 +225,80 @@ public sealed class AccountSummary : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(StatusDot));
                 OnPropertyChanged(nameof(SecondaryStatusText));
+                RaiseHealthChanged();
             }
         }
+    }
+
+    /// <summary>
+    /// True when Roblox answered this account's auth-ticket request with a 403 that carried
+    /// <c>rblx-challenge-type</c>: a step-up challenge, not the plain limit (<see cref="SessionLimited"/>)
+    /// and not a dead cookie (<see cref="SessionExpired"/>). Set to true from exactly one place,
+    /// <c>MainViewModel.LaunchAccountAsync</c> on <c>LaunchResult.NeedsVerification</c>; a 403 without
+    /// the header never reaches it. Cleared by a launch that starts or a presence poll that lands, like
+    /// <see cref="SessionLimited"/>. Spec §1.2.
+    /// </summary>
+    public bool SessionNeedsVerification
+    {
+        get => _sessionNeedsVerification;
+        set
+        {
+            if (SetField(ref _sessionNeedsVerification, value))
+            {
+                OnPropertyChanged(nameof(StatusDot));
+                OnPropertyChanged(nameof(SecondaryStatusText));
+                RaiseHealthChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// What the row says about this account's fitness to launch. First match wins: Expired, then
+    /// NeedsVerification, then Limited, then FollowMarked, else Ok. Spec §1.1.
+    /// </summary>
+    internal AccountHealth Health =>
+        _sessionExpired ? AccountHealth.Expired
+        : _sessionNeedsVerification ? AccountHealth.NeedsVerification
+        : _sessionLimited ? AccountHealth.Limited
+        : _joinViaFriend ? AccountHealth.FollowMarked
+        : AccountHealth.Ok;
+
+    /// <summary>The colour/command key the row template switches on: expired, verify, limited, follow, ok.</summary>
+    public string HealthKind => AccountHealthInfo.Kind(Health);
+
+    public string HealthWord => AccountHealthInfo.Word(Health);
+    public string HealthGlyph => AccountHealthInfo.Glyph(Health);
+
+    /// <summary>"{glyph} {word}", the health badge's face.</summary>
+    public string HealthBadgeText => $"{HealthGlyph} {HealthWord}";
+
+    /// <summary>"{word}, {action}": what a screen reader says for the health badge.</summary>
+    public string HealthBadgeName => AccountHealthInfo.BadgeName(Health);
+
+    /// <summary>
+    /// The health badge shows for the three states that stop a launch. Follow-marked has its own
+    /// permanent badge on the name line (it is a preference, and it coexists with the other three),
+    /// so it never shows here.
+    /// </summary>
+    public bool ShowHealthBadge => Health is AccountHealth.Expired or AccountHealth.NeedsVerification or AccountHealth.Limited;
+
+    /// <summary>The Follow-marked badge on the name line: visible whenever the mark is set.</summary>
+    public bool ShowFollowMarkBadge => _joinViaFriend;
+
+    public string FollowMarkBadgeText =>
+        $"{AccountHealthInfo.Glyph(AccountHealth.FollowMarked)} {AccountHealthInfo.Word(AccountHealth.FollowMarked)}";
+
+    public string FollowMarkBadgeName => AccountHealthInfo.BadgeName(AccountHealth.FollowMarked);
+
+    private void RaiseHealthChanged()
+    {
+        OnPropertyChanged(nameof(Health));
+        OnPropertyChanged(nameof(HealthKind));
+        OnPropertyChanged(nameof(HealthWord));
+        OnPropertyChanged(nameof(HealthGlyph));
+        OnPropertyChanged(nameof(HealthBadgeText));
+        OnPropertyChanged(nameof(HealthBadgeName));
+        OnPropertyChanged(nameof(ShowHealthBadge));
     }
 
     public bool IsLaunching
@@ -575,7 +649,16 @@ public sealed class AccountSummary : INotifyPropertyChanged
     public bool JoinViaFriend
     {
         get => _joinViaFriend;
-        set => SetField(ref _joinViaFriend, value);
+        set
+        {
+            if (SetField(ref _joinViaFriend, value))
+            {
+                OnPropertyChanged(nameof(SecondaryStatusText));
+                OnPropertyChanged(nameof(StatusDot));
+                OnPropertyChanged(nameof(ShowFollowMarkBadge));
+                RaiseHealthChanged();
+            }
+        }
     }
 
     /// <summary>
@@ -741,9 +824,13 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// </summary>
     public string StatusDot => _sessionExpired
         ? "yellow"
-        : _sessionLimited
-            ? "magenta"
-            : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning) ? "green" : "grey";
+        : _sessionNeedsVerification
+            ? "verify"
+            : _sessionLimited
+                ? "magenta"
+                : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning)
+                    ? "green"
+                    : _joinViaFriend ? "cyan" : "grey";
 
     /// <summary>
     /// Human-friendly secondary text shown under the display name. Precedence (v1.5.0 augment rule):
@@ -769,6 +856,11 @@ public sealed class AccountSummary : INotifyPropertyChanged
             if (_sessionExpired)
             {
                 return Loc.Get("Shell_Status_SessionExpired");
+            }
+            // 1a. Needs verification: a 403 that named a challenge. Beats presence like Expired does.
+            if (_sessionNeedsVerification)
+            {
+                return Loc.Get("Shell_Status_NeedsVerification");
             }
             // 1b. Limited by Roblox (403). Beats stale presence — this is the fix for the frozen
             //     "In game" dot masking a failed launch.
@@ -828,8 +920,11 @@ public sealed class AccountSummary : INotifyPropertyChanged
             {
                 return Loc.Format("Shell_Status_LastLaunched", RelativeAgo(last));
             }
-            // 8. Cold.
-            return Loc.Get("Shell_Status_Ready");
+            // 8. Cold. A follow-marked account is the one health state that does NOT beat presence
+            //    (it shows as a permanent badge on the name line); it takes this line only at rest.
+            return _joinViaFriend
+                ? Loc.Get("Shell_Status_FollowMarkedReady")
+                : Loc.Get("Shell_Status_Ready");
         }
     }
 

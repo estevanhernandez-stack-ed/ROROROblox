@@ -303,6 +303,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // a second capture can start while one is open — each capture's user-data-dir sweep
         // would then delete files under the other's LIVE WebView2 profile.
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary), _ => !IsBusy);
+        // The Needs-verification badge's action: a home launch, where the client itself presents the
+        // challenge. Same path as the row's Launch, so every guard that exists today applies.
+        OpenRobloxHomeCommand = new RelayCommand(p => p is AccountSummary row
+            ? LaunchAccountAsync(row, new LaunchTarget.Home())
+            : Task.FromResult(0));
         OpenGamesCommand = new RelayCommand(OpenGames);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => _ = StopAccountAsync(p as AccountSummary));
@@ -751,6 +756,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand LaunchAccountCommand { get; }
     public ICommand RemoveAccountCommand { get; }
     public ICommand ReauthenticateCommand { get; }
+
+    /// <summary>
+    /// "Open Roblox for this account": launches the account to the Roblox home screen so the client
+    /// itself can present a verification challenge. The health badge's action for Needs verification.
+    /// </summary>
+    public ICommand OpenRobloxHomeCommand { get; }
     public ICommand OpenGamesCommand { get; }
     public ICommand LaunchAllCommand { get; }
     public ICommand StopAccountCommand { get; }
@@ -1961,6 +1972,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     await _accountStore.TouchLastLaunchedAsync(summary.Id);
                     summary.StampLaunched(DateTimeOffset.UtcNow);
                     summary.SessionExpired = false;
+                    summary.SessionNeedsVerification = false; // a launch that starts proves the challenge is behind us
                     summary.StatusText = string.Empty;
                     summary.LastClosedAtUtc = null;
                     // Task 8: remembered so a later Recycle relaunches into the SAME target
@@ -1995,6 +2007,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.CurrentGameName = null;
                     summary.InGameSinceUtc = null;
                     summary.StatusText = string.Empty;                 // copy comes from SecondaryStatusText
+                    return 0;
+                case LaunchResult.NeedsVerification needs:
+                    // The one place SessionNeedsVerification is ever set true (spec §1.2).
+                    _log.LogInformation("Account {AccountId} needs verification (403, challenge {Challenge})", summary.Id, needs.ChallengeType);
+                    summary.SessionNeedsVerification = true;
+                    summary.PresenceState = UserPresenceType.Offline;
+                    summary.CurrentGameName = null;
+                    summary.InGameSinceUtc = null;
+                    summary.StatusText = string.Empty;
                     return 0;
                 case LaunchResult.Failed { Kind: LaunchFailureKind.RobloxNotInstalled }:
                     _log.LogWarning("Roblox not installed at launch time for account {AccountId}", summary.Id);
@@ -2380,7 +2401,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         ? DispatchBatchAsync(cleared, overrideTarget: null, launchingBanner)
                         : ReleaseBatchAsync(cleared, overrideTarget: null, launchingBanner, startIndex: 0));
             }
-            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"));
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"), plan.FollowMarkedCount);
         }
         finally
         {
@@ -2913,7 +2934,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                             waitForLanding: careful));
             }
 
-            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"));
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"), plan.FollowMarkedCount);
 
             // Everyone was aimed at one specific server — check with presence who actually made it.
             // Fire-and-forget: the verdict is up to four minutes out (ServerLandingGate.MaxWait,
@@ -3460,6 +3481,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (summary is null) return;
             // A presence poll landing means Roblox is answering this cookie again — clear Limited.
             summary.SessionLimited = false;
+            summary.SessionNeedsVerification = false; // same reasoning: Roblox is answering this cookie again
             summary.PresenceUpdatedAtUtc = e.OccurredAtUtc;
 
             if (e.PresenceType == UserPresenceType.InGame)
