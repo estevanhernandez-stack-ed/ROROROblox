@@ -429,20 +429,22 @@ account, then the first row; the five management passthroughs. `SettingsBlob` ga
 `(accountId, target) => MainViewModel.LaunchAccountByIdAsync(accountId, target)`, the four-line wrapper.
 
 **Acceptance:**
-- [ ] `LibraryViewModelTests`: chips multi-select and persist; none selected shows everything; `Query`
+- [x] `LibraryViewModelTests`: chips multi-select and persist; none selected shows everything; `Query`
       filters on `Name` and `LocalName`; 100 entries filter under 16 ms; Enter with a local match calls
       nothing on Roblox; Enter with no match fills `FromRoblox`; a place-id paste adds a favourite; a
       share-link paste adds a server through the delegate; **a non-Roblox host, a `javascript:` string or
       an arbitrary sentence adds nothing, launches nothing, and is reported as not understood**;
       `PlayAsync(e, null)` resolves main → only → first row in that order.
-- [ ] `SettingsReachabilityTests`: `LibraryView` and `LibraryFilters` are on the allow-list **with an
+- [x] `SettingsReachabilityTests`: `LibraryView` and `LibraryFilters` are on the allow-list **with an
       expiry note naming item 9**, which item 9 deletes when it adds `LibraryViewToggle` and
       `LibraryFiltersRow`. The alerts cycle learned this the slow way; this cycle writes the expiry in.
-- [ ] `KeyboardVocabularyTests` green with the display-name change; no gesture moved.
-- [ ] `LocKeyParityFenceTests` and `CultureKeyParityFenceTests` green: the renamed values and the
+- [x] `KeyboardVocabularyTests` green with the display-name change; no gesture moved.
+- [x] `LocKeyParityFenceTests` and `CultureKeyParityFenceTests` green: the renamed values and the
       reworded hint are in all seven files, regenerated.
-- [ ] The rail, the shell title and the toolbar button read "Library" in a dev build; Ctrl+G still opens
+- [x] The rail, the shell title and the toolbar button read "Library" in a dev build; Ctrl+G still opens
       it.
+
+*Built: 70936e2. LibraryViewModel, the rename in seven languages (Library/Bibliothek/Biblioteca/Bibliothèque/Biblioteka/Библиотека, the same words item 7's empty states use), two settings allow-listed with an item-9 expiry. Paste routing is gated by LibraryPaste.Classify (http/https, host roblox.com or a subdomain on the IDN form, no userinfo) BEFORE the shipped parsers, because LaunchTarget.FromUrl, TryParseShareLink and ExtractPlaceId ignore the host. The empty games-box hint is now 'Add in the Library' (18 chars, was 28; de longest at 28, was up to 45). LaunchAccountByIdAsync did not exist and was added. The dev-build check (rail, title, toolbar read Library; Ctrl+G) moves to C3. Suite: 3,303 unit + 3 skips; harness 27 + 1. Render-test flake under load found here and reproduced on 364494e, so not item 8's.*
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~LibraryViewModelTests|FullyQualifiedName~SettingsReachabilityTests|FullyQualifiedName~KeyboardVocabularyTests|FullyQualifiedName~ParityFence"`
 → all passed. `python scripts/gen-culture-resx.py de` (and the other five) → no orphan-row refusal.
