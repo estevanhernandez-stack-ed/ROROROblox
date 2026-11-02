@@ -227,21 +227,23 @@ in-game presence. The hardcoded `"Following a friend"` at `MainViewModel.cs:3288
 `Shell_History_FollowingAFriend`, in English and all six catalogs, regenerated.
 
 **Acceptance:**
-- [ ] `LibraryCatalogTests`: a favourite, a saved server and an unsaved played place come back as three
+- [x] `LibraryCatalogTests`: a favourite, a saved server and an unsaved played place come back as three
       kinds; a place that is both favourite and played comes back once, as Favourite, with the stat's
       `LastPlayedUtc`; order within kind is `LastPlayedUtc` desc; empty stores yield an empty list.
-- [ ] `SessionStatsStoreTests`: `LastPlayedUtc` stamps on `LaunchRecorded`; the backfill fills a legacy
+- [x] `SessionStatsStoreTests`: `LastPlayedUtc` stamps on `LaunchRecorded`; the backfill fills a legacy
       row exactly once.
-- [ ] `GameIconCacheTests`: a hit answers from disk with no request; a miss enqueues exactly one lookup
+- [x] `GameIconCacheTests`: a hit answers from disk with no request; a miss enqueues exactly one lookup
       and the file gains the row on `IconResolved`; the file deleted at runtime is recreated and nothing
       else is lost.
-- [ ] `SessionHistoryStoreTests`: `UpdateGameAsync` patches game and place on one row and no other; a
+- [x] `SessionHistoryStoreTests`: `UpdateGameAsync` patches game and place on one row and no other; a
       legacy row reads `PrivateServerId == null`.
-- [ ] `MainViewModelTests`: a follow launch whose first in-game presence names a game ends with a
+- [x] `MainViewModelTests`: a follow launch whose first in-game presence names a game ends with a
       history row carrying that place, and the stats store counted it.
-- [ ] `LocKeyParityFenceTests` and `CultureKeyParityFenceTests` green (the one key this item adds is in
+- [x] `LocKeyParityFenceTests` and `CultureKeyParityFenceTests` green (the one key this item adds is in
       all seven files; item 13 sweeps the rest of the cycle's strings).
-- [ ] No XAML in this commit.
+- [x] No XAML in this commit.
+
+*Built: eb80db9. 3,134 unit + 27/1 harness green. Two deviations, both improvements: the follow patch reaches stats as a new StatsEvent.GamePlaceResolved rather than a literal LaunchRecorded, which would double-count the account's launches, day bucket and streak; and SessionStatsBackfill gains a one-time GameLastPlayedFilled path, because existing users are already latched by Backfilled and would never get LastPlayedUtc. ListAsync over 25 unsaved places fetches nothing. MainViewModel +59/-5 cumulative from 3974579.*
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~LibraryCatalogTests|FullyQualifiedName~GameIconCacheTests|FullyQualifiedName~SessionStatsStore|FullyQualifiedName~SessionHistoryStore|FullyQualifiedName~ParityFence"`
 → all passed.
