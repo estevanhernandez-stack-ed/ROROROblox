@@ -12,14 +12,29 @@ internal static class Program
     {
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+        return await RunAsync(args, Console.Out, Console.Error, cts.Token).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// <see cref="Main"/> behind a writer pair so a test can drive the catch blocks. The generic catch
+    /// prints the exception TYPE only: an unhandled exception's message can echo whatever it was given,
+    /// and a cookie is the one thing this tool must never print.
+    /// </summary>
+    internal static async Task<int> RunAsync(string[] args, TextWriter stdout, TextWriter stderr, CancellationToken ct)
+    {
         try
         {
-            return await ProbeCli.RunAsync(args, Console.Out, Console.Error, cts.Token).ConfigureAwait(false);
+            return await ProbeCli.RunAsync(args, stdout, stderr, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            Console.Error.WriteLine("Cancelled.");
+            stderr.WriteLine("Cancelled.");
             return 130;
+        }
+        catch (Exception ex)
+        {
+            stderr.WriteLine("The probe stopped: " + ex.GetType().Name);
+            return 1;
         }
     }
 }

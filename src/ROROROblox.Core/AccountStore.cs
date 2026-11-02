@@ -74,6 +74,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
         }
+        CookieValidation.ThrowIfControlCharacters(cookie, nameof(cookie));
 
         await _gate.WaitAsync().ConfigureAwait(false);
         try
@@ -432,6 +433,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             throw new ArgumentException("Cookie must not be empty.", nameof(newCookie));
         }
+        CookieValidation.ThrowIfControlCharacters(newCookie, nameof(newCookie));
 
         await _gate.WaitAsync().ConfigureAwait(false);
         try
@@ -732,6 +734,14 @@ public sealed class AccountStore : IAccountStore, IDisposable
 
             foreach (var record in records)
             {
+                // A cookie with a control character can never be attached to a request (the header
+                // write throws and echoes it), so the record is skipped, not stored. Checked before the
+                // userId joins the merge set so it cannot shadow a valid record for the same user.
+                if (CookieValidation.HasControlCharacters(record.Cookie))
+                {
+                    skipped++;
+                    continue;
+                }
                 if (!presentUserIds.Add(record.RobloxUserId))
                 {
                     skipped++; // userId already present locally or earlier in this same batch
@@ -875,7 +885,11 @@ public sealed class AccountStore : IAccountStore, IDisposable
         bool AutoRejoin = false,
         AccountFacts? Facts = null,
         string? Note = null,
-        bool? PanelExpanded = null);
+        bool? PanelExpanded = null)
+    {
+        // The synthesized ToString would print every member, Cookie included.
+        public sealed override string ToString() => $"StoredAccount {{ Id = {Id}, Cookie = <redacted> }}";
+    }
 
     internal sealed record StoredAccountsBlob(
         int Version,

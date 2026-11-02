@@ -48,6 +48,14 @@ public sealed class AccountFactsUpdatedEventArgs : EventArgs
 /// authority on an account's health, and a facts failure is one more reason to let it decide.
 /// </para>
 /// <para>
+/// MEMBERSHIP IS OFF BY DEFAULT. The validate-membership endpoint is undocumented and marked for
+/// deprecation (Roblox Plus replaced Premium on 2026-04-30), and its only measurement is checkpoint
+/// C1's. Until then no request is made to it, <see cref="AccountFacts.Membership"/> stays null and no
+/// membership <see cref="AccountFacts.LastError"/> is ever set (a dead endpoint would otherwise paint
+/// "last try failed (404)" on every row whose Robux and friends refreshed fine). C1 flips it, by passing
+/// <c>membershipEnabled: true</c> at the composition root, only on a measured answer.
+/// </para>
+/// <para>
 /// Cookie hygiene: the plaintext cookie lives in a local for the span of one refresh, is passed to
 /// <see cref="IAccountFactsApi"/>, and appears in no log template, exception message or event.
 /// </para>
@@ -73,6 +81,7 @@ public sealed class AccountFactsService : IDisposable
     private readonly ILogger<AccountFactsService> _log;
     private readonly TimeProvider _time;
     private readonly int _interAccountDelayMs;
+    private readonly bool _membershipEnabled;
     private readonly Channel<Guid> _queue = Channel.CreateBounded<Guid>(new BoundedChannelOptions(QueueCapacity)
     {
         SingleReader = true,
@@ -98,13 +107,17 @@ public sealed class AccountFactsService : IDisposable
     /// <param name="log">Optional.</param>
     /// <param name="time">Clock and timer source; tests pass a manual one.</param>
     /// <param name="interAccountDelayMs">Base wait between accounts; tests may pass 0.</param>
+    /// <param name="membershipEnabled">
+    /// Whether to call validate-membership at all. Default false: flipped only on checkpoint C1's measured answer.
+    /// </param>
     public AccountFactsService(
         IAccountStore store,
         IAccountFactsApi api,
         Func<IReadOnlyList<FactsTarget>> targets,
         ILogger<AccountFactsService>? log = null,
         TimeProvider? time = null,
-        int interAccountDelayMs = BackfillPacing.InterAccountDelayMs)
+        int interAccountDelayMs = BackfillPacing.InterAccountDelayMs,
+        bool membershipEnabled = false)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _api = api ?? throw new ArgumentNullException(nameof(api));
@@ -112,7 +125,11 @@ public sealed class AccountFactsService : IDisposable
         _log = log ?? NullLogger<AccountFactsService>.Instance;
         _time = time ?? TimeProvider.System;
         _interAccountDelayMs = interAccountDelayMs;
+        _membershipEnabled = membershipEnabled;
     }
+
+    /// <summary>True when validate-membership is part of a refresh (three calls instead of two).</summary>
+    public bool MembershipEnabled => _membershipEnabled;
 
     /// <summary>
     /// Raised after each refresh has been written to the store (including a failed one, which
@@ -411,7 +428,7 @@ public sealed class AccountFactsService : IDisposable
     }
 
     /// <summary>
-    /// The three calls, sequentially. Robux and friends-online are the core: any failure there, and a
+    /// The calls, sequentially (two, or three when <see cref="MembershipEnabled"/>). Robux and friends-online are the core: any failure there, and a
     /// 401 or 403 from any of the three, abandons the refresh and keeps the previous values whole
     /// (a row never mixes a fresh Robux with a stale friends count under one age). Membership is the
     /// gated, deprecation-marked one: a non-auth failure there only blanks membership.
@@ -436,7 +453,7 @@ public sealed class AccountFactsService : IDisposable
         // No resolved user id yet: friends-online and membership cannot be asked. Robux only.
         if (userId is not > 0)
         {
-            return FetchOutcome.Ok(new AccountFacts(robux, previous?.Membership, previous?.FriendsOnline, null, null));
+            return FetchOutcome.Ok(new AccountFacts(robux, _membershipEnabled ? previous?.Membership : null, previous?.FriendsOnline, null, null));
         }
 
         int? friends;
@@ -452,6 +469,11 @@ public sealed class AccountFactsService : IDisposable
         if (friends is null)
         {
             return FetchOutcome.Failed("parse");
+        }
+
+        if (!_membershipEnabled)
+        {
+            return FetchOutcome.Ok(new AccountFacts(robux, null, friends, null, null));
         }
 
         MembershipProbe probe;

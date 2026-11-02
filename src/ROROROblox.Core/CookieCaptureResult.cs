@@ -43,7 +43,11 @@ public abstract record CookieCaptureResult
 {
     private CookieCaptureResult() { }
 
-    public sealed record Success(string Cookie, long UserId, string Username) : CookieCaptureResult;
+    public sealed record Success(string Cookie, long UserId, string Username) : CookieCaptureResult
+    {
+        // The synthesized ToString would print every member, Cookie included.
+        public sealed override string ToString() => $"Success {{ UserId = {UserId}, Cookie = <redacted> }}";
+    }
     public sealed record Cancelled : CookieCaptureResult;
 
     /// <summary><paramref name="Detail"/> is diagnostic data (an exception's text), not a

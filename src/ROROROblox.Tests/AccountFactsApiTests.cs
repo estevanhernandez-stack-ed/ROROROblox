@@ -141,6 +141,40 @@ public class AccountFactsApiTests
         Assert.Equal("gone", probe.Body);
     }
 
+    [Theory]
+    [InlineData(HttpStatusCode.Found)]
+    [InlineData(HttpStatusCode.MovedPermanently)]
+    public async Task ARedirect_IsJustAStatus_NeverFollowed(HttpStatusCode status)
+    {
+        // The registration disables auto-redirect (AccountFactsClient_PrimaryHandler_DoesNotFollowRedirects),
+        // so a 3xx reaches the client as a 3xx and maps like any other non-success.
+        var (api, _, _) = Make(_ => new HttpResponseMessage(status));
+
+        var ex = await Assert.ThrowsAsync<AccountFactsRequestException>(() => api.GetRobuxAsync(FakeCookie, CancellationToken.None));
+        Assert.Equal((int)status, ex.StatusCode);
+        Assert.Equal((int)status, (await api.GetMembershipAsync(FakeCookie, 4242, CancellationToken.None)).Status);
+    }
+
+    [Theory]
+    [InlineData("FAKE-COOKIE-a\r\nX-Injected: 1")]
+    [InlineData("FAKE-COOKIE-a\nb")]
+    [InlineData("FAKE-COOKIE-a\0b")]
+    [InlineData("FAKE-COOKIE-a\tb")]
+    public async Task AControlCharacterCookie_IsRefusedBeforeAnyRequest_WithNoValueInTheMessage(string cookie)
+    {
+        var (api, handler, log) = Make(_ => Json(HttpStatusCode.OK, "{}"));
+
+        var ex1 = await Assert.ThrowsAsync<ArgumentException>(() => api.GetRobuxAsync(cookie, CancellationToken.None));
+        var ex2 = await Assert.ThrowsAsync<ArgumentException>(() => api.GetFriendsOnlineCountAsync(cookie, 4242, CancellationToken.None));
+        var ex3 = await Assert.ThrowsAsync<ArgumentException>(() => api.GetMembershipAsync(cookie, 4242, CancellationToken.None));
+
+        Assert.Empty(handler.Requests);
+        foreach (var text in new[] { ex1.Message, ex1.ToString(), ex2.Message, ex3.Message }.Concat(log.Lines))
+        {
+            Assert.DoesNotContain("FAKE-COOKIE", text, StringComparison.Ordinal);
+        }
+    }
+
     [Fact]
     public async Task GetMembership_CapsTheBodyItKeeps()
     {

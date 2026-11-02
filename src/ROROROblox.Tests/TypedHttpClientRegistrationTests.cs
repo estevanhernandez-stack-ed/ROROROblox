@@ -84,6 +84,28 @@ public class TypedHttpClientRegistrationTests
             $"{clientInterface.Name}'s primary handler has UseCookies=true: the first account's cookie would be reused for every account.");
     }
 
+    /// <summary>
+    /// F1 (dpapi-cookie-blast-radius): the facts client attaches a cookie per request, so a followed 3xx
+    /// would re-send it to wherever the redirect points. It must see the 3xx itself. Only the facts
+    /// client: RobloxApi's handler is untouched this cycle (share-link resolution may rely on redirects).
+    /// </summary>
+    [Fact]
+    public void AccountFactsClient_PrimaryHandler_DoesNotFollowRedirects()
+    {
+        var services = new ServiceCollection();
+        global::ROROROblox.App.App.ConfigureServices(services, NullLoggerFactory.Instance);
+        using var provider = services.BuildServiceProvider();
+
+        HttpMessageHandler handler = provider.GetRequiredService<IHttpMessageHandlerFactory>().CreateHandler(typeof(IAccountFactsApi).Name);
+        while (handler is DelegatingHandler delegating)
+        {
+            handler = delegating.InnerHandler ?? throw new InvalidOperationException("A delegating handler has no inner handler.");
+        }
+
+        var primary = Assert.IsType<SocketsHttpHandler>(handler);
+        Assert.False(primary.AllowAutoRedirect, "IAccountFactsApi follows redirects: the Cookie header would travel with them.");
+    }
+
     [Theory]
     [InlineData(typeof(IRobloxApi))]
     [InlineData(typeof(IAccountFactsApi))]

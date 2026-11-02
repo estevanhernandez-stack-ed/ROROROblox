@@ -7,5 +7,5 @@ namespace ROROROblox.Core;
 /// back to the user verbatim: "Imported {Imported} accounts. Skipped {Skipped} already on this PC."
 /// </summary>
 /// <param name="Imported">Count of records added to the local store.</param>
-/// <param name="Skipped">Count of records skipped because their userId already exists locally.</param>
+/// <param name="Skipped">Count of records skipped because their userId already exists locally, or because their cookie held a control character and could never be used (the summary line still says "already on this PC"; that second case is rare and corrupt-bundle only).</param>
 public sealed record ImportMergeResult(int Imported, int Skipped);

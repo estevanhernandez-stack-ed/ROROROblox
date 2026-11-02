@@ -40,4 +40,8 @@ public sealed record AccountExportRecord(
     bool JoinViaFriend = false,
     string? StreamerName = null,
     string? StreamerAvatarId = null,
-    string? Note = null);
+    string? Note = null)
+{
+    // The synthesized ToString would print every member, Cookie included.
+    public sealed override string ToString() => "AccountExportRecord { Cookie = <redacted> }";
+}

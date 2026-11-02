@@ -148,6 +148,8 @@ public sealed class AccountFactsApi : IAccountFactsApi
         {
             throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
         }
+        // A control character would make the header write throw a FormatException that echoes the value.
+        CookieValidation.ThrowIfControlCharacters(cookie, nameof(cookie));
     }
 
     private static void RequireUserId(long userId)

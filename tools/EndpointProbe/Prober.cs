@@ -44,6 +44,9 @@ public sealed class Prober
 
     public Prober(HttpClient http, string cookie, long? userId, Redactor redactor, TimeSpan pace, Action<string> log)
     {
+        // Before anything holds it: a control character makes Headers.Add throw a FormatException that
+        // echoes the whole value. The refusal names no value.
+        ROROROblox.Core.CookieValidation.ThrowIfControlCharacters(cookie, nameof(cookie));
         _http = http;
         _cookie = cookie;
         _userId = userId;
@@ -127,18 +130,8 @@ public sealed class Prober
         {
             using var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
 
-            var rblx = new List<KeyValuePair<string, string>>();
-            foreach (var header in response.Headers.Concat(response.Content.Headers))
-            {
-                if (!header.Key.StartsWith("rblx-", StringComparison.OrdinalIgnoreCase)) continue;
-                var value = string.Join(", ", header.Value);
-                rblx.Add(new KeyValuePair<string, string>(
-                    header.Key.ToLowerInvariant(),
-                    header.Key.Equals("rblx-challenge-metadata", StringComparison.OrdinalIgnoreCase)
-                        ? _redactor.DecodeChallengeMetadata(value)
-                        : _redactor.Scrub(value)));
-            }
-
+            // Register this response's secrets BEFORE any of its text is scrubbed, so a header value that
+            // echoes the CSRF token or the ticket is already known to the redactor when it is scrubbed.
             string? csrf = null;
             if (response.Headers.TryGetValues("x-csrf-token", out var csrfValues))
             {
@@ -150,6 +143,18 @@ public sealed class Prober
             {
                 ticket = ticketValues.FirstOrDefault();
                 _redactor.AddSecret(ticket);
+            }
+
+            var rblx = new List<KeyValuePair<string, string>>();
+            foreach (var header in response.Headers.Concat(response.Content.Headers))
+            {
+                if (!header.Key.StartsWith("rblx-", StringComparison.OrdinalIgnoreCase)) continue;
+                var value = string.Join(", ", header.Value);
+                rblx.Add(new KeyValuePair<string, string>(
+                    header.Key.ToLowerInvariant(),
+                    header.Key.Equals("rblx-challenge-metadata", StringComparison.OrdinalIgnoreCase)
+                        ? _redactor.DecodeChallengeMetadata(value)
+                        : _redactor.Scrub(value)));
             }
 
             var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);

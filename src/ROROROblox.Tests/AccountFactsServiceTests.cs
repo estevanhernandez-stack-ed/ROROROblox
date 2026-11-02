@@ -56,6 +56,7 @@ public class AccountFactsServiceTests
         Assert.Same(service, provider.GetRequiredService<AccountFactsService>()); // one lane for the process
         Assert.Equal(0, service.RequestCount);
         Assert.False(service.TimerArmed);
+        Assert.False(service.MembershipEnabled); // C1 flips this, on a measured answer
         Assert.NotNull(provider.GetRequiredService<IAccountFactsApi>());
     }
 
@@ -402,6 +403,54 @@ public class AccountFactsServiceTests
         Assert.NotNull(facts.FetchedAtUtc);
     }
 
+    // ---- membership is off until C1 measures it ----
+
+    [Fact]
+    public async Task Membership_IsOffByDefault()
+    {
+        using var rig = await Rig.CreateAsync(1);
+        var service = new AccountFactsService(rig.Store, rig.Api, () => []);
+
+        Assert.False(service.MembershipEnabled);
+        Assert.True(rig.Service.MembershipEnabled); // the rig opts in so the mapping tests keep running
+    }
+
+    [Fact]
+    public async Task WithMembershipOff_ARefreshIsTwoRequests_AndTheMembershipEndpointIsNeverCalled()
+    {
+        using var rig = await Rig.CreateAsync(2, membershipEnabled: false);
+        // A dead endpoint: were it called, every refresh would carry "404".
+        rig.Api.MembershipStatus = 404;
+        rig.Api.MembershipBody = null;
+        await rig.SeedAsync(0, new AccountFacts(50, "plus", 2, T0 - TimeSpan.FromMinutes(20), null));
+
+        Assert.True(rig.Service.Enqueue(rig.Ids[0]));
+        Assert.True(rig.Service.Enqueue(rig.Ids[1]));
+        await rig.PumpUntilAsync(() => rig.Updates.Count == 2);
+
+        Assert.Equal(4, rig.Service.RequestCount); // two accounts, two requests each
+        Assert.DoesNotContain(rig.Api.Snapshot(), c => c.Kind == "membership");
+        Assert.All(rig.Updates, u =>
+        {
+            Assert.Null(u.Facts.Membership);  // stays null, even where a value was stored before
+            Assert.Null(u.Facts.LastError);   // no membership error can ever be set
+            Assert.Equal(100, u.Facts.Robux);
+            Assert.Equal(2, u.Facts.FriendsOnline);
+        });
+    }
+
+    [Fact]
+    public async Task WithMembershipOn_ARefreshIsThreeRequests()
+    {
+        using var rig = await Rig.CreateAsync(1, membershipEnabled: true);
+
+        Assert.True(rig.Service.Enqueue(rig.Ids[0]));
+        await rig.PumpUntilAsync(() => rig.Updates.Count == 1);
+
+        Assert.Equal(3, rig.Service.RequestCount);
+        Assert.Equal(new[] { "robux", "friends", "membership" }, rig.Api.Snapshot().Select(c => c.Kind).ToArray());
+    }
+
     // ---- accounts without a resolved user id ----
 
     [Fact]
@@ -536,14 +585,14 @@ public class AccountFactsServiceTests
         public List<Guid> Ids { get; } = [];
         public List<AccountFactsUpdatedEventArgs> Updates { get; } = [];
 
-        private Rig(string dir, int count)
+        private Rig(string dir, int count, bool membershipEnabled)
         {
             _dir = dir;
             Store = new AccountStore(Path.Combine(dir, "accounts.dat"));
             var labels = new Dictionary<string, string>();
             for (var i = 0; i < count; i++) { labels[CookieFor(i)] = $"A{i}"; }
             Api = new ScriptedFactsApi(() => Clock.GetUtcNow(), labels);
-            Service = new AccountFactsService(Store, Api, Snapshot, time: Clock);
+            Service = new AccountFactsService(Store, Api, Snapshot, time: Clock, membershipEnabled: membershipEnabled);
             // What MainViewModel.ApplyFacts does to the live row, so the next decision sees fresh facts.
             Service.AccountFactsUpdated += (_, e) =>
             {
@@ -558,11 +607,13 @@ public class AccountFactsServiceTests
 
         public static string CookieFor(int i) => $"FAKE-COOKIE-facts-{i}";
 
-        public static async Task<Rig> CreateAsync(int count, bool withUserIds = true)
+        // membershipEnabled defaults to TRUE here so the membership mapping tests keep covering the
+        // three-call path; the production default is false (see the membership-off tests).
+        public static async Task<Rig> CreateAsync(int count, bool withUserIds = true, bool membershipEnabled = true)
         {
             var dir = Path.Combine(Path.GetTempPath(), $"ROROROblox-facts-svc-{Guid.NewGuid():N}");
             Directory.CreateDirectory(dir);
-            var rig = new Rig(dir, count);
+            var rig = new Rig(dir, count, membershipEnabled);
             for (var i = 0; i < count; i++)
             {
                 var account = await rig.Store.AddAsync($"Alt{i}", "", CookieFor(i));

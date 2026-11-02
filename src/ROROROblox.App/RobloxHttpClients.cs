@@ -39,7 +39,11 @@ internal static class RobloxHttpClients
         });
 
         // Account facts (Robux, friends online, membership): its own typed client, its own handler,
-        // the same two load-bearing lines as above. Deliberately NOT a shared factory.
+        // the same load-bearing UseCookies line as above, plus AllowAutoRedirect = false: this client
+        // only ever expects a direct answer, and a redirect would re-send the Cookie header to
+        // wherever the 3xx points. A 3xx surfaces as AccountFactsRequestException(3xx) -> LastError.
+        // RobloxApi's handler is deliberately unchanged (share-link resolution may rely on redirects).
+        // Deliberately NOT a shared factory.
         services.AddHttpClient<IAccountFactsApi, AccountFactsApi>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
@@ -49,6 +53,7 @@ internal static class RobloxHttpClients
         .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
         {
             UseCookies = false,
+            AllowAutoRedirect = false,
         });
 
         return services;
