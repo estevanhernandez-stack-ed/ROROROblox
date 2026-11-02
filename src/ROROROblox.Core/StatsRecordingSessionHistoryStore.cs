@@ -76,6 +76,31 @@ public sealed class StatsRecordingSessionHistoryStore : ISessionHistoryStore
     // counted the attempt when the row was added, and uptime must not grow. Forward only.
     public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint) => _inner.MarkOutcomeAsync(sessionId, outcomeHint);
 
+    public async Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId)
+    {
+        // Read BEFORE delegating: whether this patch GIVES the row a place (null -> a place) is the
+        // only case the rollup has not already counted, and the launch time lives on the row.
+        LaunchSession? row = null;
+        try
+        {
+            row = (await _inner.ListAsync().ConfigureAwait(false)).FirstOrDefault(s => s.Id == id);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Could not read the session row before patching its game; stats will not count the place.");
+        }
+
+        await _inner.UpdateGameAsync(id, gameName, placeId, privateServerId).ConfigureAwait(false);
+
+        if (row is { PlaceId: null } && placeId is { } place)
+        {
+            // The correction a LaunchRecorded would have been had the place been known at launch,
+            // minus the account/day/streak counts that the original LaunchRecorded already made.
+            await SafeAsync(() => _stats.ApplyAsync(new StatsEvent.GamePlaceResolved(
+                place, gameName ?? row.GameName, row.LaunchedAtUtc))).ConfigureAwait(false);
+        }
+    }
+
     public async Task ClearAsync()
     {
         await _inner.ClearAsync().ConfigureAwait(false);

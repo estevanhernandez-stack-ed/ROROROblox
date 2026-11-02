@@ -800,6 +800,7 @@
   "Shell_History_BookmarkTooltip": "Adicione este place aos seus jogos salvos para poder iniciar nele a qualquer momento.",
   "Shell_History_ClearConfirm": "Limpar todo o histórico de sessões? Isso não pode ser desfeito.",
   "Shell_History_CouldntBookmark": "Não foi possível salvar: {0}",
+  "Shell_History_FollowingAFriend": "Seguindo um amigo",
   "Shell_History_LeaderRow": "{0} · {1} inicializações{2}",
   "Shell_History_LongestSession": "sessão mais longa {0}",
   "Shell_History_MostPlayed": "mais jogado: {0}",

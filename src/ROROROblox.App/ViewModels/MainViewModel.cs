@@ -160,6 +160,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// persisted via <see cref="ISessionHistoryStore.AddAsync"/>.
     /// </summary>
     private readonly Dictionary<Guid, Guid> _pendingSessionByAccountId = new();
+    // Accounts whose open history row was written with no place (a follow launch); the first in-game
+    // presence names the place and patches the row (v1.36 spec 3.7).
+    private readonly HashSet<Guid> _sessionsAwaitingPlace = new();
 
     /// <summary>
     /// Live appStorage identity defenders keyed by account id (v1.6.0 item 9). Tracked
@@ -3330,11 +3333,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             string? gameName = null;
             long? placeId = null;
             var isPrivate = false;
+            Guid? privateServerId = null;
             switch (target)
             {
                 case LaunchTarget.PrivateServer ps:
                     placeId = ps.PlaceId;
                     isPrivate = true;
+                    privateServerId = (await _privateServerStore.ListAsync())
+                        .FirstOrDefault(sv => sv.PlaceId == ps.PlaceId && sv.Code == ps.Code)?.Id;
                     // Prefer the row's PS entry name (RenderName picks up the rename); fall back
                     // to a generic label if the row selection isn't a PS entry (override path).
                     gameName = summary.SelectedGame?.IsPrivateServer == true
@@ -3350,7 +3356,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     placeId = summary.SelectedGame?.PlaceId;
                     break;
                 case LaunchTarget.FollowFriend:
-                    gameName = "Following a friend";
+                    gameName = Loc.Get("Shell_History_FollowingAFriend");
                     break;
             }
 
@@ -3364,10 +3370,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 IsPrivateServer: isPrivate,
                 LaunchedAtUtc: launchedAtUtc,
                 EndedAtUtc: null,
-                OutcomeHint: null);
+                OutcomeHint: null,
+                PrivateServerId: privateServerId);
 
             _pendingSessionByAccountId[summary.Id] = session.Id;
             await _sessionHistory.AddAsync(session);
+            if (placeId is null) _sessionsAwaitingPlace.Add(summary.Id); else _sessionsAwaitingPlace.Remove(summary.Id);
         }
         catch (Exception ex)
         {
@@ -3565,6 +3573,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.CurrentPlaceId = e.PlaceId;
                 summary.CurrentGameName = e.GameName;
                 summary.PresenceState = e.PresenceType;
+                if (e.PlaceId is { } landed && _pendingSessionByAccountId.TryGetValue(summary.Id, out var openRow)
+                    && _sessionsAwaitingPlace.Remove(summary.Id))
+                {
+                    _ = _sessionHistory.UpdateGameAsync(openRow, e.GameName, landed, privateServerId: null);
+                }
                 // WHICH server, not just which game (v1.14). Null when privacy or timing withheld
                 // the job id — Recycle then behaves exactly as it did before this feature.
                 summary.CurrentServer = e.Server;

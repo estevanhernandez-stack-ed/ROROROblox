@@ -2643,6 +2643,9 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="Shell_History_Yesterday" xml:space="preserve">
     <value>Вчера</value>
   </data>
+  <data name="Shell_History_FollowingAFriend" xml:space="preserve">
+    <value>Следует за другом</value>
+  </data>
   <data name="Shell_History_Badge_Private" xml:space="preserve">
     <value>ПРИВАТНЫЙ</value>
   </data>

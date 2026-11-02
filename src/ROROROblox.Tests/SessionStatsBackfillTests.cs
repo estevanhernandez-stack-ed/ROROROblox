@@ -35,6 +35,7 @@ public class SessionStatsBackfillTests : IDisposable
         public Task AddAsync(LaunchSession s) => Task.CompletedTask;
         public Task MarkEndedAsync(Guid id, DateTimeOffset at, string? hint = null) => Task.CompletedTask;
         public Task MarkOutcomeAsync(Guid id, string hint) => Task.CompletedTask;
+        public Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId) => Task.CompletedTask;
         public Task ClearAsync() => Task.CompletedTask;
     }
 
@@ -127,4 +128,50 @@ public class SessionStatsBackfillTests : IDisposable
 
         Assert.True((await stats.ReadAsync()).Backfilled);
     }
+
+    // ---- v1.36 item 4: LastPlayedUtc ----
+
+    [Fact]
+    public async Task AFreshBackfill_StampsEachGamesLastPlayed_FromTheNewestRow()
+    {
+        var stats = new SessionStatsStore(_tempPath);
+        var rows = await FixtureHistory().ListAsync();
+
+        await SessionStatsBackfill.RunOnceAsync(FixtureHistory(), stats);
+        var s = await stats.ReadAsync();
+
+        Assert.NotEmpty(s.Games);
+        foreach (var (place, game) in s.Games)
+        {
+            Assert.Equal(rows.Where(r => r.PlaceId == place).Max(r => r.LaunchedAtUtc), game.LastPlayedUtc);
+        }
+    }
+
+    [Fact]
+    public async Task ALegacyRollup_AlreadyBackfilled_HasItsMissingLastPlayedFilledExactlyOnce()
+    {
+        // A rollup written before GameStat.LastPlayedUtc existed: backfilled, so the one-time seed
+        // is latched, but the games carry no last-played.
+        await File.WriteAllTextAsync(_tempPath,
+            """{"version":1,"games":{"999":{"lastKnownName":"Old","launches":3,"uptimeTicks":0},"888":{"lastKnownName":"Gone","launches":1,"uptimeTicks":0}},"backfilled":true}""");
+        var stats = new SessionStatsStore(_tempPath);
+        var t = new DateTimeOffset(2026, 10, 20, 9, 0, 0, TimeSpan.Zero);
+        var history = new FixtureHistoryStore(
+        [
+            Row(999, t), Row(999, t.AddDays(2)), Row(999, t.AddDays(1)),
+        ]);
+
+        await SessionStatsBackfill.RunOnceAsync(history, stats);
+        var first = await stats.ReadAsync();
+        var bytesAfterFirst = await File.ReadAllTextAsync(_tempPath);
+        await SessionStatsBackfill.RunOnceAsync(history, stats);
+
+        Assert.Equal(t.AddDays(2), first.Games[999L].LastPlayedUtc);
+        Assert.Null(first.Games[888L].LastPlayedUtc);   // no surviving row for it: stays null, honestly
+        Assert.Equal(3, first.Games[999L].Launches);    // nothing else moved
+        Assert.Equal(bytesAfterFirst, await File.ReadAllTextAsync(_tempPath)); // the second run wrote nothing
+    }
+
+    private static LaunchSession Row(long place, DateTimeOffset at)
+        => new(Guid.NewGuid(), Guid.NewGuid(), "Alt", null, "Old", place, false, at, null, null);
 }

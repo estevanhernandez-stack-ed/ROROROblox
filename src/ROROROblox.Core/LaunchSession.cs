@@ -16,6 +16,11 @@ namespace ROROROblox.Core;
 /// process exit. Sessions whose process never attaches (Roblox version drift, AV, etc.) get a
 /// null end and a status hint via <see cref="OutcomeHint"/>.
 /// </para>
+/// <para>
+/// <see cref="PrivateServerId"/> (v1.36) names the saved private server a launch came from, so a
+/// private-server Recent entry can say which server rather than guess from the place. Rows written
+/// before the field read null.
+/// </para>
 /// </remarks>
 public sealed record LaunchSession(
     Guid Id,
@@ -27,7 +32,8 @@ public sealed record LaunchSession(
     bool IsPrivateServer,
     DateTimeOffset LaunchedAtUtc,
     DateTimeOffset? EndedAtUtc,
-    string? OutcomeHint)
+    string? OutcomeHint,
+    Guid? PrivateServerId = null)
 {
     /// <summary>
     /// Convenience: how long the session ran. Null if the session is still in flight or never

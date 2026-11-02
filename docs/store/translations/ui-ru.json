@@ -800,6 +800,7 @@
   "Shell_History_BookmarkTooltip": "Добавьте это место в сохранённые игры, чтобы запускаться в него в любой момент.",
   "Shell_History_ClearConfirm": "Очистить всю историю сессий? Это нельзя отменить.",
   "Shell_History_CouldntBookmark": "Не удалось добавить в закладки: {0}",
+  "Shell_History_FollowingAFriend": "Следует за другом",
   "Shell_History_LeaderRow": "{0} · {1} запусков{2}",
   "Shell_History_LongestSession": "самая долгая сессия {0}",
   "Shell_History_MostPlayed": "больше всего играли: {0}",

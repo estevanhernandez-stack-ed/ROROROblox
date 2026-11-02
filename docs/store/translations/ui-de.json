@@ -800,6 +800,7 @@
   "Shell_History_BookmarkTooltip": "Füge diesen Ort deinen gespeicherten Spielen hinzu, damit du jederzeit hineinstarten kannst.",
   "Shell_History_ClearConfirm": "Gesamten Sitzungsverlauf löschen? Das kann nicht rückgängig gemacht werden.",
   "Shell_History_CouldntBookmark": "Lesezeichen konnte nicht gesetzt werden: {0}",
+  "Shell_History_FollowingAFriend": "Folgt einem Freund",
   "Shell_History_LeaderRow": "{0} · {1} Starts{2}",
   "Shell_History_LongestSession": "längste Sitzung {0}",
   "Shell_History_MostPlayed": "am meisten gespielt: {0}",

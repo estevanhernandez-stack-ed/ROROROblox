@@ -2643,6 +2643,9 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   <data name="Shell_History_Yesterday" xml:space="preserve">
     <value>Ontem</value>
   </data>
+  <data name="Shell_History_FollowingAFriend" xml:space="preserve">
+    <value>Seguindo um amigo</value>
+  </data>
   <data name="Shell_History_Badge_Private" xml:space="preserve">
     <value>PRIVADO</value>
   </data>

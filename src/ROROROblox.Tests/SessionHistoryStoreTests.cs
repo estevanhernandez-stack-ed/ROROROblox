@@ -170,4 +170,60 @@ public class SessionHistoryStoreTests : IDisposable
         using var store = new SessionHistoryStore(_tempPath);
         Assert.Empty(await store.ListAsync());
     }
+
+    // ---- v1.36 item 4: PrivateServerId and UpdateGameAsync ----
+
+    [Fact]
+    public async Task UpdateGameAsync_PatchesGameAndPlaceOnOneRow_AndNoOther()
+    {
+        using var store = new SessionHistoryStore(_tempPath);
+        var follow = SampleSession(game: "Following a friend") with { PlaceId = null };
+        var other = SampleSession(game: "Other", launchedAt: DateTimeOffset.UtcNow.AddMinutes(-5)) with { PlaceId = null };
+        await store.AddAsync(follow);
+        await store.AddAsync(other);
+        var serverId = Guid.NewGuid();
+
+        await store.UpdateGameAsync(follow.Id, "Pet Sim 99", 8737899170, serverId);
+
+        var rows = await store.ListAsync();
+        var patched = rows.Single(r => r.Id == follow.Id);
+        Assert.Equal("Pet Sim 99", patched.GameName);
+        Assert.Equal(8737899170, patched.PlaceId);
+        Assert.Equal(serverId, patched.PrivateServerId);
+        Assert.Equal(follow.AccountId, patched.AccountId);
+        Assert.Equal(follow.LaunchedAtUtc, patched.LaunchedAtUtc);
+        Assert.Equal(other, rows.Single(r => r.Id == other.Id)); // untouched, field for field
+    }
+
+    [Fact]
+    public async Task UpdateGameAsync_WithANullName_KeepsTheRowsName_AndAMissingRowIsANoOp()
+    {
+        using var store = new SessionHistoryStore(_tempPath);
+        var row = SampleSession(game: "Keep Me") with { PlaceId = null };
+        await store.AddAsync(row);
+
+        await store.UpdateGameAsync(row.Id, null, 55, null);
+        await store.UpdateGameAsync(Guid.NewGuid(), "Nobody", 66, null);
+
+        var only = Assert.Single(await store.ListAsync());
+        Assert.Equal("Keep Me", only.GameName);
+        Assert.Equal(55, only.PlaceId);
+    }
+
+    [Fact]
+    public async Task ALegacyRow_WithNoPrivateServerIdOnDisk_ReadsNull()
+    {
+        var id = Guid.NewGuid();
+        await File.WriteAllTextAsync(_tempPath, """
+            {"version":1,"sessions":[{"id":"ROWID","accountId":"22222222-2222-2222-2222-222222222222",
+            "accountDisplayName":"Pokey","gameName":"Old","placeId":1,"isPrivateServer":true,
+            "launchedAtUtc":"2026-09-01T00:00:00+00:00"}]}
+            """.Replace("ROWID", id.ToString()));
+        using var store = new SessionHistoryStore(_tempPath);
+
+        var row = Assert.Single(await store.ListAsync());
+
+        Assert.Null(row.PrivateServerId);
+        Assert.Equal(id, row.Id);
+    }
 }

@@ -21,9 +21,26 @@ public static class SessionStatsBackfill
 
         // The latch is read from the rollup itself rather than a side file, so it cannot drift
         // away from the data it describes.
-        if ((await stats.ReadAsync().ConfigureAwait(false)).Backfilled) return;
-
+        var current = await stats.ReadAsync().ConfigureAwait(false);
         var rows = await history.ListAsync().ConfigureAwait(false);
+        if (current.Backfilled)
+        {
+            // Already seeded, possibly before GameStat.LastPlayedUtc existed. Fill the games that
+            // still have none from the rows that survive (newest launch per place). Touches
+            // nothing else, and writes nothing once every game it can fill is filled.
+            var newest = rows
+                .Where(r => r.PlaceId is > 0)
+                .GroupBy(r => r.PlaceId!.Value)
+                .ToDictionary(g => g.Key, g => g.Max(r => r.LaunchedAtUtc));
+            foreach (var (place, game) in current.Games)
+            {
+                if (game.LastPlayedUtc is null && newest.TryGetValue(place, out var at))
+                {
+                    await stats.ApplyAsync(new StatsEvent.GameLastPlayedFilled(place, at)).ConfigureAwait(false);
+                }
+            }
+            return;
+        }
 
         // Oldest first: streaks are built by walking days forward, so replaying newest-first would
         // record a chain that never happened.

@@ -1293,7 +1293,16 @@ public partial class App : Application
             () => sp.GetRequiredService<MainViewModel>().AccountsSnapshot
                     .Select(a => new FactsTarget(a.Id, a.RobloxUserId, a.Facts, a.SessionExpired))
                     .ToList(),
-            sp.GetRequiredService<ILogger<AccountFactsService>>()));
+            sp.GetRequiredService<ILogger<AccountFactsService>>(),
+            icons: sp.GetRequiredService<IGameIconCache>()));
+
+        // Library join (v1.36): favourites + saved servers + Recent. ListAsync is a pure read; icon
+        // lookups happen only when a caller asks for a place on screen, and they ride the facts
+        // worker above (one request at a time, the shared pacing).
+        services.AddSingleton<IGameIconCache>(sp => new GameIconCache(
+            sp.GetRequiredService<IRobloxApi>(),
+            log: sp.GetService<ILogger<GameIconCache>>()));
+        services.AddSingleton<LibraryCatalog>();
 
         // Tray avatar painter — owns its own HttpClient (default UA fine for public Roblox CDN
         // avatar URLs). TrayService is registered as ITrayService elsewhere; the painter takes

@@ -1986,6 +1986,80 @@ public class MainViewModelTests
             return 0;
         }
     }
+    // ---- v1.36 item 4: a follow launch's history row learns its place from presence ----
+
+    [Fact]
+    public async Task AFollowLaunch_WhoseFirstInGamePresenceNamesAGame_EndsWithAHistoryRowCarryingThatPlace_AndTheStatsStoreCountedIt()
+    {
+        var statsPath = Path.Combine(Path.GetTempPath(), $"rororo-mvm-follow-stats-{Guid.NewGuid():N}.json");
+        using var stats = new SessionStatsStore(statsPath);
+        var inner = new RecordingSessionHistoryStore();
+        var history = new StatsRecordingSessionHistoryStore(inner, stats);
+        var (vm, store, _, path) = Build(launcher: new RecordingSuccessLauncher(), sessionHistory: history);
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie")) { RobloxUserId = 12345 };
+            vm.Accounts.Add(row);
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.FollowFriend(777));
+            var launched = Assert.Single(inner.Added);
+            Assert.Null(launched.PlaceId);
+            Assert.Equal(global::ROROROblox.App.Localization.Loc.Get("Shell_History_FollowingAFriend"), launched.GameName);
+            Assert.Empty((await stats.ReadAsync()).Games);
+
+            vm.ApplyPresence(new AccountPresenceEventArgs(row.Id, UserPresenceType.InGame, 8737899170, "Pet Sim 99", DateTimeOffset.UtcNow));
+            await WaitForAsync(async () => (await stats.ReadAsync()).Games.ContainsKey(8737899170));
+            // A second in-game presence (same game, or a hop) does not patch again.
+            vm.ApplyPresence(new AccountPresenceEventArgs(row.Id, UserPresenceType.InGame, 920587237, "Adopt Me", DateTimeOffset.UtcNow));
+            await Task.Delay(100);
+
+            var patched = Assert.Single(inner.Added);
+            Assert.Equal(8737899170, patched.PlaceId);
+            Assert.Equal("Pet Sim 99", patched.GameName);
+            Assert.Single(inner.Updated);
+            var s = await stats.ReadAsync();
+            Assert.Equal(1, s.Games[8737899170].Launches);
+            Assert.Equal("Pet Sim 99", s.Games[8737899170].LastKnownName);
+            Assert.NotNull(s.Games[8737899170].LastPlayedUtc);
+            Assert.False(s.Games.ContainsKey(920587237));
+            Assert.Equal(1, s.Accounts[row.Id].Launches); // the launch was counted once, not twice
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(statsPath)) File.Delete(statsPath);
+        }
+    }
+
+    [Fact]
+    public async Task APlaceLaunch_IsNeverPatchedByPresence()
+    {
+        var inner = new RecordingSessionHistoryStore();
+        var (vm, store, _, path) = Build(launcher: new RecordingSuccessLauncher(), sessionHistory: inner);
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie")) { RobloxUserId = 12345 };
+            vm.Accounts.Add(row);
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(PlaceId: 8737899170));
+
+            vm.ApplyPresence(new AccountPresenceEventArgs(row.Id, UserPresenceType.InGame, 920587237, "Adopt Me", DateTimeOffset.UtcNow));
+            await Task.Delay(50);
+
+            Assert.Empty(inner.Updated);
+            Assert.Equal(8737899170, Assert.Single(inner.Added).PlaceId);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    private static async Task WaitForAsync(Func<Task<bool>> done)
+    {
+        for (var i = 0; i < 200; i++)
+        {
+            if (await done()) { return; }
+            await Task.Delay(10);
+        }
+        throw new TimeoutException("The condition did not become true.");
+    }
+
 
     /// <summary>
     /// Always succeeds with an incrementing pid and records the exact <see cref="LaunchTarget"/>
@@ -2049,6 +2123,7 @@ public class MainViewModelTests
         public Task AddAsync(LaunchSession session) => throw new NotImplementedException();
         public Task MarkEndedAsync(Guid sessionId, DateTimeOffset endedAtUtc, string? outcomeHint = null) => throw new NotImplementedException();
         public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint) => throw new NotImplementedException();
+        public Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId) => throw new NotImplementedException();
         public Task ClearAsync() => throw new NotImplementedException();
     }
 
@@ -2068,6 +2143,14 @@ public class MainViewModelTests
         { Ended.Add((sessionId, endedAtUtc, outcomeHint)); return Task.CompletedTask; }
         public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint)
         { Outcomes.Add((sessionId, outcomeHint)); return Task.CompletedTask; }
+        public readonly List<(Guid Id, string? GameName, long? PlaceId, Guid? ServerId)> Updated = new();
+        public Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId)
+        {
+            Updated.Add((id, gameName, placeId, privateServerId));
+            var i = Added.FindIndex(r => r.Id == id);
+            if (i >= 0) Added[i] = Added[i] with { GameName = gameName ?? Added[i].GameName, PlaceId = placeId, PrivateServerId = privateServerId };
+            return Task.CompletedTask;
+        }
         public Task ClearAsync() => throw new NotImplementedException();
     }
 

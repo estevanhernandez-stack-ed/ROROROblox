@@ -800,6 +800,7 @@
   "Shell_History_BookmarkTooltip": "Dodaj to miejsce do zapisanych gier, aby móc uruchamiać się do niego w każdej chwili.",
   "Shell_History_ClearConfirm": "Wyczyścić całą historię sesji? Tej operacji nie można cofnąć.",
   "Shell_History_CouldntBookmark": "Nie udało się dodać do zakładek: {0}",
+  "Shell_History_FollowingAFriend": "Podąża za znajomym",
   "Shell_History_LeaderRow": "{0} · {1} uruchomień{2}",
   "Shell_History_LongestSession": "najdłuższa sesja {0}",
   "Shell_History_MostPlayed": "najczęściej grane: {0}",

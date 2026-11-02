@@ -60,6 +60,7 @@ public class SessionHistoryEndStampTests : IDisposable
         public Task AddAsync(LaunchSession session) => throw new NotSupportedException();
         public Task MarkEndedAsync(Guid sessionId, DateTimeOffset endedAtUtc, string? outcomeHint = null) => throw new NotSupportedException();
         public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint) => throw new NotSupportedException();
+        public Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId) => throw new NotSupportedException();
         public Task ClearAsync() => throw new NotSupportedException();
     }
 

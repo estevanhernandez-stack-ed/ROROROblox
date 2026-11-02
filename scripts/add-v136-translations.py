@@ -142,6 +142,17 @@ T: dict[str, dict[str, str]] = {
         "pt-BR": "{0} seguirão a conta principal",
         "ru": "{0} последуют за основным аккаунтом",
     },
+    # ---- item 4: the Library join ------------------------------------------------------------
+    # The history row's game name for a follow launch, until presence names the place. Verbs match
+    # Shell_Msg_FollowingFromSource per language.
+    "Shell_History_FollowingAFriend": {
+        "de": "Folgt einem Freund",
+        "es": "Siguiendo a un amigo",
+        "fr": "Suit un ami",
+        "pl": "Podąża za znajomym",
+        "pt-BR": "Seguindo um amigo",
+        "ru": "Следует за другом",
+    },
 }
 
 

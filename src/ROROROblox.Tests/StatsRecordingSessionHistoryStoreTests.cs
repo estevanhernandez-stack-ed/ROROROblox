@@ -25,6 +25,14 @@ public class StatsRecordingSessionHistoryStoreTests
         public readonly List<(Guid Id, string Hint)> Outcomes = new();
         public Task MarkOutcomeAsync(Guid id, string hint)
         { Outcomes.Add((id, hint)); return Task.CompletedTask; }
+        public readonly List<(Guid Id, string? GameName, long? PlaceId)> Updated = new();
+        public Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId)
+        {
+            Updated.Add((id, gameName, placeId));
+            var i = Added.FindIndex(r => r.Id == id);
+            if (i >= 0) Added[i] = Added[i] with { GameName = gameName ?? Added[i].GameName, PlaceId = placeId, PrivateServerId = privateServerId };
+            return Task.CompletedTask;
+        }
         public Task ClearAsync() { ClearCalls++; return Task.CompletedTask; }
     }
 
@@ -176,5 +184,57 @@ public class StatsRecordingSessionHistoryStoreTests
         var rows = await sut.ListAsync();
 
         Assert.Single(rows);
+    }
+
+    // ---- v1.36 item 4: the follow-launch correction ----
+
+    [Fact]
+    public async Task UpdateGameAsync_GivingAPlacelessRowAPlace_ForwardsAGamePlaceResolved()
+    {
+        var inner = new RecordingInner();
+        var stats = new SpyStats();
+        var sut = new StatsRecordingSessionHistoryStore(inner, stats);
+        var row = Sample() with { PlaceId = null, GameName = "Following a friend" };
+        await sut.AddAsync(row);
+        stats.Events.Clear();
+
+        await sut.UpdateGameAsync(row.Id, "Pet Sim 99", 8737899170, null);
+
+        var update = Assert.Single(inner.Updated);
+        Assert.Equal((row.Id, "Pet Sim 99", (long?)8737899170), update);
+        var resolved = Assert.IsType<StatsEvent.GamePlaceResolved>(Assert.Single(stats.Events));
+        Assert.Equal(8737899170, resolved.PlaceId);
+        Assert.Equal("Pet Sim 99", resolved.GameName);
+        Assert.Equal(row.LaunchedAtUtc, resolved.AtUtc);
+    }
+
+    [Fact]
+    public async Task UpdateGameAsync_OnARowThatAlreadyHadAPlace_ForwardsNoStatsEvent()
+    {
+        var inner = new RecordingInner();
+        var stats = new SpyStats();
+        var sut = new StatsRecordingSessionHistoryStore(inner, stats);
+        var row = Sample();
+        Assert.NotNull(row.PlaceId);
+        await sut.AddAsync(row);
+        stats.Events.Clear();
+
+        await sut.UpdateGameAsync(row.Id, "Renamed", row.PlaceId, null);
+
+        Assert.Empty(stats.Events);
+        Assert.Single(inner.Updated);
+    }
+
+    [Fact]
+    public async Task UpdateGameAsync_ASwallowedStatsFailure_NeverLosesThePatch()
+    {
+        var inner = new RecordingInner();
+        var sut = new StatsRecordingSessionHistoryStore(inner, new ThrowingStats());
+        var row = Sample() with { PlaceId = null };
+        await sut.AddAsync(row);
+
+        await sut.UpdateGameAsync(row.Id, "Pet Sim 99", 42, null);
+
+        Assert.Equal(42, Assert.Single(inner.Added).PlaceId);
     }
 }

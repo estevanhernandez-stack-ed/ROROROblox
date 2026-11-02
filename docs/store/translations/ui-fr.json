@@ -800,6 +800,7 @@
   "Shell_History_BookmarkTooltip": "Ajoutez cette place à vos jeux enregistrés pour pouvoir la lancer à tout moment.",
   "Shell_History_ClearConfirm": "Effacer tout l'historique des sessions ? Cette action est irréversible.",
   "Shell_History_CouldntBookmark": "Impossible d'ajouter aux favoris : {0}",
+  "Shell_History_FollowingAFriend": "Suit un ami",
   "Shell_History_LeaderRow": "{0} · {1} lancements{2}",
   "Shell_History_LongestSession": "session la plus longue {0}",
   "Shell_History_MostPlayed": "le plus joué : {0}",

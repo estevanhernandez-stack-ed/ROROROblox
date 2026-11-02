@@ -2655,6 +2655,7 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Shell_History_LeaderRow" xml:space="preserve"><value>{0} · {1} launches{2}</value><comment>Leaderboard row; {0}=uptime {1}=launches {2}=streak suffix (localized Phase D step 3)</comment></data>
   <data name="Shell_History_Today" xml:space="preserve"><value>Today</value><comment>History date bucket (localized Phase D step 3)</comment></data>
   <data name="Shell_History_Yesterday" xml:space="preserve"><value>Yesterday</value><comment>History date bucket (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_FollowingAFriend" xml:space="preserve"><value>Following a friend</value><comment>History row game name for a follow launch, until presence names the place (v1.36)</comment></data>
   <data name="Shell_History_Badge_Private" xml:space="preserve"><value>PRIVATE</value><comment>History row private-server badge (localized Phase D step 3)</comment></data>
   <data name="Shell_History_Badge_Saved" xml:space="preserve"><value>Saved</value><comment>History row saved badge (localized Phase D step 3)</comment></data>
   <data name="Shell_History_Bookmark" xml:space="preserve"><value>+ Bookmark</value><comment>History row bookmark button (localized Phase D step 3)</comment></data>

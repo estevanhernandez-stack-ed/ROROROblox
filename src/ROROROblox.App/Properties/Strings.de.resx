@@ -2643,6 +2643,9 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="Shell_History_Yesterday" xml:space="preserve">
     <value>Gestern</value>
   </data>
+  <data name="Shell_History_FollowingAFriend" xml:space="preserve">
+    <value>Folgt einem Freund</value>
+  </data>
   <data name="Shell_History_Badge_Private" xml:space="preserve">
     <value>PRIVAT</value>
   </data>

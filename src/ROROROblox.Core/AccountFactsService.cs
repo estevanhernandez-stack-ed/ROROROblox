@@ -59,6 +59,13 @@ public sealed class AccountFactsUpdatedEventArgs : EventArgs
 /// Cookie hygiene: the plaintext cookie lives in a local for the span of one refresh, is passed to
 /// <see cref="IAccountFactsApi"/>, and appears in no log template, exception message or event.
 /// </para>
+/// <para>
+/// The worker carries a second kind of message (v1.36 item 4): a place lookup for
+/// <see cref="IGameIconCache"/>. It is a public no-cookie call and reads no cookie, but it rides the
+/// same single worker and the same jittered <see cref="BackfillPacing"/> wait, so Roblox never sees
+/// two of our requests in the same second whichever kind they are. De-duplication is per kind: an
+/// account already queued and a place already queued are each queued once.
+/// </para>
 /// </summary>
 public sealed class AccountFactsService : IDisposable
 {
@@ -82,13 +89,15 @@ public sealed class AccountFactsService : IDisposable
     private readonly TimeProvider _time;
     private readonly int _interAccountDelayMs;
     private readonly bool _membershipEnabled;
-    private readonly Channel<Guid> _queue = Channel.CreateBounded<Guid>(new BoundedChannelOptions(QueueCapacity)
+    private readonly IGameIconCache? _icons;
+    private readonly Channel<WorkItem> _queue = Channel.CreateBounded<WorkItem>(new BoundedChannelOptions(QueueCapacity)
     {
         SingleReader = true,
         FullMode = BoundedChannelFullMode.Wait, // TryWrite fails when full; Enqueue drops and un-marks.
     });
     private readonly object _gate = new();
     private readonly HashSet<Guid> _pending = []; // queued or in flight: the de-duplication set.
+    private readonly HashSet<long> _pendingPlaces = []; // the same, for place lookups.
     // When we last TRIED each account this run, success or not. A failing account keeps its old
     // FetchedAtUtc, so without this the timer would pick the same dead account every minute and
     // starve the others.
@@ -99,6 +108,7 @@ public sealed class AccountFactsService : IDisposable
     private Task? _timerLoop;
     private PeriodicTimer? _timer;
     private int _requestCount;
+    private int _placeRequestCount;
     private bool _disposed;
 
     /// <param name="store">Cookie reads and the facts cache.</param>
@@ -110,6 +120,10 @@ public sealed class AccountFactsService : IDisposable
     /// <param name="membershipEnabled">
     /// Whether to call validate-membership at all. Default false: flipped only on checkpoint C1's measured answer.
     /// </param>
+    /// <param name="icons">
+    /// The icon cache whose misses this worker resolves. The service hands the cache its
+    /// <see cref="EnqueuePlace"/> so <see cref="IGameIconCache.Request"/> lands on this queue.
+    /// </param>
     public AccountFactsService(
         IAccountStore store,
         IAccountFactsApi api,
@@ -117,7 +131,8 @@ public sealed class AccountFactsService : IDisposable
         ILogger<AccountFactsService>? log = null,
         TimeProvider? time = null,
         int interAccountDelayMs = BackfillPacing.InterAccountDelayMs,
-        bool membershipEnabled = false)
+        bool membershipEnabled = false,
+        IGameIconCache? icons = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _api = api ?? throw new ArgumentNullException(nameof(api));
@@ -126,6 +141,8 @@ public sealed class AccountFactsService : IDisposable
         _time = time ?? TimeProvider.System;
         _interAccountDelayMs = interAccountDelayMs;
         _membershipEnabled = membershipEnabled;
+        _icons = icons;
+        _icons?.AttachQueue(EnqueuePlace);
     }
 
     /// <summary>True when validate-membership is part of a refresh (three calls instead of two).</summary>
@@ -139,6 +156,9 @@ public sealed class AccountFactsService : IDisposable
 
     /// <summary>How many HTTP lookups this instance has started. Zero until the first enqueued refresh runs.</summary>
     public int RequestCount => Volatile.Read(ref _requestCount);
+
+    /// <summary>How many place lookups this instance has started (icon cache misses resolved). Zero until a caller asks for a place.</summary>
+    public int PlaceRequestCount => Volatile.Read(ref _placeRequestCount);
 
     /// <summary>True once <see cref="StartTimer"/> has armed the slow timer.</summary>
     public bool TimerArmed
@@ -199,6 +219,33 @@ public sealed class AccountFactsService : IDisposable
             return false;
         }
         return TryQueue(accountId);
+    }
+
+    /// <summary>
+    /// Queue one place lookup for the icon cache. Returns true when it was queued; false for an
+    /// invalid id, a place already queued or in flight, a full queue, or a disposed service. No
+    /// account rules apply (no cookie, no age floor): the cache has already decided it is a miss.
+    /// </summary>
+    public bool EnqueuePlace(long placeId)
+    {
+        if (placeId <= 0 || _icons is null)
+        {
+            return false;
+        }
+        lock (_gate)
+        {
+            if (_disposed || !_pendingPlaces.Add(placeId))
+            {
+                return false;
+            }
+            if (!_queue.Writer.TryWrite(WorkItem.ForPlace(placeId)))
+            {
+                _pendingPlaces.Remove(placeId);
+                return false;
+            }
+        }
+        Start();
+        return true;
     }
 
     /// <summary>
@@ -294,7 +341,7 @@ public sealed class AccountFactsService : IDisposable
             {
                 return false;
             }
-            if (!_queue.Writer.TryWrite(accountId))
+            if (!_queue.Writer.TryWrite(WorkItem.ForAccount(accountId)))
             {
                 _pending.Remove(accountId);
                 return false;
@@ -327,12 +374,16 @@ public sealed class AccountFactsService : IDisposable
     {
         try
         {
-            await foreach (var id in _queue.Reader.ReadAllAsync(ct).ConfigureAwait(false))
+            await foreach (var item in _queue.Reader.ReadAllAsync(ct).ConfigureAwait(false))
             {
+                var id = item.AccountId;
                 try
                 {
                     await WaitBetweenAccountsAsync(ct).ConfigureAwait(false);
-                    if (await RefreshAsync(id, ct).ConfigureAwait(false))
+                    var requested = item.IsPlace
+                        ? await ResolvePlaceAsync(item.PlaceId, ct).ConfigureAwait(false)
+                        : await RefreshAsync(id, ct).ConfigureAwait(false);
+                    if (requested)
                     {
                         _lastRefreshEndedUtc = _time.GetUtcNow();
                     }
@@ -343,13 +394,20 @@ public sealed class AccountFactsService : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    _log.LogDebug(ex, "Facts refresh for {AccountId} threw; the lane continues.", id);
+                    _log.LogDebug(ex, "Facts work item {Item} threw; the lane continues.", item.IsPlace ? "place " + item.PlaceId : id.ToString());
                 }
                 finally
                 {
                     lock (_gate)
                     {
-                        _pending.Remove(id);
+                        if (item.IsPlace)
+                        {
+                            _pendingPlaces.Remove(item.PlaceId);
+                        }
+                        else
+                        {
+                            _pending.Remove(id);
+                        }
                     }
                 }
             }
@@ -378,6 +436,17 @@ public sealed class AccountFactsService : IDisposable
         {
             await Task.Delay(remaining, _time, ct).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>One place lookup for the icon cache. Returns true when a request went out.</summary>
+    private async Task<bool> ResolvePlaceAsync(long placeId, CancellationToken ct)
+    {
+        if (_icons is null)
+        {
+            return false;
+        }
+        Interlocked.Increment(ref _placeRequestCount);
+        return await _icons.ResolveAsync(placeId, ct).ConfigureAwait(false);
     }
 
     /// <summary>Returns true when at least one request was made (so the pacing clock should restart).</summary>
@@ -548,6 +617,14 @@ public sealed class AccountFactsService : IDisposable
         {
             _log.LogDebug(ex, "Facts: an AccountFactsUpdated subscriber threw for {AccountId}; continuing.", id);
         }
+    }
+
+    /// <summary>One queued message: an account to refresh, or a place for the icon cache to look up.</summary>
+    private readonly record struct WorkItem(Guid AccountId, long PlaceId)
+    {
+        public bool IsPlace => PlaceId > 0;
+        public static WorkItem ForAccount(Guid id) => new(id, 0);
+        public static WorkItem ForPlace(long placeId) => new(Guid.Empty, placeId);
     }
 
     private readonly record struct FetchOutcome(AccountFacts? Facts, string? Error)

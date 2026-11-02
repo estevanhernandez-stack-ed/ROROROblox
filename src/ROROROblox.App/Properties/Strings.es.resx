@@ -2643,6 +2643,9 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
   <data name="Shell_History_Yesterday" xml:space="preserve">
     <value>Ayer</value>
   </data>
+  <data name="Shell_History_FollowingAFriend" xml:space="preserve">
+    <value>Siguiendo a un amigo</value>
+  </data>
   <data name="Shell_History_Badge_Private" xml:space="preserve">
     <value>PRIVADO</value>
   </data>
