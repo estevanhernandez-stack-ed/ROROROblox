@@ -370,26 +370,28 @@ and nothing else. `HasMultipleAccounts` on `MainViewModel`, collapsing `DangerLa
 label, and the `_FollowMarked` banner clause when there is one account.
 
 **Acceptance:**
-- [ ] `MainWindowOneAccountFitsTests` (new, `[WindowRenderTheory]` at 96 and 120 DPI): `MainWindow` at
+- [x] `MainWindowOneAccountFitsTests` (new, `[WindowRenderTheory]` at 96 and 120 DPI): `MainWindow` at
       900×600 with one account and `Panel.IsExpanded = true` → the roster `ScrollViewer`'s
       `ComputedVerticalScrollBarVisibility == Collapsed`; `DangerLaunchMultiple`, `DangerSquadLaunch`
       and the batches dot not visible with one account, visible with two.
-- [ ] `AccountRowCollapsedRenderTests` still passes with the expander present (it sits on an existing
+- [x] `AccountRowCollapsedRenderTests` still passes with the expander present (it sits on an existing
       line; if the C1 mock put it elsewhere, the constant moves in this commit with the reason).
-- [ ] `AccessibleNamingFenceTests`: the expander, `NoteBox`, Open Roblox home, every entry and every
+- [x] `AccessibleNamingFenceTests`: the expander, `NoteBox`, Open Roblox home, every entry and every
       `Save` are named; floor moved in this commit; ceiling stays 1.
-- [ ] `ButtonRankFenceTests`: no new exemption; the expander passes as a styled `ToggleButton`.
-- [ ] `MainViewModelTests`: a panel entry click reaches `LaunchAccountAsync(owner, target)` with the
+- [x] `ButtonRankFenceTests`: no new exemption; the expander passes as a styled `ToggleButton`.
+- [x] `MainViewModelTests`: a panel entry click reaches `LaunchAccountAsync(owner, target)` with the
       entry's target and runs `DecideFlaggedLaunch` (a marked account's panel launch becomes a follow; an
       expired account's returns `CookieExpired`); the panel owns no launch code
       (`grep -c "RobloxLauncher" src/ROROROblox.App/ViewModels/AccountPanelViewModel.cs` → 0).
-- [ ] Drag-reorder with a panel open: the ghost bitmap is the header's size and a drop on an expanded
+- [x] Drag-reorder with a panel open: the ghost bitmap is the header's size and a drop on an expanded
       row reorders as before (manual, recorded at C2).
-- [ ] Compact mode hides the expanders and panels and restores them on exit without writing
+- [x] Compact mode hides the expanders and panels and restores them on exit without writing
       `PanelExpanded` (item 5's test still green with the XAML in place).
-- [ ] Keyboard: Tab reaches the expander, Space toggles it; the panel's entries are in the tab order
+- [x] Keyboard: Tab reaches the expander, Space toggles it; the panel's entries are in the tab order
       while open and skipped while closed.
-- [ ] Screenshot compare against the C1 panel mock, saved under `mocks/compare/`.
+- [x] Screenshot compare against the C1 panel mock, saved under `mocks/compare/`.
+
+*Built: dcb387f + f0681a1 + 19e6c87 + the orchestrator's expander fix. B1 three columns below AccountRowBorder; the expander binds its glyph (a Content trigger in a button style broke the house rule, and the test's style check passed vacuously until it required an explicit style). Fit bar: a fresh install and a light panel (3/2/1) fit at 900x600; 4+ Recent entries scroll the roster (363 vs 327), Recent caps at 8: Este's call at C2. Launch-path assertions live in AccountPanelSurfaceTests. Panel launches and Open Roblox home are on the ui-routes deny list (DangerPanelLaunch, DangerOpenRobloxHome). PARTLY, for C2: the drag-reorder walk with a panel open (a test proves the panel is a sibling below the header), the real Tab/Enter/Esc walk, the dev-build Verify walk. Remove already clips at 900 px in v1.35 (15 px with games, 64 without) and the expander adds 32: Este's call at C2. AccessibleNamingFenceTests floor 212 to 217. Suite: 3,239 unit + 3 opt-in skips; harness 27 + 1.*
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~MainWindowOneAccountFitsTests|FullyQualifiedName~AccountRowCollapsedRenderTests|FullyQualifiedName~FenceTests"`
 → all passed. Fresh profile (park `%LOCALAPPDATA%\ROROROblox` aside), dev build, Add account → the
