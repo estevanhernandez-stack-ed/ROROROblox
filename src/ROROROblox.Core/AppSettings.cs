@@ -419,6 +419,44 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<string> GetLibraryViewAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).LibraryView ?? "grid"; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetLibraryViewAsync(string? view)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            var value = string.IsNullOrWhiteSpace(view) ? "grid" : view.Trim();
+            await SaveAsync(s with { LibraryView = value }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task<string> GetLibraryFiltersAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).LibraryFilters ?? string.Empty; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetLibraryFiltersAsync(string? filters)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            var value = string.IsNullOrWhiteSpace(filters) ? string.Empty : filters.Trim();
+            await SaveAsync(s with { LibraryFilters = value }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task<bool> GetStreamerModeAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -733,5 +771,7 @@ public sealed class AppSettings : IAppSettings, IDisposable
         bool MetricAlertsEnabled = false,
         int AlertCadenceMinutes = 5,
         string AlertCadenceOverridesJson = "",
-        string AlertSound = "Chime");
+        string AlertSound = "Chime",
+        string LibraryView = "grid",
+        string LibraryFilters = "");
 }

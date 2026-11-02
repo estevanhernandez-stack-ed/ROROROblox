@@ -277,4 +277,18 @@ public interface IAppSettings
     /// </summary>
     Task<string> GetAlertSoundAsync();
     Task SetAlertSoundAsync(string? sound);
+
+    /// <summary>
+    /// The Library's layout, <c>"grid"</c> or <c>"list"</c> (v1.36). Stored as a name, never an
+    /// ordinal; the reader treats anything unrecognised as grid. Blank normalises to <c>"grid"</c>.
+    /// </summary>
+    Task<string> GetLibraryViewAsync();
+    Task SetLibraryViewAsync(string? view);
+
+    /// <summary>
+    /// The Library's kind chips as comma-separated names (<c>Recent,Favourites,PrivateServers</c>),
+    /// v1.36. Empty means none selected, which shows everything.
+    /// </summary>
+    Task<string> GetLibraryFiltersAsync();
+    Task SetLibraryFiltersAsync(string? filters);
 }

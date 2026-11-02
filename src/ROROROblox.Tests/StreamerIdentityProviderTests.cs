@@ -333,6 +333,10 @@ public class StreamerIdentityProviderTests
         public Task SetAlertCadenceOverridesJsonAsync(string? overridesJson) => throw new NotImplementedException();
         public Task<string> GetAlertSoundAsync() => throw new NotImplementedException();
         public Task SetAlertSoundAsync(string? sound) => throw new NotImplementedException();
+        public Task<string> GetLibraryViewAsync() => throw new NotImplementedException();
+        public Task SetLibraryViewAsync(string? view) => throw new NotImplementedException();
+        public Task<string> GetLibraryFiltersAsync() => throw new NotImplementedException();
+        public Task SetLibraryFiltersAsync(string? filters) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryIdentityStore : IStreamerIdentityStore

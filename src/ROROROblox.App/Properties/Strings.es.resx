@@ -219,7 +219,7 @@
     <value>Quitar predeterminado</value>
   </data>
   <data name="GamesPage_Games" xml:space="preserve">
-    <value>Juegos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
     <value>Dale a este juego un nombre personalizado que solo se muestra en RoRoRo. El nombre del lado de Roblox no se toca.</value>
@@ -408,7 +408,7 @@
     <value>Añadir una etiqueta a esta cuenta</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Añade juegos desde Herramientas → Juegos</value>
+    <value>Añade en la Biblioteca</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>añadir etiqueta</value>
@@ -495,7 +495,7 @@
     <value>Juego o servidor privado guardado en el que iniciar esta cuenta, o '(Paste a link...)' para un enlace de una sola vez.</value>
   </data>
   <data name="MainWindow_Games" xml:space="preserve">
-    <value>Juegos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="MainWindow_History" xml:space="preserve">
     <value>Historial</value>
@@ -543,7 +543,7 @@
     <value>Inicia sesión en una cuenta de Roblox y guárdala aquí. (Ctrl+N)</value>
   </data>
   <data name="MainWindow_ManageGames" xml:space="preserve">
-    <value>Gestionar juegos…</value>
+    <value>Gestionar la Biblioteca…</value>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
     <value>Silenciar alertas de Discord</value>
@@ -1302,7 +1302,7 @@
     <value>Diagnóstico</value>
   </data>
   <data name="ShellWindow_Games" xml:space="preserve">
-    <value>Juegos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="ShellWindow_History" xml:space="preserve">
     <value>Historial</value>
@@ -3244,7 +3244,7 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
     <value>Salir</value>
   </data>
   <data name="Shell_Title_Games" xml:space="preserve">
-    <value>Juegos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="Shell_Title_Settings" xml:space="preserve">
     <value>Ajustes</value>

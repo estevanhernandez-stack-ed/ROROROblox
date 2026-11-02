@@ -219,7 +219,7 @@
     <value>Standard entfernen</value>
   </data>
   <data name="GamesPage_Games" xml:space="preserve">
-    <value>Spiele</value>
+    <value>Bibliothek</value>
   </data>
   <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
     <value>Gib diesem Spiel einen eigenen Namen, der nur in RoRoRo angezeigt wird. Der Roblox-seitige Name bleibt unberührt.</value>
@@ -408,7 +408,7 @@
     <value>Diesem Konto einen Tag hinzufügen</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Spiele über Werkzeuge → Spiele hinzufügen</value>
+    <value>In der Bibliothek hinzufügen</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>Tag hinzufügen</value>
@@ -495,7 +495,7 @@
     <value>Spiel oder gespeicherter privater Server, in den dieses Konto gestartet wird, oder ‚(Paste a link...)‘ für einen einmaligen Link.</value>
   </data>
   <data name="MainWindow_Games" xml:space="preserve">
-    <value>Spiele</value>
+    <value>Bibliothek</value>
   </data>
   <data name="MainWindow_History" xml:space="preserve">
     <value>Verlauf</value>
@@ -543,7 +543,7 @@
     <value>Melde dich bei einem Roblox-Konto an und speichere es hier. (Ctrl+N)</value>
   </data>
   <data name="MainWindow_ManageGames" xml:space="preserve">
-    <value>Spiele verwalten…</value>
+    <value>Bibliothek verwalten…</value>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
     <value>Discord-Benachrichtigungen stummschalten</value>
@@ -1302,7 +1302,7 @@
     <value>Diagnose</value>
   </data>
   <data name="ShellWindow_Games" xml:space="preserve">
-    <value>Spiele</value>
+    <value>Bibliothek</value>
   </data>
   <data name="ShellWindow_History" xml:space="preserve">
     <value>Verlauf</value>
@@ -3244,7 +3244,7 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
     <value>Beenden</value>
   </data>
   <data name="Shell_Title_Games" xml:space="preserve">
-    <value>Spiele</value>
+    <value>Bibliothek</value>
   </data>
   <data name="Shell_Title_Settings" xml:space="preserve">
     <value>Einstellungen</value>

@@ -2158,6 +2158,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// The Library's Play / Play as seam: launches the account with this id into <paramref name="target"/>
+    /// through the one launch path. Reads <see cref="AccountsSnapshot"/>, so it is safe off the UI thread;
+    /// an id that no longer resolves to a row (the account was removed) is a quiet no-op.
+    /// </summary>
+    internal Task LaunchAccountByIdAsync(Guid accountId, LaunchTarget target)
+        => AccountsSnapshot.FirstOrDefault(a => a.Id == accountId) is { } row
+            ? LaunchAccountAsync(row, overrideTarget: target)
+            : Task.CompletedTask;
+
+    /// <summary>
     /// One-click remedy for the tray memory warning (Task 8): stop the account's client and
     /// relaunch into the SAME <see cref="LaunchTarget"/> it was running, via <see cref="AccountRecycler"/>.
     /// Process exit is the only guaranteed reclaim of Roblox's leaked memory on Windows — this is

@@ -451,6 +451,59 @@ T: dict[str, dict[str, str]] = {
         "pt-BR": "Este servidor privado não está salvo, então não dá para reiniciá-lo daqui. Salve o link dele na Biblioteca.",
         "ru": "Этот приватный сервер не сохранён, поэтому запустить его отсюда снова нельзя. Сохраните его ссылку в Библиотеке.",
     },
+    # ---- item 8: the Library rename (VALUES of existing keys change; keys keep their names) -----
+    # Word per culture is the one item 7's Shell_Panel_Empty_* lines already use: Bibliothek,
+    # Biblioteca, Bibliotheque, Biblioteka, Biblioteca, Biblioteka (ru: Biblioteka in Cyrillic).
+    "ShellWindow_Games": {
+        "de": "Bibliothek",
+        "es": "Biblioteca",
+        "fr": "Bibliothèque",
+        "pl": "Biblioteka",
+        "pt-BR": "Biblioteca",
+        "ru": "Библиотека",
+    },
+    "Shell_Title_Games": {
+        "de": "Bibliothek",
+        "es": "Biblioteca",
+        "fr": "Bibliothèque",
+        "pl": "Biblioteka",
+        "pt-BR": "Biblioteca",
+        "ru": "Библиотека",
+    },
+    "MainWindow_Games": {
+        "de": "Bibliothek",
+        "es": "Biblioteca",
+        "fr": "Bibliothèque",
+        "pl": "Biblioteka",
+        "pt-BR": "Biblioteca",
+        "ru": "Библиотека",
+    },
+    "GamesPage_Games": {
+        "de": "Bibliothek",
+        "es": "Biblioteca",
+        "fr": "Bibliothèque",
+        "pl": "Biblioteka",
+        "pt-BR": "Biblioteca",
+        "ru": "Библиотека",
+    },
+    "MainWindow_ManageGames": {
+        "de": "Bibliothek verwalten…",
+        "es": "Gestionar la Biblioteca…",
+        "fr": "Gérer la Bibliothèque…",
+        "pl": "Zarządzaj Biblioteką…",
+        "pt-BR": "Gerenciar a Biblioteca…",
+        "ru": "Управление Библиотекой…",
+    },
+    # The games-box placeholder on the account row. The empty box grows to fit it, so it is kept as
+    # short as the meaning allows in every language.
+    "MainWindow_AddGamesFromToolsGames": {
+        "de": "In der Bibliothek hinzufügen",
+        "es": "Añade en la Biblioteca",
+        "fr": "Ajoutez via la Bibliothèque",
+        "pl": "Dodaj w Bibliotece",
+        "pt-BR": "Adicione na Biblioteca",
+        "ru": "Добавьте через Библиотеку",
+    },
 }
 
 

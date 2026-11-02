@@ -219,7 +219,7 @@
     <value>Limpar padrão</value>
   </data>
   <data name="GamesPage_Games" xml:space="preserve">
-    <value>Jogos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
     <value>Dê a este jogo um nome personalizado exibido apenas no RoRoRo. O nome do lado do Roblox permanece intocado.</value>
@@ -408,7 +408,7 @@
     <value>Adicionar uma etiqueta a esta conta</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Adicione jogos em Ferramentas → Jogos</value>
+    <value>Adicione na Biblioteca</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>adicionar etiqueta</value>
@@ -495,7 +495,7 @@
     <value>Jogo ou servidor privado salvo para iniciar esta conta, ou '(Paste a link...)' para um link único.</value>
   </data>
   <data name="MainWindow_Games" xml:space="preserve">
-    <value>Jogos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="MainWindow_History" xml:space="preserve">
     <value>Histórico</value>
@@ -543,7 +543,7 @@
     <value>Entre em uma conta do Roblox e salve-a aqui. (Ctrl+N)</value>
   </data>
   <data name="MainWindow_ManageGames" xml:space="preserve">
-    <value>Gerenciar jogos…</value>
+    <value>Gerenciar a Biblioteca…</value>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
     <value>Silenciar alertas do Discord</value>
@@ -1302,7 +1302,7 @@
     <value>Diagnóstico</value>
   </data>
   <data name="ShellWindow_Games" xml:space="preserve">
-    <value>Jogos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="ShellWindow_History" xml:space="preserve">
     <value>Histórico</value>
@@ -3244,7 +3244,7 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
     <value>Sair</value>
   </data>
   <data name="Shell_Title_Games" xml:space="preserve">
-    <value>Jogos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="Shell_Title_Settings" xml:space="preserve">
     <value>Configurações</value>

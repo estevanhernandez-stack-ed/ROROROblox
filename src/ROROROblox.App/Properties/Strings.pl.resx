@@ -219,7 +219,7 @@
     <value>Wyczyść domyślną</value>
   </data>
   <data name="GamesPage_Games" xml:space="preserve">
-    <value>Gry</value>
+    <value>Biblioteka</value>
   </data>
   <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
     <value>Nadaj tej grze własną nazwę widoczną tylko w RoRoRo. Nazwa po stronie Roblox pozostaje nietknięta.</value>
@@ -408,7 +408,7 @@
     <value>Dodaj etykietę do tego konta</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Dodaj gry z Narzędzia → Gry</value>
+    <value>Dodaj w Bibliotece</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>dodaj etykietę</value>
@@ -495,7 +495,7 @@
     <value>Gra lub zapisany serwer prywatny, na który uruchomić to konto, albo '(Paste a link...)' dla jednorazowego linku.</value>
   </data>
   <data name="MainWindow_Games" xml:space="preserve">
-    <value>Gry</value>
+    <value>Biblioteka</value>
   </data>
   <data name="MainWindow_History" xml:space="preserve">
     <value>Historia</value>
@@ -543,7 +543,7 @@
     <value>Zaloguj się na konto Roblox i zapisz je tutaj. (Ctrl+N)</value>
   </data>
   <data name="MainWindow_ManageGames" xml:space="preserve">
-    <value>Zarządzaj grami…</value>
+    <value>Zarządzaj Biblioteką…</value>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
     <value>Wycisz alerty Discord</value>
@@ -1302,7 +1302,7 @@
     <value>Diagnostyka</value>
   </data>
   <data name="ShellWindow_Games" xml:space="preserve">
-    <value>Gry</value>
+    <value>Biblioteka</value>
   </data>
   <data name="ShellWindow_History" xml:space="preserve">
     <value>Historia</value>
@@ -3244,7 +3244,7 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
     <value>Zakończ</value>
   </data>
   <data name="Shell_Title_Games" xml:space="preserve">
-    <value>Gry</value>
+    <value>Biblioteka</value>
   </data>
   <data name="Shell_Title_Settings" xml:space="preserve">
     <value>Ustawienia</value>

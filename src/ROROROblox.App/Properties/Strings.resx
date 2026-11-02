@@ -286,7 +286,7 @@
     <comment>src/ROROROblox.App/Games/GamesPage.xaml:149 xaml-text</comment>
   </data>
   <data name="GamesPage_Games" xml:space="preserve">
-    <value>Games</value>
+    <value>Library</value>
     <comment>src/ROROROblox.App/Games/GamesPage.xaml:302 xaml-text</comment>
   </data>
   <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
@@ -538,7 +538,7 @@
     <comment>src/ROROROblox.App/MainWindow.xaml:736 aria-label</comment>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Add games from Tools → Games</value>
+    <value>Add in the Library</value>
     <comment>src/ROROROblox.App/MainWindow.xaml:893 xaml-text</comment>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
@@ -654,7 +654,7 @@
     <comment>src/ROROROblox.App/MainWindow.xaml:853 title</comment>
   </data>
   <data name="MainWindow_Games" xml:space="preserve">
-    <value>Games</value>
+    <value>Library</value>
     <comment>duplicate value; key kept addressable for x:Static</comment>
   </data>
   <data name="MainWindow_History" xml:space="preserve">
@@ -718,7 +718,7 @@
     <comment>src/ROROROblox.App/MainWindow.xaml:1092 title</comment>
   </data>
   <data name="MainWindow_ManageGames" xml:space="preserve">
-    <value>Manage games…</value>
+    <value>Manage Library…</value>
     <comment>src/ROROROblox.App/MainWindow.xaml:1337 xaml-text</comment>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
@@ -1730,7 +1730,7 @@
     <comment>duplicate value; key kept addressable for x:Static</comment>
   </data>
   <data name="ShellWindow_Games" xml:space="preserve">
-    <value>Games</value>
+    <value>Library</value>
     <comment>duplicate value; key kept addressable for x:Static</comment>
   </data>
   <data name="ShellWindow_History" xml:space="preserve">
@@ -2855,7 +2855,7 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Tray_Plugins" xml:space="preserve"><value>Plugins...</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
   <data name="Tray_OpenLogs" xml:space="preserve"><value>Open log folder</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
   <data name="Tray_Quit" xml:space="preserve"><value>Quit</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
-  <data name="Shell_Title_Games" xml:space="preserve"><value>Games</value><comment>Shell window title, Games page (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Shell_Title_Games" xml:space="preserve"><value>Library</value><comment>Shell window title, Games page (localized Phase D step 3 batch 14)</comment></data>
   <data name="Shell_Title_Settings" xml:space="preserve"><value>Settings</value><comment>Shell window title, Settings page (localized Phase D step 3 batch 14)</comment></data>
   <data name="Shell_Title_History" xml:space="preserve"><value>History</value><comment>Shell window title, History page (localized Phase D step 3 batch 14)</comment></data>
   <data name="Shell_Title_Diagnostics" xml:space="preserve"><value>Diagnostics</value><comment>Shell window title, Diagnostics page (localized Phase D step 3 batch 14)</comment></data>

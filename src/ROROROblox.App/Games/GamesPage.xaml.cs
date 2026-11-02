@@ -28,9 +28,16 @@ internal partial class GamesPage : UserControl
     // reaches the main window without waiting for anything to close (F-013).
     private readonly Action? _libraryChanged;
 
+    /// <summary>
+    /// Launches an account by id into a target (<c>MainViewModel.LaunchAccountByIdAsync</c>). Handed in
+    /// by the composition root in v1.36 item 8; item 9's Play and Play as read it.
+    /// </summary>
+    internal Func<Guid, LaunchTarget, Task>? LaunchAccount { get; }
+
     public GamesPage(IFavoriteGameStore favorites, IPrivateServerStore servers, IRobloxApi api,
-        Action? libraryChanged = null)
+        Action? libraryChanged = null, Func<Guid, LaunchTarget, Task>? launchAccount = null)
     {
+        LaunchAccount = launchAccount;
         _favorites = favorites;
         _servers = servers;
         _api = api;

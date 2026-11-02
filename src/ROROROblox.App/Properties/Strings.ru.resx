@@ -219,7 +219,7 @@
     <value>Снять по умолчанию</value>
   </data>
   <data name="GamesPage_Games" xml:space="preserve">
-    <value>Игры</value>
+    <value>Библиотека</value>
   </data>
   <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
     <value>Задайте этой игре своё имя, видимое только в RoRoRo. Название на стороне Roblox останется прежним.</value>
@@ -408,7 +408,7 @@
     <value>Добавить метку этому аккаунту</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Добавьте игры через «Инструменты → Игры»</value>
+    <value>Добавьте через Библиотеку</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>добавить метку</value>
@@ -495,7 +495,7 @@
     <value>Игра или сохранённый приватный сервер, на который запустить этот аккаунт, либо «(Paste a link...)» для разовой ссылки.</value>
   </data>
   <data name="MainWindow_Games" xml:space="preserve">
-    <value>Игры</value>
+    <value>Библиотека</value>
   </data>
   <data name="MainWindow_History" xml:space="preserve">
     <value>История</value>
@@ -543,7 +543,7 @@
     <value>Войдите в аккаунт Roblox и сохраните его здесь. (Ctrl+N)</value>
   </data>
   <data name="MainWindow_ManageGames" xml:space="preserve">
-    <value>Управление играми…</value>
+    <value>Управление Библиотекой…</value>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
     <value>Отключить оповещения Discord</value>
@@ -1302,7 +1302,7 @@
     <value>Диагностика</value>
   </data>
   <data name="ShellWindow_Games" xml:space="preserve">
-    <value>Игры</value>
+    <value>Библиотека</value>
   </data>
   <data name="ShellWindow_History" xml:space="preserve">
     <value>История</value>
@@ -3244,7 +3244,7 @@ RoRoRo спрашивает про обводку кнопок только дл
     <value>Выйти</value>
   </data>
   <data name="Shell_Title_Games" xml:space="preserve">
-    <value>Игры</value>
+    <value>Библиотека</value>
   </data>
   <data name="Shell_Title_Settings" xml:space="preserve">
     <value>Настройки</value>

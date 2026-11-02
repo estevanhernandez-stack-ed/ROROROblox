@@ -1717,7 +1717,8 @@ public partial class App : Application
                 _services.GetRequiredService<IPrivateServerStore>(),
                 _services.GetRequiredService<IRobloxApi>(),
                 // The refresh the modal did on close, now done when the data changes.
-                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync()),
+                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync(),
+                launchAccount: (accountId, target) => _services.GetRequiredService<MainViewModel>().LaunchAccountByIdAsync(accountId, target)),
             Shell.ShellPage.Settings => BuildSettingsPage(),
             Shell.ShellPage.History => new History.SessionHistoryPage(
                 _services.GetRequiredService<ISessionHistoryStore>(),

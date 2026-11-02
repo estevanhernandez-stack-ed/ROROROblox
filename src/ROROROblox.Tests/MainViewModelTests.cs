@@ -1920,6 +1920,13 @@ public class MainViewModelTests
             AlertSound = sound ?? string.Empty;
             return Task.CompletedTask;
         }
+
+        public string LibraryView { get; set; } = "grid";
+        public Task<string> GetLibraryViewAsync() => Task.FromResult(LibraryView);
+        public Task SetLibraryViewAsync(string? view) { LibraryView = string.IsNullOrWhiteSpace(view) ? "grid" : view; return Task.CompletedTask; }
+        public string LibraryFilters { get; set; } = string.Empty;
+        public Task<string> GetLibraryFiltersAsync() => Task.FromResult(LibraryFilters);
+        public Task SetLibraryFiltersAsync(string? filters) { LibraryFilters = filters ?? string.Empty; return Task.CompletedTask; }
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore
