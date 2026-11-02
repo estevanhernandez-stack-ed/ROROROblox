@@ -1326,6 +1326,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // Open state: the persisted choice, else the main's panel, else (no main) the first row's.
             var firstRow = Accounts.Any(a => a.IsMain) ? null : Accounts.FirstOrDefault();
             foreach (var row in Accounts) row.Panel?.ResolveExpanded(row.IsMain || ReferenceEquals(row, firstRow));
+            await PrimeLastPlayedAsync();
         }
         catch (AccountStoreCorruptException)
         {
@@ -3423,6 +3424,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var panel = AccountsSnapshot.FirstOrDefault(a => a.Id == accountId)?.Panel;
         if (panel is not null) await panel.RefreshAsync();
     }
+
+    /// <summary>One local history read at load: every row's last played, with no collections, facts or icons (disk only).</summary>
+    private async Task PrimeLastPlayedAsync()
+    {
+        try
+        {
+            var history = await _sessionHistory.ListAsync();
+            _ui.Invoke(() => { foreach (var a in Accounts) a.Panel?.PrimeLastPlayed(history); });
+        }
+        catch (Exception ex) { _log.LogDebug(ex, "Priming last played threw; rows fill in on first refresh."); }
+    }
+
+    /// <summary>Startup, after the id backfill: panels that resolved open at load ask for their icons now (network lane).</summary>
+    public void RequestIconsForOpenPanels()
+        => _ui.Invoke(() => { foreach (var a in Accounts) if (a.Panel is { IsExpanded: true } p) _ = p.RefreshAsync(); });
 
     private async Task PersistPanelExpandedAsync(Guid accountId, bool open)
     {

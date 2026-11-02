@@ -43,7 +43,8 @@ public class MainViewModelTests
         Microsoft.Extensions.Logging.ILogger<MainViewModel>? log = null,
         AccountFactsService? factsService = null,
         AccountUserIdBackfillService? userIdBackfill = null,
-        string? accountStorePath = null)
+        string? accountStorePath = null,
+        IGameIconCache? gameIcons = null)
     {
         var path = accountStorePath ?? Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -81,7 +82,8 @@ public class MainViewModelTests
             uiDispatcher: uiDispatcher,
             log: log,
             factsService: factsService,
-            userIdBackfill: userIdBackfill);
+            userIdBackfill: userIdBackfill,
+            gameIcons: gameIcons);
 
         // MainViewModel never disposes the window decorator (App.xaml.cs's DI container owns
         // that lifetime in production); its ctor starts a real 1.5s reapply Timer that would
@@ -2526,6 +2528,107 @@ public class MainViewModelTests
         {
             if (File.Exists(path)) File.Delete(path);
             if (File.Exists(factsPath)) File.Delete(factsPath);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    private sealed class ProbeIcons : IGameIconCache
+    {
+        public readonly List<long> Requested = new();
+        public event EventHandler<GameIconResolvedEventArgs>? IconResolved { add { } remove { } }
+        public GameIconInfo? TryGet(long placeId) => null;
+        public bool Request(long placeId) { Requested.Add(placeId); return true; }
+        public Task<bool> ResolveAsync(long placeId, CancellationToken ct = default) => Task.FromResult(false);
+        public void AttachQueue(Func<long, bool> enqueue) { }
+    }
+
+    private sealed class CountingHistory(Func<IReadOnlyList<LaunchSession>> rows) : ISessionHistoryStore
+    {
+        public int ListCalls;
+        public Task<IReadOnlyList<LaunchSession>> ListAsync() { Interlocked.Increment(ref ListCalls); return Task.FromResult(rows()); }
+        public Task AddAsync(LaunchSession session) => throw new NotImplementedException();
+        public Task MarkEndedAsync(Guid sessionId, DateTimeOffset endedAtUtc, string? outcomeHint = null) => throw new NotImplementedException();
+        public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint) => throw new NotImplementedException();
+        public Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId) => throw new NotImplementedException();
+        public Task ClearAsync() => throw new NotImplementedException();
+    }
+
+    [Fact]
+    public async Task AtLoad_EveryRowShowsLastPlayed_FromOneHistoryRead_AndAsksForNoFactsOrIcons()
+    {
+        var factsPath = Path.Combine(Path.GetTempPath(), $"rororo-prime-facts-{Guid.NewGuid():N}.dat");
+        using var factsStore = new AccountStore(factsPath);
+        var api = new FactsApiStub();
+        using var service = new AccountFactsService(factsStore, api, () => [], interAccountDelayMs: 0);
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-prime-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        var icons = new ProbeIcons();
+        var rows = new List<LaunchSession>();
+        var history = new CountingHistory(() => rows);
+        var (vm, store, _, path) = Build(factsService: service, favorites: favorites, sessionHistory: history, gameIcons: icons);
+        try
+        {
+            await SeedAsync(store, 3);
+            foreach (var a in await store.ListAsync())
+            {
+                rows.Add(new LaunchSession(Guid.NewGuid(), a.Id, a.DisplayName, null, "Pet Sim 99", 8737899170, false,
+                    DateTimeOffset.UtcNow.AddHours(-2), DateTimeOffset.UtcNow.AddHours(-1), null));
+            }
+
+            await LoadRowsAsync(vm);
+            service.Start();
+            await Task.Delay(100);
+
+            Assert.Equal(3, vm.Accounts.Count);
+            Assert.All(vm.Accounts, a => Assert.StartsWith("Pet Sim 99 \u00b7 ", a.LastPlayedText));
+            // The prime is ONE read for all three rows; the main's open panel adds one read for its own Recent.
+            Assert.True(history.ListCalls <= 2, $"history read {history.ListCalls} times");
+            Assert.Empty(icons.Requested);
+            Assert.Equal(0, service.RequestCount);
+            Assert.Equal(0, api.CallCount);
+            Assert.All(vm.Accounts.Where(a => !a.IsMain), a => Assert.Empty(a.Panel!.Recent)); // collapsed panels build nothing
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(factsPath)) File.Delete(factsPath);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    [Fact]
+    public async Task OpenPanelsAskForIcons_OnlyWhenStartupSaysSo_AfterTheBackfill()
+    {
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-icons-fav-{Guid.NewGuid():N}.json");
+        using var favorites = new FavoriteGameStore(favoritesPath);
+        var icons = new ProbeIcons();
+        var rows = new List<LaunchSession>();
+        var history = new CountingHistory(() => rows);
+        var (vm, store, _, path) = Build(favorites: favorites, sessionHistory: history, gameIcons: icons);
+        try
+        {
+            await SeedAsync(store, 2);
+            var main = (await store.ListAsync()).Single(a => a.IsMain);
+            rows.Add(new LaunchSession(Guid.NewGuid(), main.Id, main.DisplayName, null, "Unsaved game", 555, false,
+                DateTimeOffset.UtcNow.AddHours(-2), DateTimeOffset.UtcNow.AddHours(-1), null));
+
+            await LoadRowsAsync(vm);
+            await WaitForAsync(() => Task.FromResult(vm.Accounts.Single(a => a.IsMain).Panel!.Recent.Count == 1));
+            Assert.Empty(icons.Requested); // load, the open main panel and the prime: no icon
+
+            vm.RequestIconsForOpenPanels();
+
+            Assert.Equal(new long[] { 555 }, icons.Requested.ToArray());
+            // And the startup call sits after the backfill in source, beside StartTimer.
+            var root = XamlStyleScanner.FindRepoRoot()!;
+            var app = File.ReadAllText(Path.Combine(root, "src", "ROROROblox.App", "App.xaml.cs"));
+            var run = app.IndexOf("await backfill.RunAsync()", StringComparison.Ordinal);
+            var call = app.IndexOf("RequestIconsForOpenPanels()", StringComparison.Ordinal);
+            Assert.True(run > 0 && call > run, "RequestIconsForOpenPanels must come after the backfill completes");
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
             if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
         }
     }

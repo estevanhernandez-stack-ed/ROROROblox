@@ -948,6 +948,8 @@ public partial class App : Application
             // its first tick is a full TimerTick (60 s) from here. Nothing about facts runs before
             // this line except a user's own panel expand.
             _services.GetRequiredService<AccountFactsService>().StartTimer();
+            // Panels that resolved open at load asked for no icon then (it is a network lane); now is the time.
+            _services.GetRequiredService<MainViewModel>().RequestIconsForOpenPanels();
         }
         catch (Exception ex)
         {

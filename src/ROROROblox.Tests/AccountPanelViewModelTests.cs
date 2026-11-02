@@ -226,6 +226,79 @@ public class AccountPanelViewModelTests
         Assert.IsType<LaunchTarget.Home>(p.HomeTarget);
     }
 
+    // ------------------------------------------------------------------ unsaved private servers
+
+    [Fact]
+    public async Task AnUnsavedPrivateServerEntry_CannotLaunch_AndReachesTheLaunchDelegateZeroTimes()
+    {
+        var h = new Harness();
+        var o = Owner();
+        var gone = Guid.NewGuid(); // a server the user deleted: no code to rejoin with
+        h.Library.Add(Fav(9, "Public favourite of the same place"));
+        h.History.Add(Row(o.Id, 9, "Clan", Now.AddHours(-1), server: gone));
+        h.History.Add(Row(o.Id, 9, "Clan legacy", Now.AddHours(-2), isPrivate: true)); // pre-field row, no server id
+        var p = h.Panel(o);
+        await p.RefreshAsync();
+
+        Assert.Equal(2, p.Recent.Count);
+        Assert.All(p.Recent, e =>
+        {
+            Assert.False(e.CanLaunch);
+            Assert.False(e.IsSaved);
+        });
+        foreach (var e in p.Recent)
+        {
+            await p.LaunchAsync(e);
+            Assert.False(p.LaunchCommand.CanExecute(e));
+            p.LaunchCommand.Execute(e);
+            await p.SaveAsync(e);
+            Assert.False(p.SaveCommand.CanExecute(e));
+        }
+        Assert.Empty(h.Launched);
+        Assert.Empty(h.Favorites.Added);
+        Assert.Equal(0, h.Icons.ResolveCalls);
+    }
+
+    [Fact]
+    public async Task ASavedServerEntry_LaunchesWithItsPrivateServerTarget()
+    {
+        var h = new Harness();
+        var o = Owner();
+        var sid = Guid.NewGuid();
+        h.Library.Add(Server(sid, 9, "Clan"));
+        h.History.Add(Row(o.Id, 9, "Clan", Now.AddHours(-1), server: sid));
+        var p = h.Panel(o);
+        await p.RefreshAsync();
+
+        var e = Assert.Single(p.Recent);
+        Assert.True(e.CanLaunch);
+        Assert.True(e.IsSaved);
+        await p.LaunchAsync(e);
+
+        Assert.Equal(new LaunchTarget.PrivateServer(9, "FAKE-CODE", PrivateServerCodeKind.AccessCode), Assert.Single(h.Launched));
+    }
+
+    [Fact]
+    public void PrimeLastPlayed_SetsOnlyTheNewestRowWithAPlace_AndBuildsNothingElse()
+    {
+        var h = new Harness();
+        var o = Owner();
+        var history = new List<LaunchSession>
+        {
+            Row(o.Id, 1, "Old", Now.AddHours(-5)),
+            Row(o.Id, 2, "New", Now.AddHours(-1)),
+            Row(Guid.NewGuid(), 3, "Other", Now),
+        };
+        var p = h.Panel(o);
+
+        p.PrimeLastPlayed(history);
+
+        Assert.Equal("New", p.LastPlayed!.Name);
+        Assert.Empty(p.Recent);
+        Assert.Equal(0, h.FactsRequests);
+        Assert.Empty(h.Icons.Requested);
+    }
+
     // ------------------------------------------------------------------ save
 
     [Fact]

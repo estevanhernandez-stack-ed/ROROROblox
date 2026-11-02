@@ -14,7 +14,8 @@ namespace ROROROblox.App.ViewModels;
 /// <param name="LastPlayedUtc">When this account last launched it. Null if it never did.</param>
 /// <param name="TotalPlayed">Sum of this account's session durations over the history window ("in recent sessions"). Null if none ended.</param>
 /// <param name="IsSaved">True when the place or server is in the Library (a favourite or a saved private server).</param>
-public sealed record PanelEntry(LibraryEntry Entry, DateTimeOffset? LastPlayedUtc, TimeSpan? TotalPlayed, bool IsSaved);
+/// <param name="CanLaunch">False for a Recent private-server group with no saved server behind it: the history row has no access code, and launching its place would join the PUBLIC game.</param>
+public sealed record PanelEntry(LibraryEntry Entry, DateTimeOffset? LastPlayedUtc, TimeSpan? TotalPlayed, bool IsSaved, bool CanLaunch = true);
 
 /// <summary>This account's most recent session with a place: the name to show and when it started.</summary>
 public sealed record PanelLastPlayed(string? Name, DateTimeOffset AtUtc);
@@ -76,9 +77,9 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         _icons = icons;
         _favorites = favorites;
         _ui = ui;
-        LaunchCommand = new RelayCommand(p => p is PanelEntry e ? LaunchAsync(e) : Task.CompletedTask);
+        LaunchCommand = new RelayCommand(p => p is PanelEntry e ? LaunchAsync(e) : Task.CompletedTask, p => p is PanelEntry { CanLaunch: true });
         OpenHomeCommand = new RelayCommand(() => _launch(HomeTarget));
-        SaveCommand = new RelayCommand(p => p is PanelEntry e ? SaveAsync(e) : Task.CompletedTask);
+        SaveCommand = new RelayCommand(p => p is PanelEntry e ? SaveAsync(e) : Task.CompletedTask, p => p is PanelEntry { IsSaved: false, CanLaunch: true });
     }
 
     public ObservableCollection<PanelEntry> Recent { get; } = new();
@@ -172,7 +173,21 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
     }
 
     /// <summary>Every click on an entry lands here: the main view model's launch path, with its guards.</summary>
-    public Task LaunchAsync(PanelEntry entry) => _launch(entry.Entry.Target);
+    public Task LaunchAsync(PanelEntry entry) => entry.CanLaunch ? _launch(entry.Entry.Target) : Task.CompletedTask;
+
+    /// <summary>
+    /// Set <see cref="LastPlayed"/> from an already-read history list (the load-time prime: one disk
+    /// read for every row, no collections built, no facts, no icons). Never overwrites a value a
+    /// fuller refresh already set.
+    /// </summary>
+    public void PrimeLastPlayed(IReadOnlyList<LaunchSession> history)
+    {
+        if (_lastPlayed is not null) return;
+        var row = history.Where(r => r.AccountId == _owner.Id && (r.PlaceId is not null || r.IsPrivateServer))
+                         .OrderByDescending(r => r.LaunchedAtUtc).FirstOrDefault();
+        if (row is null) return;
+        Marshal(() => LastPlayed ??= new PanelLastPlayed(string.IsNullOrWhiteSpace(row.GameName) ? null : row.GameName, row.LaunchedAtUtc));
+    }
 
     /// <summary>
     /// Save an unsaved Recent place to the Library. Uses the cache's universe id; when the cache has
@@ -181,7 +196,7 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
     /// </summary>
     public async Task SaveAsync(PanelEntry entry)
     {
-        if (entry.IsSaved || _favorites is null || _icons is null) return;
+        if (entry.IsSaved || !entry.CanLaunch || _favorites is null || _icons is null) return;
         var placeId = entry.Entry.PlaceId;
         try
         {
@@ -244,6 +259,7 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         LibraryEntry? SavedFor(LaunchSession r)
         {
             if (r.PrivateServerId is { } sid) return servers.FirstOrDefault(s => s.PrivateServerId == sid);
+            if (r.IsPrivateServer) return null; // a legacy private row must not match the public favourite of the same place
             return r.PlaceId is { } p ? favs.FirstOrDefault(f => f.PlaceId == p) : null;
         }
 
@@ -259,7 +275,9 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
             var placeId = latest.PlaceId!.Value;
             var saved = SavedFor(latest);
             var entry = saved ?? Synthesize(latest, placeId);
-            recent.Add(new PanelEntry(entry, latest.LaunchedAtUtc, TotalOf(g), saved is not null || _savedHere.Contains(placeId)));
+            var unsavedPrivate = saved is null && latest.IsPrivateServer; // Favourites cannot hold a private server
+            recent.Add(new PanelEntry(entry, latest.LaunchedAtUtc, TotalOf(g),
+                IsSaved: saved is not null || (!unsavedPrivate && _savedHere.Contains(placeId)), CanLaunch: !unsavedPrivate));
         }
 
         var favourites = favs.Select(f =>
