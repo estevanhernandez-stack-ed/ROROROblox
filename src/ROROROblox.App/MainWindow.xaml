@@ -641,7 +641,65 @@
                             </TextBlock>
                         </StackPanel>
 
-                        <!-- Follow strip — "Follow:" label + chips of OTHER accounts. Click a chip to
+                        <!-- v1.36 facts line (A1, picked 2026-11-02): its own line under the status line, inside this
+             column. Collapsed, not Hidden, when it has nothing to say, so an account with no facts, no
+             history and no note renders exactly as it did in v1.35. Last played comes from local
+             history and counts as something to say; the age hint alone never opens the line. Each
+             badge shows only when its own fact is known (the dash and "unknown" live on the
+             summary for the accessible name). Robux, membership and friends online read "••••"
+             under streamer mode and the note is hidden; last played and the age are not masked.
+             The panel WRAPS rather than clips (F-119 precedent, the Follow strip below): at the declared
+             900 px the name column is about 160 px wide, and a clipped line silently drops last played,
+             the note and the age hint. A line that wraps costs height only when there is a lot to say.
+             Membership is built but collapsed whenever membership is not a membership: the probes
+             have not run. -->
+        <WrapPanel Orientation="Horizontal" Margin="0,4,0,0"
+                    Visibility="{Binding HasFactsLine, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Style="{StaticResource FactBadgeStyle}"
+                    AutomationProperties.Name="{Binding RobuxAccessibleName}"
+                    Visibility="{Binding ShowRobuxBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="{Binding RobuxText}" />
+            </Border>
+            <Border Style="{StaticResource FactBadgeStyle}"
+                    AutomationProperties.Name="{Binding MembershipAccessibleName}"
+                    Visibility="{Binding ShowMembershipBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="{Binding MembershipText}" />
+            </Border>
+            <Border Style="{StaticResource FactBadgeStyle}"
+                    AutomationProperties.Name="{Binding FriendsOnlineAccessibleName}"
+                    Visibility="{Binding ShowFriendsOnlineBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="{Binding FriendsOnlineText}" />
+            </Border>
+            <Border Style="{StaticResource FactBadgeStyle}"
+                    AutomationProperties.Name="{Binding LastPlayedAccessibleName}"
+                    Visibility="{Binding ShowLastPlayedBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="{Binding LastPlayedText}" TextTrimming="CharacterEllipsis" />
+            </Border>
+            <Border Style="{StaticResource FactBadgeStyle}"
+                    AutomationProperties.Name="{Binding NoteAccessibleName}"
+                    Visibility="{Binding ShowNoteBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="{Binding NoteFirstLine}" MaxWidth="240"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource MutedTextBrush}" />
+            </Border>
+            <TextBlock Text="{Binding FactsAgeText}" Margin="0,0,0,3" TextWrapping="Wrap"
+                       FontSize="{DynamicResource MetaFontSize}"
+                       VerticalAlignment="Center"
+                       Visibility="{Binding ShowFactsAge, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding FactsFailed}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </WrapPanel>
+
+        <!-- Follow strip — "Follow:" label + chips of OTHER accounts. Click a chip to
                              launch THIS row's account into that account's current Roblox server
                              (LaunchTarget.FollowFriend). Self-chip hides via EqualsToCollapseConverter
                              on Id. Whole strip (label + chips) collapses when there's nothing to

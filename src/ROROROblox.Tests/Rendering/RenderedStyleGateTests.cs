@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -162,6 +162,12 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
             // own comment records). No fill, no boundary, so 1.4.11 has no subject; the WhiteBrush
             // label is the app's standard text pair.
             "NavItemStyle",
+            // FactBadgeStyle (v1.36 item 6) is a Border drawing a thin outlined pill around a TextBlock:
+            // decoration, the CardBorderStyle role. The outline is DividerBrush on purpose (a separator,
+            // which 1.4.11 does not govern; InteractiveEdgeBindingTests forbids the derived edge on a
+            // decorative type), and the label is WhiteBrush or MutedTextBrush on the row, already
+            // measured by the text pairs. It is not interactive and has no fill to sample.
+            "FactBadgeStyle",
         ];
 
     /// <summary>The two fills the input styles' own comment names, in the order it names them.</summary>
@@ -671,6 +677,16 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
                     Assert.True(c.Authored.SentinelLeaked,
                         $"{c.Label}: the host no longer shows through, so this TextBlock now paints a "
                         + "fill of its own. It is excluded on the grounds that it has none — "
+                        + "re-classify it into FullyMeasured.");
+                    break;
+
+                case "FactBadgeStyle":
+                    // A decorative pill: an outline and a label, no fill of its own. The host showing
+                    // through in bulk IS that statement, measured. A badge that started painting a
+                    // background would stop leaking and would need measuring like any filled surface.
+                    Assert.True(c.Authored.SentinelLeaked,
+                        $"{c.Label}: the host no longer shows through, so this badge now paints a "
+                        + "fill of its own. It is excluded on the grounds that it has none; "
                         + "re-classify it into FullyMeasured.");
                     break;
 

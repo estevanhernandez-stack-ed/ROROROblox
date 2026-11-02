@@ -496,6 +496,23 @@
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 
+    <!-- v1.36 facts-line badge (A1): a thin outlined pill at meta size, one per fact on the account
+         row (Robux, membership, friends online, last played, the note's first line). The outline is
+         the divider brush (decoration, not a control edge); the text takes the ordinary themed text
+         brush and size through TextElement so the child TextBlock inherits them and the pill sets no
+         colour of its own. The note badge overrides Foreground to the muted brush at the call site.
+         Every element carrying this style names itself (FactBadgeNamingFenceTests). -->
+    <Style x:Key="FactBadgeStyle" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="Margin" Value="0,0,6,3" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextElement.FontSize" Value="{DynamicResource MetaFontSize}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource WhiteBrush}" />
+    </Style>
+
     <!-- ============================ INPUTS (F-029, F-049) ============================
 
          A text box IS a UI component under WCAG 1.4.11, exactly as much as a button is. Wave 5

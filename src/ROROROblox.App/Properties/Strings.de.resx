@@ -1914,6 +1914,51 @@
   <data name="Shell_Health_BadgeName" xml:space="preserve">
     <value>{0}, {1}</value>
   </data>
+  <data name="Shell_Fact_Masked" xml:space="preserve">
+    <value>••••</value>
+  </data>
+  <data name="Shell_Fact_Hidden" xml:space="preserve">
+    <value>verborgen</value>
+  </data>
+  <data name="Shell_Fact_Unknown" xml:space="preserve">
+    <value>unbekannt</value>
+  </data>
+  <data name="Shell_Fact_Robux_Name" xml:space="preserve">
+    <value>Robux, {0}</value>
+  </data>
+  <data name="Shell_Fact_Membership_Name" xml:space="preserve">
+    <value>Mitgliedschaft, {0}</value>
+  </data>
+  <data name="Shell_Fact_Friends_Name" xml:space="preserve">
+    <value>Freunde online, {0}</value>
+  </data>
+  <data name="Shell_Fact_LastPlayed_Name" xml:space="preserve">
+    <value>Zuletzt gespielt, {0}</value>
+  </data>
+  <data name="Shell_Fact_Note_Name" xml:space="preserve">
+    <value>Notiz, {0}</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_one" xml:space="preserve">
+    <value>{0} Freund online</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_other" xml:space="preserve">
+    <value>{0} Freunde online</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_few" xml:space="preserve">
+    <value>{0} Freunde online</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_many" xml:space="preserve">
+    <value>{0} Freunde online</value>
+  </data>
+  <data name="Shell_Fact_Updated" xml:space="preserve">
+    <value>Aktualisiert {0}</value>
+  </data>
+  <data name="Shell_Fact_UpdatedFailed" xml:space="preserve">
+    <value>Aktualisiert {0} · letzter Versuch fehlgeschlagen ({1})</value>
+  </data>
+  <data name="Shell_Fact_NeverUpdatedFailed" xml:space="preserve">
+    <value>Noch nicht aktualisiert · letzter Versuch fehlgeschlagen ({0})</value>
+  </data>
   <data name="Shell_Status_NeedsVerification" xml:space="preserve">
     <value>Verifizierung nötig — Roblox für dieses Konto öffnen</value>
   </data>

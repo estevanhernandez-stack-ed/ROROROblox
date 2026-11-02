@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Media;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
@@ -40,11 +40,29 @@ public class AccountRowCollapsedRenderTests
     /// <summary>v1.35 (5a8fe61) rendered <c>AccountRowBorder</c> height at 120 DPI, in device pixels.</summary>
     internal const int V135RowHeight120 = 115;
 
+    /// <summary>
+    /// Rendered <c>AccountRowBorder</c> height at 96 DPI, in device pixels, with the v1.36 facts line
+    /// VISIBLE (Robux, friends online, a note and a fresh age hint). Measured on the item-6 commit.
+    /// <para>82 px over the collapsed 92, and that is NOT one line. At the declared 900 px the name
+    /// column is only about 160 px wide (the actions column takes the rest), so the WrapPanel breaks the
+    /// four items onto separate lines. A one-line variant (clipped) measured 21 px over (113 at 96, 141
+    /// at 120), but silently dropped last played, the note and the age hint; wrapping was kept on the
+    /// F-119 precedent and the choice is flagged for Este.</para> It is the SECOND bar, beside
+    /// <see cref="V135RowHeight96"/>, which stays the collapsed row: a populated row is allowed to be
+    /// taller by exactly the facts line and no more, so a stray margin or a second line trips this.
+    /// </summary>
+    internal const int PopulatedRowHeight96 = 174;
+
+    /// <summary>Same row at 120 DPI; see <see cref="PopulatedRowHeight96"/>. 103 px over the collapsed 115.</summary>
+    internal const int PopulatedRowHeight120 = 218;
+
     private readonly Xunit.Abstractions.ITestOutputHelper _output;
 
     public AccountRowCollapsedRenderTests(Xunit.Abstractions.ITestOutputHelper output) => _output = output;
 
-    private static Window BuildWindow()
+    private static Window BuildWindow() => BuildWindow(facts: null, note: null);
+
+    private static Window BuildWindow(AccountFacts? facts, string? note)
     {
         var built = MainViewModelTests.Build();
         built.Vm.Accounts.Add(new AccountSummary(new Account(
@@ -53,21 +71,28 @@ public class AccountRowCollapsedRenderTests
             AvatarUrl: "",
             CreatedAt: DateTimeOffset.UtcNow,
             LastLaunchedAt: null,
-            Tags: null)));
+            Tags: null,
+            Facts: facts,
+            Note: note)));
 
         return new ROROROblox.App.MainWindow(built.Vm);
     }
+
+    /// <summary>The populated row: three facts, a note and a fresh age hint, so the facts line is visible.</summary>
+    private static Window BuildPopulatedWindow() => BuildWindow(
+        new AccountFacts(1240, null, 3, DateTimeOffset.UtcNow.AddMinutes(-3), null),
+        "Farm alt, keep at 20 FPS");
 
     /// <summary>
     /// The header, rendered to a bitmap at <paramref name="dpi"/>; the bitmap's height is the
     /// device-pixel height. <c>ThemedWindowRender.Find</c> throws when the row is absent, so a
     /// missing row can never read as a height of 0.
     /// </summary>
-    private static RegionSample RenderHeader(double dpi) =>
+    private static RegionSample RenderHeader(double dpi, Func<Window>? build = null) =>
         ThemedWindowRender.MeasureRegion(
             BuiltInFlatline(),
             $"MainWindow collapsed account row @{dpi}dpi",
-            BuildWindow,
+            build ?? BuildWindow,
             content => ThemedWindowRender.Find(
                 content, fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0, "AccountRowBorder"),
             dpi);
@@ -99,4 +124,35 @@ public class AccountRowCollapsedRenderTests
 
     [WindowRenderFact]
     public void TheCollapsedRowMatchesV135At120Dpi() => Pin(120, V135RowHeight120);
+
+    private void PinPopulated(double dpi, int pinnedPx)
+    {
+        var collapsed = RenderHeader(dpi).Height;
+        var populated = RenderHeader(dpi, BuildPopulatedWindow);
+        _output.WriteLine($"@{dpi}dpi  populated {populated.Width}x{populated.Height}, collapsed {collapsed}, delta {populated.Height - collapsed}");
+
+        Assert.True(populated.Height == pinnedPx,
+            $"@{dpi}dpi: the populated account row header renders {populated.Height}px tall; the item-6 "
+            + $"commit measured {pinnedPx}px. The facts line changed height.");
+        Assert.True(populated.Height > collapsed,
+            $"@{dpi}dpi: a row with facts must be taller than the collapsed row ({collapsed}px); the facts line did not show.");
+    }
+
+    [WindowRenderFact]
+    public void ARowWithFacts_IsTheMeasuredDeltaTallerAt96Dpi() => PinPopulated(96, PopulatedRowHeight96);
+
+    [WindowRenderFact]
+    public void ARowWithFacts_IsTheMeasuredDeltaTallerAt120Dpi() => PinPopulated(120, PopulatedRowHeight120);
+
+    /// <summary>
+    /// "Collapsed when it has nothing to say" at the pixel level, stated against the facts line
+    /// specifically: an upgraded roster (no facts, no history, no note) and a row whose facts are
+    /// all null, with only an age hint to its name, both render at exactly the v1.35 height.
+    /// </summary>
+    [WindowRenderFact]
+    public void AFactsRecordWithNothingInIt_StaysAtTheV135HeightAt96Dpi()
+    {
+        var sample = RenderHeader(96, () => BuildWindow(new AccountFacts(null, null, null, null, "403"), null));
+        Assert.Equal(V135RowHeight96, sample.Height);
+    }
 }

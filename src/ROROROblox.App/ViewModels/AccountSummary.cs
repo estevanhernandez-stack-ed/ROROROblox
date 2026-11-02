@@ -83,7 +83,13 @@ public sealed class AccountSummary : INotifyPropertyChanged
     public AccountFacts? Facts
     {
         get => _facts;
-        set => SetField(ref _facts, value);
+        set
+        {
+            if (SetField(ref _facts, value))
+            {
+                RaiseFactProperties();
+            }
+        }
     }
 
     /// <summary>The panel's saved open/closed state, null until the user first toggles it (the panel resolves the default at load).</summary>
@@ -101,6 +107,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(LastPlayedText));
                 OnPropertyChanged(nameof(LastPlayedUtc));
+                RaiseFactProperties();
             }
         };
     }
@@ -123,7 +130,141 @@ public sealed class AccountSummary : INotifyPropertyChanged
     public string? Note
     {
         get => _note;
-        set => SetField(ref _note, value);
+        set
+        {
+            if (SetField(ref _note, value))
+            {
+                RaiseFactProperties();
+            }
+        }
+    }
+
+    // ---- v1.36 item 6: the facts line (spec 2.1, 2.4, 2.5) -----------------------------------
+
+    /// <summary>The placeholder for a fact nobody has measured yet. Not prose, so not a resource.</summary>
+    internal const string FactDash = "\u2014";
+
+    private bool FactsMasked => _identity?.IsActive == true;
+
+    private static System.Globalization.CultureInfo FactCulture => TranslationSource.Instance.CurrentCulture;
+
+    private static bool IsPlus(string? membership) =>
+        string.Equals(membership, "plus", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(membership, "premium", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Robux for the badge: the balance, the dash when unknown, "&#x2022;&#x2022;&#x2022;&#x2022;" under streamer mode.</summary>
+    public string RobuxText =>
+        FactsMasked ? Loc.Get("Shell_Fact_Masked")
+        : _facts?.Robux is { } r ? "R$ " + r.ToString("N0", FactCulture)
+        : FactDash;
+
+    /// <summary>Membership for the badge: "Plus" for any membership, the dash when unknown, masked under streamer mode.</summary>
+    public string MembershipText =>
+        FactsMasked ? Loc.Get("Shell_Fact_Masked")
+        : IsPlus(_facts?.Membership) ? "Plus"
+        : FactDash;
+
+    /// <summary>Friends online for the badge: "3 friends online", the dash when unknown, masked under streamer mode.</summary>
+    public string FriendsOnlineText =>
+        FactsMasked ? Loc.Get("Shell_Fact_Masked")
+        : _facts?.FriendsOnline is { } f ? Loc.Plural("Shell_Fact_FriendsOnline", f)
+        : FactDash;
+
+    /// <summary>The note's text up to the first newline (the TextBlock ellipsises the rest). Empty under streamer mode: hidden entirely.</summary>
+    public string NoteFirstLine
+    {
+        get
+        {
+            if (FactsMasked || string.IsNullOrWhiteSpace(_note)) return string.Empty;
+            var text = _note.Trim();
+            var cut = text.IndexOfAny(['\r', '\n']);
+            return cut < 0 ? text : text[..cut].TrimEnd();
+        }
+    }
+
+    public bool ShowRobuxBadge => _facts?.Robux is not null;
+
+    /// <summary>Collapsed whenever membership is not a membership: the probes have not run, so today it is always null.</summary>
+    public bool ShowMembershipBadge => IsPlus(_facts?.Membership);
+
+    public bool ShowFriendsOnlineBadge => _facts?.FriendsOnline is not null;
+
+    public bool ShowLastPlayedBadge => !string.IsNullOrEmpty(LastPlayedText);
+
+    public bool ShowNoteBadge => NoteFirstLine.Length > 0;
+
+    /// <summary>
+    /// The facts line shows when any of Robux, membership, friends online, last played or the note's
+    /// first line has something to say. The age hint alone never makes it visible (the A1 ruling,
+    /// 2026-11-02): an account with no facts, no history and no note renders exactly as v1.35.
+    /// </summary>
+    public bool HasFactsLine =>
+        ShowRobuxBadge || ShowMembershipBadge || ShowFriendsOnlineBadge || ShowLastPlayedBadge || ShowNoteBadge;
+
+    private string MaskedOrUnknownName(string key, bool known, string value) =>
+        Loc.Format(key, FactsMasked ? Loc.Get("Shell_Fact_Hidden")
+                      : known ? value
+                      : Loc.Get("Shell_Fact_Unknown"));
+
+    public string RobuxAccessibleName => MaskedOrUnknownName("Shell_Fact_Robux_Name", ShowRobuxBadge, RobuxText);
+
+    public string MembershipAccessibleName => MaskedOrUnknownName("Shell_Fact_Membership_Name", ShowMembershipBadge, MembershipText);
+
+    public string FriendsOnlineAccessibleName => MaskedOrUnknownName("Shell_Fact_Friends_Name", ShowFriendsOnlineBadge, FriendsOnlineText);
+
+    /// <summary>Last played is local history, never masked.</summary>
+    public string LastPlayedAccessibleName =>
+        Loc.Format("Shell_Fact_LastPlayed_Name", ShowLastPlayedBadge ? LastPlayedText : Loc.Get("Shell_Fact_Unknown"));
+
+    public string NoteAccessibleName => Loc.Format("Shell_Fact_Note_Name", NoteFirstLine);
+
+    /// <summary>
+    /// "Updated 3 min ago", or "Updated 2 hr ago, last try failed (403)" when the last request failed
+    /// (the previous values stay standing beside the reason). Empty until a refresh has been
+    /// attempted. Not masked: an age identifies nobody.
+    /// </summary>
+    public string FactsAgeText
+    {
+        get
+        {
+            if (_facts is not { } f) return string.Empty;
+            if (f.FetchedAtUtc is { } at)
+            {
+                return string.IsNullOrEmpty(f.LastError)
+                    ? Loc.Format("Shell_Fact_Updated", RelativeAgo(at))
+                    : Loc.Format("Shell_Fact_UpdatedFailed", RelativeAgo(at), f.LastError);
+            }
+            return string.IsNullOrEmpty(f.LastError)
+                ? string.Empty
+                : Loc.Format("Shell_Fact_NeverUpdatedFailed", f.LastError);
+        }
+    }
+
+    public bool ShowFactsAge => FactsAgeText.Length > 0;
+
+    /// <summary>True when the last refresh failed; the age hint takes the warning brush.</summary>
+    public bool FactsFailed => !string.IsNullOrEmpty(_facts?.LastError);
+
+    private void RaiseFactProperties()
+    {
+        OnPropertyChanged(nameof(RobuxText));
+        OnPropertyChanged(nameof(MembershipText));
+        OnPropertyChanged(nameof(FriendsOnlineText));
+        OnPropertyChanged(nameof(NoteFirstLine));
+        OnPropertyChanged(nameof(ShowRobuxBadge));
+        OnPropertyChanged(nameof(ShowMembershipBadge));
+        OnPropertyChanged(nameof(ShowFriendsOnlineBadge));
+        OnPropertyChanged(nameof(ShowLastPlayedBadge));
+        OnPropertyChanged(nameof(ShowNoteBadge));
+        OnPropertyChanged(nameof(HasFactsLine));
+        OnPropertyChanged(nameof(RobuxAccessibleName));
+        OnPropertyChanged(nameof(MembershipAccessibleName));
+        OnPropertyChanged(nameof(FriendsOnlineAccessibleName));
+        OnPropertyChanged(nameof(LastPlayedAccessibleName));
+        OnPropertyChanged(nameof(NoteAccessibleName));
+        OnPropertyChanged(nameof(FactsAgeText));
+        OnPropertyChanged(nameof(ShowFactsAge));
+        OnPropertyChanged(nameof(FactsFailed));
     }
     public string AvatarUrl { get; }
     public DateTimeOffset? LastLaunchedAt { get; private set; }
@@ -222,6 +363,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(RenderName));
         OnPropertyChanged(nameof(AvatarDisplaySource));
+        // The five facts and their accessible names flip with the name (spec 2.5).
+        RaiseFactProperties();
     }
 
     private bool _isMain;
@@ -993,6 +1136,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(SecondaryStatusText));
         OnPropertyChanged(nameof(LastPlayedText));
+        OnPropertyChanged(nameof(LastPlayedAccessibleName));
+        OnPropertyChanged(nameof(FactsAgeText));
     }
 
     public void StampLaunched(DateTimeOffset at)
