@@ -16,7 +16,8 @@ public static class ReportWriter
         sb.AppendLine();
         sb.AppendLine($"- Generated: {at.UtcDateTime:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine($"- Mode: {mode}");
-        sb.AppendLine("- Account: named by its local name; the Roblox user id is replaced by `<uid>` everywhere.");
+        sb.AppendLine("- Account: named by the first 8 characters of its local id, never its Roblox name (`--list` maps the two on");
+        sb.AppendLine("  the machine that holds the vault); the Roblox user id is `<uid>` and a server id is `<gameId>` everywhere.");
         sb.AppendLine("- Redaction: the request `Cookie` header, every `Set-Cookie`, every `x-csrf-token` value and the");
         sb.AppendLine("  `RBX-Authentication-Ticket` value are never written. `rblx-*` headers are verbatim except");
         sb.AppendLine("  `rblx-challenge-metadata`, which is base64-decoded with every bare number of five or more digits");

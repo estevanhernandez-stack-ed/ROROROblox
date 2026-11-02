@@ -88,9 +88,18 @@ public class EndpointProbeTests : IDisposable
         Assert.Contains("`rblx-challenge-type`: `captcha`", report);
         Assert.Contains("rblx-challenge-id", report);
         Assert.Contains("\"unifiedCaptchaId\":\"offline-stub\"", report);
-        Assert.Contains("# Endpoint probe: Captcha Alt", report);
         Assert.Contains("validate-membership GET", report);
         Assert.Contains("<uid>", report);
+
+        // Reports land in a public repo: no account name in the report or its file name (it would tie
+        // every alt to the main), and no server id (with the place id beside it, enough to join).
+        var reportFile = Assert.Single(Directory.GetFiles(outDir, "*.md"));
+        Assert.Contains($"# Endpoint probe: account {account.Id.ToString()[..8]}", report);
+        Assert.DoesNotContain("Captcha Alt", report);
+        Assert.DoesNotContain("captcha-alt", Path.GetFileName(reportFile));
+        Assert.Contains(account.Id.ToString()[..8], Path.GetFileName(reportFile));
+        Assert.DoesNotContain("00000000-0000-0000-0000-000000000000", report);
+        Assert.Contains("\"gameId\":\"<gameId>\"", report);
 
         // The vault was only read.
         Assert.Equal(before, Hash(file));
@@ -198,6 +207,22 @@ public class EndpointProbeTests : IDisposable
         Assert.DoesNotContain("FAKE-SHAPE-ONLY", scrubbed);
         Assert.Contains("<uid>", scrubbed);
         Assert.Contains("<withheld>", scrubbed);
+    }
+
+    [Fact]
+    public void Redactor_ScrubsServerIds_WhatTheLivePresenceBodyCarries()
+    {
+        // The shape the first live run returned (2026-11-02), with a made-up server id.
+        var body = "{\"userPresences\":[{\"userPresenceType\":2,\"placeId\":85920622393590,"
+                 + "\"gameId\":\"a1b2c3d4-0000-4000-8000-123456789abc\",\"universeId\":3317771874,\"userId\":1}]}";
+
+        var scrubbed = new Redactor(null).Scrub(body + " {\"jobId\": \"another-server\"}");
+
+        Assert.DoesNotContain("a1b2c3d4-0000-4000-8000-123456789abc", scrubbed);
+        Assert.DoesNotContain("another-server", scrubbed);
+        Assert.Contains("\"gameId\":\"<gameId>\"", scrubbed);
+        Assert.Contains("\"jobId\": \"<gameId>\"", scrubbed);
+        Assert.Contains("85920622393590", scrubbed); // the place id stays: it names the game, not the server
     }
 
     [Fact]

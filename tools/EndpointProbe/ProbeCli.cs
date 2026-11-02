@@ -149,6 +149,9 @@ public static class ProbeCli
         }
         var chosen = matches[0];
         var name = LocalNameOf(chosen);
+        // Reports land in a public repo, and a set of them would tie every alt's Roblox name to the
+        // main's. The report and its file carry the local id's prefix; the name stays on this console.
+        var label = $"account {chosen.Id.ToString()[..8]}";
 
         var reportDir = outDir ?? DefaultReportDir();
         if (reportDir is null)
@@ -176,10 +179,10 @@ public static class ProbeCli
         var steps = await prober.RunAsync(ct).ConfigureAwait(false);
 
         var at = DateTimeOffset.UtcNow;
-        var report = ReportWriter.Render(name, offline ? "offline (stub handler, no network request was made)" : "live (real requests to roblox.com)", at, steps, redactor);
+        var report = ReportWriter.Render(label, offline ? "offline (stub handler, no network request was made)" : "live (real requests to roblox.com)", at, steps, redactor);
 
         Directory.CreateDirectory(reportDir);
-        var file = fileNameOverride ?? $"{(offline ? "offline-" : string.Empty)}{at:yyyyMMdd-HHmmss}-{Redactor.Slug(name)}.md";
+        var file = fileNameOverride ?? $"{(offline ? "offline-" : string.Empty)}{at:yyyyMMdd-HHmmss}-{Redactor.Slug(label)}.md";
         var reportPath = Path.Combine(reportDir, file);
         await File.WriteAllTextAsync(reportPath, report, ct).ConfigureAwait(false);
         await stdout.WriteLineAsync($"Report: {reportPath}").ConfigureAwait(false);

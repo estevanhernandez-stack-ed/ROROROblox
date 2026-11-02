@@ -61,6 +61,21 @@ Both A/B builds exist, built in Release and not launched:
 5. **One-account path:** park the data folder aside, start build B, Add account: the panel opens with three empty states and Open Roblox home launches that account. Restore the folder.
 6. **Probe gate (e):** whatever step 1 measured decides Needs verification and the Plus badge.
 
+## Probes, 2026-11-02 (C2 step 1, first pass)
+
+All eight saved accounts, `--live`, 15:24-15:25 UTC, reports in `docs/cycles/2026-11-01-account-library/probes/` (named by local-id prefix; no names, no server ids).
+
+| Request | Result on all 8 |
+|---|---|
+| ticket POST 1 (CSRF handshake) | 403, no `rblx-*` headers |
+| ticket POST 2 (with the token) | 200, ticket minted, nothing launched |
+| presence POST | 200 (the main in game, seven offline) |
+| validate-membership GET | 200: `true` for the main (`8fb7b3e1`), `false` for the seven alts |
+
+- **Membership:** the endpoint answers for every cookie and distinguishes the accounts. It ships as Plus if Este confirms the main is a Plus (or legacy Premium) member and the alts are not.
+- **Needs verification:** not measured. No account was in the captcha, expired or limited state, so no 403 with a `rblx-challenge-type` exists to compare. It stays unset until a captcha-state account (the clan's follow-cancel-follow) and, ideally, a limited one are probed.
+- The first live run's report carried the main's Roblox name and its live `gameId` (server instance id); the repo is public. Deleted unpublished; the probe now names reports by local-id prefix and scrubs `gameId`/`jobId`, with tests.
+
 ## Controlled A/B, pending C2
 
 The 10% startup bar (spec §6) is decided here, on a machine with no live session:

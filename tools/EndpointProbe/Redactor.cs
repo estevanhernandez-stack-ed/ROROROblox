@@ -27,6 +27,11 @@ public sealed class Redactor
     private static readonly Regex UserIdField =
         new(@"(""(?:userId|UserId|user_id|targetId)""\s*:\s*)""?\d+""?", RegexOptions.Compiled);
 
+    // A live server instance: with the place id beside it, enough to join the account's server.
+    // Reports land in a public repo (found on the first live run, 2026-11-02).
+    private static readonly Regex ServerIdField =
+        new(@"(""(?:gameId|GameId|jobId|JobId)""\s*:\s*)""[^""]*""", RegexOptions.Compiled);
+
     // A standalone run of five or more digits. Challenge metadata is opaque JSON, and "redact any
     // numeric user id inside it" is safest as "redact any bare number that could be one".
     private static readonly Regex BareNumber =
@@ -60,6 +65,7 @@ public sealed class Redactor
         }
         result = SessionCookieShape.Replace(result, "<withheld>");
         result = UserIdField.Replace(result, "$1\"<uid>\"");
+        result = ServerIdField.Replace(result, "$1\"<gameId>\"");
         if (_userId is { } id)
         {
             result = result.Replace(id.ToString(System.Globalization.CultureInfo.InvariantCulture), "<uid>", StringComparison.Ordinal);

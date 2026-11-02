@@ -34,6 +34,6 @@ Other flags: `--data-dir <path>` (folder holding `accounts.dat`; default `%LOCAL
   socket.
 - **Write** the request `Cookie`, any `Set-Cookie`, any `x-csrf-token` value or the `RBX-Authentication-Ticket`
   value. `rblx-challenge-metadata` is base64-decoded and every bare number of five digits or more is replaced.
-  The account is named by its local name; its Roblox user id is `<uid>` everywhere.
+  The account is named by the first 8 characters of its local id, never its Roblox name (the reports go to a public repo; `--list` maps the two locally). Its Roblox user id is `<uid>` and a server id (`gameId`, `jobId`) is `<gameId>` everywhere.
 
 A successful ticket POST mints a real auth ticket (nothing launches). Run `--live` on purpose.
