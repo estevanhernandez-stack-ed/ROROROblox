@@ -293,6 +293,38 @@ public class AccountHealthTests
     }
 
     [Fact]
+    public void HealthAction_DispatchesByState()
+    {
+        Assert.Equal(MainViewModel.HealthAction.Reauthenticate, MainViewModel.HealthActionFor(AccountHealth.Expired));
+        Assert.Equal(MainViewModel.HealthAction.Reauthenticate, MainViewModel.HealthActionFor(AccountHealth.Limited));
+        Assert.Equal(MainViewModel.HealthAction.OpenRobloxHome, MainViewModel.HealthActionFor(AccountHealth.NeedsVerification));
+        Assert.Equal(MainViewModel.HealthAction.None, MainViewModel.HealthActionFor(AccountHealth.Ok));
+        Assert.Equal(MainViewModel.HealthAction.None, MainViewModel.HealthActionFor(AccountHealth.FollowMarked));
+    }
+
+    [Fact]
+    public async Task HealthActionCommand_NeedsVerification_OpensHome_AndOkDoesNothing()
+    {
+        var launcher = new ScriptedLauncher(_ => new LaunchResult.Failed(LaunchFailureKind.ProcessStartFailed, "x"));
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("TestAlt", "", "cookie"));
+            await vm.RunHealthActionAsync(row);
+            Assert.Empty(launcher.Targets); // Ok: nothing
+
+            row.JoinViaFriend = true;
+            await vm.RunHealthActionAsync(row);
+            Assert.Empty(launcher.Targets); // FollowMarked: nothing
+
+            row.SessionNeedsVerification = true;
+            await vm.RunHealthActionAsync(row);
+            Assert.IsType<LaunchTarget.Home>(Assert.Single(launcher.Targets));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
     public async Task APresencePollThatLands_ClearsNeedsVerification()
     {
         var (vm, store, _, path) = MainViewModelTests.Build();
@@ -360,6 +392,7 @@ public class AccountHealthTests
 
         Assert.Contains("AutomationProperties.Name=\"{Binding HealthBadgeName}\"", xaml);
         Assert.Contains("AutomationProperties.Name=\"{Binding FollowMarkBadgeName}\"", xaml);
-        Assert.Contains("DataContext.OpenRobloxHomeCommand", xaml);
+        Assert.Contains("DataContext.HealthActionCommand", xaml);
+        Assert.DoesNotContain("<Setter Property=\"Command\"", xaml);
     }
 }

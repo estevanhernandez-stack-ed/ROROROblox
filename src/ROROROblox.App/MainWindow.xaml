@@ -470,22 +470,19 @@
                                  needs verification, limited). Word, glyph and action differ per state, so flatline
                                  can tell them apart with colour removed; colour is only the third carrier. It sits on
                                  the name line, which is the tallest line of the row, so it adds no height. The face
-                                 colour is the child TextBlock's (a Button may not paint itself). The command swaps by
-                                 state: Needs verification opens Roblox, the other two re-authenticate. -->
+                                 colour is the child TextBlock's (a Button may not paint itself). One command, HealthActionCommand,
+                                 dispatches on the row's Health. -->
                             <Button AutomationProperties.Name="{Binding HealthBadgeName}"
+                                    Command="{Binding DataContext.HealthActionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                     CommandParameter="{Binding}"
                                     Padding="6,0" Margin="8,2,0,0" MinHeight="0"
                                     VerticalAlignment="Center">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}">
                                         <Setter Property="Visibility" Value="Collapsed" />
-                                        <Setter Property="Command" Value="{Binding DataContext.ReauthenticateCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding ShowHealthBadge}" Value="True">
                                                 <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding HealthKind}" Value="verify">
-                                                <Setter Property="Command" Value="{Binding DataContext.OpenRobloxHomeCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>

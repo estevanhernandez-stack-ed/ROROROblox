@@ -305,6 +305,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary), _ => !IsBusy);
         // The Needs-verification badge's action: a home launch, where the client itself presents the
         // challenge. Same path as the row's Launch, so every guard that exists today applies.
+        HealthActionCommand = new RelayCommand(p => RunHealthActionAsync(p as AccountSummary),
+            p => p is AccountSummary row && HealthActionFor(row.Health) != HealthAction.None && (HealthActionFor(row.Health) != HealthAction.Reauthenticate || !IsBusy));
         OpenRobloxHomeCommand = new RelayCommand(p => p is AccountSummary row
             ? LaunchAccountAsync(row, new LaunchTarget.Home())
             : Task.FromResult(0));
@@ -762,6 +764,33 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// itself can present a verification challenge. The health badge's action for Needs verification.
     /// </summary>
     public ICommand OpenRobloxHomeCommand { get; }
+
+    /// <summary>
+    /// The health badge's one command: dispatches on the row's <see cref="AccountSummary.Health"/>
+    /// so the badge's style never has to swap a Command. Expired and Limited re-authenticate,
+    /// NeedsVerification opens Roblox to the home screen, anything else does nothing.
+    /// </summary>
+    public ICommand HealthActionCommand { get; }
+
+    internal enum HealthAction { None, Reauthenticate, OpenRobloxHome }
+
+    internal static HealthAction HealthActionFor(AccountHealth health) => health switch
+    {
+        AccountHealth.Expired or AccountHealth.Limited => HealthAction.Reauthenticate,
+        AccountHealth.NeedsVerification => HealthAction.OpenRobloxHome,
+        _ => HealthAction.None,
+    };
+
+    internal Task RunHealthActionAsync(AccountSummary? summary)
+    {
+        if (summary is null) return Task.CompletedTask;
+        return HealthActionFor(summary.Health) switch
+        {
+            HealthAction.Reauthenticate => ReauthenticateAsync(summary),
+            HealthAction.OpenRobloxHome => LaunchAccountAsync(summary, new LaunchTarget.Home()),
+            _ => Task.CompletedTask,
+        };
+    }
     public ICommand OpenGamesCommand { get; }
     public ICommand LaunchAllCommand { get; }
     public ICommand StopAccountCommand { get; }
