@@ -209,3 +209,33 @@ Measurement per spec §7.3: one day with ten launches, counted at the end of the
 | fr, es, ru, pt-BR, pl, de | rule 3 on quoted UI labels | **Overruled**, the known false positive. The UI is localized, and every quoted label (Launch multiple, the tray menu items, Library, Recent) matches its own on-screen translation in that language. |
 
 **Pass 2 at `d088a46`.** All 11 fixes cleared. 17 pairs came back revise: 15 were the rule-3 false positive, overruled as above; ru `Shell_Fact_FriendsOnline_other` was overruled again; ru `MainWindow_AddGamesFromToolsGames` was fixed (accusative). No other finding.
+
+**Passes 3 to 5** (`f3dea11`, `b44ce76`, `1986347`), after the wrap measurement below had changed strings. These are the fixes and overrules that rule 3 did not already cover:
+
+| Pass | Language | Field | Ruling |
+|---|---|---|---|
+| 3 | de, es, pl, ru | `MainWindow_Reauthenticate`, `Shell_Health_Action_Reauthenticate` | Fixed: one term per language (rule 6). de "Neu anmelden" puts back the "re-" that "Anmelden" dropped. |
+| 3 | pl | `Shell_Health_FollowMarked` | Fixed: "przez znajomego", matching the app's "Dołącz" for Follow. In pass 4 the verifier asked for "obserwowanie": **overruled**. RoRoRo's follow joins a friend's server (JoinViaFriend); "obserwowanie" is Roblox's social follow, a different feature. |
+| 4 | es, pl, pt-BR, ru | `Library_Kind_PrivateServer` | Fixed: the abbreviations dropped the noun. The Kind column went 84 to 116 DIP instead, and the full "Private server" is back. |
+| 4 | pl | `Library_Playing` | Fixed: "grają: {0}". "gra: {0}" read as "game: {0}". |
+| 5 | ru | `WelcomeWindow_OnePlaceToLaunchRoblox`, `WelcomeWindow_PickOrPlayFromThePanel` | Fixed: "ещё" (more) restored (rule 1); "с панели". |
+| 5 | pt-BR | `Library_Col_LastPlayed` | **Overruled**: "Última vez jogado" is wider than the 108 DIP column; "Última partida" matches es. |
+| 5 | fr | `Library_PlaceId` | **Overruled**: minor, style. |
+
+The verifier is not deterministic: each pass raises a few minor findings on strings an earlier pass accepted. The loop stopped at pass 5, when nothing above minor remained except the standing overrules.
+
+## Item 13: label wrap, measured (2026-11-03)
+
+`LabelWrapMeasurementTests` renders the real row (four health states), the panel (heavy and empty), the Library (grid, list, empty, no-match) and the tour in all seven languages at 96 DPI. A NoWrap label fails if a real layout clip cuts it; wrapping text fails above 2 lines. Exemptions are named: paragraphs (6-line sanity cap, measured maximum 3), data-bound names that trim, and the status sentence. `OnEveryBadgeRow_RemoveStaysInsideTheRow_InEverySupportedLanguage` checks Remove's real clip region on every badge row.
+
+**What the walk found, and what changed:**
+- The MAIN pill clipped in all six translations ("HAUP" in German), and in English the health badges pushed the account name to zero width. **Este ruled 2026-11-03:**
+  - The badges lead the facts line.
+  - Re-authenticate takes Launch As's slot on an expired row.
+  - The name line and status line became Grids, so text trims.
+  - Launch As collapses on limited rows too (it was disabled there).
+  - The game picker went 132 to 120 DIP and Re-authenticate's padding 12 to 8, so Remove stays on the row.
+  - Re-authenticate is shortened in de, es, pl and ru.
+- **The Library list:** the Kind column went 84 to 116 DIP, and the default tag is abbreviated in es and ru ("PREDET.", "ПО УМОЛЧ.", because the alternatives mean "main", which collides with MAIN).
+- **German captures:** `mocks/compare/item13-de-{row,panel,library}-brand-96dpi.png` show no truncation. The tour's German capture is `item10-tour-de-*`. The English badge rows are `item13-en-row-{verify,expired,limited-follow}-brand-96dpi.png`.
+- **Test isolation:** four render classes set the UI culture outside the `MutatesUiCulture` collection, and a fit test measured German as a result. `MutatesUiCultureFenceTests` now guards this.

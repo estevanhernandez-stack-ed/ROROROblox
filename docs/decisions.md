@@ -928,3 +928,17 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Decision:** Use the fallback. The Settings hint `SettingsPage_AlertSoundPluginsHint` ("Silent silences RoRoRo's own alerts only…") already exists (c7564f2), so the remaining work is naming it in the 1.36 release notes (item 15).
 
 **Evidence:** `src/ROROROblox.App/Properties/Strings.resx`.
+
+### 2026-11-03 — Health badges lead the facts line; the name and status trim; Remove stays on the row
+
+**Context:** Item 13's `LabelWrapMeasurementTests` rendered the real row in seven languages at the declared 900 px. The C1 mock put the health badge on the name line, but the mock row had no game pickers and no Remove. On the real row, an expired account's badge pushed the name to zero width in English. The MAIN pill read "HAUP" in German, because the name line was a horizontal StackPanel and the name's ellipsis never engaged. On expired and limited rows, Re-authenticate beside Launch As pushed Remove off the row; that had shipped for expired rows through v1.35. C2 missed all of it because Este has no expired, captcha or limited account.
+
+**Decision (Este's):**
+- The health and Follow-marked badges lead the facts line, and a badge row always shows it. The row comes out at the populated height, 114 at 96 DPI.
+- Re-authenticate takes Launch As's slot on expired rows. Launch As also collapses on limited rows, where it was only disabled. That part is mine: the option as offered said the game picker would shrink instead, but a 132 DIP picker could not give back the roughly 100 DIP needed.
+- The name and status lines are Grids, so their text trims and the full text is in a tooltip.
+- The game picker goes 132 to 120 DIP and Re-authenticate's padding 12 to 8. The room came from the picker, not the name column, because the actions column is shared across rows: a narrower name column would trim every French main account's name.
+
+**Consequences:** One expired account no longer widens every row's actions past 900 px. `HealthBadgeRenderTests` now pin badge rows at the populated height, with the badge in the facts line. A mid-row badge was a mock that did not survive real widths, so at the next C-checkpoint the mocks carry the real actions column.
+
+**Evidence:** `9830000`, `b44ce76`, `1986347`; `mocks/compare/item13-*`.

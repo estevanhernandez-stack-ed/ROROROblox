@@ -638,10 +638,13 @@ fixing everything else.
 - [x] The translations live in a committed, re-runnable script (`scripts/add-v136-translations.py`), not a
       paste; the generator refuses no orphan rows.
 - [x] The verifier run is recorded in the smoke doc with per-language verdicts and each overrule named.
-- [ ] Label wrap measured, not assumed, the way 6b did it: the new fact names, health words, chip labels
+- [x] Label wrap measured, not assumed, the way 6b did it: the new fact names, health words, chip labels
       and tour steps at their declared widths max at two lines in every language.
 - [ ] A German dev build (the longest strings) shows the row, the panel, the Library and the tour without
       truncation; screenshots in the smoke doc.
+      *(2026-11-03: the real windows were rendered in German by the test harness, `mocks/compare/item13-de-*` and
+      `item10-tour-de-*`, with no truncation. A live German dev build has not been looked at yet; it needs the app
+      running, so it waits for Este's machine time.)*
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~CultureKeyParityFenceTests|FullyQualifiedName~LocKeyParityFenceTests"`
 → all passed. **Then the PR:** `cycle/v1.36-account-library` → `main`, `ci.yml` green on x64 and arm64,
