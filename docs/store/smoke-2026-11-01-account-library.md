@@ -85,7 +85,7 @@ Este's calls at C2:
 
 ## C2 one-account path, 2026-11-03 (build B at `e3d0db0`, Este)
 
-The real data folder (1,677 files) was renamed aside and restored afterwards with an identical file count and `accounts.dat` size. The renamed folder was refused at first: three `626labs.ur-mcp` MCP servers run from `ROROROblox\plugins\`, so a Claude session holding the `rororo` tools pins the folder. They were stopped with Este's word. B then started on an empty folder with a clean gate (`singleton name acquired, no leftover Roblox processes`), and no Roblox client was running.
+The real data folder (1,677 files) was renamed aside and restored afterwards with an identical file count and `accounts.dat` size. The rename was refused at first: three `626labs.ur-mcp` MCP servers run from `ROROROblox\plugins\`, so a Claude session holding the `rororo` tools pins the folder. They were stopped with Este's word. B then started on an empty folder with a clean gate (`singleton name acquired, no leftover Roblox processes`), and no Roblox client was running.
 
 | Check | Result |
 |---|---|
