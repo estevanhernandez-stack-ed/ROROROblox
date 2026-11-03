@@ -187,3 +187,25 @@ Measurement per spec §7.3: one day with ten launches, counted at the end of the
 |---|---|---|---|
 | 2026-11-01 21:53 -06:00 | 1 | 0 | none |
 | 2026-11-03 11:10 -06:00 | 1 | 0 | none |
+
+## Item 13: the translation verifier on the cycle's string delta (2026-11-03)
+
+**Slice.** `docs/store/ui-translations-1.36-delta.json`: the fields of `ui-translations.json` that are new or changed against main's committed export. That's 111 fields (104 new, 7 changed), 666 pairs across fr, de, ru, pt-BR, pl and es.
+
+**Which verifier.** The hosted verifier ran, fed the raw GitHub URL at each commit. The local `translation-verifier` MCP ingested the file but judged 0 pairs on every call, even a single language, so it was not used. Ingest found no cap violations.
+
+**Pass 1 at `caf5830`.** 18 pairs came back revise; 11 fixes were applied in `d088a46`:
+
+| Language | Field | Ruling |
+|---|---|---|
+| fr, de, ru, pt-BR, es | `WelcomeWindow_PickOrPlayFromThePanel_Detail` | Fixed. The Open Roblox home label was dropped in as an infinitive beside an imperative. The verifier flagged ru and es; rule 7 carried the fix to fr, de and pt-BR. pl already read right. |
+| de | `Library_NoMatch` | Fixed: "Keine Treffer in deiner Bibliothek." |
+| fr | `Shell_Panel_Meta_InRecent` | Fixed: "dans les sessions récentes". |
+| ru | `Library_Col_LastPlayed`, `Shell_Fact_LastPlayed_Name` | Fixed: "Последний запуск" in both, for one term across fields (rule 6). |
+| ru | `Shell_Panel_Expander_Name` | Fixed: "для {0}". |
+| ru | `MainWindow_AddGamesFromToolsGames` | Fixed in pass 1 to "в Библиотеке". Pass 2 asked for the accusative "в Библиотеку", applied in `125a8cf`. |
+| ru | `Shell_Fact_FriendsOnline_other` | **Overruled.** Unreachable: `Plurals.Category` returns one, few or many for ru integer counts, never "other". |
+| pl | `Shell_Fact_FriendsOnline_few` | **Overruled.** "2 znajomych" is the standard form with digits. |
+| fr, es, ru, pt-BR, pl, de | rule 3 on quoted UI labels | **Overruled**, the known false positive. The UI is localized, and every quoted label (Launch multiple, the tray menu items, Library, Recent) matches its own on-screen translation in that language. |
+
+**Pass 2 at `d088a46`.** All 11 fixes cleared. 17 pairs came back revise: 15 were the rule-3 false positive, overruled as above; ru `Shell_Fact_FriendsOnline_other` was overruled again; ru `MainWindow_AddGamesFromToolsGames` was fixed (accusative). No other finding.

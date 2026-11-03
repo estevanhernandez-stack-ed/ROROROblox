@@ -552,19 +552,19 @@ prefixes; equal `• ` bullet count in the long description (14 today), equal no
 today), short description ≤ 200 characters; floors 7 / 10 / 15; What's new excluded.
 
 **Acceptance:**
-- [ ] `ActivityMonitorTests` replay of the 2026-09-29 timeline (fg C at 0, fg B at 300, input at 450, fg
+- [x] `ActivityMonitorTests` replay of the 2026-09-29 timeline (fg C at 0, fg B at 300, input at 450, fg
       C at 800, sample at 1000) credits B; **the same test against the pre-change code credits C** (run it
       red first and record the red in the commit message); a second row puts the switch-back inside one
       100 ms window so the ring, not the faster period, is what passes; an account with no input keeps its
       idle age climbing.
-- [ ] `grep -rn "SetWindowsHookEx\|WH_KEYBOARD_LL\|RegisterRawInputDevices" src/` → 0.
-- [ ] `ActivitySnapshotProvider` and the `GetAccountActivity` RPC unchanged: no diff under `Plugins/`,
+- [x] `grep -rn "SetWindowsHookEx\|WH_KEYBOARD_LL\|RegisterRawInputDevices" src/` → 0.
+- [x] `ActivitySnapshotProvider` and the `GetAccountActivity` RPC unchanged: no diff under `Plugins/`,
       `RpcMethodCapabilityMapTests` and the harness green.
-- [ ] `InstallIdentityTests`: the four channels resolve from their inputs; the Diagnostics page and
+- [x] `InstallIdentityTests`: the four channels resolve from their inputs; the Diagnostics page and
       `snapshot.txt` show the About page's version string and a channel word; Core with no identity
       injected still answers from the assembly.
-- [ ] `CursorFenceTests` passes on the tree and fails when a `Cursor="None"` is planted (mutation-checked).
-- [ ] `ListingSheetParityFenceTests` passes on today's seven sheets and fails when one bullet is deleted
+- [x] `CursorFenceTests` passes on the tree and fails when a `Cursor="None"` is planted (mutation-checked).
+- [x] `ListingSheetParityFenceTests` passes on today's seven sheets and fails when one bullet is deleted
       from one sheet (mutation-checked).
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~ActivityMonitorTests|FullyQualifiedName~InstallIdentityTests|FullyQualifiedName~CursorFenceTests|FullyQualifiedName~ListingSheetParityFenceTests"`
@@ -597,12 +597,12 @@ covers and the release notes name it.
 **Acceptance:**
 - [ ] #260 has the evidence request posted; its lane is recorded in `docs/decisions.md` when the reporter
       answers; the cycle does not wait on the answer.
-- [ ] #222 is closed with the smoke-doc numbers quoted, **or** `TrayClientTests` has the age rows (under
+- [x] #222 is closed with the smoke-doc numbers quoted, **or** `TrayClientTests` has the age rows (under
       two minutes never swept; windowed never swept; tracked never swept; null command line fails closed)
       and the sweeper's timer is its own.
 - [ ] #231, `eejy3xvcu` and `g5hjernie` are closed with the quoted step output; nothing in
       `plugins-catalog.json` was edited by hand this cycle.
-- [ ] The banner sits above the existing "Approved-shape" line, dated, pointing at the ruling; nothing
+- [x] The banner sits above the existing "Approved-shape" line, dated, pointing at the ruling; nothing
       below it was rewritten.
 - [ ] #230 is in (field on `HostInfo`, harness green, `RpcMethodCapabilityMapTests` untouched) or named in
       the Silent hint and the release notes.
@@ -633,11 +633,11 @@ verifier on the delta through its MCP, overruling its known rule-3 false positiv
 fixing everything else.
 
 **Acceptance:**
-- [ ] `Strings.resx` and all six culture resx hold the same key count; `CultureKeyParityFenceTests` green
+- [x] `Strings.resx` and all six culture resx hold the same key count; `CultureKeyParityFenceTests` green
       in both directions.
-- [ ] The translations live in a committed, re-runnable script (`scripts/add-v136-translations.py`), not a
+- [x] The translations live in a committed, re-runnable script (`scripts/add-v136-translations.py`), not a
       paste; the generator refuses no orphan rows.
-- [ ] The verifier run is recorded in the smoke doc with per-language verdicts and each overrule named.
+- [x] The verifier run is recorded in the smoke doc with per-language verdicts and each overrule named.
 - [ ] Label wrap measured, not assumed, the way 6b did it: the new fact names, health words, chip labels
       and tour steps at their declared widths max at two lines in every language.
 - [ ] A German dev build (the longest strings) shows the row, the panel, the Library and the tour without
