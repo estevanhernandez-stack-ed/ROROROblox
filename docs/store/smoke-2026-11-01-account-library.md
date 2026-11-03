@@ -83,6 +83,23 @@ Este's calls at C2:
 - **The Library order** in the panel stays as built.
 - **The 900 px minimum:** the game picker's MinWidth goes from 160 to 132 so the MAIN pill fits beside the expander. Remove fits there with or without the change; the "still clips by 14" was the 24 DIP measuring error below.
 
+## C2 one-account path, 2026-11-03 (build B at `e3d0db0`, Este)
+
+The real data folder (1,677 files) was renamed aside and restored afterwards with an identical file count and `accounts.dat` size. The renamed folder was refused at first: three `626labs.ur-mcp` MCP servers run from `ROROROblox\plugins\`, so a Claude session holding the `rororo` tools pins the folder. They were stopped with Este's word. B then started on an empty folder with a clean gate (`singleton name acquired, no leftover Roblox processes`), and no Roblox client was running.
+
+| Check | Result |
+|---|---|
+| First run (welcome, language notice) | pass |
+| Add one account | pass: facts fetched once at add, all three 200 |
+| With one account the panel is open without the expander | pass |
+| Empty states read right; nothing clips | pass |
+| Open Roblox home | pass: log `target=Home`, `Flagged-launch decision ... "Direct"`, signed in as the added account |
+| Quit | exit code 0; one WRN: the login WebView2 folder was still locked at sweep time (retried next start) |
+
+The test's data folder is kept at `%LOCALAPPDATA%\ROROROblox.fresh-c2-20261103`; it holds a DPAPI-wrapped cookie, so it is never committed and should be deleted once C2 is signed off.
+
+Open from the walk: Este asked whether the Plus badge can be Roblox's own Plus icon. Not decided here.
+
 ## Probes, 2026-11-02 (C2 step 1, first pass)
 
 All eight saved accounts, `--live`, 15:24-15:25 UTC, reports in `docs/cycles/2026-11-01-account-library/probes/` (named by local-id prefix; no names, no server ids).
