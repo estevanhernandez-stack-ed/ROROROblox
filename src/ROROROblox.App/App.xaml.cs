@@ -1411,7 +1411,8 @@ public partial class App : Application
             () => AlertCadenceSetting));
 
         // #52: the version and channel Diagnostics reports. Same IHostBuildIdentity the plugin host uses.
-        services.AddSingleton<ROROROblox.App.Plugins.IHostBuildIdentity, ROROROblox.App.Plugins.HostBuildIdentity>();
+        // A factory, not the type form: HostBuildIdentity has two public ctors and only the parameterless one is production.
+        services.AddSingleton<ROROROblox.App.Plugins.IHostBuildIdentity>(_ => new ROROROblox.App.Plugins.HostBuildIdentity());
         services.AddSingleton<IInstallIdentity>(sp => new Distribution.InstallIdentity(
             sp.GetRequiredService<Distribution.IDistributionMode>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IHostBuildIdentity>()));

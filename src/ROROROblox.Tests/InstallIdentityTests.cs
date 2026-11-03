@@ -5,6 +5,8 @@ using ROROROblox.App.Diagnostics;
 using ROROROblox.App.Distribution;
 using ROROROblox.App.Plugins;
 using ROROROblox.Core.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ROROROblox.Tests;
@@ -81,4 +83,19 @@ public class InstallIdentityTests
     [InlineData(null, "not detected")]
     public void SnapshotChannelWord_IsEnglishAndInvariant(InstallChannel? channel, string expected)
         => Assert.Equal(expected, DiagnosticsPage.ChannelText(channel));
+
+    [Fact]
+    public async Task ProductionRegistration_GivesDiagnosticsTheIdentity()
+    {
+        // The identity is an optional collector ctor argument, so a missed registration would leave the page on the
+        // assembly fallback with a green suite. Resolve it from the REAL composition root and read a snapshot.
+        var services = new ServiceCollection();
+        global::ROROROblox.App.App.ConfigureServices(services, NullLoggerFactory.Instance);
+        using var provider = services.BuildServiceProvider();
+
+        var identity = provider.GetRequiredService<IInstallIdentity>();
+        Assert.Equal(InstallChannel.Dev, identity.Channel); // the test host is unpackaged and not a Velopack install
+        var snapshot = await provider.GetRequiredService<IDiagnosticsCollector>().CollectAsync();
+        Assert.Equal(identity.Channel, snapshot.Channel);
+    }
 }
