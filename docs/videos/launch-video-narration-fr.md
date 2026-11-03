@@ -20,23 +20,35 @@ stays as digits in any OVERLAY.
 - OVERLAY: `enregistrez une fois. lancez.`
 - VO: `Enregistrez tous vos alts, gérez vos comptes. Un clic par compte, statut en direct et le jeu où chacun se trouve.`
 
-### squad (slide 3)
+### manager (slide 3)
+- OVERLAY: `chaque compte, d'un coup d'œil`
+- VO: `Chaque compte affiche maintenant ses Robux, son Plus et ses amis en ligne. Ouvrez-en un, et ses jeux sont là. Récents, favoris, serveurs privés.`
+
+### health (slide 4)
+- OVERLAY: `il vous dit ce qui cloche`
+- VO: `Et quand un compte a besoin de vous, il le dit. Session expirée, vérification requise, limité par Roblox. Un clic pour régler ça.`
+
+### library (slide 5)
+- OVERLAY: `une bibliothèque. chaque compte.`
+- VO: `Chaque jeu auquel vous avez joué arrive dans la Bibliothèque. Cherchez, filtrez, et choisissez le compte qui joue.`
+
+### squad (slide 6)
 - OVERLAY: `même serveur privé. tous.`
 - VO: `Squad Launch, c'est le meilleur. Un lien, et chaque compte atterrit dans le MÊME serveur privé, ensemble.`
 
-### history (slide 4)
+### history (slide 7)
 - OVERLAY: `il compte les points désormais`
 - VO: `Et il compte les points ! Pic d'alts simultanés, temps total, un classement de vos alts avec les séries de connexions. Tout calculé sur votre machine, rien n'en sort.`
 
-### themes (slide 5)
+### themes (slide 8)
 - OVERLAY: `l'IA crée votre thème`
 - VO: `Quatre thèmes intégrés, plus un créateur où une IA conçoit le vôtre à partir d'une ambiance que vous décrivez.`
 
-### trust (slide 6)
+### trust (slide 9)
 - OVERLAY: `votre mot de passe n'y passe pas`
 - VO: `Votre mot de passe ne touche jamais l'appli, jamais. En plus, plein d'améliorations de confort. Jetez un œil à la liste !`
 
-### cta (slide 7)
+### cta (slide 10)
 - OVERLAY: `scannez, ouvrez sur ordi`
 - VO: `Gratuit sur le Microsoft Store, Windows ET Mac. Scannez le code, gardez la page, prenez-le sur votre ordi. RoRoRo, de six-deux-six Labs. Imaginez autre chose.`
 

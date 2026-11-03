@@ -10,8 +10,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "slides-02-06-r2",
-  "generatedUtc": "2026-10-06T16:16:13+00:00",
+  "sourceCommit": "v136-new-slides",
+  "generatedUtc": "2026-11-03T20:55:03+00:00",
   "sourceOfTruth": "docs/videos/launch-video-narration-*.md — corrections are edits there",
   "fields": [
     {
@@ -63,6 +63,84 @@
         "pt-br": "Salve todos os alts e gerencie as contas. Um clique por conta, status ao vivo e o jogo em que cada uma está.",
         "pl": "Zapisz wszystkie alty i zarządzaj kontami. Jeden klik na konto, status na żywo i gra, w której jest każde z nich.",
         "es": "Guarda todos tus alts y gestiona tus cuentas. Un clic por cuenta, estado en vivo y el juego en el que está cada una."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "manager_overlay",
+      "en": "every account, at a glance",
+      "translations": {
+        "fr": "chaque compte, d'un coup d'œil",
+        "de": "jeder Account auf einen Blick",
+        "ru": "каждый аккаунт как на ладони",
+        "pt-br": "cada conta, num relance",
+        "pl": "każde konto na pierwszy rzut oka",
+        "es": "cada cuenta, de un vistazo"
+      },
+      "charCap": 34
+    },
+    {
+      "field": "manager_vo",
+      "en": "Now every account shows its Robux, Plus, and friends online. Open one up, and its games are right there. Recent, favorites, private servers.",
+      "translations": {
+        "fr": "Chaque compte affiche maintenant ses Robux, son Plus et ses amis en ligne. Ouvrez-en un, et ses jeux sont là. Récents, favoris, serveurs privés.",
+        "de": "Jetzt zeigt jeder Account seine Robux, Plus und Freunde online. Klapp einen auf, und seine Spiele sind direkt da. Zuletzt, Favoriten, private Server.",
+        "ru": "Теперь каждый аккаунт показывает свои Robux, Plus и друзей в сети. Откройте любой, и его игры прямо там. Недавние, избранное, приватные серверы.",
+        "pt-br": "Agora cada conta mostra seus Robux, o Plus e os amigos online. Abra uma, e os jogos dela estão bem ali. Recentes, favoritos, servidores privados.",
+        "pl": "Teraz każde konto pokazuje swoje Robux, Plus i znajomych online. Otwórz je, a jego gry są od razu pod ręką. Ostatnie, ulubione, prywatne serwery.",
+        "es": "Ahora cada cuenta muestra sus Robux, su Plus y sus amigos en línea. Abre una, y sus juegos están ahí mismo. Recientes, favoritos, servidores privados."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "health_overlay",
+      "en": "it tells you what's wrong",
+      "translations": {
+        "fr": "il vous dit ce qui cloche",
+        "de": "er sagt dir, was los ist",
+        "ru": "он скажет, что не так",
+        "pt-br": "ela avisa o que deu errado",
+        "pl": "powie ci, co jest nie tak",
+        "es": "te dice qué pasa"
+      },
+      "charCap": 34
+    },
+    {
+      "field": "health_vo",
+      "en": "And when an account needs you, it says so. Session expired, needs verification, limited by Roblox. One click to fix it.",
+      "translations": {
+        "fr": "Et quand un compte a besoin de vous, il le dit. Session expirée, vérification requise, limité par Roblox. Un clic pour régler ça.",
+        "de": "Und wenn ein Account dich braucht, sagt er es dir. Sitzung abgelaufen, Verifizierung nötig, von Roblox eingeschränkt. Ein Klick, und es ist behoben.",
+        "ru": "А если аккаунту нужна ваша помощь, он об этом скажет. Сессия истекла, нужна проверка, ограничено Roblox. Один клик, и всё исправлено.",
+        "pt-br": "E quando uma conta precisa de você, ela avisa. Sessão expirada, requer verificação, limitado pelo Roblox. Um clique para resolver.",
+        "pl": "A kiedy konto cię potrzebuje, mówi o tym. Sesja wygasła, wymaga weryfikacji, ograniczone przez Roblox. Jedno kliknięcie i gotowe.",
+        "es": "Y cuando una cuenta te necesita, te lo dice. Sesión caducada, requiere verificación, limitado por Roblox. Un clic para arreglarlo."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "library_overlay",
+      "en": "one library. play as anyone.",
+      "translations": {
+        "fr": "une bibliothèque. chaque compte.",
+        "de": "eine Bibliothek. jeder Account.",
+        "ru": "одна библиотека. любой аккаунт.",
+        "pt-br": "uma biblioteca. qualquer conta.",
+        "pl": "jedna biblioteka. dowolne konto.",
+        "es": "una biblioteca. cualquier cuenta."
+      },
+      "charCap": 34
+    },
+    {
+      "field": "library_vo",
+      "en": "Every game you've played lands in the Library. Search it, filter it, and pick which account plays.",
+      "translations": {
+        "fr": "Chaque jeu auquel vous avez joué arrive dans la Bibliothèque. Cherchez, filtrez, et choisissez le compte qui joue.",
+        "de": "Jedes Spiel, das du gespielt hast, landet in der Bibliothek. Durchsuchen, filtern und aussuchen, welcher Account spielt.",
+        "ru": "Каждая игра, в которую вы играли, попадает в Библиотеку. Ищите, фильтруйте и выбирайте, каким аккаунтом играть.",
+        "pt-br": "Todo jogo que você jogou vai para a Biblioteca. Pesquise, filtre e escolha qual conta joga.",
+        "pl": "Każda gra, w którą grasz, trafia do Biblioteki. Przeszukuj, filtruj i wybierz, które konto gra.",
+        "es": "Cada juego que has jugado llega a la Biblioteca. Búscalo, fíltralo y elige qué cuenta juega."
       },
       "charCap": 600
     },

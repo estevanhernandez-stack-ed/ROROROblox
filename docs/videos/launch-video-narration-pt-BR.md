@@ -20,19 +20,31 @@ stays as digits in any OVERLAY.
 - OVERLAY: `salve uma vez. inicie como.`
 - VO: `Salve todos os alts e gerencie as contas. Um clique por conta, status ao vivo e o jogo em que cada uma está.`
 
-### squad (slide 3)
+### manager (slide 3)
+- OVERLAY: `cada conta, num relance`
+- VO: `Agora cada conta mostra seus Robux, o Plus e os amigos online. Abra uma, e os jogos dela estão bem ali. Recentes, favoritos, servidores privados.`
+
+### health (slide 4)
+- OVERLAY: `ela avisa o que deu errado`
+- VO: `E quando uma conta precisa de você, ela avisa. Sessão expirada, requer verificação, limitado pelo Roblox. Um clique para resolver.`
+
+### library (slide 5)
+- OVERLAY: `uma biblioteca. qualquer conta.`
+- VO: `Todo jogo que você jogou vai para a Biblioteca. Pesquise, filtre e escolha qual conta joga.`
+
+### squad (slide 6)
 - OVERLAY: `mesmo servidor privado. todos.`
 - VO: `Squad Launch é a melhor parte. Um link, e todas as contas caem no MESMO servidor privado, juntas.`
 
-### history (slide 4)
+### history (slide 7)
 - OVERLAY: `agora ele marca os pontos`
 - VO: `E ele marca os pontos! Pico de alts, tempo total, um ranking com sequências de login. Tudo calculado na sua máquina, nada sai.`
 
-### themes (slide 5)
+### themes (slide 8)
 - OVERLAY: `a IA cria seu tema`
 - VO: `Quatro temas nativos, mais um construtor onde uma IA cria o seu a partir de uma vibe.`
 
-### trust (slide 6)
+### trust (slide 9)
 - OVERLAY: `sua senha nunca passa por ele`
 - VO: `Sua senha nunca toca no app, nunca mesmo. E tem um monte de melhorias. Dá uma olhada na lista!`
 
@@ -43,7 +55,7 @@ stays as digits in any OVERLAY.
 > than a translation one. Either accept a slightly quicker read on this slide, or say
 > which claim to cut and it comes back inside budget.
 
-### cta (slide 7)
+### cta (slide 10)
 - OVERLAY: `escaneie, abra no computador`
 - VO: `Grátis na Microsoft Store, Windows E Mac. Escaneie o código, salve a página, pegue no computador. RoRoRo, da seis-dois-seis Labs. Imagine algo diferente.`
 
