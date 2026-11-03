@@ -47,7 +47,8 @@ public sealed record AccountStat(
     int StreakDays = 0, int LongestStreakDays = 0);
 
 /// <summary>Name is "last known" and purely for display — never a key (§2.1).</summary>
-public sealed record GameStat(string? LastKnownName, int Launches, TimeSpan Uptime);
+public sealed record GameStat(
+    string? LastKnownName, int Launches, TimeSpan Uptime, DateTimeOffset? LastPlayedUtc = null);
 
 public sealed record DayStat(int Launches, TimeSpan Uptime);
 
@@ -107,6 +108,21 @@ public abstract record StatsEvent
 
     /// <summary>Latches the one-time seed so it never runs twice (§4).</summary>
     public sealed record BackfillCompleted() : StatsEvent;
+
+    /// <summary>
+    /// A launch row recorded without a place (a follow launch) learned its place from presence.
+    /// Counts one launch for the game and stamps its last-played; it does NOT touch the account's
+    /// launch count, the day buckets or the streak, because <see cref="LaunchRecorded"/> already
+    /// counted this launch when the row was added (counting it again would double it).
+    /// </summary>
+    public sealed record GamePlaceResolved(long PlaceId, string? GameName, DateTimeOffset AtUtc) : StatsEvent;
+
+    /// <summary>
+    /// Fills a game's last-played ONLY when it has none: the one-time fix for rollups written before
+    /// <see cref="GameStat.LastPlayedUtc"/> existed. Never moves a stamp that is already set, so
+    /// running it again changes nothing.
+    /// </summary>
+    public sealed record GameLastPlayedFilled(long PlaceId, DateTimeOffset AtUtc) : StatsEvent;
 
     /// <summary>
     /// Presence confirmed this alt in a game. Fired from the presence poll, deduped per local

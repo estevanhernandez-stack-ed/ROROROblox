@@ -88,6 +88,24 @@ public static class ThemeSlots
     /// </summary>
     public const string OnMagenta = "OnMagentaBrush";
 
+    /// <summary>
+    /// DERIVED, the fourth health colour (v1.36 item 2): the "Needs verification" badge and dot.
+    /// The midpoint of <see cref="RowExpiredAccent"/> and <see cref="Magenta"/>, so the four health
+    /// states are four colours from three slots (amber, midpoint, magenta, cyan) and no theme grows
+    /// an eleventh slot. Colour is never the only carrier: the state also differs by glyph and word.
+    /// Measured against Bg and RowBg in every built-in by <c>ContrastPairGateTests</c>.
+    /// </summary>
+    public const string HealthVerify = "HealthVerifyBrush";
+
+    /// <summary>
+    /// DERIVED: the "Limited by Roblox" badge TEXT. Raw <see cref="Magenta"/> is a graphic colour (the
+    /// status dot's fill) and fails AA as 11 px text on the row in three of four built-ins (brand
+    /// 4.05, midnight 3.53, flatline 2.81 against RowBg), so the text takes Magenta nudged toward
+    /// white only as far as it needs to clear 4.5:1 against both Bg and RowBg. Unchanged where raw
+    /// Magenta already passes (magenta-heat).
+    /// </summary>
+    public const string HealthLimited = "HealthLimitedBrush";
+
     // ========================= THE LIBRARY'S ACCENT, TAKEN OVER =========================
     //
     // The four below are the only keys in this class whose NAME is not ours. They are WPF-UI's,

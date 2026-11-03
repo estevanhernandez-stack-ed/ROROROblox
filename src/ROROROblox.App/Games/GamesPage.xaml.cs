@@ -1,416 +1,225 @@
-using System.Collections.ObjectModel;
+using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ROROROblox.App.Localization;
 using ROROROblox.App.Modals;
+using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.Games;
 
 /// <summary>
-/// The Games destination, hosted by the shell (F-013 — formerly <c>GamesWindow</c>). <c>Loaded</c>
-/// refires on every navigation back here, so each visit reloads the stores — the same freshness
-/// the per-open window had.
+/// The Library destination, hosted by the shell (F-013 — formerly <c>GamesWindow</c>). <c>Loaded</c>
+/// refires on every navigation back here, so each visit reloads the stores — the same freshness the
+/// per-open window had.
+/// <para>
+/// v1.36 item 9: this file is wiring. Every decision (chips, the one box, paste routing, who Play
+/// launches as, the remove confirm) is in <see cref="LibraryViewModel"/> and tested there. What stays
+/// here is what needs a window or a focus: the rename dialog, the Play as picker's placement, and the
+/// box taking focus when the page opens.
+/// </para>
 /// </summary>
 internal partial class GamesPage : UserControl
 {
-    private readonly IFavoriteGameStore _favorites;
-    private readonly IPrivateServerStore _servers;
-    private readonly IRobloxApi _api;
-    private readonly ObservableCollection<FavoriteGame> _items = [];
-    private readonly ObservableCollection<GameSearchResult> _searchItems = [];
-    private readonly ObservableCollection<SavedPrivateServer> _serverItems = [];
+    private readonly LibraryViewModel _vm;
+    private readonly AccountPickerFlyout _picker = new();
+    private LibraryItem? _pickerFor;
 
-    // The old modal reloaded the view model's library once, when ShowDialog returned. A shell page
-    // has no close moment, so the composition root hands in the refresh and the page invokes it
-    // whenever its own lists reload — every mutation path already reloads, so every mutation
-    // reaches the main window without waiting for anything to close (F-013).
-    private readonly Action? _libraryChanged;
-
-    public GamesPage(IFavoriteGameStore favorites, IPrivateServerStore servers, IRobloxApi api,
-        Action? libraryChanged = null)
+    /// <param name="viewModel">The page's brain, built by the composition root beside <c>MainViewModel</c>.</param>
+    /// <param name="pickerAccounts">What the Play as picker lists: <c>MainViewModel.Accounts</c> (UI thread; the page runs there).</param>
+    public GamesPage(LibraryViewModel viewModel, IEnumerable pickerAccounts)
     {
-        _favorites = favorites;
-        _servers = servers;
-        _api = api;
-        _libraryChanged = libraryChanged;
+        _vm = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        ArgumentNullException.ThrowIfNull(pickerAccounts);
+        DataContext = _vm;
         InitializeComponent();
-        FavoritesList.ItemsSource = _items;
-        SearchResultsList.ItemsSource = _searchItems;
-        ServersList.ItemsSource = _serverItems;
+        _picker.ItemsSource = pickerAccounts;
+        _picker.AccountPicked += OnAccountPicked;
+        _vm.PropertyChanged += OnViewModelChanged;
         Loaded += OnLoaded;
+        Unloaded += (_, _) => _vm.Detach();
     }
+
+    internal LibraryViewModel ViewModel => _vm;
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        await ReloadAsync();
-        await ReloadServersAsync();
-        SearchInput.Focus();
-    }
-
-    private void OnSearchKeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter)
-        {
-            OnSearchClick(sender, e);
-            e.Handled = true;
-        }
-    }
-
-    private async void OnSearchClick(object sender, RoutedEventArgs e)
-    {
-        var query = SearchInput.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            StatusText.Text = Loc.Get("Shell_Games_TypeToSearch");
-            return;
-        }
-
-        SearchButton.IsEnabled = false;
-        StatusText.Text = Loc.Format("Shell_Games_Searching", query);
-
+        LibraryBox.Focus();
         try
         {
-            var results = await _api.SearchGamesAsync(query);
-            _searchItems.Clear();
-            foreach (var r in results)
-            {
-                _searchItems.Add(r);
-            }
+            await _vm.LoadAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _vm.Report(Loc.Format("Shell_Games_CouldntAdd", ex.Message));
+        }
+    }
 
-            if (results.Count == 0)
-            {
-                SearchResultsContainer.Visibility = Visibility.Collapsed;
-                StatusText.Text = Loc.Format("Shell_Games_NoResults", query);
-            }
-            else
-            {
-                SearchResultsContainer.Visibility = Visibility.Visible;
-                StatusText.Text = Loc.Plural("Shell_Games_FoundMatches", results.Count);
-            }
-        }
-        catch (Exception ex)
+    private void OnViewModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(LibraryViewModel.IsRemoveConfirmOpen)) return;
+
+        // The confirm opens on Cancel, so a stray Enter or Space does the safe thing; closing it hands the box its focus back.
+        Dispatcher.BeginInvoke(() =>
         {
-            StatusText.Text = Loc.Format("Shell_Games_SearchFailed", ex.Message);
-        }
-        finally
-        {
-            SearchButton.IsEnabled = true;
-        }
+            if (_vm.IsRemoveConfirmOpen) CancelRemoveButton.Focus();
+            else LibraryBox.Focus();
+        }, System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private static LibraryItem? ItemOf(object sender)
+        => (sender as FrameworkElement)?.DataContext as LibraryItem
+           ?? ((sender as FrameworkElement)?.Tag as LibraryItem);
+
+    // ---------- the one box ----------
+
+    private async void OnBoxKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        await _vm.SubmitAsync();
     }
 
     private async void OnAddSearchResultClick(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button button || button.Tag is not GameSearchResult result)
+        if (sender is Button { Tag: GameSearchResult result })
         {
-            return;
+            await _vm.AddSearchResultAsync(result);
         }
+    }
 
+    // ---------- tiles ----------
+
+    /// <summary>A tile or row was realised, which only happens for entries on screen: ask for its icon if it has none.</summary>
+    private void OnTileLoaded(object sender, RoutedEventArgs e)
+    {
+        if (ItemOf(sender) is { } item)
+        {
+            _vm.NoteOnScreen(item);
+        }
+    }
+
+    private async void OnPlayClick(object sender, RoutedEventArgs e)
+    {
+        if (ItemOf(sender) is not { } item) return;
         try
         {
-            await _favorites.AddAsync(result.PlaceId, result.UniverseId, result.Name, result.IconUrl);
-            StatusText.Text = Loc.Format("Shell_Games_Added", result.Name);
-            await ReloadAsync();
+            await _vm.PlayAsync(item.Entry, null);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntAdd", ex.Message);
+            _vm.Report(Loc.Format("Shell_Games_CouldntAdd", ex.Message));
         }
     }
 
-    private async Task ReloadAsync()
+    private void OnPlayAsClick(object sender, RoutedEventArgs e)
     {
-        _items.Clear();
-        var list = await _favorites.ListAsync();
-        foreach (var fav in list)
-        {
-            _items.Add(fav);
-        }
-        EmptyState.Visibility = _items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        _libraryChanged?.Invoke();
+        if (ItemOf(sender) is not { } item || sender is not Button button) return;
+        _pickerFor = item;
+        _picker.PlacementTarget = button;
+        _picker.IsOpen = true;
     }
 
-    private async Task ReloadServersAsync()
+    private async void OnAccountPicked(object? sender, AccountSummary account)
     {
-        _serverItems.Clear();
-        var list = await _servers.ListAsync();
-        foreach (var server in list)
-        {
-            _serverItems.Add(server);
-        }
-        ServersEmptyState.Visibility = _serverItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        _libraryChanged?.Invoke();
-    }
-
-    private async void OnAddClick(object sender, RoutedEventArgs e)
-    {
-        var input = UrlInput.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            StatusText.Text = Loc.Get("Shell_Games_PasteUrlFirst");
-            return;
-        }
-
-        var placeId = RobloxLauncher.ExtractPlaceId(input);
-        if (placeId is null)
-        {
-            StatusText.Text = Loc.Get("Shell_Games_NoPlaceId");
-            return;
-        }
-
-        AddButton.IsEnabled = false;
-        StatusText.Text = Loc.Get("Shell_Games_LookingUp");
-
+        if (_pickerFor is not { } item) return;
         try
         {
-            var meta = await _api.GetGameMetadataByPlaceIdAsync(placeId.Value);
-            if (meta is null)
-            {
-                StatusText.Text = Loc.Format("Shell_Games_NoMetadata", placeId);
-                return;
-            }
-
-            await _favorites.AddAsync(meta.PlaceId, meta.UniverseId, meta.Name, meta.IconUrl);
-            UrlInput.Text = string.Empty;
-            StatusText.Text = Loc.Format("Shell_Games_Added", meta.Name);
-            await ReloadAsync();
+            await _vm.PlayAsync(item.Entry, account.Id);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntAdd", ex.Message);
-        }
-        finally
-        {
-            AddButton.IsEnabled = true;
+            _vm.Report(Loc.Format("Shell_Games_CouldntAdd", ex.Message));
         }
     }
+
+    private void OnMoreClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { ContextMenu: { } menu } button)
+        {
+            menu.PlacementTarget = button;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            menu.IsOpen = true;
+        }
+    }
+
+    // ---------- management (the entry menu) ----------
 
     private async void OnSetDefaultClick(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button button || button.Tag is not long placeId)
+        if (ItemOf(sender) is not { } item) return;
+        try { await _vm.SetDefaultAsync(item.Entry); }
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            return;
-        }
-
-        try
-        {
-            await _favorites.SetDefaultAsync(placeId);
-            await ReloadAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntSetDefault", ex.Message);
+            _vm.Report(Loc.Format(item.IsPrivate ? "Shell_Games_CouldntSetDefaultServer" : "Shell_Games_CouldntSetDefault", ex.Message));
         }
     }
 
     private async void OnClearDefaultClick(object sender, RoutedEventArgs e)
     {
-        try
+        if (ItemOf(sender) is not { } item) return;
+        try { await _vm.ClearDefaultAsync(item.Entry); }
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            await _favorites.ClearDefaultAsync();
-            await ReloadAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntClearDefault", ex.Message);
+            _vm.Report(Loc.Format(item.IsPrivate ? "Shell_Games_CouldntClearDefaultServer" : "Shell_Games_CouldntClearDefault", ex.Message));
         }
     }
 
-    private async void OnSetDefaultServerClick(object sender, RoutedEventArgs e)
+    private async void OnRenameClick(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button button || button.Tag is not Guid id)
-        {
-            return;
-        }
+        if (ItemOf(sender) is not { } item) return;
 
-        try
-        {
-            await _servers.SetDefaultAsync(id);
-            await ReloadServersAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntSetDefaultServer", ex.Message);
-        }
-    }
-
-    private async void OnClearDefaultServerClick(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            await _servers.ClearDefaultAsync();
-            await ReloadServersAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntClearDefaultServer", ex.Message);
-        }
-    }
-
-    private async void OnRemoveClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button button || button.Tag is not long placeId)
-        {
-            return;
-        }
-
-        var game = _items.FirstOrDefault(f => f.PlaceId == placeId);
-        var confirm = MessageBox.Show(
-            Window.GetWindow(this),
-            Loc.Format("Shell_Games_RemoveGameConfirm", game?.RenderName ?? Loc.Get("Shell_Games_ThisGame")),
-            Loc.Get("Shell_Games_RemoveGameTitle"),
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-        if (confirm != MessageBoxResult.Yes)
-        {
-            return;
-        }
-
-        try
-        {
-            await _favorites.RemoveAsync(placeId);
-            await ReloadAsync();
-            StatusText.Text = Loc.Get("Shell_Games_Removed");
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntRemove", ex.Message);
-        }
-    }
-
-    private async void OnRemoveServerClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button button || button.Tag is not Guid id)
-        {
-            return;
-        }
-
-        var server = _serverItems.FirstOrDefault(s => s.Id == id);
-        var confirm = MessageBox.Show(
-            Window.GetWindow(this),
-            Loc.Format("Shell_Games_RemoveServerConfirm", server?.RenderName ?? Loc.Get("Shell_Games_ThisServer")),
-            Loc.Get("Shell_Games_RemoveServerTitle"),
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-        if (confirm != MessageBoxResult.Yes)
-        {
-            return;
-        }
-
-        try
-        {
-            await _servers.RemoveAsync(id);
-            await ReloadServersAsync();
-            StatusText.Text = Loc.Get("Shell_Games_Removed");
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntRemove", ex.Message);
-        }
-    }
-
-    // ---------- v1.3.x — rename handlers (button + right-click context menu both target these) ----------
-
-    private async void OnRenameGameClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement el || el.Tag is not FavoriteGame game)
-        {
-            return;
-        }
-
+        var entry = item.Entry;
         var target = new RenameTarget(
-            RenameTargetKind.Game,
-            game.PlaceId,
-            game.Name,
-            game.LocalName);
+            entry.Kind == LibraryEntryKind.PrivateServer ? RenameTargetKind.PrivateServer : RenameTargetKind.Game,
+            entry.Kind == LibraryEntryKind.PrivateServer && entry.PrivateServerId is { } serverId ? serverId : entry.PlaceId,
+            entry.Name,
+            entry.LocalName);
         var result = await RenameWindow.ShowAsync(Window.GetWindow(this)!, target);
-        if (result.Kind == RenameResultKind.Cancel)
-        {
-            return;
-        }
-        try
-        {
-            await _favorites.UpdateLocalNameAsync(game.PlaceId, result.NewName);
-            await ReloadAsync();
-        }
+        if (result.Kind == RenameResultKind.Cancel) return;
+
+        try { await _vm.RenameAsync(entry, result.NewName); }
         catch (KeyNotFoundException)
         {
-            StatusText.Text = Loc.Get("Shell_Msg_GameNotSaved");
-            await ReloadAsync();
+            _vm.Report(Loc.Get(item.IsPrivate ? "Shell_Games_ServerNotSaved" : "Shell_Msg_GameNotSaved"));
+            await _vm.ReloadAsync();
         }
         catch (System.IO.IOException ex)
         {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntSaveNameChangeDisk", ex.Message);
+            _vm.Report(Loc.Format("Shell_Games_CouldntSaveNameChangeDisk", ex.Message));
         }
     }
 
-    private async void OnResetGameNameClick(object sender, RoutedEventArgs e)
+    private async void OnResetNameClick(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement el || el.Tag is not FavoriteGame game)
-        {
-            return;
-        }
-        try
-        {
-            await _favorites.UpdateLocalNameAsync(game.PlaceId, null);
-            await ReloadAsync();
-        }
+        if (ItemOf(sender) is not { } item) return;
+        try { await _vm.ResetNameAsync(item.Entry); }
         catch (KeyNotFoundException)
         {
-            StatusText.Text = Loc.Get("Shell_Msg_GameNotSaved");
-            await ReloadAsync();
+            _vm.Report(Loc.Get(item.IsPrivate ? "Shell_Games_ServerNotSaved" : "Shell_Msg_GameNotSaved"));
+            await _vm.ReloadAsync();
         }
     }
 
-    private async void OnRenameServerClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement el || el.Tag is not SavedPrivateServer server)
-        {
-            return;
-        }
+    // ---------- remove: the in-page confirm ----------
 
-        var target = new RenameTarget(
-            RenameTargetKind.PrivateServer,
-            server.Id,
-            server.Name,
-            server.LocalName);
-        var result = await RenameWindow.ShowAsync(Window.GetWindow(this)!, target);
-        if (result.Kind == RenameResultKind.Cancel)
+    private void OnRemoveClick(object sender, RoutedEventArgs e)
+    {
+        if (ItemOf(sender) is { } item)
         {
-            return;
-        }
-        try
-        {
-            await _servers.UpdateLocalNameAsync(server.Id, result.NewName);
-            await ReloadServersAsync();
-        }
-        catch (KeyNotFoundException)
-        {
-            StatusText.Text = Loc.Get("Shell_Games_ServerNotSaved");
-            await ReloadServersAsync();
-        }
-        catch (System.IO.IOException ex)
-        {
-            StatusText.Text = Loc.Format("Shell_Games_CouldntSaveNameChangeDisk", ex.Message);
+            _vm.RequestRemove(item);
         }
     }
 
-    private async void OnResetServerNameClick(object sender, RoutedEventArgs e)
+    private async void OnConfirmRemoveClick(object sender, RoutedEventArgs e) => await _vm.ConfirmRemoveAsync();
+
+    private void OnCancelRemoveClick(object sender, RoutedEventArgs e) => _vm.CancelRemove();
+
+    private void OnRemoveBarKeyDown(object sender, KeyEventArgs e)
     {
-        if (sender is not FrameworkElement el || el.Tag is not SavedPrivateServer server)
-        {
-            return;
-        }
-        try
-        {
-            await _servers.UpdateLocalNameAsync(server.Id, null);
-            await ReloadServersAsync();
-        }
-        catch (KeyNotFoundException)
-        {
-            StatusText.Text = Loc.Get("Shell_Games_ServerNotSaved");
-            await ReloadServersAsync();
-        }
+        if (e.Key != Key.Escape) return;
+        e.Handled = true;
+        _vm.CancelRemove();
     }
 }

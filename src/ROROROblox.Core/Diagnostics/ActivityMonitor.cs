@@ -21,6 +21,16 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
     private readonly ILogger<ActivityMonitor> _log;
     private readonly ConcurrentDictionary<Guid, Record> _records = new();
 
+    /// <summary>How often the foreground is sampled into the history ring.</summary>
+    internal static readonly TimeSpan SamplePeriod = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>Ring capacity: 32 samples at 100 ms is 3.2 s of foreground history.</summary>
+    internal const int ForegroundHistory = 32;
+
+    private readonly (uint Tick, int Pid)[] _ring = new (uint, int)[ForegroundHistory];
+    private int _ringHead;   // next write slot
+    private int _ringCount;
+
     private uint _lastSeenInputTick;
 
     public TimeSpan WarnThreshold { get; set; } = TimeSpan.FromMinutes(15);
@@ -60,14 +70,14 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
     // 0 idle, 1 sampling. System.Threading.Timer callbacks can overlap if a tick runs long;
     // Sample() is a single-writer over _lastSeenInputTick + _records, so a re-entrant tick would
     // race it. SafeSample skips (not queues) an overlapping tick rather than blocking the timer
-    // thread pool -- the next 1s tick picks up cleanly.
+    // thread pool -- the next tick picks up cleanly.
     private int _sampling;
 
     public void Start()
     {
         if (_disposed) return;
         _timer ??= new System.Threading.Timer(_ => SafeSample(), null,
-            dueTime: TimeSpan.FromSeconds(2), period: TimeSpan.FromSeconds(1));
+            dueTime: TimeSpan.FromSeconds(2), period: SamplePeriod);
     }
 
     public void Stop()
@@ -98,12 +108,19 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
         // first Sample() call only counts as "advanced" when input has genuinely moved since the
         // monitor was built -- a repeated tick (including matching the ctor baseline) means no
         // input happened, and idle accounts age instead of getting falsely re-stamped.
+        var nowTick = _input.NowTick;
+        var haveFg = _foreground.TryGetForegroundPid(out var fgPid);
+        PushForeground(nowTick, haveFg ? fgPid : 0);
+
         var currentTick = _input.LastInputTick;
         var advanced = currentTick != _lastSeenInputTick;
         _lastSeenInputTick = currentTick;
 
+        // Credit the window that was foreground at the input's own tick, not at sample time: the user
+        // can tap in B and bring C back before this sample runs (#221).
         if (advanced
-            && _foreground.TryGetForegroundPid(out var pid)
+            && TryPidAtTick(currentTick, out var pid, fallbackPid: haveFg ? fgPid : 0)
+            && pid > 0
             && _resolver.TryResolveAccountByPid(pid, out var accountId)
             && _records.TryGetValue(accountId, out var rec))
         {
@@ -135,8 +152,8 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
             }
         }
 
-        // Trace, not Debug: Sample() runs once a second and the app's Serilog floor is Debug
-        // (AppLogging.cs), so a Debug line here would write ~86k lines a day for nothing.
+        // Trace, not Debug: Sample() runs ten times a second and the app's Serilog floor is Debug
+        // (AppLogging.cs), so a Debug line here would write ~860k lines a day for nothing.
         // The crossing line above is the diagnostic surface; this one is for a Trace session.
         _log.LogTrace(
             "idle: sampled {Count} account(s), input advanced={Advanced}, threshold {ThresholdMinutes:F0} min, crossed {Crossed}",
@@ -146,6 +163,33 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
         {
             WarnThresholdCrossed?.Invoke(this, crossed);
         }
+    }
+
+    private void PushForeground(uint tick, int pid)
+    {
+        _ring[_ringHead] = (tick, pid);
+        _ringHead = (_ringHead + 1) % ForegroundHistory;
+        if (_ringCount < ForegroundHistory) _ringCount++;
+    }
+
+    // Greatest ring tick <= inputTick, oldest to newest. The comparison is the signed difference so a
+    // uint wrap between the entry and the input still orders correctly (valid within ~24 days).
+    // No qualifying entry (input older than the whole ring) falls back to the current foreground.
+    private bool TryPidAtTick(uint inputTick, out int pid, int fallbackPid)
+    {
+        pid = fallbackPid;
+        var found = false;
+        var start = (_ringHead - _ringCount + ForegroundHistory) % ForegroundHistory;
+        for (var i = 0; i < _ringCount; i++)
+        {
+            var e = _ring[(start + i) % ForegroundHistory];
+            if (unchecked((int)(inputTick - e.Tick)) >= 0)
+            {
+                pid = e.Pid;
+                found = true;
+            }
+        }
+        return found || fallbackPid > 0;
     }
 
     public void MarkActive(Guid accountId, DateTimeOffset nowUtc)

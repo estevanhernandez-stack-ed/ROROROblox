@@ -18,7 +18,7 @@ public sealed class RobloxRunningProbe : IRobloxRunningProbe
         try
         {
             return processes
-                .Select(p => new RobloxProcessInfo(p.Id, ReadHasWindow(() => p.MainWindowHandle), ProcessCommandLine.TryRead(p.Id)))
+                .Select(p => new RobloxProcessInfo(p.Id, ReadHasWindow(() => p.MainWindowHandle), ProcessCommandLine.TryRead(p.Id), ReadStartedAt(() => p.StartTime)))
                 .ToArray();
         }
         finally
@@ -49,6 +49,17 @@ public sealed class RobloxRunningProbe : IRobloxRunningProbe
     {
         try { return readMainWindowHandle() != IntPtr.Zero; }
         catch { return true; } // unknown → assume windowed; never silently close what we couldn't read
+    }
+
+    /// <summary>
+    /// Reads a process start time, or null when it cannot be read (access denied across an integrity
+    /// boundary, exited mid-scan). Null means unknown, and the idle-tray age floor never sweeps an
+    /// unknown age (#222). Same handling as <c>OrphanedClientSweeper.DefaultEnumerate</c>.
+    /// </summary>
+    public static DateTimeOffset? ReadStartedAt(Func<DateTime> readStartTime)
+    {
+        try { return new DateTimeOffset(readStartTime().ToUniversalTime(), TimeSpan.Zero); }
+        catch { return null; }
     }
 
     public IReadOnlyList<int> GetRunningPlayerPids()

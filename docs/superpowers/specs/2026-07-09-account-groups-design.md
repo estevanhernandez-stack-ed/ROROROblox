@@ -1,5 +1,7 @@
 # RORORO — account groups (coalescing launch surfaces) design
 
+> **Banner, 2026-11-03: abandoned.** Ruled 2026-08-30 (`docs/decisions.md`, "Onboarding-docs rulings"; `docs/features.md`, "Unbuilt, superseded, or ruled dead"). Nothing below was built. The v1.36 account panel (one account's places, opened under its own row) is **not** a group and does not revive this design.
+
 ---
 **Date:** 2026-07-09
 **Status:** Approved-shape (queue spec — build whenever) — mini-spec, ready for a plan

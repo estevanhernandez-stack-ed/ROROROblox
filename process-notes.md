@@ -1693,3 +1693,216 @@ and now named in the playbook's Phase 2).
 **Zero deepening rounds.** The spec carried the thinking; this was translation plus sequencing.
 
 **Handoff:** superpowers `subagent-driven-development`, per-task review, halting at C1 and C2.
+
+## /scope — the account manager and the Library (opened 2026-11-01)
+
+Cart cycle #6. Written to `docs/cycles/2026-11-01-account-library/scope.md`, same convention as the
+alerts cycle: `docs/scope.md` is the retired snapshot and stays untouched.
+
+**This one got an interview, two questions long, and both earned their place.** The record could
+not answer the brain dump: Este arrived with one sentence ("not only a multi launcher, but a good
+account manager with an easy to use game library so even users who only want RoRo can RoRo anyway")
+and a number (about 300 daily users). Recon first, then the one fork everything hangs on: what does a
+one-account user see first. He ruled **roster stays home**, with the main account's row opening into a
+history area and games picker, optional and remembered, and "Library" as the game-side word. That
+killed the home-screen flip as a cycle and kept it as a product question for later. Second question:
+what does "account manager" show that a row does not today. "Yes to all": Robux, membership, avatar,
+friends online, last played, a note, and the API cost under the existing pacing. Zero deepening
+rounds, by his habit and by the tempo of the answers.
+
+**Recon that reshaped the scope before a question was asked:** the one-account launcher already
+exists inside the app (FPS cap, Keep windowed, alerts, themes, library, join by link) and is hidden
+behind a roster-first window; per-account game history is a query over `LaunchSession`, not new
+storage; RAM (ic3w0lf22) is archived since 2024-07 so the account-manager seat is open; vibe-iterate
+has never been bootstrapped here; the backlog is 11 dashboard tasks plus 11 GitHub issues, two of
+them this week's live user pain (#260 invisible cursor, the captcha loop). All of it is in the doc
+with the backlog mapped by surface so nothing rides along by accident.
+
+**Contradiction named:** the account-groups spec banner says "Approved-shape"; `decisions.md`
+2026-08-30 and `features.md` say abandoned. Ruling wins; the spec gets a banner this cycle.
+
+**Este asked for two things the chain does not do by itself:** vibe-iterate as an instrument
+(bootstrap plus one `competitive` run against Bloxstrap and Fishstrap, as cycle items), and the
+backlog picked up along the way (mapped by surface, with the left-outs named).
+
+**Anchor carried as an assumption** rather than asked, to keep the beat count at two: "Worth
+installing with one account." One sentence to overturn.
+
+**Active shaping:** Este set the home-screen ruling in one message and the account-facts scope in
+two words. He steered; the recon supplied the options. The assumption list (every account gets a
+panel, note exported like tags, no plaintext Robux) is where the next interactive pass can push back.
+
+**Model note for the build:** this scope ran on a Fable 5.1 session. The era map says Cart builds
+and releases run from an Opus session with Sonnet workers; switch before `/build`.
+
+**Handoff:** `/prd`, against `docs/cycles/2026-11-01-account-library/scope.md`.
+
+## /prd — the account manager and the Library (2026-11-01)
+
+Cart cycle #6, step 3. Written to `docs/cycles/2026-11-01-account-library/prd.md`, beside the scope.
+Autonomous run under the fully-autonomous contract: every mandatory beat was answered from the scope,
+the features map, the open issues and the dashboard tasks; the ten beats the record did not answer are
+marked `(default — confirm on next interactive run)` inline and collected in a closing section. No
+question was put to Este. Zero deepening rounds, by habit; one self-run freshness pass instead,
+because the scope was more thorough than typical and the Vibe Thesis lesson says that is exactly when
+to verify upstream state.
+
+**The freshness pass earned its keep, three times.** (1) The captcha-marked task (`g5fgibvy7`,
+written 2026-08-09) reads as unbuilt, but v1.32 shipped "join via friend on every launch path" with
+the per-batch ask and the "It's fixed, join directly" clear. The mark, the acknowledge and the unmark
+exist. What is missing is a face: the row cannot say an account is marked, and Launch all shows a
+count instead of a sentence. The PRD rules that the health state IS the existing flag, not a second
+one. (2) #52 is half done: the About page and User-Agent read the package version since 2026-10-19;
+Diagnostics still reads the assembly and has no channel line. The rider shrank to one page and one
+bundle field. (3) #222 may already be answered by v1.35's pre-launch idle tray-client clear; the PRD
+makes it a measurement with a close-or-sweep fork, not a feature.
+
+**Scope guard, one hard one.** The scope promised three health states (Expired, Needs 2FA,
+Captcha-marked). The task cluster note says nobody has measured whether a 403 is the captcha, and
+no signal for "needs 2FA" has ever been named. The PRD keeps three states as the target but gates the
+third on a measured signal: ship it on evidence or keep today's two words. A state that fires on the
+wrong condition teaches users to distrust the row, which is worse than one fewer state.
+
+**What the PRD added over the scope:** empty states for a one-account install with a two-click path
+to Roblox home; the panel's Favourites and Private servers are the shared Library ordered per account,
+not a second list (that kills a whole class of sync bugs before /spec); the Library's search box also
+takes pastes, collapsing two inputs to one; Play as reuses the Squad Launch account picker; compact
+mode collapses all panels; a "nothing moves for the six-alt user" epic with a pixel bar and a startup
+time bar; an evidence bar for #260 and a cursor fence either way; the sheet-parity fence (#232) rides
+because this cycle rewrites all seven sheets.
+
+**Rider count:** eight (#221, #260, #222, listing, #232, #231 + two catalog tasks, #52, vibe-iterate)
+plus one conditional (#230). Each is its own epic so /spec and /checklist can address them.
+
+**Active shaping:** none this run; Este's rulings from /scope (roster stays home, "yes to all" on
+facts, no startup sweep) were carried as constraints. The ten assumptions are where his next pass
+should push, with the fact-timer cadence and the hidden-note-in-streamer-mode the two most likely to
+move.
+
+**Model note:** still a Fable 5.1 session. Switch to an Opus session before `/build`, per the era map.
+
+**Handoff:** `/spec`, against `docs/cycles/2026-11-01-account-library/prd.md`.
+
+## /spec — the account manager and the Library (2026-11-01)
+
+Cart cycle #6, step 4. Written to `docs/cycles/2026-11-01-account-library/spec.md`, beside the scope and
+PRD. Autonomous run under the fully-autonomous contract; no question put to Este. Three read-only recon
+sweeps against HEAD `5a8fe61` (account data and the facts lane; the roster row, Games page, tour and
+fences; the rider surfaces and release lane) replaced the tech-preferences interview, because the stack
+is fixed and every beat the interview would ask is answered by the tree. Deployment identity flowed
+through from CLAUDE.md unchanged. Endpoint research was web-first: Roblox's own legacy API reference
+pages and Swagger, not memory.
+
+**The spec's whole argument is in its first paragraph:** three stores already hold everything the panel
+and the Library show, and the main window renders one of them. So the cycle is one new network lane,
+two view models that join existing stores, and one launch path that everything new is handed a delegate
+to. Writing that first made the "nothing moves for the six-alt user" epic a set of gates rather than a
+promise.
+
+**The tree overrode the PRD ten times, and §0 lists every one.** The expensive ones: there is no Squad
+Launch account picker to reuse for Play as (`SquadLaunchWindow` picks a target; the rows' dots pick
+accounts), so Play as is a new flyout; the #231 catalog drift gate already shipped 2026-10-19 and ran
+green on two tag runs, so that rider and both catalog tasks close on evidence; no 30 s tick touches
+strays, so the conditional #222 sweep gets its own timer; follow launches record no place, so a
+follow-marked account's Recent would have been empty without a history patch; the backfilled user id
+never reaches the live row, which both presence and the friends-online fact need; and the Games page is
+820 lines of code-behind with no view model, so "grown" became "rewritten around a view model" because
+grid, list, chips, paste routing and Play as cannot be tested from click handlers.
+
+**The gotcha that earned the web search:** Roblox Plus replaced Premium on 2026-04-30 and the only
+documented membership endpoint is flagged in Roblox's own Swagger as hidden, "planned for deprecation
+on 4/30 (Roblox Plus launch)". The PRD's "Premium or none" was stale before it was written. Membership
+is now gated on a measured answer, the same shape as the PRD's health-state gate; logged to the
+dashboard at spec time.
+
+**Two decisions worth more than they look.** Facts get their own typed client, not members on
+`IRobloxApi`, because that interface has nine private fakes that break when it grows: one new fake in
+one new file instead. And #221 is a 100 ms foreground ring keyed by `GetTickCount` ticks, not an input
+hook, because a low-level hook or Raw Input sink is keylogger-shaped on a Store binary; the ring is
+within a reaction time of the truth and stays observational.
+
+**Deepening rounds: one, and it was the architecture self-review the SKILL names as judgment work,**
+run as an unanchored agent given the three files and CLAUDE.md, not a fork. Ten findings, all folded in:
+a `SecondaryButtonStyle` on a `ToggleButton` that would have thrown at XAML load (the rank style is
+`SecondaryToggleButtonStyle`); the anchor epic's "nothing says alts above the fold" had no home
+(now §3.8, `HasMultipleAccounts`, three `AutomationId`s asserted hidden with one account); two of three
+health states shared a brush against a PRD line that wants colour distinct (now one derived
+`HealthVerifyBrush`); the 100-entry Library bar had no measure and the virtualizing wrap panel's
+existence was hedged when the pinned WPF-UI 4.3.0 ships one; the membership probe had no mapping rule
+and no owner; the age hint had no element; fact badges had names in the PRD and no gate in the spec
+(`FactBadgeNamingFenceTests`, because the naming fence does not scan `TextBlock`); and §9's test tree
+had drifted from six sections. The review also verified every line anchor, every fake location and every
+fence constant against the tree and reported them matched, which is the other half of why it was worth
+running.
+
+**Active shaping:** none this run. Este's rulings from /scope (roster stays home, "yes to all" on facts,
+no startup sweep) were carried as constraints; the PRD's ten assumptions stand and this spec adds ten
+more, with "follow-marked does not beat presence" (12) and "the one-account window collapses the batch
+controls rather than demoting them" (19) the two most likely to move on his next pass.
+
+**Model note:** still a Fable 5.1 session. Switch to an Opus session before `/build`, per the era map.
+
+**Handoff:** `/checklist`, against `docs/cycles/2026-11-01-account-library/spec.md`.
+
+## /checklist — the account manager and the Library (2026-11-01)
+
+Cart cycle #6, step 5. Written to `docs/cycles/2026-11-01-account-library/checklist.md`, beside the spec.
+Autonomous run under the fully-autonomous contract; no question put to Este. Sixteen items, three halts,
+eight new assumptions (21-28) on top of the PRD's ten and the spec's ten.
+
+**Sixteen, not twelve, and said so in the header.** A shipped Store app's release cycle with two new
+surfaces, nine riders and a release lane is bigger than a Cart project; the alerts cycle ran thirteen.
+Every candidate merge fused a Core item with a XAML item or hid a halt, and both are seams a worker gets
+wrong.
+
+**Core first, and the first item moves no feature.** Everything this cycle paints is a view over stores
+that already exist, so items 3-5 (facts lane, Library join, panel view model) land and get tested without
+WPF before any XAML. Item 1 exists because three numbers cannot be captured after the first XAML change:
+the v1.35 row height for the pixel bar, the v1.35 startup time for the 10% bar, and the #222 windowless
+count on the current build. The #222 day is a day of Este's wall clock, so it starts at item 1 and is read
+at item 12.
+
+**The probes became a checkpoint, not a blocking item.** The spec's build item 1 was "run the captcha
+experiment", but putting an account into the captcha state and supplying a Plus cookie are Este's hands,
+not a worker's, and an autonomous build that blocks on item 1 is a build that does not start. So item 2
+builds the vocabulary and a probe tool (Core-referencing console, never prints a cookie, reports land under
+`probes/` where the pre-commit scan sees them), and C1 is where Este runs it. The code is shaped so an
+unmeasured state never sets: `NeedsVerification` is compiled in with one setter path, the membership badge
+is absent until the probe answers, and the gate is re-checked at C2. A probe not run tonight costs nothing.
+
+**C1 is also the mock gate.** Este rules on taste from rendered options, not descriptions (profile), and
+the house rule is match-the-mock. So C1 presents rendered options for the row's facts line, the panel, the
+Library grid and list, and the Play as flyout before a line of XAML; items 6, 7 and 9 build to the picks
+and screenshot-compare before they close. C2 is the roster (one-account path and eight-alt roster), C3 is
+the Library. Three halts for sixteen items is the SKILL's every-3-4-items cadence at this size.
+
+**One contradiction in the spec, resolved as assumption 21.** §2.1 puts the facts on a new line under the
+status line; §6 pins the collapsed row to v1.35's height. Both cannot hold once facts arrive. The plan
+collapses the facts line when every fact is null and the note is empty, so an upgraded roster matches
+v1.35 to the pixel until the first refresh, and pins the populated row's delta as a second constant set
+by the C1 mock. Este's to reverse if he wants dashes always showing.
+
+**Two debts paid forward from the alerts cycle.** Item 13 is the planned catalog sweep for the six
+languages, which the alerts cycle discovered mid-build as 6b. Item 8 writes the reachability exemptions
+with an expiry note naming item 9, which deletes them, because the alerts cycle caught an exemption
+outliving its reason twice, a cycle late each time.
+
+**Two guards the checklist adds that the spec did not name.** CLAUDE.md says no test guards
+`UseCookies=false` on the `IRobloxApi` client; this cycle registers a second typed client with the same
+load-bearing line, so item 3's `TypedHttpClientRegistrationTests` assertion covers both registrations.
+And item 8's paste routing names the rejection cases (non-Roblox host, `javascript:`, prose) as the
+cycle's one input-validation surface, re-read in item 16.
+
+**Zero deepening rounds**, by habit and because the spec carried the thinking; this was translation,
+sequencing, and the two reshapings above (probe-as-checkpoint, baselines-first).
+
+**Active shaping:** none this run. Este's rulings from /scope stand as constraints. The eight new
+assumptions are where the next interactive pass should push, with 21 (facts line collapses when empty)
+and 24 (a probe that cannot run does not hold the build) the two most likely to move.
+
+**Model note:** still a Fable 5.1 session. The checklist header says run `/build` from an Opus session
+with Sonnet workers, per the era map.
+
+**Handoff:** `/build`, naming `docs/cycles/2026-11-01-account-library/checklist.md` (the top-level
+`docs/checklist.md` is the retired snapshot). Autonomous, halting at C1 (after item 5), C2 (after item 7)
+and C3 (after item 9).

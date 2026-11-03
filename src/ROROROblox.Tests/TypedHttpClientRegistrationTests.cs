@@ -1,5 +1,7 @@
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.Core;
 using ROROROblox.App.Discord;
 using ROROROblox.Core.Diagnostics;
@@ -20,6 +22,7 @@ public class TypedHttpClientRegistrationTests
 {
     [Theory]
     [InlineData(typeof(IRobloxApi))]
+    [InlineData(typeof(IAccountFactsApi))]
     [InlineData(typeof(IRobloxCompatChecker))]
     [InlineData(typeof(IRobloxUpdateProbe))]
     [InlineData(typeof(DiscordWebhookSender))]
@@ -32,6 +35,7 @@ public class TypedHttpClientRegistrationTests
         var services = new ServiceCollection();
         services.AddLogging(); // registers ILogger<T> — the second-applicable-ctor trigger
         services.AddHttpClient<IRobloxApi, RobloxApi>();
+        services.AddHttpClient<IAccountFactsApi, AccountFactsApi>();
         services.AddHttpClient<IRobloxCompatChecker, RobloxCompatChecker>();
         services.AddHttpClient<IRobloxUpdateProbe, RobloxUpdateProbe>();
         services.AddHttpClient<DiscordWebhookSender>();
@@ -44,6 +48,90 @@ public class TypedHttpClientRegistrationTests
         var resolved = provider.GetRequiredService(serviceType);
 
         Assert.NotNull(resolved);
+    }
+
+    /// <summary>
+    /// <c>UseCookies = false</c> is the line CLAUDE.md calls load-bearing and used to say no test
+    /// guards. With a cookie container, the first request's <c>.ROBLOSECURITY</c> is kept and every
+    /// later request, for every other account, rides it. v1.36 adds a second client that attaches a
+    /// cookie per request, so there are now two places to get it wrong and this reads both.
+    /// <para>
+    /// Read from the REAL <c>App.ConfigureServices</c> graph: the primary handler is found by
+    /// walking the factory's handler chain down to the innermost handler, so a refactor that moves
+    /// either client onto a shared or default handler fails here, not in production as "every alt
+    /// opens as the first user".
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData(typeof(IRobloxApi))]
+    [InlineData(typeof(IAccountFactsApi))]
+    public void CookieCarryingClients_PrimaryHandler_HasUseCookiesFalse(Type clientInterface)
+    {
+        var services = new ServiceCollection();
+        global::ROROROblox.App.App.ConfigureServices(services, NullLoggerFactory.Instance);
+        using var provider = services.BuildServiceProvider();
+
+        var factory = provider.GetRequiredService<IHttpMessageHandlerFactory>();
+        HttpMessageHandler handler = factory.CreateHandler(clientInterface.Name);
+        while (handler is DelegatingHandler delegating)
+        {
+            handler = delegating.InnerHandler
+                ?? throw new InvalidOperationException("A delegating handler in the chain has no inner handler.");
+        }
+
+        var primary = Assert.IsType<SocketsHttpHandler>(handler);
+        Assert.False(primary.UseCookies,
+            $"{clientInterface.Name}'s primary handler has UseCookies=true: the first account's cookie would be reused for every account.");
+    }
+
+    /// <summary>
+    /// F1 (dpapi-cookie-blast-radius): both cookie-carrying clients attach the cookie per request, so a
+    /// followed 3xx would re-send it to wherever the redirect points. Each must see the 3xx itself. The
+    /// facts client closed it in v1.36 item 3; RobloxApi followed on 2026-11-02, once reading it showed
+    /// every cookie-carrying call goes to a fixed roblox.com API endpoint and share links resolve by an
+    /// API POST, not a redirect chase.
+    /// </summary>
+    [Theory]
+    [InlineData(typeof(IRobloxApi))]
+    [InlineData(typeof(IAccountFactsApi))]
+    public void CookieCarryingClients_PrimaryHandler_DoNotFollowRedirects(Type clientInterface)
+    {
+        var services = new ServiceCollection();
+        global::ROROROblox.App.App.ConfigureServices(services, NullLoggerFactory.Instance);
+        using var provider = services.BuildServiceProvider();
+
+        HttpMessageHandler handler = provider.GetRequiredService<IHttpMessageHandlerFactory>().CreateHandler(clientInterface.Name);
+        while (handler is DelegatingHandler delegating)
+        {
+            handler = delegating.InnerHandler ?? throw new InvalidOperationException("A delegating handler has no inner handler.");
+        }
+
+        var primary = Assert.IsType<SocketsHttpHandler>(handler);
+        Assert.False(primary.AllowAutoRedirect, $"{clientInterface.Name} follows redirects: the Cookie header would travel with them.");
+    }
+
+    [Theory]
+    [InlineData(typeof(IRobloxApi))]
+    [InlineData(typeof(IAccountFactsApi))]
+    public void CookieCarryingClients_SendTheRororoUserAgent(Type clientInterface)
+    {
+        var services = new ServiceCollection();
+        global::ROROROblox.App.App.ConfigureServices(services, NullLoggerFactory.Instance);
+        using var provider = services.BuildServiceProvider();
+
+        var client = provider.GetRequiredService<IHttpClientFactory>().CreateClient(clientInterface.Name);
+
+        var product = Assert.Single(client.DefaultRequestHeaders.UserAgent);
+        Assert.Equal("RORORO", product.Product?.Name);
+        Assert.False(string.IsNullOrWhiteSpace(product.Product?.Version));
+    }
+
+    [Fact]
+    public void AccountFactsApi_HasExactlyOnePublicConstructor()
+    {
+        var ctors = typeof(AccountFactsApi).GetConstructors();
+        var ctor = Assert.Single(ctors);
+        Assert.Equal(new[] { typeof(HttpClient), typeof(ILogger<AccountFactsApi>) }, ctor.GetParameters().Select(p => p.ParameterType));
     }
 
     /// <summary>

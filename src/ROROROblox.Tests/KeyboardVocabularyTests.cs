@@ -129,6 +129,17 @@ public class KeyboardVocabularyTests
     }
 
     [Fact]
+    public void CtrlG_ReadsLibrary_AndTheGestureDidNotMove()
+    {
+        // v1.36 item 8: Games became the Library. The display name changes; the gesture and the action do not.
+        var g = KeyboardVocabulary.Shortcuts.Single(s => s.Action == ShortcutAction.OpenGames);
+        Assert.Equal("Library", g.Label);
+        Assert.Equal("Ctrl+G", g.GestureText);
+        Assert.Equal(Key.G, g.Key);
+        Assert.Equal(ModifierKeys.Control, g.Modifiers);
+    }
+
+    [Fact]
     public void BuildBindings_BindsWhatTheWindowMaps_AndSkipsTheRest()
     {
         var all = KeyboardVocabulary.BuildBindings(_ => new FakeCommand()).ToList();

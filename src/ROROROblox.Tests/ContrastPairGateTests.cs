@@ -166,6 +166,19 @@ public class ContrastPairGateTests
         (ThemeSlots.CheckedAccent, ThemeSlots.OnCheckedAccent, "the check glyph on a ticked box"),
         (ThemeSlots.CheckedAccentHover, ThemeSlots.OnCheckedAccent, "the check glyph, hovered"),
         (ThemeSlots.CheckedAccentPressed, ThemeSlots.OnCheckedAccent, "the check glyph, pressed"),
+        (ThemeSlots.Bg, ThemeSlots.HealthVerify, "the Needs-verification badge text on the page field (v1.36)"),
+        (ThemeSlots.RowBg, ThemeSlots.HealthVerify, "the Needs-verification badge text on a row (v1.36)"),
+        (ThemeSlots.Bg, ThemeSlots.HealthLimited, "the Limited badge text on the page field (v1.36)"),
+        (ThemeSlots.RowBg, ThemeSlots.HealthLimited, "the Limited badge text on a row, and the Plus facts badge text (v1.36)"),
+        (ThemeSlots.Bg, ThemeSlots.Cyan, "the Follow-marked badge text on the page field (v1.36)"),
+        (ThemeSlots.RowBg, ThemeSlots.Cyan, "the Follow-marked badge text on a row, and the Robux and friends-online facts text (v1.36)"),
+        // C2 (F2, 2026-11-02): the facts line is coloured. Robux text is Cyan, the Plus badge's text is HealthLimited
+        // (raw Magenta text fails AA on the row in three themes, which is why the Limited health badge reads it
+        // too). A facts line also shows on an EXPIRED row, and there both colours failed when first measured
+        // (HealthLimited on RowExpiredBg 3.97 brand, 4.41 midnight, 3.54 magenta-heat, 3.45 flatline; Cyan 3.54
+        // magenta-heat), so the two colouring styles fall back to White on an expired row (FactBadgeAccentTextStyle,
+        // FactBadgePlusStyle) and White on RowExpiredBg is the pair measured here.
+        (ThemeSlots.RowExpiredBg, ThemeSlots.White, "the facts-line text on an expired row, where the coloured badges fall back to white (v1.36 C2)"),
     ];
 
     private sealed record Pair(string Fill, string Text, int Sites);

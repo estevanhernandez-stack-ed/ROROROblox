@@ -27,6 +27,7 @@ public sealed class DiagnosticsCollector : IDiagnosticsCollector
     private readonly string _dataDirectory;
     private readonly ISystemMemoryProbe _systemMemoryProbe;
     private readonly IMemoryWatchdog _memoryWatchdog;
+    private readonly IInstallIdentity? _identity;
 
     public DiagnosticsCollector(
         IAccountStore accountStore,
@@ -35,7 +36,8 @@ public sealed class DiagnosticsCollector : IDiagnosticsCollector
         string logDirectory,
         string dataDirectory,
         ISystemMemoryProbe systemMemoryProbe,
-        IMemoryWatchdog memoryWatchdog)
+        IMemoryWatchdog memoryWatchdog,
+        IInstallIdentity? identity = null)
     {
         _accountStore = accountStore ?? throw new ArgumentNullException(nameof(accountStore));
         _processTracker = processTracker ?? throw new ArgumentNullException(nameof(processTracker));
@@ -44,15 +46,18 @@ public sealed class DiagnosticsCollector : IDiagnosticsCollector
         _dataDirectory = dataDirectory ?? string.Empty;
         _systemMemoryProbe = systemMemoryProbe ?? throw new ArgumentNullException(nameof(systemMemoryProbe));
         _memoryWatchdog = memoryWatchdog ?? throw new ArgumentNullException(nameof(memoryWatchdog));
+        _identity = identity;
     }
 
     public async Task<DiagnosticsSnapshot> CollectAsync(CancellationToken ct = default)
     {
-        // The release version lives on the entry assembly (ROROROblox.App.exe, set via the
-        // csproj <Version>). This Core assembly is deliberately unversioned, so reading it
-        // reported a permanent 1.0.0 in the System-health panel.
-        var appVersion = (System.Reflection.Assembly.GetEntryAssembly() ?? typeof(DiagnosticsCollector).Assembly)
-            .GetName().Version?.ToString(3) ?? "0.0.0";
+        // With an identity, the version is the one the About page shows and the channel is known.
+        // Without one (tests, any caller that does not wire it) fall back to the entry assembly:
+        // the release version lives on ROROROblox.App.exe (csproj <Version>); this Core assembly is
+        // deliberately unversioned, so reading it reported a permanent 1.0.0.
+        var appVersion = _identity?.Version
+            ?? (System.Reflection.Assembly.GetEntryAssembly() ?? typeof(DiagnosticsCollector).Assembly)
+                .GetName().Version?.ToString(3) ?? "0.0.0";
 
         var dotnet = RuntimeInformation.FrameworkDescription;
         var osVersion = RuntimeInformation.OSDescription;
@@ -119,7 +124,8 @@ public sealed class DiagnosticsCollector : IDiagnosticsCollector
             CapturedAtUtc: DateTimeOffset.UtcNow,
             TotalPhysicalMemoryBytes: totalMemory,
             AvailablePhysicalMemoryBytes: availableMemory,
-            AccountMemory: accountMemory);
+            AccountMemory: accountMemory,
+            Channel: _identity?.Channel);
     }
 
     private static string? TryGetRobloxVersion()

@@ -17,6 +17,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
 {
     private bool _sessionExpired;
     private bool _sessionLimited;
+    private bool _sessionNeedsVerification;
     private bool _isLaunching;
     private string _statusText = string.Empty;
     private FavoriteGame? _selectedGame;
@@ -41,6 +42,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private bool _joinViaFriend;
     private bool _autoRejoin;
     private bool _alertsMuted;
+    private AccountFacts? _facts;
+    private string? _note;
     private IStreamerIdentityProvider? _identity;
 
     public AccountSummary(Account account)
@@ -56,6 +59,9 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _joinViaFriend = account.JoinViaFriend;
         _autoRejoin = account.AutoRejoin;
         _localName = account.LocalName;
+        _facts = account.Facts;
+        _note = account.Note;
+        PersistedPanelExpanded = account.PanelExpanded;
         RobloxUserId = account.RobloxUserId;
         BrowserTrackerId = account.BrowserTrackerId;
         // Seed tags from the persisted record BEFORE any CollectionChanged subscriber is attached
@@ -68,6 +74,243 @@ public sealed class AccountSummary : INotifyPropertyChanged
 
     public Guid Id { get; }
     public string DisplayName { get; }
+
+    /// <summary>
+    /// The cached Robux / membership / friends-online facts for THIS account, seeded from the store
+    /// and replaced only through <c>MainViewModel.ApplyFacts</c>, keyed by id (v1.36). Null until the
+    /// first refresh. Nothing renders it yet; the row's badges arrive with the surface items.
+    /// </summary>
+    public AccountFacts? Facts
+    {
+        get => _facts;
+        set
+        {
+            if (SetField(ref _facts, value))
+            {
+                RaiseFactProperties();
+            }
+        }
+    }
+
+    /// <summary>The panel's saved open/closed state, null until the user first toggles it (the panel resolves the default at load).</summary>
+    internal bool? PersistedPanelExpanded { get; }
+
+    /// <summary>This account's panel (recent games, favourites, private servers). Set once by <c>MainViewModel.WireAccountSummary</c>.</summary>
+    public AccountPanelViewModel? Panel { get; private set; }
+
+    internal void AttachPanel(AccountPanelViewModel panel)
+    {
+        Panel = panel;
+        panel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AccountPanelViewModel.LastPlayed))
+            {
+                OnPropertyChanged(nameof(LastPlayedText));
+                OnPropertyChanged(nameof(LastPlayedUtc));
+                RaiseFactProperties();
+            }
+            else if (e.PropertyName == nameof(AccountPanelViewModel.IsExpanded))
+            {
+                OnPropertyChanged(nameof(PanelExpanderGlyph));
+            }
+        };
+        OnPropertyChanged(nameof(PanelExpanderGlyph));
+    }
+
+    /// <summary>The expander's glyph: ▾ while this row's panel is open, ▸ while closed. A bound property, not a style trigger, because a button's trigger style carries Visibility/IsEnabled setters only.</summary>
+    public string PanelExpanderGlyph => Panel?.IsExpanded == true ? "\u25BE" : "\u25B8";
+
+    /// <summary>When this account last launched a game, from the panel's own object so row and panel cannot disagree. Null until the panel has read history.</summary>
+    public DateTimeOffset? LastPlayedUtc => Panel?.LastPlayed?.AtUtc;
+
+    /// <summary>"{game} · {age}" for the row's last-played badge; empty when the panel has no history for this account (the view picks the dash).</summary>
+    public string LastPlayedText
+    {
+        get
+        {
+            if (Panel?.LastPlayed is not { } lp) return string.Empty;
+            var ago = RelativeAgo(lp.AtUtc);
+            return string.IsNullOrEmpty(lp.Name) ? ago : $"{lp.Name} · {ago}";
+        }
+    }
+
+    /// <summary>The account's free-text note (trimmed, at most <see cref="Account.MaxNoteLength"/> characters), or null.</summary>
+    public string? Note
+    {
+        get => _note;
+        set
+        {
+            if (SetField(ref _note, value))
+            {
+                RaiseFactProperties();
+            }
+        }
+    }
+
+    /// <summary>
+    /// The note as the panel's <c>NoteBox</c> edits it: empty when there is none. The setter trims, turns
+    /// empty into null and caps at <see cref="Account.MaxNoteLength"/> (the same rule the store applies), then
+    /// sets <see cref="Note"/>, which <c>MainViewModel</c> persists. The box commits on LostFocus and Enter, so
+    /// this is written once per edit, not per keystroke. Raised even when <see cref="Note"/> did not change so
+    /// the box re-reads the trimmed text.
+    /// </summary>
+    public string NoteText
+    {
+        get => _note ?? string.Empty;
+        set
+        {
+            Note = Account.NormalizeNote(value);
+            OnPropertyChanged(nameof(NoteText));
+        }
+    }
+
+    /// <summary>False under streamer mode: the note is hidden entirely, so the panel's NoteBox collapses with it (spec 2.5).</summary>
+    public bool ShowNoteBox => !FactsMasked;
+
+    /// <summary>Accessible name and tooltip of the expander: "Show recent games for {name}", streamer-aware through <see cref="RenderName"/>.</summary>
+    public string PanelExpanderName => Loc.Format("Shell_Panel_Expander_Name", RenderName);
+
+    /// <summary>Accessible name of the panel's note box.</summary>
+    public string PanelNoteName => Loc.Format("Shell_Panel_Note_Name", RenderName);
+
+    /// <summary>Accessible name of the panel's Open Roblox home button.</summary>
+    public string PanelOpenHomeName => Loc.Format("Shell_Panel_OpenHome_Name", RenderName);
+
+    // ---- v1.36 item 6: the facts line (spec 2.1, 2.4, 2.5) -----------------------------------
+
+    /// <summary>The placeholder for a fact nobody has measured yet. Not prose, so not a resource.</summary>
+    internal const string FactDash = "\u2014";
+
+    private bool FactsMasked => _identity?.IsActive == true;
+
+    private static System.Globalization.CultureInfo FactCulture => TranslationSource.Instance.CurrentCulture;
+
+    private static bool IsPlus(string? membership) =>
+        string.Equals(membership, "plus", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(membership, "premium", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Robux for the badge: the balance, the dash when unknown, "&#x2022;&#x2022;&#x2022;&#x2022;" under streamer mode.</summary>
+    public string RobuxText =>
+        FactsMasked ? Loc.Get("Shell_Fact_Masked")
+        : _facts?.Robux is { } r ? "R$ " + r.ToString("N0", FactCulture)
+        : FactDash;
+
+    /// <summary>Membership for the badge: "Plus" for any membership, the dash when unknown, masked under streamer mode.</summary>
+    public string MembershipText =>
+        FactsMasked ? Loc.Get("Shell_Fact_Masked")
+        : IsPlus(_facts?.Membership) ? "Plus"
+        : FactDash;
+
+    /// <summary>Friends online for the badge: "3 friends online", the dash when unknown, masked under streamer mode.</summary>
+    public string FriendsOnlineText =>
+        FactsMasked ? Loc.Get("Shell_Fact_Masked")
+        : _facts?.FriendsOnline is { } f ? Loc.Plural("Shell_Fact_FriendsOnline", f)
+        : FactDash;
+
+    /// <summary>The note's text up to the first newline (the TextBlock ellipsises the rest). Empty under streamer mode: hidden entirely.</summary>
+    public string NoteFirstLine
+    {
+        get
+        {
+            if (FactsMasked || string.IsNullOrWhiteSpace(_note)) return string.Empty;
+            var text = _note.Trim();
+            var cut = text.IndexOfAny(['\r', '\n']);
+            return cut < 0 ? text : text[..cut].TrimEnd();
+        }
+    }
+
+    public bool ShowRobuxBadge => _facts?.Robux is not null;
+
+    /// <summary>Collapsed whenever membership is not a membership: the probes have not run, so today it is always null.</summary>
+    public bool ShowMembershipBadge => IsPlus(_facts?.Membership);
+
+    public bool ShowFriendsOnlineBadge => _facts?.FriendsOnline is not null;
+
+    public bool ShowLastPlayedBadge => !string.IsNullOrEmpty(LastPlayedText);
+
+    public bool ShowNoteBadge => NoteFirstLine.Length > 0;
+
+    /// <summary>
+    /// The facts line shows when any of Robux, membership, friends online, last played or the note's
+    /// first line has something to say, or a health or Follow-marked badge shows (they lead the line since the
+    /// item-13 ruling, 2026-11-03). The age hint alone never makes it visible (the A1 ruling,
+    /// 2026-11-02): an account with no facts, no history and no note renders exactly as v1.35.
+    /// </summary>
+    public bool HasFactsLine =>
+        ShowHealthBadge || ShowFollowMarkBadge
+        || ShowRobuxBadge || ShowMembershipBadge || ShowFriendsOnlineBadge || ShowLastPlayedBadge || ShowNoteBadge;
+
+    private string MaskedOrUnknownName(string key, bool known, string value) =>
+        Loc.Format(key, FactsMasked ? Loc.Get("Shell_Fact_Hidden")
+                      : known ? value
+                      : Loc.Get("Shell_Fact_Unknown"));
+
+    public string RobuxAccessibleName => MaskedOrUnknownName("Shell_Fact_Robux_Name", ShowRobuxBadge, RobuxText);
+
+    public string MembershipAccessibleName => MaskedOrUnknownName("Shell_Fact_Membership_Name", ShowMembershipBadge, MembershipText);
+
+    public string FriendsOnlineAccessibleName => MaskedOrUnknownName("Shell_Fact_Friends_Name", ShowFriendsOnlineBadge, FriendsOnlineText);
+
+    /// <summary>Last played is local history, never masked.</summary>
+    public string LastPlayedAccessibleName =>
+        Loc.Format("Shell_Fact_LastPlayed_Name", ShowLastPlayedBadge ? LastPlayedText : Loc.Get("Shell_Fact_Unknown"));
+
+    public string NoteAccessibleName => Loc.Format("Shell_Fact_Note_Name", NoteFirstLine);
+
+    /// <summary>
+    /// "Updated 3 min ago", or "Updated 2 hr ago, last try failed (403)" when the last request failed
+    /// (the previous values stay standing beside the reason). Empty until a refresh has been
+    /// attempted. Not masked: an age identifies nobody.
+    /// </summary>
+    public string FactsAgeText
+    {
+        get
+        {
+            if (_facts is not { } f) return string.Empty;
+            if (f.FetchedAtUtc is { } at)
+            {
+                return string.IsNullOrEmpty(f.LastError)
+                    ? Loc.Format("Shell_Fact_Updated", RelativeAgo(at))
+                    : Loc.Format("Shell_Fact_UpdatedFailed", RelativeAgo(at), f.LastError);
+            }
+            return string.IsNullOrEmpty(f.LastError)
+                ? string.Empty
+                : Loc.Format("Shell_Fact_NeverUpdatedFailed", f.LastError);
+        }
+    }
+
+    public bool ShowFactsAge => FactsAgeText.Length > 0;
+
+    /// <summary>True when the last refresh failed; the age hint takes the warning brush.</summary>
+    public bool FactsFailed => !string.IsNullOrEmpty(_facts?.LastError);
+
+    private void RaiseFactProperties()
+    {
+        OnPropertyChanged(nameof(RobuxText));
+        OnPropertyChanged(nameof(MembershipText));
+        OnPropertyChanged(nameof(FriendsOnlineText));
+        OnPropertyChanged(nameof(NoteFirstLine));
+        // NoteText is deliberately NOT raised here: this runs on every facts refresh, and a re-read would
+        // overwrite text the user is typing in the panel's NoteBox (it commits on LostFocus).
+        OnPropertyChanged(nameof(ShowNoteBox));
+        OnPropertyChanged(nameof(PanelExpanderName));
+        OnPropertyChanged(nameof(PanelNoteName));
+        OnPropertyChanged(nameof(PanelOpenHomeName));
+        OnPropertyChanged(nameof(ShowRobuxBadge));
+        OnPropertyChanged(nameof(ShowMembershipBadge));
+        OnPropertyChanged(nameof(ShowFriendsOnlineBadge));
+        OnPropertyChanged(nameof(ShowLastPlayedBadge));
+        OnPropertyChanged(nameof(ShowNoteBadge));
+        OnPropertyChanged(nameof(HasFactsLine));
+        OnPropertyChanged(nameof(RobuxAccessibleName));
+        OnPropertyChanged(nameof(MembershipAccessibleName));
+        OnPropertyChanged(nameof(FriendsOnlineAccessibleName));
+        OnPropertyChanged(nameof(LastPlayedAccessibleName));
+        OnPropertyChanged(nameof(NoteAccessibleName));
+        OnPropertyChanged(nameof(FactsAgeText));
+        OnPropertyChanged(nameof(ShowFactsAge));
+        OnPropertyChanged(nameof(FactsFailed));
+    }
     public string AvatarUrl { get; }
     public DateTimeOffset? LastLaunchedAt { get; private set; }
 
@@ -87,6 +330,9 @@ public sealed class AccountSummary : INotifyPropertyChanged
             if (SetField(ref _localName, value))
             {
                 OnPropertyChanged(nameof(RenderName));
+                OnPropertyChanged(nameof(PanelExpanderName));
+                OnPropertyChanged(nameof(PanelNoteName));
+                OnPropertyChanged(nameof(PanelOpenHomeName));
             }
         }
     }
@@ -153,6 +399,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// </summary>
     public void DetachIdentityProvider()
     {
+        Panel?.Detach();
         if (_identity is not null)
         {
             _identity.Changed -= OnIdentityChanged;
@@ -164,6 +411,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(RenderName));
         OnPropertyChanged(nameof(AvatarDisplaySource));
+        // The five facts and their accessible names flip with the name (spec 2.5).
+        RaiseFactProperties();
     }
 
     private bool _isMain;
@@ -205,6 +454,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(StatusDot));
                 OnPropertyChanged(nameof(SecondaryStatusText));
+                RaiseHealthChanged();
             }
         }
     }
@@ -223,8 +473,106 @@ public sealed class AccountSummary : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(StatusDot));
                 OnPropertyChanged(nameof(SecondaryStatusText));
+                RaiseHealthChanged();
             }
         }
+    }
+
+    /// <summary>
+    /// True when Roblox answered this account's auth-ticket request with a 403 that carried
+    /// <c>rblx-challenge-type</c>: a step-up challenge, not the plain limit (<see cref="SessionLimited"/>)
+    /// and not a dead cookie (<see cref="SessionExpired"/>). Set to true from exactly one place,
+    /// <c>MainViewModel.LaunchAccountAsync</c> on <c>LaunchResult.NeedsVerification</c>; a 403 without
+    /// the header never reaches it. Cleared by a launch that starts or a presence poll that lands, like
+    /// <see cref="SessionLimited"/>. Spec §1.2.
+    /// </summary>
+    public bool SessionNeedsVerification
+    {
+        get => _sessionNeedsVerification;
+        set
+        {
+            if (SetField(ref _sessionNeedsVerification, value))
+            {
+                OnPropertyChanged(nameof(StatusDot));
+                OnPropertyChanged(nameof(SecondaryStatusText));
+                RaiseHealthChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// What the row says about this account's fitness to launch. First match wins: Expired, then
+    /// NeedsVerification, then Limited, then FollowMarked, else Ok. Spec §1.1.
+    /// </summary>
+    internal AccountHealth Health =>
+        _sessionExpired ? AccountHealth.Expired
+        : _sessionNeedsVerification ? AccountHealth.NeedsVerification
+        : _sessionLimited ? AccountHealth.Limited
+        : _joinViaFriend ? AccountHealth.FollowMarked
+        : AccountHealth.Ok;
+
+    /// <summary>The colour/command key the row template switches on: expired, verify, limited, follow, ok.</summary>
+    public string HealthKind => AccountHealthInfo.Kind(Health);
+
+    public string HealthWord => AccountHealthInfo.Word(Health);
+    public string HealthGlyph => AccountHealthInfo.Glyph(Health);
+
+    /// <summary>"{glyph} {word}", the health badge's face.</summary>
+    public string HealthBadgeText => $"{HealthGlyph} {HealthWord}";
+
+    /// <summary>"{word}, {action}": what a screen reader says for the health badge.</summary>
+    public string HealthBadgeName => AccountHealthInfo.BadgeName(Health);
+
+    /// <summary>
+    /// The health badge shows for the three states that stop a launch. Follow-marked has its own
+    /// permanent badge on the name line (it is a preference, and it coexists with the other three),
+    /// so it never shows here.
+    /// </summary>
+    public bool ShowHealthBadge => Health is AccountHealth.Expired or AccountHealth.NeedsVerification or AccountHealth.Limited;
+
+    /// <summary>The Follow-marked badge on the name line: visible whenever the mark is set.</summary>
+    public bool ShowFollowMarkBadge => _joinViaFriend;
+
+    public string FollowMarkBadgeText =>
+        $"{AccountHealthInfo.Glyph(AccountHealth.FollowMarked)} {AccountHealthInfo.Word(AccountHealth.FollowMarked)}";
+
+    public string FollowMarkBadgeName => AccountHealthInfo.BadgeName(AccountHealth.FollowMarked);
+
+    // ---- v1.36 item 9: the Library's Play as picker (spec 4.4) ---------------------------------
+
+    /// <summary>
+    /// False for an expired session: the picker disables the item rather than let a launch fail on a
+    /// dead cookie. Limited and Needs-verification accounts stay pickable (they can recover on their own),
+    /// and a follow-marked account is pickable too: the launch path, not the picker, decides it follows.
+    /// </summary>
+    public bool CanPlayAs => !_sessionExpired;
+
+    /// <summary>
+    /// The item's second line (the D2 pick): the health glyph and word for anything that is not Ok
+    /// ("Session expired", "Limited by Roblox", "Joins by following"), else the row's own status text
+    /// ("Ready", "In {game}"). The word is the short health one, not the row's long sentence, because
+    /// the picker is 260 px wide.
+    /// </summary>
+    public string PlayAsStatusText
+        => Health == AccountHealth.Ok ? SecondaryStatusText : HealthBadgeText;
+
+    /// <summary>Tooltip of a disabled picker item: why it cannot be picked. Null when it can be, so no empty tooltip box appears.</summary>
+    public string? PlayAsDisabledReason => CanPlayAs ? null : Loc.Get("Library_PlayAs_ExpiredReason");
+
+    /// <summary>Accessible name of the picker item: "{name}, {status}", streamer-aware through <see cref="RenderName"/>.</summary>
+    public string PlayAsItemName => Loc.Format("Library_PlayAs_Item_Name", RenderName,
+        Health == AccountHealth.Ok ? SecondaryStatusText : HealthWord);
+
+    private void RaiseHealthChanged()
+    {
+        OnPropertyChanged(nameof(Health));
+        OnPropertyChanged(nameof(HealthKind));
+        OnPropertyChanged(nameof(HealthWord));
+        OnPropertyChanged(nameof(HealthGlyph));
+        OnPropertyChanged(nameof(HealthBadgeText));
+        OnPropertyChanged(nameof(HealthBadgeName));
+        OnPropertyChanged(nameof(ShowHealthBadge));
+        OnPropertyChanged(nameof(HasFactsLine));
     }
 
     public bool IsLaunching
@@ -575,7 +923,17 @@ public sealed class AccountSummary : INotifyPropertyChanged
     public bool JoinViaFriend
     {
         get => _joinViaFriend;
-        set => SetField(ref _joinViaFriend, value);
+        set
+        {
+            if (SetField(ref _joinViaFriend, value))
+            {
+                OnPropertyChanged(nameof(SecondaryStatusText));
+                OnPropertyChanged(nameof(StatusDot));
+                OnPropertyChanged(nameof(ShowFollowMarkBadge));
+                OnPropertyChanged(nameof(HasFactsLine));
+                RaiseHealthChanged();
+            }
+        }
     }
 
     /// <summary>
@@ -741,9 +1099,13 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// </summary>
     public string StatusDot => _sessionExpired
         ? "yellow"
-        : _sessionLimited
-            ? "magenta"
-            : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning) ? "green" : "grey";
+        : _sessionNeedsVerification
+            ? "verify"
+            : _sessionLimited
+                ? "magenta"
+                : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning)
+                    ? "green"
+                    : _joinViaFriend ? "cyan" : "grey";
 
     /// <summary>
     /// Human-friendly secondary text shown under the display name. Precedence (v1.5.0 augment rule):
@@ -769,6 +1131,11 @@ public sealed class AccountSummary : INotifyPropertyChanged
             if (_sessionExpired)
             {
                 return Loc.Get("Shell_Status_SessionExpired");
+            }
+            // 1a. Needs verification: a 403 that named a challenge. Beats presence like Expired does.
+            if (_sessionNeedsVerification)
+            {
+                return Loc.Get("Shell_Status_NeedsVerification");
             }
             // 1b. Limited by Roblox (403). Beats stale presence — this is the fix for the frozen
             //     "In game" dot masking a failed launch.
@@ -828,8 +1195,11 @@ public sealed class AccountSummary : INotifyPropertyChanged
             {
                 return Loc.Format("Shell_Status_LastLaunched", RelativeAgo(last));
             }
-            // 8. Cold.
-            return Loc.Get("Shell_Status_Ready");
+            // 8. Cold. A follow-marked account is the one health state that does NOT beat presence
+            //    (it shows as a permanent badge on the name line); it takes this line only at rest.
+            return _joinViaFriend
+                ? Loc.Get("Shell_Status_FollowMarkedReady")
+                : Loc.Get("Shell_Status_Ready");
         }
     }
 
@@ -837,7 +1207,14 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// Force the secondary text to recompute (relative timestamps drift). Called on a tick from
     /// MainViewModel's clock.
     /// </summary>
-    public void RefreshRelativeTimes() => OnPropertyChanged(nameof(SecondaryStatusText));
+    public void RefreshRelativeTimes()
+    {
+        Panel?.RefreshRelativeTimes();
+        OnPropertyChanged(nameof(SecondaryStatusText));
+        OnPropertyChanged(nameof(LastPlayedText));
+        OnPropertyChanged(nameof(LastPlayedAccessibleName));
+        OnPropertyChanged(nameof(FactsAgeText));
+    }
 
     public void StampLaunched(DateTimeOffset at)
     {
@@ -882,9 +1259,14 @@ public sealed class AccountSummary : INotifyPropertyChanged
         return Loc.Format("Shell_Age_Days", (int)span.TotalDays);
     }
 
-    private static string RelativeAgo(DateTimeOffset when)
+    /// <summary>Test seam: a clock for relative-age wording, per async flow, so a test can advance time without touching other tests.</summary>
+    internal static readonly AsyncLocal<Func<DateTimeOffset>?> ClockOverride = new();
+
+    internal static DateTimeOffset UtcNow => ClockOverride.Value?.Invoke() ?? DateTimeOffset.UtcNow;
+
+    internal static string RelativeAgo(DateTimeOffset when)
     {
-        var span = DateTimeOffset.UtcNow - when;
+        var span = UtcNow - when;
         if (span < TimeSpan.Zero) return Loc.Get("Shell_Ago_InFuture"); // clock skew safety
         if (span < TimeSpan.FromSeconds(30)) return Loc.Get("Shell_Ago_JustNow");
         if (span < TimeSpan.FromMinutes(1)) return Loc.Get("Shell_Ago_LessThanMinute");

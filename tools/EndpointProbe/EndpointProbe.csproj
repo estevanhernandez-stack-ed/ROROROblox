@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- Core's own TFM. Core is the only reference (AccountStore for the vault listing, nothing WPF),
+         so this does not need App's windows10.0.19041.0 pin that MetricSmoke carries. A project
+         reference needs the same or a LOWER windows version than the referencing project, which is
+         why ROROROblox.Tests (19041) can still reference this one. -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>EndpointProbe</AssemblyName>
+    <RootNamespace>ROROROblox.EndpointProbe</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- DIRECTION MATTERS, as for MetricSmoke: this tool references Core, never the reverse. The
+         Store build publishes src/ROROROblox.App/ROROROblox.App.csproj by path, so nothing walks the
+         solution file and this project cannot reach a package. -->
+    <ProjectReference Include="..\..\src\ROROROblox.Core\ROROROblox.Core.csproj" />
+  </ItemGroup>
+</Project>

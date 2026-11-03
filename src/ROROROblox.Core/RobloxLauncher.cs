@@ -210,9 +210,11 @@ public sealed class RobloxLauncher : IRobloxLauncher
         {
             return new LaunchResult.CookieExpired();
         }
-        catch (SessionLimitedException)
+        catch (SessionLimitedException ex)
         {
-            return new LaunchResult.Limited();
+            return ex.ChallengeType is { Length: > 0 } challenge
+                ? new LaunchResult.NeedsVerification(challenge)
+                : new LaunchResult.Limited();
         }
         catch (Exception ex)
         {

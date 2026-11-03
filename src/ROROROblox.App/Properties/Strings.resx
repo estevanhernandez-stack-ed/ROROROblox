@@ -286,7 +286,7 @@
     <comment>src/ROROROblox.App/Games/GamesPage.xaml:149 xaml-text</comment>
   </data>
   <data name="GamesPage_Games" xml:space="preserve">
-    <value>Games</value>
+    <value>Library</value>
     <comment>src/ROROROblox.App/Games/GamesPage.xaml:302 xaml-text</comment>
   </data>
   <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
@@ -538,7 +538,7 @@
     <comment>src/ROROROblox.App/MainWindow.xaml:736 aria-label</comment>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Add games from Tools → Games</value>
+    <value>Add in the Library</value>
     <comment>src/ROROROblox.App/MainWindow.xaml:893 xaml-text</comment>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
@@ -654,7 +654,7 @@
     <comment>src/ROROROblox.App/MainWindow.xaml:853 title</comment>
   </data>
   <data name="MainWindow_Games" xml:space="preserve">
-    <value>Games</value>
+    <value>Library</value>
     <comment>duplicate value; key kept addressable for x:Static</comment>
   </data>
   <data name="MainWindow_History" xml:space="preserve">
@@ -718,7 +718,7 @@
     <comment>src/ROROROblox.App/MainWindow.xaml:1092 title</comment>
   </data>
   <data name="MainWindow_ManageGames" xml:space="preserve">
-    <value>Manage games…</value>
+    <value>Manage Library…</value>
     <comment>src/ROROROblox.App/MainWindow.xaml:1337 xaml-text</comment>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
@@ -1730,7 +1730,7 @@
     <comment>duplicate value; key kept addressable for x:Static</comment>
   </data>
   <data name="ShellWindow_Games" xml:space="preserve">
-    <value>Games</value>
+    <value>Library</value>
     <comment>duplicate value; key kept addressable for x:Static</comment>
   </data>
   <data name="ShellWindow_History" xml:space="preserve">
@@ -1865,17 +1865,12 @@
     <value>Click + Add account.</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:61 xaml-text</comment>
   </data>
-  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
-    <value>Click Launch As. Or Launch multiple for every selected alt at once.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:99 xaml-text</comment>
-  </data>
   <data name="WelcomeWindow_ClickThe" xml:space="preserve">
     <value>Click the</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:175 xaml-text</comment>
   </data>
   <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
-    <value>Closing X minimizes to tray; right-click the tray icon for Preferences, History,
-                        Diagnostics, or Quit.</value>
+    <value>Closing X minimizes to tray; right-click the tray icon for Preferences, History, Diagnostics, or Quit.</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:166 xaml-text</comment>
   </data>
   <data name="WelcomeWindow_Compact" xml:space="preserve">
@@ -1898,17 +1893,9 @@
     <value>in the system tray and drag RoRoRo out to keep it visible.</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:177 xaml-text</comment>
   </data>
-  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
-    <value>Multi-Instance is on by default — Roblox windows open side by side without fighting each other for the singleton.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:102 xaml-text</comment>
-  </data>
   <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
     <value>on the left of a row — drag to reorder.</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:124 xaml-text</comment>
-  </data>
-  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
-    <value>Open Games and add the place you launch into.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:80 xaml-text</comment>
   </data>
   <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
     <value>Quick tips for the row controls</value>
@@ -1917,14 +1904,6 @@
   <data name="WelcomeWindow_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
     <comment>duplicate value; key kept addressable for x:Static</comment>
-  </data>
-  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Run multiple Roblox clients side by side. Three steps and you're set.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:45 xaml-text</comment>
-  </data>
-  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
-    <value>Search by name or paste a roblox.com/games/&lt;id&gt; URL. The default game is what Launch As uses.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:83 xaml-text</comment>
   </data>
   <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
     <value>Sign in to roblox.com in the popup. We capture the cookie, encrypt it, and never see your password.</value>
@@ -2382,6 +2361,60 @@
   <data name="Shell_Launch_Clause_Expired" xml:space="preserve"><value>{0} expired</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
   <data name="Shell_Launch_Clause_Limited" xml:space="preserve"><value>{0} limited</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
   <data name="Shell_Launch_Clause_Deselected" xml:space="preserve"><value>{0} deselected</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
+  <data name="Shell_Health_Expired" xml:space="preserve"><value>Session expired</value><comment>Health badge word, expired cookie (v1.36)</comment></data>
+  <data name="Shell_Health_NeedsVerification" xml:space="preserve"><value>Needs verification</value><comment>Health badge word, Roblox asked for a step-up check (v1.36)</comment></data>
+  <data name="Shell_Health_Limited" xml:space="preserve"><value>Limited by Roblox</value><comment>Health badge word, plain 403 limit; "Roblox" stays English (v1.36)</comment></data>
+  <data name="Shell_Health_FollowMarked" xml:space="preserve"><value>Joins by following</value><comment>Health badge word, the join-via-friend mark (v1.36)</comment></data>
+  <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve"><value>Re-authenticate</value><comment>Health badge action, same word as the row button (v1.36)</comment></data>
+  <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve"><value>Open Roblox for this account</value><comment>Health badge action for Needs verification; "Roblox" stays English (v1.36)</comment></data>
+  <data name="Shell_Health_Action_ToggleMark" xml:space="preserve"><value>Toggle the mark</value><comment>Health badge action for the follow mark (v1.36)</comment></data>
+  <data name="Shell_Health_BadgeName" xml:space="preserve"><value>{0}, {1}</value><comment>Health badge accessible name; {0}=word {1}=action (v1.36)</comment></data>
+  <data name="Shell_Fact_Masked" xml:space="preserve"><value>••••</value><comment>Streamer-mode placeholder for Robux, membership and friends online (v1.36)</comment></data>
+  <data name="Shell_Fact_Hidden" xml:space="preserve"><value>hidden</value><comment>Accessible-name value for a masked fact (v1.36)</comment></data>
+  <data name="Shell_Fact_Unknown" xml:space="preserve"><value>unknown</value><comment>Accessible-name value for a fact not yet fetched (v1.36)</comment></data>
+  <data name="Shell_Fact_Robux_Name" xml:space="preserve"><value>Robux, {0}</value><comment>Accessible name of the Robux badge; Robux stays English (v1.36)</comment></data>
+  <data name="Shell_Fact_Membership_Name" xml:space="preserve"><value>Membership, {0}</value><comment>Accessible name of the membership badge (v1.36)</comment></data>
+  <data name="Shell_Fact_Friends_Name" xml:space="preserve"><value>Friends online, {0}</value><comment>Accessible name of the friends-online badge (v1.36)</comment></data>
+  <data name="Shell_Fact_LastPlayed_Name" xml:space="preserve"><value>Last played, {0}</value><comment>Accessible name of the last-played badge (v1.36)</comment></data>
+  <data name="Shell_Fact_Note_Name" xml:space="preserve"><value>Note, {0}</value><comment>Accessible name of the note badge (v1.36)</comment></data>
+  <data name="Shell_Fact_FriendsOnline_one" xml:space="preserve"><value>{0} friend online</value><comment>Friends-online badge via Loc.Plural (v1.36)</comment></data>
+  <data name="Shell_Fact_FriendsOnline_other" xml:space="preserve"><value>{0} friends online</value><comment>Friends-online badge via Loc.Plural (v1.36)</comment></data>
+  <data name="Shell_Fact_FriendsOnline_few" xml:space="preserve"><value>{0} friends online</value><comment>few-form (ru/pl) mirrors other in English (v1.36)</comment></data>
+  <data name="Shell_Fact_FriendsOnline_many" xml:space="preserve"><value>{0} friends online</value><comment>many-form (ru/pl) mirrors other in English (v1.36)</comment></data>
+  <data name="Shell_Fact_Updated" xml:space="preserve"><value>Updated {0}</value><comment>Facts age hint; {0}=relative age such as '3 min ago' (v1.36)</comment></data>
+  <data name="Shell_Fact_UpdatedFailed" xml:space="preserve"><value>Updated {0} · last try failed ({1})</value><comment>Facts age hint after a failed refresh; {0}=age {1}=short reason such as 403 (v1.36)</comment></data>
+  <data name="Shell_Fact_NeverUpdatedFailed" xml:space="preserve"><value>Not updated yet · last try failed ({0})</value><comment>Facts age hint when no refresh has ever succeeded; {0}=short reason (v1.36)</comment></data>
+  <data name="Shell_Panel_Expander_Name" xml:space="preserve"><value>Show recent games for {0}</value><comment>Accessible name and tooltip of the row's panel expander; {0}=account name (v1.36)</comment></data>
+  <data name="Shell_Panel_Heading_Recent" xml:space="preserve"><value>RECENT</value><comment>Panel column heading, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_Heading_Favourites" xml:space="preserve"><value>FAVOURITES</value><comment>Panel column heading, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_Heading_PrivateServers" xml:space="preserve"><value>PRIVATE SERVERS</value><comment>Panel column heading, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_SeeAll" xml:space="preserve"><value>See all</value><comment>Link in the Favourites and Private servers panel headers when the column hides entries; opens the Library (v1.36 C2)</comment></data>
+  <data name="Shell_Panel_SeeAll_Favourites_Name" xml:space="preserve"><value>See all favourites</value><comment>Accessible name of the Favourites header's See all link; opens the Library (v1.36 C2)</comment></data>
+  <data name="Shell_Panel_SeeAll_PrivateServers_Name" xml:space="preserve"><value>See all private servers</value><comment>Accessible name of the Private servers header's See all link; opens the Library (v1.36 C2)</comment></data>
+  <data name="Shell_Panel_Empty_Recent" xml:space="preserve"><value>Nothing played yet. Launch a game and it shows up here.</value><comment>Panel empty state, Recent column (v1.36)</comment></data>
+  <data name="Shell_Panel_Empty_Favourites" xml:space="preserve"><value>No favourites yet. Save one from Recent, or add games in the Library.</value><comment>Panel empty state, Favourites column; 'Library' is the renamed Games window (v1.36)</comment></data>
+  <data name="Shell_Panel_Empty_PrivateServers" xml:space="preserve"><value>No private servers saved. Paste a server link in the Library to add one.</value><comment>Panel empty state, Private servers column; 'Library' is the renamed Games window (v1.36)</comment></data>
+  <data name="Shell_Panel_OpenHome" xml:space="preserve"><value>Open Roblox home</value><comment>Panel header button; 'Roblox' stays English (v1.36)</comment></data>
+  <data name="Shell_Panel_OpenHome_Name" xml:space="preserve"><value>Open Roblox home as {0}</value><comment>Accessible name of the panel's Open Roblox home button; {0}=account name (v1.36)</comment></data>
+  <data name="Shell_Panel_Note_Placeholder" xml:space="preserve"><value>Private note, only you see it</value><comment>Placeholder of the panel's note box (v1.36)</comment></data>
+  <data name="Shell_Panel_Note_Name" xml:space="preserve"><value>Private note for {0}</value><comment>Accessible name of the panel's note box; {0}=account name (v1.36)</comment></data>
+  <data name="Shell_Panel_Save" xml:space="preserve"><value>Save</value><comment>Inline Save on an unsaved Recent entry (v1.36)</comment></data>
+  <data name="Shell_Panel_Save_Name" xml:space="preserve"><value>Save {0} to favourites</value><comment>Accessible name of an entry's Save button; {0}=game name (v1.36)</comment></data>
+  <data name="Shell_Panel_Entry_Name" xml:space="preserve"><value>Launch {0}, {1}</value><comment>Accessible name of a panel entry's launch button; {0}=game or server name {1}=age line (v1.36)</comment></data>
+  <data name="Shell_Panel_Tag_Default" xml:space="preserve"><value>DEFAULT</value><comment>Tag on the Library's default entry, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_Tag_Private" xml:space="preserve"><value>PRIVATE</value><comment>Tag on a private-server entry, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_Meta_NotPlayed" xml:space="preserve"><value>Not played by this account</value><comment>Second line of a saved entry this account never launched (v1.36)</comment></data>
+  <data name="Shell_Panel_Meta_InRecent" xml:space="preserve"><value>{0} in recent sessions</value><comment>Second line of a Recent entry; {0}=time spent such as '14 hr' (the history window is 100 rows, not all time) (v1.36)</comment></data>
+  <data name="Shell_Panel_Duration_Minutes" xml:space="preserve"><value>{0} min</value><comment>Time spent, minutes; unit symbol (v1.36)</comment></data>
+  <data name="Shell_Panel_Duration_Hours" xml:space="preserve"><value>{0} hr</value><comment>Time spent, hours; unit symbol (v1.36)</comment></data>
+  <data name="Shell_Panel_Duration_LessThanMinute" xml:space="preserve"><value>&lt;1 min</value><comment>Time spent, under a minute; unit symbol (v1.36)</comment></data>
+  <data name="Shell_Panel_Entry_PrivateUnsaved" xml:space="preserve"><value>This private server is not saved, so it cannot be relaunched from here. Save its link in the Library.</value><comment>Tooltip on a disabled Recent entry whose private server was never saved (v1.36)</comment></data>
+  <data name="Shell_Status_NeedsVerification" xml:space="preserve"><value>Needs verification — open Roblox for this account</value><comment>AccountSummary secondary line; "Roblox" stays English (v1.36)</comment></data>
+  <data name="Shell_Status_FollowMarkedReady" xml:space="preserve"><value>Joins by following · Ready</value><comment>AccountSummary secondary line for a follow-marked account at rest (v1.36)</comment></data>
+  <data name="Shell_Launch_Clause_FollowMarked_one" xml:space="preserve"><value>{0} will follow the main</value><comment>Batch banner clause via Loc.Plural; {0}=count (v1.36)</comment></data>
+  <data name="Shell_Launch_Clause_FollowMarked_other" xml:space="preserve"><value>{0} will follow the main</value><comment>Batch banner clause via Loc.Plural (v1.36)</comment></data>
+  <data name="Shell_Launch_Clause_FollowMarked_few" xml:space="preserve"><value>{0} will follow the main</value><comment>few-form (ru/pl) mirrors other in English (v1.36)</comment></data>
+  <data name="Shell_Launch_Clause_FollowMarked_many" xml:space="preserve"><value>{0} will follow the main</value><comment>many-form (ru/pl) mirrors other in English (v1.36)</comment></data>
   <data name="Shell_Leftover_Windowless_one" xml:space="preserve"><value>{0} leftover Roblox process with no window</value><comment>LeftoverSummary via Loc.Plural; "Roblox" stays English (localized Phase D step 3)</comment></data>
   <data name="Shell_Leftover_Windowless_other" xml:space="preserve"><value>{0} leftover Roblox processes with no window</value><comment>LeftoverSummary via Loc.Plural (localized Phase D step 3)</comment></data>
   <data name="Shell_Leftover_Windowless_few" xml:space="preserve"><value>{0} leftover Roblox processes with no window</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
@@ -2580,6 +2613,11 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Diag_Section_PerAccountMemory" xml:space="preserve"><value>Per-Account Memory</value><comment>Diagnostics section title (localized Phase D step 3)</comment></data>
   <data name="Diag_Section_Paths" xml:space="preserve"><value>Paths</value><comment>Diagnostics section title (localized Phase D step 3)</comment></data>
   <data name="Diag_Label_Version" xml:space="preserve"><value>Version</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_Channel" xml:space="preserve"><value>Channel</value><comment>Diagnostics row label: which install channel this copy came from (#52)</comment></data>
+  <data name="Diag_Channel_Store" xml:space="preserve"><value>Microsoft Store</value><comment>Diagnostics channel value; product noun, stays English</comment></data>
+  <data name="Diag_Channel_Sideload" xml:space="preserve"><value>Sideload</value><comment>Diagnostics channel value: signed MSIX installed outside the Store</comment></data>
+  <data name="Diag_Channel_DirectDownload" xml:space="preserve"><value>Direct download</value><comment>Diagnostics channel value: the Setup.exe from GitHub</comment></data>
+  <data name="Diag_Channel_Dev" xml:space="preserve"><value>Dev build</value><comment>Diagnostics channel value: a build run from source</comment></data>
   <data name="Diag_Label_DotNet" xml:space="preserve"><value>.NET runtime</value><comment>Diagnostics row label; ".NET" stays English (localized Phase D step 3)</comment></data>
   <data name="Diag_Label_OS" xml:space="preserve"><value>OS</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
   <data name="Diag_Label_SavedAccounts" xml:space="preserve"><value>Saved accounts</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
@@ -2641,6 +2679,7 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Shell_History_LeaderRow" xml:space="preserve"><value>{0} · {1} launches{2}</value><comment>Leaderboard row; {0}=uptime {1}=launches {2}=streak suffix (localized Phase D step 3)</comment></data>
   <data name="Shell_History_Today" xml:space="preserve"><value>Today</value><comment>History date bucket (localized Phase D step 3)</comment></data>
   <data name="Shell_History_Yesterday" xml:space="preserve"><value>Yesterday</value><comment>History date bucket (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_FollowingAFriend" xml:space="preserve"><value>Following a friend</value><comment>History row game name for a follow launch, until presence names the place (v1.36)</comment></data>
   <data name="Shell_History_Badge_Private" xml:space="preserve"><value>PRIVATE</value><comment>History row private-server badge (localized Phase D step 3)</comment></data>
   <data name="Shell_History_Badge_Saved" xml:space="preserve"><value>Saved</value><comment>History row saved badge (localized Phase D step 3)</comment></data>
   <data name="Shell_History_Bookmark" xml:space="preserve"><value>+ Bookmark</value><comment>History row bookmark button (localized Phase D step 3)</comment></data>
@@ -2803,7 +2842,7 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Tray_Plugins" xml:space="preserve"><value>Plugins...</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
   <data name="Tray_OpenLogs" xml:space="preserve"><value>Open log folder</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
   <data name="Tray_Quit" xml:space="preserve"><value>Quit</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
-  <data name="Shell_Title_Games" xml:space="preserve"><value>Games</value><comment>Shell window title, Games page (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Shell_Title_Games" xml:space="preserve"><value>Library</value><comment>Shell window title, Games page (localized Phase D step 3 batch 14)</comment></data>
   <data name="Shell_Title_Settings" xml:space="preserve"><value>Settings</value><comment>Shell window title, Settings page (localized Phase D step 3 batch 14)</comment></data>
   <data name="Shell_Title_History" xml:space="preserve"><value>History</value><comment>Shell window title, History page (localized Phase D step 3 batch 14)</comment></data>
   <data name="Shell_Title_Diagnostics" xml:space="preserve"><value>Diagnostics</value><comment>Shell window title, Diagnostics page (localized Phase D step 3 batch 14)</comment></data>
@@ -3102,4 +3141,48 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Plugin_Health_Stopped" xml:space="preserve"><value>Stopped.</value><comment>Plugin row health line, exit code 0 after it had been running (#242)</comment></data>
   <data name="Plugin_CouldNotStartBanner" xml:space="preserve"><value>{0} can't start on this PC. Restarting won't fix it: send your RoRoRo log to 626 Labs.</value><comment>Plugins-window banner with no Restart button; {0}=plugin name (#242)</comment></data>
   <data name="Plugin_KeepsFailingBanner" xml:space="preserve"><value>{0} keeps stopping as it starts. Restarting won't fix it: send your RoRoRo log to 626 Labs.</value><comment>Plugins-window banner with no Restart button, after 3 failed starts in a minute; {0}=plugin name (#242)</comment></data>
+  <data name="Library_Box_Placeholder" xml:space="preserve"><value>Search your games or paste a Roblox link</value><comment>Library one-box placeholder (v1.36 item 9)</comment></data>
+  <data name="Library_Box_Name" xml:space="preserve"><value>Search the Library or paste a Roblox link</value><comment>Library one-box accessible name (v1.36 item 9)</comment></data>
+  <data name="Library_Box_Tip" xml:space="preserve"><value>Type to filter. Enter adds a pasted game, place id or private-server link, or searches Roblox.</value><comment>Library one-box tooltip (v1.36 item 9)</comment></data>
+  <data name="Library_View_Name" xml:space="preserve"><value>Library layout</value><comment>Accessible name of the grid/list toggle (v1.36 item 9)</comment></data>
+  <data name="Library_View_Grid" xml:space="preserve"><value>Grid</value><comment>Library layout toggle (v1.36 item 9)</comment></data>
+  <data name="Library_View_List" xml:space="preserve"><value>List</value><comment>Library layout toggle (v1.36 item 9)</comment></data>
+  <data name="Library_Filters_Name" xml:space="preserve"><value>Show these kinds</value><comment>Accessible name of the kind chips group (v1.36 item 9)</comment></data>
+  <data name="Library_Chip_Recent" xml:space="preserve"><value>Recent</value><comment>Library kind chip (v1.36 item 9)</comment></data>
+  <data name="Library_Chip_Favourites" xml:space="preserve"><value>Favourites</value><comment>Library kind chip (v1.36 item 9)</comment></data>
+  <data name="Library_Chip_PrivateServers" xml:space="preserve"><value>Private servers</value><comment>Library kind chip (v1.36 item 9)</comment></data>
+  <data name="Library_Play" xml:space="preserve"><value>Play</value><comment>Library entry button, launches as the main account (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs" xml:space="preserve"><value>Play as</value><comment>Library entry button, opens the account picker (v1.36 item 9)</comment></data>
+  <data name="Library_Play_Name" xml:space="preserve"><value>Play {0}</value><comment>Accessible name of Play; {0}=game or server name (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs_Name" xml:space="preserve"><value>Play {0} as another account</value><comment>Accessible name of Play as; {0}=game or server name (v1.36 item 9)</comment></data>
+  <data name="Library_More_Name" xml:space="preserve"><value>More actions for {0}</value><comment>Accessible name of the entry's more-actions button; {0}=name (v1.36 item 9)</comment></data>
+  <data name="Library_Meta_NeverPlayed" xml:space="preserve"><value>Never played</value><comment>Library entry meta line when RoRoRo never launched it (v1.36 item 9)</comment></data>
+  <data name="Library_Meta_Played" xml:space="preserve"><value>{0} · {1}</value><comment>Library entry meta line; {0}=age, {1}=total time (v1.36 item 9)</comment></data>
+  <data name="Library_Kind_Favourite" xml:space="preserve"><value>Favourite</value><comment>List view kind column (v1.36 item 9)</comment></data>
+  <data name="Library_Kind_PrivateServer" xml:space="preserve"><value>Private server</value><comment>List view kind column (v1.36 item 9)</comment></data>
+  <data name="Library_Kind_Recent" xml:space="preserve"><value>Recent</value><comment>List view kind column (v1.36 item 9)</comment></data>
+  <data name="Library_Col_Game" xml:space="preserve"><value>Game</value><comment>List view column header (v1.36 item 9)</comment></data>
+  <data name="Library_Col_Kind" xml:space="preserve"><value>Kind</value><comment>List view column header (v1.36 item 9)</comment></data>
+  <data name="Library_Col_LastPlayed" xml:space="preserve"><value>Last played</value><comment>List view column header (v1.36 item 9)</comment></data>
+  <data name="Library_Col_Total" xml:space="preserve"><value>Total</value><comment>List view column header (v1.36 item 9)</comment></data>
+  <data name="GamesPage_EmptyLibrary" xml:space="preserve"><value>Your Library is empty.</value><comment>Library empty state, first sentence (v1.36 item 9)</comment></data>
+  <data name="GamesPage_EmptyLibrary_Hint" xml:space="preserve"><value>Search for a game or paste a game or private-server link above. Saved games show up in every account's panel.</value><comment>Library empty state, the invitation (v1.36 item 9)</comment></data>
+  <data name="Library_NoMatch" xml:space="preserve"><value>Nothing in your Library matches. Press Enter to search Roblox.</value><comment>Library line when chips or the box hide everything (v1.36 item 9)</comment></data>
+  <data name="Library_FromRoblox" xml:space="preserve"><value>From Roblox</value><comment>Heading of the Roblox search results group (v1.36 item 9)</comment></data>
+  <data name="Library_By" xml:space="preserve"><value>by {0}</value><comment>Search result creator; {0}=creator name (v1.36 item 9)</comment></data>
+  <data name="Library_Playing" xml:space="preserve"><value>{0} playing</value><comment>Search result player count; {0}=formatted number (v1.36 item 9)</comment></data>
+  <data name="Library_PlaceId" xml:space="preserve"><value>Place ID {0}</value><comment>Tooltip line of an entry; {0}=place id (v1.36 item 9)</comment></data>
+  <data name="Library_Cancel" xml:space="preserve"><value>Cancel</value><comment>Cancel button of the Library's inline remove confirm (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs_Menu_Name" xml:space="preserve"><value>Choose an account to play as</value><comment>Accessible name of the Play as account picker (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs_ExpiredReason" xml:space="preserve"><value>Session expired. Re-authenticate this account in the main window.</value><comment>Tooltip of a disabled (expired) account in the Play as picker (v1.36 item 9)</comment></data>
+  <data name="Library_PlayAs_Item_Name" xml:space="preserve"><value>{0}, {1}</value><comment>Accessible name of a Play as picker item; {0}=account name, {1}=status (v1.36 item 9)</comment></data>
+  <data name="Library_NoAccount" xml:space="preserve"><value>Add an account first, then play.</value><comment>Status when Play has no account to launch (v1.36 item 9)</comment></data>
+  <data name="Shell_Games_PrivateSuffix" xml:space="preserve"><value>(private server)</value><comment>Suffix on a saved private server in a row's game picker (v1.36 item 9, was hardcoded in Core)</comment></data>
+  <data name="Library_Add_Name" xml:space="preserve"><value>Add {0} to the Library</value><comment>Accessible name of the Add button on a search result; {0}=game name (v1.36 item 9)</comment></data>
+  <data name="WelcomeWindow_OnePlaceToLaunchRoblox" xml:space="preserve"><value>One place to launch Roblox: your account, your games, your settings. Add more accounts later and they run side by side.</value><comment>WelcomeWindow hero subtitle (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel" xml:space="preserve"><value>Play from the panel under your account.</value><comment>WelcomeWindow step 2 title (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve"><value>Recent, Favourites and Private servers are right there. No game yet? Open Roblox home, or add one in the Library.</value><comment>WelcomeWindow step 2 detail (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve"><value>When you want alts, add another account.</value><comment>WelcomeWindow step 3 title (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_WhenYouWantAlts_Detail" xml:space="preserve"><value>With two or more, Launch multiple and Squad Launch appear, and each account opens its own Roblox window.</value><comment>WelcomeWindow step 3 detail (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve"><value>With more than one account</value><comment>WelcomeWindow quick-tips heading for the multi-account tips (v1.36 item 10)</comment></data>
 </root>

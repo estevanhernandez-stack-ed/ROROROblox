@@ -37,11 +37,4 @@ public sealed record FavoriteGame(
     /// <c>MainViewModel.ResolveLaunchTarget</c> branches on this before the plain Place case.
     /// </summary>
     public bool IsPrivateServer => !string.IsNullOrEmpty(PrivateServerCode);
-
-    /// <summary>
-    /// Dropdown label for the per-account picker. Appends a quiet "(private server)" suffix to
-    /// PS entries so they're distinguishable from games at a glance, without polluting
-    /// <see cref="RenderName"/> (which the rename feature reads + writes). v1.6.0.
-    /// </summary>
-    public string DropdownLabel => IsPrivateServer ? $"{RenderName} (private server)" : RenderName;
 }

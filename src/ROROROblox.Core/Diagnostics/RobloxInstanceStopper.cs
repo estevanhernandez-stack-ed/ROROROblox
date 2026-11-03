@@ -84,7 +84,7 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
         return KillAndWaitAll(pids, "StopWindowless");
     }
 
-    public int StopIdleTrayClients(Func<int, bool> isTracked)
+    public int StopIdleTrayClients(Func<int, bool> isTracked, TimeSpan? minAge)
     {
         ArgumentNullException.ThrowIfNull(isTracked);
 
@@ -101,11 +101,25 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
 
         // The safety-critical filter lives in TrayClient.IsIdleTrayClient and fails closed: an
         // unreadable command line, a window, or a tracked pid all keep the process alive.
-        var pids = players.Where(p => TrayClient.IsIdleTrayClient(p, isTracked)).Select(p => p.Pid).ToArray();
-        if (pids.Length == 0)
+        var now = DateTimeOffset.UtcNow;
+        var idle = players.Where(p => TrayClient.IsIdleTrayClient(p, isTracked, minAge, now)).ToArray();
+        if (idle.Length == 0)
         {
             return 0;
         }
+
+        if (minAge is not null)
+        {
+            // The sweeper path: one line per kill, pid and age only (never account identity).
+            foreach (var p in idle)
+            {
+                _log.LogInformation(
+                    "StopIdleTrayClients: ending idle tray client pid {Pid}, age {AgeSeconds} s.",
+                    p.Pid, (int)(now - p.StartedAt!.Value).TotalSeconds);
+            }
+        }
+
+        var pids = idle.Select(p => p.Pid).ToArray();
 
         // KillAndWaitAll logs the signalled count at Information under this label.
         return KillAndWaitAll(pids, "StopIdleTrayClients");

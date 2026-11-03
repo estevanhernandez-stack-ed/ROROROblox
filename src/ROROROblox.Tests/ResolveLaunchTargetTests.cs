@@ -153,26 +153,7 @@ public class ResolveLaunchTargetTests
         var entry = PsEntry(1, "X", PrivateServerCodeKind.LinkCode, name: "Clan HQ");
 
         Assert.True(entry.IsPrivateServer);
-        Assert.Equal("Clan HQ (private server)", entry.DropdownLabel);
-    }
-
-    [Fact]
-    public void PlainGame_DropdownLabel_IsJustTheRenderName()
-    {
-        Assert.Equal("Adopt Me", Game(1, "Adopt Me").DropdownLabel);
-    }
-
-    [Fact]
-    public void PrivateServerEntry_DropdownLabel_UsesLocalNameOverride()
-    {
-        var entry = new FavoriteGame(
-            1, UniverseId: 0, "Roblox-side name", ThumbnailUrl: "", IsDefault: false,
-            AddedAt: DateTimeOffset.UnixEpoch,
-            LocalName: "My Nickname",
-            PrivateServerCode: "X",
-            PrivateServerCodeKind: PrivateServerCodeKind.LinkCode,
-            PrivateServerId: Guid.NewGuid());
-
-        Assert.Equal("My Nickname (private server)", entry.DropdownLabel);
+        // The "(private server)" suffix is no longer Core's to word: the row's game picker draws it from the
+        // Shell_Games_PrivateSuffix resx key (v1.36 item 9, LibraryPageXamlTests).
     }
 }

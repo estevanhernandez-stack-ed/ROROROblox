@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -103,6 +103,11 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
             // and it kept the OS hover. Its rank sets its own fill, label and edge, so it measures
             // exactly like the others.
             "SecondaryToggleButtonStyle",
+            // v1.36 C2 (E1): the panel expander's own toggle rank. Same Navy fill, derived edge and white
+            // glyph as SecondaryToggleButtonStyle at rest, so it measures exactly like it; its one difference
+            // (open = Cyan outline and glyph, no fill) is the checked state, which this resting render does not
+            // draw and ButtonStateGateTests.ThePanelExpanderOpenState_ClearsBothFloors_UnderEveryTheme measures.
+            "PanelExpanderToggleButtonStyle",
         ];
 
     /// <summary>
@@ -132,7 +137,12 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     /// </summary>
     private static readonly string[] BorderlessFilled = ["CtaButtonStyle", "WarningButtonStyle"];
 
-    private static readonly string[] SurfaceSupplied = ["AppTextBoxStyle", "AppPasswordBoxStyle"];
+    // v1.36 C3: PillToggleButtonStyle (the Library chips) is here, not in FullyMeasured, because a pill does not cover its
+    // own corners by design (CornerRadius 14 on a ~27 px control): rendered bare, the magenta host shows through all four
+    // and the gate rightly refuses the sample (measured 2026-11-03: #FF00FF x115, third most common). In the app the chips
+    // sit on the page surface, which is what the surface wrapper supplies. Its checked pair is measured separately in
+    // ButtonStateGateTests.APillChipsCheckedState_ClearsBothFloors_UnderEveryTheme.
+    private static readonly string[] SurfaceSupplied = ["AppTextBoxStyle", "AppPasswordBoxStyle", "PillToggleButtonStyle"];
 
     /// <summary>
     /// A CLOSED list, so a style added later cannot land here by accident — it lands in
@@ -162,6 +172,21 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
             // own comment records). No fill, no boundary, so 1.4.11 has no subject; the WhiteBrush
             // label is the app's standard text pair.
             "NavItemStyle",
+            // FactBadgeStyle (v1.36 item 6) is a Border drawing a thin outlined pill around a TextBlock:
+            // decoration, the CardBorderStyle role. The outline is DividerBrush on purpose (a separator,
+            // which 1.4.11 does not govern; InteractiveEdgeBindingTests forbids the derived edge on a
+            // decorative type), and the label is WhiteBrush or MutedTextBrush on the row, already
+            // measured by the text pairs. It is not interactive and has no fill to sample.
+            "FactBadgeStyle",
+            // The three C2 colour variants (F2) are BasedOn that same pill and change only its outline brush
+            // (Cyan, Cyan, Magenta) and its text brush (white, Cyan, HealthLimited, bold): still a Border with an
+            // outline and a label and no fill, so the same role and the same measured reason. What is NEW is the text
+            // colour, and that is not left to this exclusion: Cyan and HealthLimited are measured against RowBg in
+            // every built-in theme by ContrastPairGateTests.NamedPairs, and on an expired row (RowExpiredBg), where they
+            // measured under AA, the two text-colouring styles fall back to White, which is a named pair of its own and
+            // is pinned by AccountPanelXamlTests.OnAnExpiredRow_TheColouredFactsFallBackToWhiteText. The Magenta outline is
+            // decoration, like the hairline it replaces.
+            "FactBadgeAccentStyle", "FactBadgeAccentTextStyle", "FactBadgePlusStyle",
         ];
 
     /// <summary>The two fills the input styles' own comment names, in the order it names them.</summary>
@@ -671,6 +696,19 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
                     Assert.True(c.Authored.SentinelLeaked,
                         $"{c.Label}: the host no longer shows through, so this TextBlock now paints a "
                         + "fill of its own. It is excluded on the grounds that it has none — "
+                        + "re-classify it into FullyMeasured.");
+                    break;
+
+                case "FactBadgeStyle":
+                case "FactBadgeAccentStyle":
+                case "FactBadgeAccentTextStyle":
+                case "FactBadgePlusStyle":
+                    // A decorative pill: an outline and a label, no fill of its own. The host showing
+                    // through in bulk IS that statement, measured. A badge that started painting a
+                    // background would stop leaking and would need measuring like any filled surface.
+                    Assert.True(c.Authored.SentinelLeaked,
+                        $"{c.Label}: the host no longer shows through, so this badge now paints a "
+                        + "fill of its own. It is excluded on the grounds that it has none; "
                         + "re-classify it into FullyMeasured.");
                     break;
 

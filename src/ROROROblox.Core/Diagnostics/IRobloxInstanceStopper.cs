@@ -42,6 +42,8 @@ public interface IRobloxInstanceStopper
     /// be read and a browser-started loader are never touched. <paramref name="isTracked"/> says
     /// whether RoRoRo owns a pid. Same kill + bounded exit-wait budget as <see cref="StopAll"/>.
     /// Degrade-safe: a probe failure resolves to 0. Returns the count actually stopped.
+    /// <paramref name="minAge"/> adds an age floor (#222 sweeper): a client younger than it, or one
+    /// whose start time is unknown, is left alone. Null (the pre-launch clear) applies no age rule.
     /// </summary>
-    int StopIdleTrayClients(Func<int, bool> isTracked);
+    int StopIdleTrayClients(Func<int, bool> isTracked, TimeSpan? minAge);
 }

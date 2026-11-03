@@ -53,8 +53,19 @@ public class AccessibleNamingFenceTests
     /// <summary>
     /// Guards the walk itself. If the regex stops matching, a broken scan would report a perfectly
     /// named app forever — the same vacuity trap the colour-literal clause keeps a floor for.
+    /// <para>212 to 217 with v1.36 item 7: the panel's expander, NoteBox, Open Roblox home, the one entry
+    /// template's launch button and its Save, every one named.</para>
+    /// <para>217 to 217 with v1.36 item 9, re-measured by raising the floor until it failed: the Library page swapped
+    /// its 13 scanned controls (two boxes, five old buttons per template) for 13 new ones (the one ui:TextBox, three
+    /// chips, two Play, two Play as, two more, the search result's Add, Remove and Cancel on the confirm bar). The two
+    /// layout RadioButtons and the flyout's MenuItems are not Kinds here, so they do not move the count;
+    /// LibraryPageXamlTests names them.</para>
+    /// <para>217 to 219 with the v1.36 C2 rework (2026-11-02), re-measured by raising the floor until it failed: the two
+    /// "See all" links in the Favourites and Private servers panel headers, both named ("See all favourites", "See all
+    /// private servers"). The expander moved from the actions column to the name column and is still one control, so it
+    /// does not move the count; the unnamed ceiling stays 1.</para>
     /// </summary>
-    private const int ScannedFloor = 120;
+    private const int ScannedFloor = 219;
 
     /// <summary>
     /// A Content/Text value names its control when it is a literal with letters OR an

@@ -160,6 +160,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// persisted via <see cref="ISessionHistoryStore.AddAsync"/>.
     /// </summary>
     private readonly Dictionary<Guid, Guid> _pendingSessionByAccountId = new();
+    // Accounts whose open history row was written with no place (a follow launch); the first in-game
+    // presence names the place and patches the row (v1.36 spec 3.7).
+    private readonly HashSet<Guid> _sessionsAwaitingPlace = new();
+    // v1.36 panel wiring: the facts lane (launch-end trigger), the Library join and the icon cache.
+    private readonly AccountFactsService? _factsService;
+    private readonly LibraryCatalog? _libraryCatalog;
+    private readonly IGameIconCache? _gameIcons;
 
     /// <summary>
     /// Live appStorage identity defenders keyed by account id (v1.6.0 item 9). Tracked
@@ -216,8 +223,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IGlobalBasicSettingsWriter? globalBasicSettings = null,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         DiscordConfigService? discordConfigService = null,
-        ILogger<MainViewModel>? log = null)
+        ILogger<MainViewModel>? log = null,
+        AccountFactsService? factsService = null,
+        AccountUserIdBackfillService? userIdBackfill = null,
+        LibraryCatalog? libraryCatalog = null,
+        IGameIconCache? gameIcons = null)
     {
+        (_factsService, _libraryCatalog, _gameIcons) = (factsService, libraryCatalog, gameIcons);
         _cookieCapture = cookieCapture;
         _api = api;
         _accountStore = accountStore;
@@ -295,6 +307,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // Mirror must exist before any off-thread reader (presence loop, plugin host) can
         // resolve this VM — the ctor runs on the UI thread, so wiring it here is race-free.
         _accountsMirror = new ObservableCollectionMirror<AccountSummary>(Accounts);
+        // The one-account window (spec 3.8): the batch surfaces appear when a second account does.
+        Accounts.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasMultipleAccounts));
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
@@ -303,6 +317,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // a second capture can start while one is open — each capture's user-data-dir sweep
         // would then delete files under the other's LIVE WebView2 profile.
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary), _ => !IsBusy);
+        // The Needs-verification badge's action: a home launch, where the client itself presents the
+        // challenge. Same path as the row's Launch, so every guard that exists today applies.
+        HealthActionCommand = new RelayCommand(p => RunHealthActionAsync(p as AccountSummary),
+            p => p is AccountSummary row && HealthActionFor(row.Health) != HealthAction.None && (HealthActionFor(row.Health) != HealthAction.Reauthenticate || !IsBusy));
+        OpenRobloxHomeCommand = new RelayCommand(p => p is AccountSummary row
+            ? LaunchAccountAsync(row, new LaunchTarget.Home())
+            : Task.FromResult(0));
         OpenGamesCommand = new RelayCommand(OpenGames);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => _ = StopAccountAsync(p as AccountSummary));
@@ -361,6 +382,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _presenceService.AccountPresenceUpdated += OnAccountPresenceUpdated;
         _presenceService.AccountSessionExpired += OnAccountSessionExpired;
         _presenceService.AccountSessionLimited += OnAccountSessionLimited;
+
+        // v1.36 account facts + the backfill's resolved ids. Both raise on a worker thread, so each
+        // marshals through _ui like the presence events above; the services guard their own raise.
+        if (factsService is not null)
+        {
+            factsService.AccountFactsUpdated += (_, e) => _ui.Invoke(() => ApplyFacts(e.AccountId, e.Facts));
+        }
+        if (userIdBackfill is not null)
+        {
+            userIdBackfill.AccountUserIdResolved += (_, e) => _ui.Invoke(() => ApplyUserIdResolved(e.AccountId, e.UserId));
+        }
 
         // v1.8 idle awareness — coalesced, edge-triggered crossing when accounts newly pass the
         // warn threshold. The monitor itself (Task 5) already runs its own sample timer; this
@@ -549,6 +581,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     });
 
     public ObservableCollection<AccountSummary> Accounts { get; } = [];
+
+    /// <summary>
+    /// More than one saved account. The batch surfaces (Launch multiple, Squad Launch, the row's selection
+    /// dot with its In batches / Skipped label, and the follow-marked clause of a batch banner) have nothing
+    /// to do with one account, so they bind to this and stay out of a one-account user's first screen
+    /// (spec 2026-11-01 section 3.8). They still exist and work the moment a second account is added.
+    /// </summary>
+    public bool HasMultipleAccounts => Accounts.Count > 1;
 
     private readonly ObservableCollectionMirror<AccountSummary> _accountsMirror;
 
@@ -751,6 +791,39 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand LaunchAccountCommand { get; }
     public ICommand RemoveAccountCommand { get; }
     public ICommand ReauthenticateCommand { get; }
+
+    /// <summary>
+    /// "Open Roblox for this account": launches the account to the Roblox home screen so the client
+    /// itself can present a verification challenge. The health badge's action for Needs verification.
+    /// </summary>
+    public ICommand OpenRobloxHomeCommand { get; }
+
+    /// <summary>
+    /// The health badge's one command: dispatches on the row's <see cref="AccountSummary.Health"/>
+    /// so the badge's style never has to swap a Command. Expired and Limited re-authenticate,
+    /// NeedsVerification opens Roblox to the home screen, anything else does nothing.
+    /// </summary>
+    public ICommand HealthActionCommand { get; }
+
+    internal enum HealthAction { None, Reauthenticate, OpenRobloxHome }
+
+    internal static HealthAction HealthActionFor(AccountHealth health) => health switch
+    {
+        AccountHealth.Expired or AccountHealth.Limited => HealthAction.Reauthenticate,
+        AccountHealth.NeedsVerification => HealthAction.OpenRobloxHome,
+        _ => HealthAction.None,
+    };
+
+    internal Task RunHealthActionAsync(AccountSummary? summary)
+    {
+        if (summary is null) return Task.CompletedTask;
+        return HealthActionFor(summary.Health) switch
+        {
+            HealthAction.Reauthenticate => ReauthenticateAsync(summary),
+            HealthAction.OpenRobloxHome => LaunchAccountAsync(summary, new LaunchTarget.Home()),
+            _ => Task.CompletedTask,
+        };
+    }
     public ICommand OpenGamesCommand { get; }
     public ICommand LaunchAllCommand { get; }
     public ICommand StopAccountCommand { get; }
@@ -1260,6 +1333,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 WireAccountSummary(summary);
                 Accounts.Add(summary);
             }
+            // Open state: the persisted choice, else the main's panel, else (no main) the first row's.
+            var firstRow = Accounts.Any(a => a.IsMain) ? null : Accounts.FirstOrDefault();
+            foreach (var row in Accounts) row.Panel?.ResolveExpanded(row.IsMain || ReferenceEquals(row, firstRow));
+            await PrimeLastPlayedAsync();
         }
         catch (AccountStoreCorruptException)
         {
@@ -1296,8 +1373,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // v1.5.0 — start the presence poll loop now that Accounts is populated, so the first
         // tick has targets. Start() is idempotent (no-op if already running), so the repeated
         // LoadAsync calls on Games-dialog close don't spin up a second loop. Accounts that get
-        // their RobloxUserId backfilled after this point enter the poll snapshot automatically —
-        // the snapshot provider re-reads Accounts on every tick.
+        // their RobloxUserId backfilled after this point reach the poll snapshot only because the
+        // backfill raises AccountUserIdResolved and ApplyUserIdResolved sets the live row's id (the
+        // provider re-reads AccountsSnapshot every tick, but the backfill itself writes the store
+        // only; the old "enter the poll snapshot automatically" was wrong until v1.36).
         _presenceService.Start();
     }
 
@@ -1338,7 +1417,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
         // Saved private servers join the per-account dropdown as FavoriteGame-shaped entries
         // carrying the PS code/kind + stable PS Id (v1.6.0). They render with the server's
-        // RenderName so renames show, plus a "(private server)" suffix via DropdownLabel. NOT
+        // RenderName so renames show, plus a "(private server)" suffix drawn by the row picker's item template. NOT
         // added to WidgetGames — the default-game widget is for games, not one-off PS launches
         // (same exclusion the JoinByLink sentinel gets).
         foreach (var server in privateServers)
@@ -1639,6 +1718,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
         WireAccountSummary(summary);
         Accounts.Insert(0, summary);
+        if (Accounts.Count == 1 && summary.Panel is { } firstPanel) firstPanel.IsExpanded = true; // a one-account install opens on its panel
         RefreshFpsCapWarning();
         _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId}, isMain={IsMain})",
             account.Id, captured.Username, captured.UserId, account.IsMain);
@@ -1947,7 +2027,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             try
             {
                 var trackedPids = _processTracker.Attached.Values.Select(p => p.Pid).ToHashSet();
-                await Task.Run(() => _instanceStopper.StopIdleTrayClients(trackedPids.Contains));
+                await Task.Run(() => _instanceStopper.StopIdleTrayClients(trackedPids.Contains, minAge: null));
             }
             catch (Exception ex)
             {
@@ -1961,6 +2041,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     await _accountStore.TouchLastLaunchedAsync(summary.Id);
                     summary.StampLaunched(DateTimeOffset.UtcNow);
                     summary.SessionExpired = false;
+                    summary.SessionNeedsVerification = false; // a launch that starts proves the challenge is behind us
                     summary.StatusText = string.Empty;
                     summary.LastClosedAtUtc = null;
                     // Task 8: remembered so a later Recycle relaunches into the SAME target
@@ -1995,6 +2076,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.CurrentGameName = null;
                     summary.InGameSinceUtc = null;
                     summary.StatusText = string.Empty;                 // copy comes from SecondaryStatusText
+                    return 0;
+                case LaunchResult.NeedsVerification needs:
+                    // The one place SessionNeedsVerification is ever set true (spec §1.2).
+                    _log.LogInformation("Account {AccountId} needs verification (403, challenge {Challenge})", summary.Id, needs.ChallengeType);
+                    summary.SessionNeedsVerification = true;
+                    summary.PresenceState = UserPresenceType.Offline;
+                    summary.CurrentGameName = null;
+                    summary.InGameSinceUtc = null;
+                    summary.StatusText = string.Empty;
                     return 0;
                 case LaunchResult.Failed { Kind: LaunchFailureKind.RobloxNotInstalled }:
                     _log.LogWarning("Roblox not installed at launch time for account {AccountId}", summary.Id);
@@ -2066,6 +2156,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var summary = AccountsSnapshot.FirstOrDefault(a => a.Id == accountId);
         return summary is null ? Task.FromResult(0) : LaunchAccountAsync(summary, overrideTarget: target);
     }
+
+    /// <summary>
+    /// The Library's Play / Play as seam: launches the account with this id into <paramref name="target"/>
+    /// through the one launch path. Reads <see cref="AccountsSnapshot"/>, so it is safe off the UI thread;
+    /// an id that no longer resolves to a row (the account was removed) is a quiet no-op.
+    /// </summary>
+    internal Task LaunchAccountByIdAsync(Guid accountId, LaunchTarget target)
+        => AccountsSnapshot.FirstOrDefault(a => a.Id == accountId) is { } row
+            ? LaunchAccountAsync(row, overrideTarget: target)
+            : Task.CompletedTask;
 
     /// <summary>
     /// One-click remedy for the tray memory warning (Task 8): stop the account's client and
@@ -2380,7 +2480,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         ? DispatchBatchAsync(cleared, overrideTarget: null, launchingBanner)
                         : ReleaseBatchAsync(cleared, overrideTarget: null, launchingBanner, startIndex: 0));
             }
-            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"));
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"), plan.FollowMarkedCount, suppressFollowClause: !HasMultipleAccounts);
         }
         finally
         {
@@ -2913,7 +3013,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                             waitForLanding: careful));
             }
 
-            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"));
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"), plan.FollowMarkedCount, suppressFollowClause: !HasMultipleAccounts);
 
             // Everyone was aimed at one specific server — check with presence who actually made it.
             // Fire-and-forget: the verdict is up to four minutes out (ServerLandingGate.MaxWait,
@@ -3265,11 +3365,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             string? gameName = null;
             long? placeId = null;
             var isPrivate = false;
+            Guid? privateServerId = null;
             switch (target)
             {
                 case LaunchTarget.PrivateServer ps:
                     placeId = ps.PlaceId;
                     isPrivate = true;
+                    privateServerId = (await _privateServerStore.ListAsync())
+                        .FirstOrDefault(sv => sv.PlaceId == ps.PlaceId && sv.Code == ps.Code)?.Id;
                     // Prefer the row's PS entry name (RenderName picks up the rename); fall back
                     // to a generic label if the row selection isn't a PS entry (override path).
                     gameName = summary.SelectedGame?.IsPrivateServer == true
@@ -3285,7 +3388,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     placeId = summary.SelectedGame?.PlaceId;
                     break;
                 case LaunchTarget.FollowFriend:
-                    gameName = "Following a friend";
+                    gameName = Loc.Get("Shell_History_FollowingAFriend");
                     break;
             }
 
@@ -3299,10 +3402,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 IsPrivateServer: isPrivate,
                 LaunchedAtUtc: launchedAtUtc,
                 EndedAtUtc: null,
-                OutcomeHint: null);
+                OutcomeHint: null,
+                PrivateServerId: privateServerId);
 
             _pendingSessionByAccountId[summary.Id] = session.Id;
             await _sessionHistory.AddAsync(session);
+            if (placeId is null) _sessionsAwaitingPlace.Add(summary.Id); else _sessionsAwaitingPlace.Remove(summary.Id);
         }
         catch (Exception ex)
         {
@@ -3333,6 +3438,32 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             _log.LogDebug(ex, "Stamping session end threw for account {AccountId}; continuing.", accountId);
         }
+        // v1.36: the row is stamped, so the panel's Recent and last played are current, and Robux
+        // is the thing a session most likely changed (facts trigger 2, still gated by MinRefreshAge).
+        _factsService?.Enqueue(accountId);
+        var panel = AccountsSnapshot.FirstOrDefault(a => a.Id == accountId)?.Panel;
+        if (panel is not null) await panel.RefreshAsync();
+    }
+
+    /// <summary>One local history read at load: every row's last played, with no collections, facts or icons (disk only).</summary>
+    private async Task PrimeLastPlayedAsync()
+    {
+        try
+        {
+            var history = await _sessionHistory.ListAsync();
+            _ui.Invoke(() => { foreach (var a in Accounts) a.Panel?.PrimeLastPlayed(history); });
+        }
+        catch (Exception ex) { _log.LogDebug(ex, "Priming last played threw; rows fill in on first refresh."); }
+    }
+
+    /// <summary>Startup, after the id backfill: panels that resolved open at load ask for their icons now (network lane).</summary>
+    public void RequestIconsForOpenPanels()
+        => _ui.Invoke(() => { foreach (var a in Accounts) if (a.Panel is { IsExpanded: true } p) _ = p.RefreshAsync(); });
+
+    private async Task PersistPanelExpandedAsync(Guid accountId, bool open)
+    {
+        try { await _accountStore.SetPanelExpandedAsync(accountId, open); }
+        catch (Exception ex) { _log.LogDebug(ex, "Persisting panel state threw for account {AccountId}; continuing.", accountId); }
     }
 
     /// <summary>
@@ -3450,6 +3581,32 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         => _ui.Invoke(() => ApplyPresence(e));
 
     /// <summary>
+    /// UI-thread body of the facts handler (internal for tests). Keyed by id: a row is only ever
+    /// touched by the facts fetched with ITS cookie, so facts for account A cannot land on row B.
+    /// </summary>
+    internal void ApplyFacts(Guid accountId, AccountFacts facts)
+    {
+        var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (summary is not null)
+        {
+            summary.Facts = facts;
+        }
+    }
+
+    /// <summary>
+    /// UI-thread body of the backfill handler (internal for tests): the live row learns its
+    /// resolved Roblox user id, so presence starts polling it this session instead of after a restart.
+    /// </summary>
+    internal void ApplyUserIdResolved(Guid accountId, long userId)
+    {
+        var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (summary is not null)
+        {
+            summary.RobloxUserId = userId;
+        }
+    }
+
+    /// <summary>
     /// UI-thread body of the presence handler (internal for tests — <see cref="OnAccountPresenceUpdated"/>
     /// marshals to it, same seam shape as <see cref="ApplySessionExpired"/>).
     /// </summary>
@@ -3460,6 +3617,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (summary is null) return;
             // A presence poll landing means Roblox is answering this cookie again — clear Limited.
             summary.SessionLimited = false;
+            summary.SessionNeedsVerification = false; // same reasoning: Roblox is answering this cookie again
             summary.PresenceUpdatedAtUtc = e.OccurredAtUtc;
 
             if (e.PresenceType == UserPresenceType.InGame)
@@ -3473,6 +3631,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.CurrentPlaceId = e.PlaceId;
                 summary.CurrentGameName = e.GameName;
                 summary.PresenceState = e.PresenceType;
+                if (e.PlaceId is { } landed && _pendingSessionByAccountId.TryGetValue(summary.Id, out var openRow)
+                    && _sessionsAwaitingPlace.Remove(summary.Id))
+                {
+                    _ = _sessionHistory.UpdateGameAsync(openRow, e.GameName, landed, privateServerId: null);
+                }
                 // WHICH server, not just which game (v1.14). Null when privacy or timing withheld
                 // the job id — Recycle then behaves exactly as it did before this feature.
                 summary.CurrentServer = e.Server;
@@ -4745,6 +4908,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private void WireAccountSummary(AccountSummary summary)
     {
+        var panel = new AccountPanelViewModel(summary, _sessionHistory.ListAsync,
+            () => _libraryCatalog is null ? Task.FromResult<IReadOnlyList<LibraryEntry>>([]) : _libraryCatalog.ListAsync(),
+            target => LaunchAccountAsync(summary, target),
+            () => { _factsService?.Enqueue(summary.Id); return Task.CompletedTask; },
+            _gameIcons, _favorites, _ui,
+            // The Favourites / Private servers headers' "See all" link opens the Library page, the same call
+            // as the header's Library button.
+            openLibrary: OpenGames);
+        panel.UserToggled += (_, open) => _ = PersistPanelExpandedAsync(summary.Id, open);
+        summary.AttachPanel(panel);
         summary.PropertyChanged += OnAccountSummaryPropertyChanged;
         summary.Tags.CollectionChanged += (_, _) => OnAccountTagsChanged(summary);
         if (_streamerIdentity is not null)
@@ -4833,6 +5006,23 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         else if (e.PropertyName == nameof(AccountSummary.CaptionColorHex))
         {
             _ = PersistCaptionColorAsync(summary.Id, summary.CaptionColorHex);
+        }
+        else if (e.PropertyName == nameof(AccountSummary.Note))
+        {
+            _ = PersistNoteAsync(summary.Id, summary.Note);
+        }
+    }
+
+    /// <summary>The panel's NoteBox committed (LostFocus or Enter): persist the normalized note. A write failure is logged and the next edit reconverges.</summary>
+    private async Task PersistNoteAsync(Guid accountId, string? note)
+    {
+        try
+        {
+            await _accountStore.UpdateNoteAsync(accountId, note);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Persisting the note for {AccountId} failed.", accountId);
         }
     }
 

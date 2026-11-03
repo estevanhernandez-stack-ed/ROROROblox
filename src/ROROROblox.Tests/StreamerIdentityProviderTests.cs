@@ -154,6 +154,128 @@ public class StreamerIdentityProviderTests
         Assert.Empty(accountPersists);                     // never routed through the account persist callback
     }
 
+    // ---- v1.36 item 6 (spec 2.5): the facts line joins the streamer switch. One row per masked
+    // fact, and two rows for the facts that must NOT mask. The summary reads the provider's
+    // IsActive, so the masking is asserted on the real row, not on the provider.
+
+    private static ROROROblox.App.ViewModels.AccountSummary FactsRow(StreamerIdentityProvider provider)
+    {
+        var row = new ROROROblox.App.ViewModels.AccountSummary(new Account(
+            Id: Guid.NewGuid(), DisplayName: "FakeAlt", AvatarUrl: "", CreatedAt: DateTimeOffset.UtcNow,
+            LastLaunchedAt: null,
+            Facts: new AccountFacts(1240, "plus", 3, DateTimeOffset.UtcNow.AddMinutes(-3), null),
+            Note: "Farm alt"));
+        row.AttachIdentityProvider(provider);
+        return row;
+    }
+
+    [Theory]
+    [InlineData("robux")]
+    [InlineData("membership")]
+    [InlineData("friends")]
+    [InlineData("note")]
+    public async Task Active_MasksEachFact_AndInactiveShowsIt(string fact)
+    {
+        var p = Make(active: false);
+        var row = FactsRow(p);
+        string Read() => fact switch
+        {
+            "robux" => row.RobuxText,
+            "membership" => row.MembershipText,
+            "friends" => row.FriendsOnlineText,
+            _ => row.NoteFirstLine,
+        };
+        string Name() => fact switch
+        {
+            "robux" => row.RobuxAccessibleName,
+            "membership" => row.MembershipAccessibleName,
+            "friends" => row.FriendsOnlineAccessibleName,
+            _ => row.NoteAccessibleName,
+        };
+
+        var shown = Read();
+        Assert.NotEqual("••••", shown);
+        Assert.NotEmpty(shown);
+
+        var raised = new List<string?>();
+        row.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+        await p.SetActiveAsync(true);
+
+        if (fact == "note")
+        {
+            Assert.Equal(string.Empty, Read());      // hidden entirely, not masked
+            Assert.False(row.ShowNoteBadge);
+        }
+        else
+        {
+            Assert.Equal("••••", Read());
+            Assert.EndsWith("hidden", Name());       // the accessible name never carries the value
+            Assert.DoesNotContain("1,240", Name());
+        }
+        Assert.Contains(fact switch
+        {
+            "robux" => nameof(ROROROblox.App.ViewModels.AccountSummary.RobuxText),
+            "membership" => nameof(ROROROblox.App.ViewModels.AccountSummary.MembershipText),
+            "friends" => nameof(ROROROblox.App.ViewModels.AccountSummary.FriendsOnlineText),
+            _ => nameof(ROROROblox.App.ViewModels.AccountSummary.NoteFirstLine),
+        }, raised);
+    }
+
+    [Fact]
+    public async Task Active_HidesThePanelsNoteBox_AndNamesStayWithTheMaskedName()
+    {
+        var p = Make(active: false);
+        var row = FactsRow(p);
+        Assert.True(row.ShowNoteBox);
+        Assert.Equal("Farm alt", row.NoteText);
+
+        var raised = new List<string?>();
+        row.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+        await p.SetActiveAsync(true);
+
+        Assert.False(row.ShowNoteBox);                                  // item 7: the box goes with the note
+        Assert.Contains(nameof(ROROROblox.App.ViewModels.AccountSummary.ShowNoteBox), raised);
+        Assert.DoesNotContain("FakeAlt", row.PanelExpanderName);        // the expander's name follows RenderName, so it never leaks the real one
+        Assert.Contains(row.RenderName, row.PanelExpanderName);
+        Assert.Contains(row.RenderName, row.PanelOpenHomeName);
+        Assert.Contains(row.RenderName, row.PanelNoteName);
+    }
+
+    [Fact]
+    public async Task Active_DoesNotMaskTheAgeHint()
+    {
+        var p = Make(active: false);
+        var row = FactsRow(p);
+        var before = row.FactsAgeText;
+        await p.SetActiveAsync(true);
+
+        Assert.Equal("Updated 3 min ago", row.FactsAgeText);
+        Assert.Equal(before, row.FactsAgeText);
+    }
+
+    [Fact]
+    public async Task Active_DoesNotMaskLastPlayed()
+    {
+        var p = Make(active: false);
+        var row = FactsRow(p);
+        var panel = new ROROROblox.App.ViewModels.AccountPanelViewModel(
+            row,
+            () => Task.FromResult<IReadOnlyList<LaunchSession>>([]),
+            () => Task.FromResult<IReadOnlyList<LibraryEntry>>([]),
+            _ => Task.CompletedTask,
+            () => Task.CompletedTask);
+        row.AttachPanel(panel);
+        panel.PrimeLastPlayed([new LaunchSession(Guid.NewGuid(), row.Id, "Alt", null, "Pet Simulator 99", 1L, false,
+            DateTimeOffset.UtcNow.AddHours(-2), null, null)]);
+        var before = row.LastPlayedText;
+        Assert.StartsWith("Pet Simulator 99", before);
+
+        await p.SetActiveAsync(true);
+
+        Assert.Equal(before, row.LastPlayedText);
+        Assert.True(row.ShowLastPlayedBadge);
+    }
+
     private sealed class FakeSettings : IAppSettings
     {
         private bool _on;
@@ -211,6 +333,10 @@ public class StreamerIdentityProviderTests
         public Task SetAlertCadenceOverridesJsonAsync(string? overridesJson) => throw new NotImplementedException();
         public Task<string> GetAlertSoundAsync() => throw new NotImplementedException();
         public Task SetAlertSoundAsync(string? sound) => throw new NotImplementedException();
+        public Task<string> GetLibraryViewAsync() => throw new NotImplementedException();
+        public Task SetLibraryViewAsync(string? view) => throw new NotImplementedException();
+        public Task<string> GetLibraryFiltersAsync() => throw new NotImplementedException();
+        public Task SetLibraryFiltersAsync(string? filters) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryIdentityStore : IStreamerIdentityStore

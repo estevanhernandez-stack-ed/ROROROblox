@@ -269,6 +269,17 @@ public class RobloxLauncherTests
     }
 
     [Fact]
+    public async Task LaunchAsync_TypedApi_SessionLimitedWithChallenge_ReturnsNeedsVerification()
+    {
+        var api = new StubRobloxApi(_ => throw new SessionLimitedException("captcha"));
+        var launcher = new RobloxLauncher(api, new InMemoryAppSettings(), new RecordingProcessStarter(_ => 1));
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42));
+
+        Assert.Equal("captcha", Assert.IsType<LaunchResult.NeedsVerification>(result).ChallengeType);
+    }
+
+    [Fact]
     public async Task LaunchAsync_TypedApi_SessionLimited_ReturnsLimitedResult()
     {
         var api = new StubRobloxApi(_ => throw new SessionLimitedException());
@@ -806,6 +817,13 @@ public class RobloxLauncherTests
             AlertSound = sound ?? string.Empty;
             return Task.CompletedTask;
         }
+
+        public string LibraryView { get; set; } = "grid";
+        public Task<string> GetLibraryViewAsync() => Task.FromResult(LibraryView);
+        public Task SetLibraryViewAsync(string? view) { LibraryView = string.IsNullOrWhiteSpace(view) ? "grid" : view; return Task.CompletedTask; }
+        public string LibraryFilters { get; set; } = string.Empty;
+        public Task<string> GetLibraryFiltersAsync() => Task.FromResult(LibraryFilters);
+        public Task SetLibraryFiltersAsync(string? filters) { LibraryFilters = filters ?? string.Empty; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter

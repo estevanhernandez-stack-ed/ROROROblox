@@ -566,4 +566,22 @@ public class SettingsReachabilityTests
         Assert.True(File.Exists(appXaml), $"{CompositionRoot}'s markup is missing; the exclusion is unverifiable.");
         Assert.Equal("Application", XDocument.Load(appXaml).Root!.Name.LocalName);
     }
+
+    /// <summary>
+    /// v1.36 item 9 deleted the two "EXPIRES AT ITEM 9" exemptions. <c>LibraryViewModel</c> calls the accessors, which
+    /// would keep both settings green by itself, so this pins the other road the spec asked for: the Library page names
+    /// a control for each setting by the fence's own control-edge rule, so a user can change them there.
+    /// </summary>
+    [Theory]
+    [InlineData("LibraryView", "LibraryViewToggle")]
+    [InlineData("LibraryFilters", "LibraryFiltersRow")]
+    public void TheLibrarysSettingsAreReachableByAControlNamedForThem(string setting, string controlName)
+    {
+        Assert.DoesNotContain(Exemptions, e => e.Property == setting);
+
+        var xaml = File.ReadAllText(Path.Combine(XamlStyleScanner.AppSourceDirectory()!, "Games", "GamesPage.xaml"));
+        var declaration = $"x:Name=\"{controlName}\"";
+        Assert.Contains(declaration, xaml);
+        Assert.Matches(ControlEdge(setting), controlName); // the name is one the control-edge rule accepts
+    }
 }

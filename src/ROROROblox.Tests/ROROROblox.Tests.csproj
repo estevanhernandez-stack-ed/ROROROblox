@@ -29,6 +29,9 @@
          nothing in src/ references tools/, and the Store build publishes the App project by path, so
          this reference cannot reach a shipped binary. -->
     <ProjectReference Include="..\..\tools\MetricSmoke\MetricSmoke.csproj" />
+    <!-- The endpoint probe (tools/EndpointProbe). Referenced so its redaction and its "never prints a
+         cookie" guarantee are under the unit suite, not just a manual grep. Same direction as above. -->
+    <ProjectReference Include="..\..\tools\EndpointProbe\EndpointProbe.csproj" />
   </ItemGroup>
 
   <!-- Modal XAML copied next to the test binary so ModalDefaultButtonSafetyTests can assert that

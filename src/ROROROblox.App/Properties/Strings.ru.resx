@@ -219,7 +219,7 @@
     <value>Снять по умолчанию</value>
   </data>
   <data name="GamesPage_Games" xml:space="preserve">
-    <value>Игры</value>
+    <value>Библиотека</value>
   </data>
   <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
     <value>Задайте этой игре своё имя, видимое только в RoRoRo. Название на стороне Roblox останется прежним.</value>
@@ -408,7 +408,7 @@
     <value>Добавить метку этому аккаунту</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Добавьте игры через «Инструменты → Игры»</value>
+    <value>Добавьте в Библиотеку</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>добавить метку</value>
@@ -495,7 +495,7 @@
     <value>Игра или сохранённый приватный сервер, на который запустить этот аккаунт, либо «(Paste a link...)» для разовой ссылки.</value>
   </data>
   <data name="MainWindow_Games" xml:space="preserve">
-    <value>Игры</value>
+    <value>Библиотека</value>
   </data>
   <data name="MainWindow_History" xml:space="preserve">
     <value>История</value>
@@ -543,7 +543,7 @@
     <value>Войдите в аккаунт Roblox и сохраните его здесь. (Ctrl+N)</value>
   </data>
   <data name="MainWindow_ManageGames" xml:space="preserve">
-    <value>Управление играми…</value>
+    <value>Управление Библиотекой…</value>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
     <value>Отключить оповещения Discord</value>
@@ -1302,7 +1302,7 @@
     <value>Диагностика</value>
   </data>
   <data name="ShellWindow_Games" xml:space="preserve">
-    <value>Игры</value>
+    <value>Библиотека</value>
   </data>
   <data name="ShellWindow_History" xml:space="preserve">
     <value>История</value>
@@ -1403,15 +1403,11 @@
   <data name="WelcomeWindow_ClickAddAccount" xml:space="preserve">
     <value>Нажмите «+ Добавить аккаунт».</value>
   </data>
-  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
-    <value>Нажмите «Запустить как». Или «Запустить несколько» для всех выбранных альтов сразу.</value>
-  </data>
   <data name="WelcomeWindow_ClickThe" xml:space="preserve">
     <value>Нажмите</value>
   </data>
   <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
-    <value>Закрытие крестиком сворачивает в область уведомлений; щёлкните значок в области уведомлений правой кнопкой для настроек, истории,
-                        диагностики или выхода.</value>
+    <value>Закрытие крестиком сворачивает в область уведомлений; щёлкните значок в области уведомлений правой кнопкой для настроек, истории, диагностики или выхода.</value>
   </data>
   <data name="WelcomeWindow_Compact" xml:space="preserve">
     <value>Компактный</value>
@@ -1428,26 +1424,14 @@
   <data name="WelcomeWindow_InTheSystemTrayAnd" xml:space="preserve">
     <value>в области уведомлений и вытащите RoRoRo наружу, чтобы он оставался видимым.</value>
   </data>
-  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
-    <value>Multi-Instance включён по умолчанию — окна Roblox открываются рядом, не борясь друг с другом за singleton.</value>
-  </data>
   <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
     <value>слева от строки — перетащите, чтобы изменить порядок.</value>
-  </data>
-  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
-    <value>Откройте «Игры» и добавьте место, куда запускаетесь.</value>
   </data>
   <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
     <value>Быстрые подсказки по элементам строки</value>
   </data>
   <data name="WelcomeWindow_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
-  </data>
-  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Запускайте несколько клиентов Roblox одновременно. Три шага — и всё готово.</value>
-  </data>
-  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
-    <value>Найдите по названию или вставьте URL roblox.com/games/&lt;id&gt;. Игру по умолчанию использует «Запустить как».</value>
   </data>
   <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
     <value>Войдите на roblox.com во всплывающем окне. Мы сохраняем cookie, шифруем его и никогда не видим ваш пароль.</value>
@@ -1489,7 +1473,7 @@
     <value>Вернуть исходное</value>
   </data>
   <data name="MainWindow_Reauthenticate" xml:space="preserve">
-    <value>Пройти аутентификацию заново</value>
+    <value>Войти заново</value>
   </data>
   <data name="SettingsPage_Language" xml:space="preserve">
     <value>Язык</value>
@@ -1889,6 +1873,168 @@
   </data>
   <data name="Shell_Launch_Clause_Deselected" xml:space="preserve">
     <value>{0} не выбрано</value>
+  </data>
+  <data name="Shell_Health_Expired" xml:space="preserve">
+    <value>Сессия истекла</value>
+  </data>
+  <data name="Shell_Health_NeedsVerification" xml:space="preserve">
+    <value>Нужна проверка</value>
+  </data>
+  <data name="Shell_Health_Limited" xml:space="preserve">
+    <value>Ограничено Roblox</value>
+  </data>
+  <data name="Shell_Health_FollowMarked" xml:space="preserve">
+    <value>Присоединяется следом</value>
+  </data>
+  <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve">
+    <value>Войти заново</value>
+  </data>
+  <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve">
+    <value>Открыть Roblox для этого аккаунта</value>
+  </data>
+  <data name="Shell_Health_Action_ToggleMark" xml:space="preserve">
+    <value>Переключить отметку</value>
+  </data>
+  <data name="Shell_Health_BadgeName" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Shell_Fact_Masked" xml:space="preserve">
+    <value>••••</value>
+  </data>
+  <data name="Shell_Fact_Hidden" xml:space="preserve">
+    <value>скрыто</value>
+  </data>
+  <data name="Shell_Fact_Unknown" xml:space="preserve">
+    <value>неизвестно</value>
+  </data>
+  <data name="Shell_Fact_Robux_Name" xml:space="preserve">
+    <value>Robux, {0}</value>
+  </data>
+  <data name="Shell_Fact_Membership_Name" xml:space="preserve">
+    <value>Подписка, {0}</value>
+  </data>
+  <data name="Shell_Fact_Friends_Name" xml:space="preserve">
+    <value>Друзья в сети, {0}</value>
+  </data>
+  <data name="Shell_Fact_LastPlayed_Name" xml:space="preserve">
+    <value>Последний запуск, {0}</value>
+  </data>
+  <data name="Shell_Fact_Note_Name" xml:space="preserve">
+    <value>Заметка, {0}</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_one" xml:space="preserve">
+    <value>{0} друг в сети</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_other" xml:space="preserve">
+    <value>{0} друга в сети</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_few" xml:space="preserve">
+    <value>{0} друга в сети</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_many" xml:space="preserve">
+    <value>{0} друзей в сети</value>
+  </data>
+  <data name="Shell_Fact_Updated" xml:space="preserve">
+    <value>Обновлено {0}</value>
+  </data>
+  <data name="Shell_Fact_UpdatedFailed" xml:space="preserve">
+    <value>Обновлено {0} · последняя попытка не удалась ({1})</value>
+  </data>
+  <data name="Shell_Fact_NeverUpdatedFailed" xml:space="preserve">
+    <value>Ещё не обновлено · последняя попытка не удалась ({0})</value>
+  </data>
+  <data name="Shell_Panel_Expander_Name" xml:space="preserve">
+    <value>Показать недавние игры для {0}</value>
+  </data>
+  <data name="Shell_Panel_Heading_Recent" xml:space="preserve">
+    <value>НЕДАВНИЕ</value>
+  </data>
+  <data name="Shell_Panel_Heading_Favourites" xml:space="preserve">
+    <value>ИЗБРАННОЕ</value>
+  </data>
+  <data name="Shell_Panel_Heading_PrivateServers" xml:space="preserve">
+    <value>ПРИВАТНЫЕ СЕРВЕРЫ</value>
+  </data>
+  <data name="Shell_Panel_SeeAll" xml:space="preserve">
+    <value>Показать все</value>
+  </data>
+  <data name="Shell_Panel_SeeAll_Favourites_Name" xml:space="preserve">
+    <value>Показать все избранное</value>
+  </data>
+  <data name="Shell_Panel_SeeAll_PrivateServers_Name" xml:space="preserve">
+    <value>Показать все приватные серверы</value>
+  </data>
+  <data name="Shell_Panel_Empty_Recent" xml:space="preserve">
+    <value>Пока ничего не запускалось. Запустите игру, и она появится здесь.</value>
+  </data>
+  <data name="Shell_Panel_Empty_Favourites" xml:space="preserve">
+    <value>Пока нет избранного. Сохраните игру из списка «Недавние» или добавьте игры в Библиотеке.</value>
+  </data>
+  <data name="Shell_Panel_Empty_PrivateServers" xml:space="preserve">
+    <value>Нет сохранённых приватных серверов. Вставьте ссылку на сервер в Библиотеке, чтобы добавить его.</value>
+  </data>
+  <data name="Shell_Panel_OpenHome" xml:space="preserve">
+    <value>Открыть главную Roblox</value>
+  </data>
+  <data name="Shell_Panel_OpenHome_Name" xml:space="preserve">
+    <value>Открыть главную Roblox как {0}</value>
+  </data>
+  <data name="Shell_Panel_Note_Placeholder" xml:space="preserve">
+    <value>Личная заметка, видна только вам</value>
+  </data>
+  <data name="Shell_Panel_Note_Name" xml:space="preserve">
+    <value>Личная заметка для {0}</value>
+  </data>
+  <data name="Shell_Panel_Save" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="Shell_Panel_Save_Name" xml:space="preserve">
+    <value>Сохранить {0} в избранное</value>
+  </data>
+  <data name="Shell_Panel_Entry_Name" xml:space="preserve">
+    <value>Запустить {0}, {1}</value>
+  </data>
+  <data name="Shell_Panel_Tag_Default" xml:space="preserve">
+    <value>ПО УМОЛЧ.</value>
+  </data>
+  <data name="Shell_Panel_Tag_Private" xml:space="preserve">
+    <value>ПРИВАТНЫЙ</value>
+  </data>
+  <data name="Shell_Panel_Meta_NotPlayed" xml:space="preserve">
+    <value>Этот аккаунт не играл</value>
+  </data>
+  <data name="Shell_Panel_Meta_InRecent" xml:space="preserve">
+    <value>{0} в недавних сессиях</value>
+  </data>
+  <data name="Shell_Panel_Duration_Minutes" xml:space="preserve">
+    <value>{0} мин</value>
+  </data>
+  <data name="Shell_Panel_Duration_Hours" xml:space="preserve">
+    <value>{0} ч</value>
+  </data>
+  <data name="Shell_Panel_Duration_LessThanMinute" xml:space="preserve">
+    <value>&lt;1 мин</value>
+  </data>
+  <data name="Shell_Panel_Entry_PrivateUnsaved" xml:space="preserve">
+    <value>Этот приватный сервер не сохранён, поэтому запустить его отсюда снова нельзя. Сохраните его ссылку в Библиотеке.</value>
+  </data>
+  <data name="Shell_Status_NeedsVerification" xml:space="preserve">
+    <value>Нужна проверка — откройте Roblox для этого аккаунта</value>
+  </data>
+  <data name="Shell_Status_FollowMarkedReady" xml:space="preserve">
+    <value>Присоединяется следом · Готово</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_one" xml:space="preserve">
+    <value>{0} последует за основным аккаунтом</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_other" xml:space="preserve">
+    <value>{0} последуют за основным аккаунтом</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_few" xml:space="preserve">
+    <value>{0} последуют за основным аккаунтом</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_many" xml:space="preserve">
+    <value>{0} последуют за основным аккаунтом</value>
   </data>
   <data name="Shell_Leftover_Windowless_one" xml:space="preserve">
     <value>{0} оставшийся процесс Roblox без окна</value>
@@ -2418,6 +2564,21 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="Diag_Label_Version" xml:space="preserve">
     <value>Версия</value>
   </data>
+  <data name="Diag_Label_Channel" xml:space="preserve">
+    <value>Канал</value>
+  </data>
+  <data name="Diag_Channel_Store" xml:space="preserve">
+    <value>Microsoft Store</value>
+  </data>
+  <data name="Diag_Channel_Sideload" xml:space="preserve">
+    <value>Ручная установка</value>
+  </data>
+  <data name="Diag_Channel_DirectDownload" xml:space="preserve">
+    <value>Прямая загрузка</value>
+  </data>
+  <data name="Diag_Channel_Dev" xml:space="preserve">
+    <value>Сборка разработчика</value>
+  </data>
   <data name="Diag_Label_DotNet" xml:space="preserve">
     <value>Среда выполнения .NET</value>
   </data>
@@ -2600,6 +2761,9 @@ RoRoRo спрашивает про обводку кнопок только дл
   </data>
   <data name="Shell_History_Yesterday" xml:space="preserve">
     <value>Вчера</value>
+  </data>
+  <data name="Shell_History_FollowingAFriend" xml:space="preserve">
+    <value>Следует за другом</value>
   </data>
   <data name="Shell_History_Badge_Private" xml:space="preserve">
     <value>ПРИВАТНЫЙ</value>
@@ -3088,7 +3252,7 @@ RoRoRo спрашивает про обводку кнопок только дл
     <value>Выйти</value>
   </data>
   <data name="Shell_Title_Games" xml:space="preserve">
-    <value>Игры</value>
+    <value>Библиотека</value>
   </data>
   <data name="Shell_Title_Settings" xml:space="preserve">
     <value>Настройки</value>
@@ -3422,5 +3586,137 @@ RoRoRo спрашивает про обводку кнопок только дл
   </data>
   <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
     <value>{0} раз за разом останавливается при запуске. Перезапуск не поможет: отправьте журнал RoRoRo в 626 Labs.</value>
+  </data>
+  <data name="Library_Box_Placeholder" xml:space="preserve">
+    <value>Ищите свои игры или вставьте ссылку Roblox</value>
+  </data>
+  <data name="Library_Box_Name" xml:space="preserve">
+    <value>Поиск по Библиотеке или вставка ссылки Roblox</value>
+  </data>
+  <data name="Library_Box_Tip" xml:space="preserve">
+    <value>Печатайте для фильтрации. Enter добавляет вставленную игру, ID места или ссылку на приватный сервер либо запускает поиск в Roblox.</value>
+  </data>
+  <data name="Library_View_Name" xml:space="preserve">
+    <value>Вид Библиотеки</value>
+  </data>
+  <data name="Library_View_Grid" xml:space="preserve">
+    <value>Сетка</value>
+  </data>
+  <data name="Library_View_List" xml:space="preserve">
+    <value>Список</value>
+  </data>
+  <data name="Library_Filters_Name" xml:space="preserve">
+    <value>Показывать эти типы</value>
+  </data>
+  <data name="Library_Chip_Recent" xml:space="preserve">
+    <value>Недавние</value>
+  </data>
+  <data name="Library_Chip_Favourites" xml:space="preserve">
+    <value>Избранное</value>
+  </data>
+  <data name="Library_Chip_PrivateServers" xml:space="preserve">
+    <value>Приватные серверы</value>
+  </data>
+  <data name="Library_Play" xml:space="preserve">
+    <value>Играть</value>
+  </data>
+  <data name="Library_PlayAs" xml:space="preserve">
+    <value>Играть как</value>
+  </data>
+  <data name="Library_Play_Name" xml:space="preserve">
+    <value>Играть в {0}</value>
+  </data>
+  <data name="Library_PlayAs_Name" xml:space="preserve">
+    <value>Играть в {0} с другого аккаунта</value>
+  </data>
+  <data name="Library_More_Name" xml:space="preserve">
+    <value>Другие действия для {0}</value>
+  </data>
+  <data name="Library_Meta_NeverPlayed" xml:space="preserve">
+    <value>Ещё не играли</value>
+  </data>
+  <data name="Library_Meta_Played" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Library_Kind_Favourite" xml:space="preserve">
+    <value>Избранное</value>
+  </data>
+  <data name="Library_Kind_PrivateServer" xml:space="preserve">
+    <value>Приватный сервер</value>
+  </data>
+  <data name="Library_Kind_Recent" xml:space="preserve">
+    <value>Недавняя</value>
+  </data>
+  <data name="Library_Col_Game" xml:space="preserve">
+    <value>Игра</value>
+  </data>
+  <data name="Library_Col_Kind" xml:space="preserve">
+    <value>Тип</value>
+  </data>
+  <data name="Library_Col_LastPlayed" xml:space="preserve">
+    <value>Последний запуск</value>
+  </data>
+  <data name="Library_Col_Total" xml:space="preserve">
+    <value>Всего</value>
+  </data>
+  <data name="GamesPage_EmptyLibrary" xml:space="preserve">
+    <value>Ваша Библиотека пуста.</value>
+  </data>
+  <data name="GamesPage_EmptyLibrary_Hint" xml:space="preserve">
+    <value>Найдите игру выше или вставьте ссылку на игру или приватный сервер. Сохранённые игры появятся на панели каждого аккаунта.</value>
+  </data>
+  <data name="Library_NoMatch" xml:space="preserve">
+    <value>В вашей Библиотеке ничего не найдено. Нажмите Enter, чтобы искать в Roblox.</value>
+  </data>
+  <data name="Library_FromRoblox" xml:space="preserve">
+    <value>Из Roblox</value>
+  </data>
+  <data name="Library_By" xml:space="preserve">
+    <value>автор: {0}</value>
+  </data>
+  <data name="Library_Playing" xml:space="preserve">
+    <value>играют: {0}</value>
+  </data>
+  <data name="Library_PlaceId" xml:space="preserve">
+    <value>ID места {0}</value>
+  </data>
+  <data name="Library_Cancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="Library_PlayAs_Menu_Name" xml:space="preserve">
+    <value>Выберите аккаунт для игры</value>
+  </data>
+  <data name="Library_PlayAs_ExpiredReason" xml:space="preserve">
+    <value>Сессия истекла. Пройдите аутентификацию для этого аккаунта заново в главном окне.</value>
+  </data>
+  <data name="Library_PlayAs_Item_Name" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Library_NoAccount" xml:space="preserve">
+    <value>Сначала добавьте аккаунт, потом играйте.</value>
+  </data>
+  <data name="Shell_Games_PrivateSuffix" xml:space="preserve">
+    <value>(приватный сервер)</value>
+  </data>
+  <data name="Library_Add_Name" xml:space="preserve">
+    <value>Добавить {0} в Библиотеку</value>
+  </data>
+  <data name="WelcomeWindow_OnePlaceToLaunchRoblox" xml:space="preserve">
+    <value>Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте ещё аккаунты позже, и они будут работать бок о бок.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel" xml:space="preserve">
+    <value>Играйте с панели под вашим аккаунтом.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
+    <value>Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Откройте главную Roblox или добавьте игру в Библиотеку.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
+    <value>Когда нужны альты, добавьте ещё один аккаунт.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts_Detail" xml:space="preserve">
+    <value>При двух и более появляются «Запустить несколько» и Squad Launch, и каждый аккаунт открывает собственное окно Roblox.</value>
+  </data>
+  <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
+    <value>Если аккаунтов больше одного</value>
   </data>
 </root>

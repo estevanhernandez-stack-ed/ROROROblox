@@ -131,6 +131,32 @@ public sealed class SessionHistoryStore : ISessionHistoryStore, IDisposable
         }
     }
 
+    public async Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Sessions.FindIndex(s => s.Id == id);
+            if (idx < 0)
+            {
+                return; // pruned already; harmless.
+            }
+            var row = blob.Sessions[idx];
+            blob.Sessions[idx] = row with
+            {
+                GameName = gameName ?? row.GameName,
+                PlaceId = placeId,
+                PrivateServerId = privateServerId,
+            };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task ClearAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);

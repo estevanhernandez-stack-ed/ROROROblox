@@ -394,6 +394,13 @@ internal static class DiscordTestHarness
             AlertSound = sound ?? string.Empty;
             return Task.CompletedTask;
         }
+
+        public string LibraryView { get; set; } = "grid";
+        public Task<string> GetLibraryViewAsync() => Task.FromResult(LibraryView);
+        public Task SetLibraryViewAsync(string? view) { LibraryView = string.IsNullOrWhiteSpace(view) ? "grid" : view; return Task.CompletedTask; }
+        public string LibraryFilters { get; set; } = string.Empty;
+        public Task<string> GetLibraryFiltersAsync() => Task.FromResult(LibraryFilters);
+        public Task SetLibraryFiltersAsync(string? filters) { LibraryFilters = filters ?? string.Empty; return Task.CompletedTask; }
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore
@@ -434,7 +441,7 @@ internal static class DiscordTestHarness
         public int StopAll() => 0;
         public bool StopAccount(Guid accountId) => true;
         public int StopWindowless() => 0;
-        public int StopIdleTrayClients(Func<int, bool> isTracked) => 0;
+        public int StopIdleTrayClients(Func<int, bool> isTracked, TimeSpan? minAge) => 0;
     }
 
     private sealed class FakeRobloxRunningProbe : IRobloxRunningProbe
@@ -488,6 +495,7 @@ internal static class DiscordTestHarness
         public Task AddAsync(LaunchSession session) => throw new NotImplementedException();
         public Task MarkEndedAsync(Guid sessionId, DateTimeOffset endedAtUtc, string? outcomeHint = null) => throw new NotImplementedException();
         public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint) => throw new NotImplementedException();
+        public Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId) => throw new NotImplementedException();
         public Task ClearAsync() => throw new NotImplementedException();
     }
 

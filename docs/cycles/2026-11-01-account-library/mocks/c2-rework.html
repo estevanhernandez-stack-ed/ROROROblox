@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RoRoRo v1.36 — C2 rework</title>
+<style>
+  :root {
+    --bg:#0F1F31; --cyan:#17D4FA; --magenta:#F22F89; --white:#FFFFFF; --muted:#9AA8B8;
+    --divider:#1F3149; --rowbg:#15263A; --expbg:#3A2D14; --expacc:#F1B232; --navy:#0F1F31;
+    --oncyan:#0F1F31;
+  }
+  body[data-theme="midnight"] { --bg:#0A1320; --cyan:#3FB8D9; --magenta:#C0407E; --white:#E6EDF5; --muted:#768598; --divider:#162232; --rowbg:#0F1B2B; --expbg:#241B0E; --expacc:#C99A2D; --navy:#0A1320; --oncyan:#0A1320; }
+  body[data-theme="magenta-heat"] { --bg:#1A0F1F; --cyan:#F22F89; --magenta:#F22F89; --white:#FFE9F4; --muted:#B091A2; --divider:#2D1832; --rowbg:#241432; --expbg:#3A2D14; --expacc:#F1B232; --navy:#1A0F1F; --oncyan:#1A0F1F; }
+  body[data-theme="flatline"] { --bg:#101010; --cyan:#D4D4D4; --magenta:#6E6E6E; --white:#F5F5F5; --muted:#989898; --divider:#333333; --rowbg:#2A2A2A; --expbg:#3D3D3D; --expacc:#D4D4D4; --navy:#101010; --oncyan:#101010; }
+
+  body { --verify: color-mix(in srgb, var(--expacc) 50%, var(--magenta)); }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#05080f; color:#e8eef5; font-family:"Segoe UI Variable Text","Segoe UI",Inter,system-ui,sans-serif; font-size:12px; }
+  .chrome { position:sticky; top:0; z-index:5; background:#05080f; border-bottom:1px solid #1d2a3a; padding:10px 24px; display:flex; gap:16px; align-items:center; }
+  .chrome h1 { font-family:"Space Grotesk","Segoe UI Variable Display",sans-serif; font-size:18px; margin:0 16px 0 0; }
+  .chrome button { background:#111a27; color:#e8eef5; border:1px solid #2a3a50; border-radius:4px; padding:5px 10px; cursor:pointer; font:inherit; }
+  .chrome button.on { border-color:#17D4FA; color:#17D4FA; }
+  main { padding:8px 24px 80px; max-width:1500px; }
+  section { margin:28px 0 8px; }
+  section > h2 { font-family:"Space Grotesk","Segoe UI Variable Display",sans-serif; font-size:20px; margin:0 0 4px; }
+  section > p.q { color:#9fb0c3; margin:0 0 14px; max-width:900px; font-size:13px; line-height:1.45; }
+  .opts { display:flex; flex-wrap:wrap; gap:22px; }
+  .opt { flex:0 0 auto; }
+  .opt > .lbl { font-family:"JetBrains Mono",Consolas,monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#17D4FA; margin:0 0 6px; }
+  .opt > .lbl b { color:#F22F89; font-weight:700; margin-right:6px; }
+  .opt > .note { color:#9fb0c3; font-size:12px; margin:6px 0 0; max-width:900px; line-height:1.4; }
+
+  /* app surface */
+  .win { width:900px; background:var(--bg); color:var(--white); border:1px solid #000; border-radius:6px; overflow:hidden; }
+  .win.narrow { width:420px; }
+  .pad { padding:12px 16px; }
+  .row { background:var(--rowbg); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .row.expired { background:var(--expbg); }
+  .grip { color:var(--muted); font-size:14px; width:12px; }
+  .ava { width:56px; height:56px; border-radius:50%; border:3px solid var(--cap,#F22F89); display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.06); font-weight:700; font-size:18px; color:var(--white); flex:0 0 auto; }
+  .who { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .nameline { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+  .name { font-size:15px; font-weight:600; }
+  .pill { background:var(--magenta); color:var(--white); font-size:11px; font-weight:700; padding:1px 6px; border-radius:3px; letter-spacing:.04em; }
+  .status { display:flex; align-items:center; gap:6px; color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex:0 0 auto; }
+  .dot.green { background:#3ddc84; }
+  body[data-theme="flatline"] .dot.green { background:var(--white); }
+  .dot.cyan { background:var(--cyan); }
+  .dot.amber { background:var(--expacc); }
+  .dot.mag { background:var(--magenta); }
+  .dot.verify { background:var(--verify); }
+  .facts { display:flex; align-items:center; gap:6px; white-space:nowrap; overflow:hidden; font-size:11px; }
+  .fb { border:1px solid var(--divider); border-radius:3px; padding:0 6px; line-height:17px; color:var(--white); }
+  .fb.dim { color:var(--muted); }
+  .age { color:var(--muted); font-size:11px; }
+  .age.fail { color:var(--expacc); }
+  .inline-facts { color:var(--white); }
+  .sep { color:var(--muted); }
+  .ctrls { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+  .sw { width:22px; height:16px; border-radius:3px; background:var(--cap,#F22F89); }
+  .star { color:var(--magenta); font-size:15px; }
+  .star.off { color:var(--white); }
+  .btn { border:1px solid var(--muted); color:var(--white); background:transparent; border-radius:4px; padding:5px 10px; font:inherit; font-size:12px; white-space:nowrap; }
+  .cta { background:var(--cyan); color:var(--oncyan); border:none; border-radius:4px; padding:7px 14px; font:inherit; font-size:12px; font-weight:600; white-space:nowrap; }
+  .combo { border:1px solid var(--divider); background:var(--navy); color:var(--white); border-radius:4px; padding:5px 8px; width:92px; font-size:12px; display:flex; justify-content:space-between; }
+  .ghost { background:transparent; border:none; padding:0 6px; font:inherit; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .ghost.exp { color:var(--expacc); } .ghost.lim { color:color-mix(in srgb, var(--magenta) 60%, var(--white)); } .ghost.ver { color:var(--verify); } .ghost.fol { color:var(--cyan); }
+  .xp { width:24px; height:24px; border:1px solid var(--muted); border-radius:4px; color:var(--white); background:transparent; font-size:11px; display:flex; align-items:center; justify-content:center; }
+  .xp.on { border-color:var(--cyan); color:var(--cyan); }
+
+  /* panel */
+  .panel { background:color-mix(in srgb, var(--rowbg) 70%, var(--bg)); border:1px solid var(--divider); border-top:none; border-radius:0 0 8px 8px; margin:-10px 0 8px; padding:12px 14px 12px 44px; }
+  .row.open { border-radius:8px 8px 0 0; margin-bottom:10px; }
+  .phead { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .notebox { flex:1; border:1px solid var(--divider); background:var(--navy); border-radius:4px; padding:5px 8px; color:var(--muted); font-size:12px; }
+  .notebox.filled { color:var(--white); }
+  .groups3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  .gh { font-family:"JetBrains Mono",Consolas,monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:0 0 6px; }
+  .entry { display:flex; align-items:center; gap:8px; padding:4px 6px; border-radius:4px; }
+  .entry:hover { background:rgba(255,255,255,.04); }
+  .ico { width:28px; height:28px; border-radius:5px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; color:#fff; }
+  .ico.l { width:100%; height:auto; aspect-ratio:1; border-radius:8px; font-size:22px; }
+  .ico.m { width:56px; height:56px; border-radius:7px; font-size:16px; }
+  .et { display:flex; flex-direction:column; min-width:0; flex:1; }
+  .en { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .em { font-size:11px; color:var(--muted); white-space:nowrap; }
+  .tag { font-size:10px; font-weight:700; letter-spacing:.06em; padding:0 5px; border:1px solid var(--muted); border-radius:3px; color:var(--white); }
+  .save { font-size:11px; color:var(--cyan); background:transparent; border:1px solid var(--cyan); border-radius:3px; padding:0 6px; }
+  .empty { color:var(--muted); font-size:12px; padding:4px 6px; }
+  .stack .grp { margin-bottom:10px; }
+  .strip { display:flex; gap:10px; }
+  .tile-s { width:96px; display:flex; flex-direction:column; gap:4px; }
+
+  /* library */
+  .lib { padding:16px 18px; }
+  .lt { font-family:"Space Grotesk","Segoe UI Variable Display",sans-serif; font-size:24px; font-weight:700; margin:0 0 12px; }
+  .lt span { color:var(--cyan); }
+  .bar { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+  .box { flex:1; border:1px solid var(--divider); background:var(--navy); border-radius:4px; padding:7px 10px; color:var(--muted); }
+  .chip { border:1px solid var(--muted); border-radius:14px; padding:4px 10px; font-size:12px; color:var(--white); background:transparent; white-space:nowrap; }
+  .chip.on { border-color:var(--cyan); color:var(--cyan); }
+  .vt { display:flex; border:1px solid var(--divider); border-radius:4px; overflow:hidden; }
+  .vt span { padding:4px 10px; font-size:12px; color:var(--muted); }
+  .vt span.on { background:var(--divider); color:var(--white); }
+  .grid4 { display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; }
+  .tile { background:var(--rowbg); border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:6px; }
+  .tile .tn { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile .acts { display:flex; gap:6px; }
+  .tile .acts .cta, .tile .acts .btn { padding:4px 8px; font-size:11px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .card { background:var(--rowbg); border-radius:8px; padding:8px; display:flex; gap:10px; align-items:center; }
+  .list .lr { display:grid; grid-template-columns:36px 1fr 110px 110px 90px 74px 70px; align-items:center; gap:10px; padding:6px 8px; border-bottom:1px solid var(--divider); }
+  .list .lh { font-family:"JetBrains Mono",Consolas,monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  .from { margin-top:12px; }
+
+  /* flyout */
+  .fly { width:260px; background:var(--navy); border:1px solid var(--divider); border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.5); padding:4px; }
+  .mi { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:4px; }
+  .mi:hover, .mi.hl { background:var(--divider); }
+  .mi.dis { opacity:.5; }
+  .mi .av { width:24px; height:24px; border-radius:50%; border:2px solid var(--cap,#888); background:rgba(255,255,255,.08); font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .mi .nm { flex:1; font-size:12px; }
+  .mi .hw { font-size:11px; color:var(--muted); }
+  .mi .two { display:flex; flex-direction:column; flex:1; }
+  .mi .two .s { font-size:11px; color:var(--muted); }
+  .scene { position:relative; }
+  .tip { position:absolute; left:0; top:200px; background:#000; color:#fff; font-size:11px; padding:3px 6px; border-radius:3px; white-space:nowrap; }
+  /* C2 rework additions */
+  .who .nameline .xp { flex:0 0 auto; }
+  .fb .v { font-weight:600; }
+  .fdot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--cyan); margin-right:5px; vertical-align:middle; position:relative; top:-1px; }
+  /* F1 accent words */
+  .f1 .fb.rbx .v, .f1 .fb.fr .v { color:var(--cyan); }
+  .plus-fill { background:var(--magenta); color:var(--white); font-weight:700; border:1px solid var(--magenta); border-radius:3px; padding:0 6px; line-height:17px; letter-spacing:.04em; }
+  /* F2 outlined chips */
+  .f2 .fb.rbx { border-color:var(--cyan); color:var(--cyan); }
+  .f2 .fb.fr { border-color:var(--cyan); }
+  .plus-line { border:1px solid var(--magenta); color:color-mix(in srgb, var(--magenta) 60%, var(--white)); font-weight:700; border-radius:3px; padding:0 6px; line-height:17px; letter-spacing:.04em; }
+  /* F3 filled chips */
+  .f3 .fb.rbx { background:var(--cyan); border-color:var(--cyan); color:var(--oncyan); }
+  .gh .all { color:var(--cyan); letter-spacing:.06em; margin-left:8px; text-transform:none; font-family:"Segoe UI Variable Text","Segoe UI",Inter,sans-serif; font-size:11px; }
+  .gh .n { margin-left:6px; }
+</style>
+</head>
+<body data-theme="brand">
+<div class="chrome">
+  <h1>RoRoRo v1.36 — C2 rework</h1>
+  <button data-t="brand" class="on">brand</button><button data-t="midnight">midnight</button><button data-t="magenta-heat">magenta-heat</button><button data-t="flatline">flatline</button>
+</div>
+<main>
+
+<section>
+  <h2>F. Colour on the facts line</h2>
+  <p class="q">Robux, friends online and Plus get colour. Theme colours only (no new slot), so each option follows all four themes. Magenta <b>text</b> fails AA on the row in three themes, so Plus is either a filled pill (the MAIN pill's look) or uses the lightened magenta the Limited badge already uses. The expander sits in the name column (option E1 below) and opens cyan. The facts line clips here only because the mock keeps it in the name column; in the build it spans the row (item 6).</p>
+  <div class="opts">
+
+    <div class="opt f1"><div class="lbl"><b>F1</b>accent numbers, Plus as a pill</div>
+      <div class="win"><div class="pad">
+        <div class="row" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><button class="xp">▸</button><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot"></span>Last launched 3 h ago</div>
+            <div class="facts"><span class="fb rbx">R$ <span class="v">1,240</span></span><span class="plus-fill">PLUS</span><span class="fb fr"><span class="fdot"></span><span class="v">9</span> friends online</span><span class="fb">Pet Simulator 99 · 3 h ago</span><span class="age">Updated 4 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="btn">Friends</button><span class="combo">Pet Sim 99 ▾</span><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button><button class="btn">Remove</button></div></div>
+        <div class="row" style="--cap:#2a6fdb"><span class="grip">☰</span><div class="ava">P</div>
+          <div class="who"><div class="nameline"><button class="xp">▸</button><span class="name">PetGrinder07</span></div>
+            <div class="status"><span class="dot"></span>Last launched Oct 25</div>
+            <div class="facts"><span class="fb rbx">R$ <span class="v">0</span></span><span class="fb fr"><span class="fdot"></span><span class="v">1</span> friend online</span><span class="fb">Pet Simulator 99 · Oct 25</span><span class="age">Updated 1 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="btn">Friends</button><span class="combo">Pet Sim 99 ▾</span><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button><button class="btn">Remove</button></div></div>
+      </div></div>
+      <p class="note">Quietest. The boxes stay hairline; the numbers carry the colour. Plus matches MAIN.</p>
+    </div>
+
+    <div class="opt f2"><div class="lbl"><b>F2</b>outlined chips</div>
+      <div class="win"><div class="pad">
+        <div class="row" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><button class="xp">▸</button><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot"></span>Last launched 3 h ago</div>
+            <div class="facts"><span class="fb rbx">R$ <span class="v">1,240</span></span><span class="plus-line">PLUS</span><span class="fb fr"><span class="fdot"></span><span class="v">9</span> friends online</span><span class="fb">Pet Simulator 99 · 3 h ago</span><span class="age">Updated 4 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="btn">Friends</button><span class="combo">Pet Sim 99 ▾</span><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button><button class="btn">Remove</button></div></div>
+        <div class="row" style="--cap:#2a6fdb"><span class="grip">☰</span><div class="ava">P</div>
+          <div class="who"><div class="nameline"><button class="xp">▸</button><span class="name">PetGrinder07</span></div>
+            <div class="status"><span class="dot"></span>Last launched Oct 25</div>
+            <div class="facts"><span class="fb rbx">R$ <span class="v">0</span></span><span class="fb fr"><span class="fdot"></span><span class="v">1</span> friend online</span><span class="fb">Pet Simulator 99 · Oct 25</span><span class="age">Updated 1 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="btn">Friends</button><span class="combo">Pet Sim 99 ▾</span><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button><button class="btn">Remove</button></div></div>
+      </div></div>
+      <p class="note">Louder. Robux reads as a cyan chip; Plus is a magenta outline with the Limited badge's lighter magenta text.</p>
+    </div>
+
+    <div class="opt f3"><div class="lbl"><b>F3</b>filled chips</div>
+      <div class="win"><div class="pad">
+        <div class="row" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><button class="xp">▸</button><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot"></span>Last launched 3 h ago</div>
+            <div class="facts"><span class="fb rbx">R$ <span class="v">1,240</span></span><span class="plus-fill">PLUS</span><span class="fb fr"><span class="fdot"></span><span class="v">9</span> friends online</span><span class="fb">Pet Simulator 99 · 3 h ago</span><span class="age">Updated 4 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="btn">Friends</button><span class="combo">Pet Sim 99 ▾</span><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button><button class="btn">Remove</button></div></div>
+        <div class="row" style="--cap:#2a6fdb"><span class="grip">☰</span><div class="ava">P</div>
+          <div class="who"><div class="nameline"><button class="xp">▸</button><span class="name">PetGrinder07</span></div>
+            <div class="status"><span class="dot"></span>Last launched Oct 25</div>
+            <div class="facts"><span class="fb rbx">R$ <span class="v">0</span></span><span class="fb fr"><span class="fdot"></span><span class="v">1</span> friend online</span><span class="fb">Pet Simulator 99 · Oct 25</span><span class="age">Updated 1 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star off">☆</span><button class="btn">Friends</button><span class="combo">Pet Sim 99 ▾</span><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button><button class="btn">Remove</button></div></div>
+      </div></div>
+      <p class="note">Loudest. Robux is a filled cyan chip, the same weight as Launch As; Plus is the MAIN pill.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>E. The expander in the name column</h2>
+  <p class="q">Your pick 7b. Moving it out of the actions frees its 32 px there, which is what clipped Remove. Open is the mock's cyan outline (your call 9).</p>
+  <div class="opts f1">
+    <div class="opt"><div class="lbl"><b>E1</b>before the name</div>
+      <div class="win narrow"><div class="pad">
+        <div class="row" style="--cap:#F22F89"><div class="ava">N</div>
+          <div class="who"><div class="nameline"><button class="xp on">▾</button><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot"></span>Last launched 3 h ago</div></div></div>
+        <div class="row" style="--cap:#2a6fdb"><div class="ava">P</div>
+          <div class="who"><div class="nameline"><button class="xp">▸</button><span class="name">PetGrinder07</span></div>
+            <div class="status"><span class="dot"></span>Last launched Oct 25</div></div></div>
+      </div></div>
+      <p class="note">Disclosure-triangle convention: the toggle leads the thing it opens. Names line up after it.</p>
+    </div>
+    <div class="opt"><div class="lbl"><b>E2</b>end of the name line</div>
+      <div class="win narrow"><div class="pad">
+        <div class="row" style="--cap:#F22F89"><div class="ava">N</div>
+          <div class="who"><div class="nameline"><span class="name">NovaBuilds</span><span class="pill">MAIN</span><button class="xp on">▾</button></div>
+            <div class="status"><span class="dot"></span>Last launched 3 h ago</div></div></div>
+        <div class="row" style="--cap:#2a6fdb"><div class="ava">P</div>
+          <div class="who"><div class="nameline"><span class="name">PetGrinder07</span><button class="xp">▸</button></div>
+            <div class="status"><span class="dot"></span>Last launched Oct 25</div></div></div>
+      </div></div>
+      <p class="note">Names stay where v1.35 put them; the toggle's position moves with the name's length.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>P. Show fewer: three per column</h2>
+  <p class="q">Your call 8. Each column shows at most three, so one open panel is never taller than three entries and one account fits 900x600 (measured: three entries fit, four scroll). Favourites and Private servers say how many there are and link to the Library; Recent just keeps the three newest.</p>
+  <div class="opts f1">
+    <div class="opt"><div class="lbl"><b>P1</b>three, with See all in the header</div>
+      <div class="win"><div class="pad">
+        <div class="row open" style="--cap:#F22F89"><span class="grip">☰</span><div class="ava">N</div>
+          <div class="who"><div class="nameline"><button class="xp on">▾</button><span class="name">NovaBuilds</span><span class="pill">MAIN</span></div>
+            <div class="status"><span class="dot"></span>Last launched 3 h ago</div>
+            <div class="facts"><span class="fb rbx">R$ <span class="v">1,240</span></span><span class="plus-fill">PLUS</span><span class="fb fr"><span class="fdot"></span><span class="v">9</span> friends online</span><span class="fb">Pet Simulator 99 · 3 h ago</span><span class="age">Updated 4 min ago</span></div></div>
+          <div class="ctrls"><span class="sw"></span><span class="star">★</span><button class="btn">Friends</button><span class="combo">20 FPS ▾</span><button class="cta">Launch As</button><button class="btn">Remove</button></div></div>
+        <div class="panel">
+          <div class="phead"><div class="notebox filled">Farm alt, keep at 20 FPS. Clan bank on Fridays.</div><button class="btn">Open Roblox home</button></div>
+          <div class="groups3">
+            <div><div class="gh">Recent</div>
+              <div class="entry"><div class="ico" style="background:#d9822b">PS</div><div class="et"><span class="en">Pet Simulator 99</span><span class="em">3 h ago · 14 h in recent sessions</span></div></div>
+              <div class="entry"><div class="ico" style="background:#3f9d4a">GG</div><div class="et"><span class="en">Grow a Garden</span><span class="em">1 d ago · 3 h</span></div><button class="save">Save</button></div>
+              <div class="entry"><div class="ico" style="background:#6b4fd6">BF</div><div class="et"><span class="en">Blox Fruits</span><span class="em">4 d ago · 40 min</span></div><button class="save">Save</button></div></div>
+            <div><div class="gh">Favourites<span class="n">· 5</span><span class="all">See all</span></div>
+              <div class="entry"><div class="ico" style="background:#d9822b">PS</div><div class="et"><span class="en">Pet Simulator 99</span><span class="em">3 h ago</span></div><span class="tag">DEFAULT</span></div>
+              <div class="entry"><div class="ico" style="background:#e04f7a">AM</div><div class="et"><span class="en">Adopt Me!</span><span class="em">Not played by this account</span></div></div>
+              <div class="entry"><div class="ico" style="background:#3f9d4a">GG</div><div class="et"><span class="en">Grow a Garden</span><span class="em">1 d ago</span></div></div></div>
+            <div><div class="gh">Private servers<span class="n">· 1</span></div>
+              <div class="entry"><div class="ico" style="background:#d9822b">PS</div><div class="et"><span class="en">Clan base</span><span class="em">Pet Simulator 99 · 5 h ago</span></div><span class="tag">PRIVATE</span></div></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="note">See all opens the Library. The count and link sit in the header, so they add no height.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+<script>
+  document.querySelectorAll('.chrome button[data-t]').forEach(b => b.addEventListener('click', () => {
+    document.body.dataset.theme = b.dataset.t;
+    document.querySelectorAll('.chrome button[data-t]').forEach(x => x.classList.toggle('on', x === b));
+  }));
+</script>
+</body>
+</html>

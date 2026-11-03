@@ -219,7 +219,7 @@
     <value>Limpar padrão</value>
   </data>
   <data name="GamesPage_Games" xml:space="preserve">
-    <value>Jogos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
     <value>Dê a este jogo um nome personalizado exibido apenas no RoRoRo. O nome do lado do Roblox permanece intocado.</value>
@@ -408,7 +408,7 @@
     <value>Adicionar uma etiqueta a esta conta</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Adicione jogos em Ferramentas → Jogos</value>
+    <value>Adicione na Biblioteca</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>adicionar etiqueta</value>
@@ -495,7 +495,7 @@
     <value>Jogo ou servidor privado salvo para iniciar esta conta, ou '(Paste a link...)' para um link único.</value>
   </data>
   <data name="MainWindow_Games" xml:space="preserve">
-    <value>Jogos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="MainWindow_History" xml:space="preserve">
     <value>Histórico</value>
@@ -543,7 +543,7 @@
     <value>Entre em uma conta do Roblox e salve-a aqui. (Ctrl+N)</value>
   </data>
   <data name="MainWindow_ManageGames" xml:space="preserve">
-    <value>Gerenciar jogos…</value>
+    <value>Gerenciar a Biblioteca…</value>
   </data>
   <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
     <value>Silenciar alertas do Discord</value>
@@ -1302,7 +1302,7 @@
     <value>Diagnóstico</value>
   </data>
   <data name="ShellWindow_Games" xml:space="preserve">
-    <value>Jogos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="ShellWindow_History" xml:space="preserve">
     <value>Histórico</value>
@@ -1403,15 +1403,11 @@
   <data name="WelcomeWindow_ClickAddAccount" xml:space="preserve">
     <value>Clique em + Adicionar conta.</value>
   </data>
-  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
-    <value>Clique em Iniciar como. Ou em Iniciar vários para todos os alts selecionados de uma vez.</value>
-  </data>
   <data name="WelcomeWindow_ClickThe" xml:space="preserve">
     <value>Clique no</value>
   </data>
   <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
-    <value>Fechar no X minimiza para a bandeja do sistema; clique com o botão direito no ícone da bandeja para Preferências, Histórico,
-                        Diagnóstico, ou Sair.</value>
+    <value>Fechar no X minimiza para a bandeja do sistema; clique com o botão direito no ícone da bandeja para Preferências, Histórico, Diagnóstico, ou Sair.</value>
   </data>
   <data name="WelcomeWindow_Compact" xml:space="preserve">
     <value>Compacto</value>
@@ -1428,26 +1424,14 @@
   <data name="WelcomeWindow_InTheSystemTrayAnd" xml:space="preserve">
     <value>na bandeja do sistema e arraste o RoRoRo para fora para mantê-lo visível.</value>
   </data>
-  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
-    <value>O Multi-Instance está ativado por padrão — as janelas do Roblox abrem lado a lado sem brigar entre si pelo singleton.</value>
-  </data>
   <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
     <value>à esquerda de uma linha — arraste para reordenar.</value>
-  </data>
-  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
-    <value>Abra Jogos e adicione o lugar em que você inicia.</value>
   </data>
   <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
     <value>Dicas rápidas para os controles da linha</value>
   </data>
   <data name="WelcomeWindow_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
-  </data>
-  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Execute vários clientes do Roblox lado a lado. Três passos e está pronto.</value>
-  </data>
-  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
-    <value>Busque por nome ou cole uma URL roblox.com/games/&lt;id&gt;. O jogo padrão é o que o Iniciar como usa.</value>
   </data>
   <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
     <value>Entre em roblox.com no pop-up. Capturamos o cookie, o criptografamos e nunca vemos sua senha.</value>
@@ -1889,6 +1873,168 @@
   </data>
   <data name="Shell_Launch_Clause_Deselected" xml:space="preserve">
     <value>{0} desmarcadas</value>
+  </data>
+  <data name="Shell_Health_Expired" xml:space="preserve">
+    <value>Sessão expirada</value>
+  </data>
+  <data name="Shell_Health_NeedsVerification" xml:space="preserve">
+    <value>Requer verificação</value>
+  </data>
+  <data name="Shell_Health_Limited" xml:space="preserve">
+    <value>Limitado pelo Roblox</value>
+  </data>
+  <data name="Shell_Health_FollowMarked" xml:space="preserve">
+    <value>Entra seguindo</value>
+  </data>
+  <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve">
+    <value>Reautenticar</value>
+  </data>
+  <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve">
+    <value>Abrir o Roblox para esta conta</value>
+  </data>
+  <data name="Shell_Health_Action_ToggleMark" xml:space="preserve">
+    <value>Alternar a marcação</value>
+  </data>
+  <data name="Shell_Health_BadgeName" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Shell_Fact_Masked" xml:space="preserve">
+    <value>••••</value>
+  </data>
+  <data name="Shell_Fact_Hidden" xml:space="preserve">
+    <value>oculto</value>
+  </data>
+  <data name="Shell_Fact_Unknown" xml:space="preserve">
+    <value>desconhecido</value>
+  </data>
+  <data name="Shell_Fact_Robux_Name" xml:space="preserve">
+    <value>Robux, {0}</value>
+  </data>
+  <data name="Shell_Fact_Membership_Name" xml:space="preserve">
+    <value>Assinatura, {0}</value>
+  </data>
+  <data name="Shell_Fact_Friends_Name" xml:space="preserve">
+    <value>Amigos online, {0}</value>
+  </data>
+  <data name="Shell_Fact_LastPlayed_Name" xml:space="preserve">
+    <value>Última partida, {0}</value>
+  </data>
+  <data name="Shell_Fact_Note_Name" xml:space="preserve">
+    <value>Nota, {0}</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_one" xml:space="preserve">
+    <value>{0} amigo online</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_other" xml:space="preserve">
+    <value>{0} amigos online</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_few" xml:space="preserve">
+    <value>{0} amigos online</value>
+  </data>
+  <data name="Shell_Fact_FriendsOnline_many" xml:space="preserve">
+    <value>{0} amigos online</value>
+  </data>
+  <data name="Shell_Fact_Updated" xml:space="preserve">
+    <value>Atualizado {0}</value>
+  </data>
+  <data name="Shell_Fact_UpdatedFailed" xml:space="preserve">
+    <value>Atualizado {0} · a última tentativa falhou ({1})</value>
+  </data>
+  <data name="Shell_Fact_NeverUpdatedFailed" xml:space="preserve">
+    <value>Ainda não atualizado · a última tentativa falhou ({0})</value>
+  </data>
+  <data name="Shell_Panel_Expander_Name" xml:space="preserve">
+    <value>Mostrar jogos recentes de {0}</value>
+  </data>
+  <data name="Shell_Panel_Heading_Recent" xml:space="preserve">
+    <value>RECENTES</value>
+  </data>
+  <data name="Shell_Panel_Heading_Favourites" xml:space="preserve">
+    <value>FAVORITOS</value>
+  </data>
+  <data name="Shell_Panel_Heading_PrivateServers" xml:space="preserve">
+    <value>SERVIDORES PRIVADOS</value>
+  </data>
+  <data name="Shell_Panel_SeeAll" xml:space="preserve">
+    <value>Ver tudo</value>
+  </data>
+  <data name="Shell_Panel_SeeAll_Favourites_Name" xml:space="preserve">
+    <value>Ver todos os favoritos</value>
+  </data>
+  <data name="Shell_Panel_SeeAll_PrivateServers_Name" xml:space="preserve">
+    <value>Ver todos os servidores privados</value>
+  </data>
+  <data name="Shell_Panel_Empty_Recent" xml:space="preserve">
+    <value>Nada jogado ainda. Inicie um jogo e ele aparece aqui.</value>
+  </data>
+  <data name="Shell_Panel_Empty_Favourites" xml:space="preserve">
+    <value>Nenhum favorito ainda. Salve um de Recentes ou adicione jogos na Biblioteca.</value>
+  </data>
+  <data name="Shell_Panel_Empty_PrivateServers" xml:space="preserve">
+    <value>Nenhum servidor privado salvo. Cole um link de servidor na Biblioteca para adicionar um.</value>
+  </data>
+  <data name="Shell_Panel_OpenHome" xml:space="preserve">
+    <value>Abrir a página inicial do Roblox</value>
+  </data>
+  <data name="Shell_Panel_OpenHome_Name" xml:space="preserve">
+    <value>Abrir a página inicial do Roblox como {0}</value>
+  </data>
+  <data name="Shell_Panel_Note_Placeholder" xml:space="preserve">
+    <value>Nota privada, só você vê</value>
+  </data>
+  <data name="Shell_Panel_Note_Name" xml:space="preserve">
+    <value>Nota privada para {0}</value>
+  </data>
+  <data name="Shell_Panel_Save" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Shell_Panel_Save_Name" xml:space="preserve">
+    <value>Salvar {0} nos favoritos</value>
+  </data>
+  <data name="Shell_Panel_Entry_Name" xml:space="preserve">
+    <value>Iniciar {0}, {1}</value>
+  </data>
+  <data name="Shell_Panel_Tag_Default" xml:space="preserve">
+    <value>PADRÃO</value>
+  </data>
+  <data name="Shell_Panel_Tag_Private" xml:space="preserve">
+    <value>PRIVADO</value>
+  </data>
+  <data name="Shell_Panel_Meta_NotPlayed" xml:space="preserve">
+    <value>Não jogado por esta conta</value>
+  </data>
+  <data name="Shell_Panel_Meta_InRecent" xml:space="preserve">
+    <value>{0} em sessões recentes</value>
+  </data>
+  <data name="Shell_Panel_Duration_Minutes" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Shell_Panel_Duration_Hours" xml:space="preserve">
+    <value>{0} h</value>
+  </data>
+  <data name="Shell_Panel_Duration_LessThanMinute" xml:space="preserve">
+    <value>&lt;1 min</value>
+  </data>
+  <data name="Shell_Panel_Entry_PrivateUnsaved" xml:space="preserve">
+    <value>Este servidor privado não está salvo, então não dá para reiniciá-lo daqui. Salve o link dele na Biblioteca.</value>
+  </data>
+  <data name="Shell_Status_NeedsVerification" xml:space="preserve">
+    <value>Requer verificação — abra o Roblox para esta conta</value>
+  </data>
+  <data name="Shell_Status_FollowMarkedReady" xml:space="preserve">
+    <value>Entra seguindo · Pronto</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_one" xml:space="preserve">
+    <value>{0} seguirá a conta principal</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_other" xml:space="preserve">
+    <value>{0} seguirão a conta principal</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_few" xml:space="preserve">
+    <value>{0} seguirão a conta principal</value>
+  </data>
+  <data name="Shell_Launch_Clause_FollowMarked_many" xml:space="preserve">
+    <value>{0} seguirão a conta principal</value>
   </data>
   <data name="Shell_Leftover_Windowless_one" xml:space="preserve">
     <value>{0} processo do Roblox restante sem janela</value>
@@ -2418,6 +2564,21 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   <data name="Diag_Label_Version" xml:space="preserve">
     <value>Versão</value>
   </data>
+  <data name="Diag_Label_Channel" xml:space="preserve">
+    <value>Canal</value>
+  </data>
+  <data name="Diag_Channel_Store" xml:space="preserve">
+    <value>Microsoft Store</value>
+  </data>
+  <data name="Diag_Channel_Sideload" xml:space="preserve">
+    <value>Instalação manual</value>
+  </data>
+  <data name="Diag_Channel_DirectDownload" xml:space="preserve">
+    <value>Download direto</value>
+  </data>
+  <data name="Diag_Channel_Dev" xml:space="preserve">
+    <value>Build de desenvolvimento</value>
+  </data>
   <data name="Diag_Label_DotNet" xml:space="preserve">
     <value>Runtime do .NET</value>
   </data>
@@ -2600,6 +2761,9 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   </data>
   <data name="Shell_History_Yesterday" xml:space="preserve">
     <value>Ontem</value>
+  </data>
+  <data name="Shell_History_FollowingAFriend" xml:space="preserve">
+    <value>Seguindo um amigo</value>
   </data>
   <data name="Shell_History_Badge_Private" xml:space="preserve">
     <value>PRIVADO</value>
@@ -3088,7 +3252,7 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
     <value>Sair</value>
   </data>
   <data name="Shell_Title_Games" xml:space="preserve">
-    <value>Jogos</value>
+    <value>Biblioteca</value>
   </data>
   <data name="Shell_Title_Settings" xml:space="preserve">
     <value>Configurações</value>
@@ -3422,5 +3586,137 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   </data>
   <data name="Plugin_KeepsFailingBanner" xml:space="preserve">
     <value>{0} continua parando ao iniciar. Reiniciar não vai resolver: mande o seu log do RoRoRo para a 626 Labs.</value>
+  </data>
+  <data name="Library_Box_Placeholder" xml:space="preserve">
+    <value>Pesquise seus jogos ou cole um link do Roblox</value>
+  </data>
+  <data name="Library_Box_Name" xml:space="preserve">
+    <value>Pesquisar na Biblioteca ou colar um link do Roblox</value>
+  </data>
+  <data name="Library_Box_Tip" xml:space="preserve">
+    <value>Digite para filtrar. Enter adiciona um jogo, ID de local ou link de servidor privado colado, ou pesquisa no Roblox.</value>
+  </data>
+  <data name="Library_View_Name" xml:space="preserve">
+    <value>Exibição da Biblioteca</value>
+  </data>
+  <data name="Library_View_Grid" xml:space="preserve">
+    <value>Grade</value>
+  </data>
+  <data name="Library_View_List" xml:space="preserve">
+    <value>Lista</value>
+  </data>
+  <data name="Library_Filters_Name" xml:space="preserve">
+    <value>Mostrar estes tipos</value>
+  </data>
+  <data name="Library_Chip_Recent" xml:space="preserve">
+    <value>Recentes</value>
+  </data>
+  <data name="Library_Chip_Favourites" xml:space="preserve">
+    <value>Favoritos</value>
+  </data>
+  <data name="Library_Chip_PrivateServers" xml:space="preserve">
+    <value>Servidores privados</value>
+  </data>
+  <data name="Library_Play" xml:space="preserve">
+    <value>Jogar</value>
+  </data>
+  <data name="Library_PlayAs" xml:space="preserve">
+    <value>Jogar como</value>
+  </data>
+  <data name="Library_Play_Name" xml:space="preserve">
+    <value>Jogar {0}</value>
+  </data>
+  <data name="Library_PlayAs_Name" xml:space="preserve">
+    <value>Jogar {0} com outra conta</value>
+  </data>
+  <data name="Library_More_Name" xml:space="preserve">
+    <value>Mais ações para {0}</value>
+  </data>
+  <data name="Library_Meta_NeverPlayed" xml:space="preserve">
+    <value>Nunca jogado</value>
+  </data>
+  <data name="Library_Meta_Played" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Library_Kind_Favourite" xml:space="preserve">
+    <value>Favorito</value>
+  </data>
+  <data name="Library_Kind_PrivateServer" xml:space="preserve">
+    <value>Servidor privado</value>
+  </data>
+  <data name="Library_Kind_Recent" xml:space="preserve">
+    <value>Recente</value>
+  </data>
+  <data name="Library_Col_Game" xml:space="preserve">
+    <value>Jogo</value>
+  </data>
+  <data name="Library_Col_Kind" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="Library_Col_LastPlayed" xml:space="preserve">
+    <value>Última partida</value>
+  </data>
+  <data name="Library_Col_Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="GamesPage_EmptyLibrary" xml:space="preserve">
+    <value>Sua Biblioteca está vazia.</value>
+  </data>
+  <data name="GamesPage_EmptyLibrary_Hint" xml:space="preserve">
+    <value>Pesquise um jogo acima ou cole o link de um jogo ou de um servidor privado. Os jogos salvos aparecem no painel de cada conta.</value>
+  </data>
+  <data name="Library_NoMatch" xml:space="preserve">
+    <value>Nada na sua Biblioteca corresponde. Pressione Enter para buscar no Roblox.</value>
+  </data>
+  <data name="Library_FromRoblox" xml:space="preserve">
+    <value>Do Roblox</value>
+  </data>
+  <data name="Library_By" xml:space="preserve">
+    <value>por {0}</value>
+  </data>
+  <data name="Library_Playing" xml:space="preserve">
+    <value>{0} jogando</value>
+  </data>
+  <data name="Library_PlaceId" xml:space="preserve">
+    <value>ID do local {0}</value>
+  </data>
+  <data name="Library_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Library_PlayAs_Menu_Name" xml:space="preserve">
+    <value>Escolha uma conta para jogar</value>
+  </data>
+  <data name="Library_PlayAs_ExpiredReason" xml:space="preserve">
+    <value>Sessão expirada. Reautentique esta conta na janela principal.</value>
+  </data>
+  <data name="Library_PlayAs_Item_Name" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Library_NoAccount" xml:space="preserve">
+    <value>Adicione uma conta primeiro e depois jogue.</value>
+  </data>
+  <data name="Shell_Games_PrivateSuffix" xml:space="preserve">
+    <value>(servidor privado)</value>
+  </data>
+  <data name="Library_Add_Name" xml:space="preserve">
+    <value>Adicionar {0} à Biblioteca</value>
+  </data>
+  <data name="WelcomeWindow_OnePlaceToLaunchRoblox" xml:space="preserve">
+    <value>Um só lugar para iniciar o Roblox: sua conta, seus jogos, suas configurações. Adicione mais contas depois e elas rodam lado a lado.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel" xml:space="preserve">
+    <value>Jogue pelo painel sob a sua conta.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
+    <value>Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abra a página inicial do Roblox ou adicione um na Biblioteca.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
+    <value>Quando quiser alts, adicione outra conta.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts_Detail" xml:space="preserve">
+    <value>Com duas ou mais, Iniciar vários e Squad Launch aparecem, e cada conta abre a própria janela do Roblox.</value>
+  </data>
+  <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
+    <value>Com mais de uma conta</value>
   </data>
 </root>

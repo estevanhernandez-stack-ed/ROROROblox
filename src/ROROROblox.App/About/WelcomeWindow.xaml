@@ -15,8 +15,8 @@
         <Style x:Key="StepStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource RowBgBrush}" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="14,12" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Margin" Value="0,0,0,8" />
         </Style>
         <Style x:Key="StepNumberStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource CyanBrush}" />
@@ -28,7 +28,7 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="32,28">
+    <Grid Margin="32,22">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -40,26 +40,32 @@
                 <TextBlock Text="{loc:Loc WelcomeWindow_WelcomeTo}"
                            FontFamily="{DynamicResource DisplayFontFamily}" FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
-                <TextBlock Text="{loc:Loc WelcomeWindow_Rororo}"
+                <!-- The space between the two halves is a margin, not text: resx trims the trailing space of
+                     "Welcome to", so through v1.35 the title read "Welcome toRoRoRo" in every language. -->
+                <TextBlock Text="{loc:Loc WelcomeWindow_Rororo}" Margin="9,0,0,0"
                            FontFamily="{DynamicResource DisplayFontFamily}" FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                            Foreground="{DynamicResource CyanBrush}" />
             </StackPanel>
-            <TextBlock Text="{loc:Loc WelcomeWindow_RunMultipleRobloxClientsSide}"
+            <TextBlock Text="{loc:Loc WelcomeWindow_OnePlaceToLaunchRoblox}"
                        FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,6,0,0"
                        TextWrapping="Wrap" />
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" Margin="0,22,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" Margin="0,16,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
             <Border Style="{StaticResource StepStyle}">
-                <StackPanel Orientation="Horizontal">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                     <Border Style="{StaticResource StepNumberStyle}">
                         <TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    FontSize="{DynamicResource HeadingFontSize}" FontWeight="Bold" Foreground="{DynamicResource NavyBrush}" />
                     </Border>
-                    <StackPanel VerticalAlignment="Center">
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="{loc:Loc WelcomeWindow_ClickAddAccount}"
                                    FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource WhiteBrush}" />
@@ -69,45 +75,53 @@
                                    TextWrapping="Wrap"
                                    Margin="0,2,0,0" />
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </Border>
 
             <Border Style="{StaticResource StepStyle}">
-                <StackPanel Orientation="Horizontal">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                     <Border Style="{StaticResource StepNumberStyle}">
                         <TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    FontSize="{DynamicResource HeadingFontSize}" FontWeight="Bold" Foreground="{DynamicResource NavyBrush}" />
                     </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{loc:Loc WelcomeWindow_OpenGamesAndAddThe}"
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Loc WelcomeWindow_PickOrPlayFromThePanel}"
                                    FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource WhiteBrush}" />
-                        <TextBlock Text="{loc:Loc WelcomeWindow_SearchByNameOrPaste}"
+                        <TextBlock Text="{loc:Loc WelcomeWindow_PickOrPlayFromThePanel_Detail}"
                                    FontSize="{DynamicResource BodyFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,2,0,0" />
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </Border>
 
             <Border Style="{StaticResource StepStyle}">
-                <StackPanel Orientation="Horizontal">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                     <Border Style="{StaticResource StepNumberStyle}">
                         <TextBlock Text="3" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    FontSize="{DynamicResource HeadingFontSize}" FontWeight="Bold" Foreground="{DynamicResource NavyBrush}" />
                     </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{loc:Loc WelcomeWindow_ClickLaunchAsOrLaunch}"
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Loc WelcomeWindow_WhenYouWantAlts}"
                                    FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource WhiteBrush}" />
-                        <TextBlock Text="{loc:Loc WelcomeWindow_MultiInstanceIsOnBy}"
+                        <TextBlock Text="{loc:Loc WelcomeWindow_WhenYouWantAlts_Detail}"
                                    FontSize="{DynamicResource BodyFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,2,0,0" />
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </Border>
 
             <Border Background="{DynamicResource RowBgBrush}"
@@ -122,38 +136,7 @@
                                Foreground="{DynamicResource MutedTextBrush}"
                                TextWrapping="Wrap"
                                Margin="0,0,0,3">
-                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="&#x2630;" />
-                        <Run Text="{loc:Loc WelcomeWindow_OnTheLeftOfA}" />
-                    </TextBlock>
-                    <TextBlock FontSize="{DynamicResource BodyFontSize}"
-                               Foreground="{DynamicResource MutedTextBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,3">
-                        <Run FontWeight="SemiBold" Foreground="{DynamicResource MagentaBrush}" Text="&#x2605;" />
-                        <Run Text="{loc:Loc WelcomeWindow_StarNextToARow}" />
-                    </TextBlock>
-                    <TextBlock FontSize="{DynamicResource BodyFontSize}"
-                               Foreground="{DynamicResource MutedTextBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,3">
                         <Run Text="{loc:Loc WelcomeWindow_TheColoredSwatchNextTo}" />
-                    </TextBlock>
-                    <TextBlock FontSize="{DynamicResource BodyFontSize}"
-                               Foreground="{DynamicResource MutedTextBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,3">
-                        <Run Text="{loc:Loc WelcomeWindow_TheDotLabeled}" />
-                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="{loc:Loc WelcomeWindow_InBatches}" />
-                        <Run Text=" / " />
-                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="{loc:Loc WelcomeWindow_Skipped}" />
-                        <Run Text="{loc:Loc WelcomeWindow_TogglesWhetherThisAccountJoins}" />
-                    </TextBlock>
-                    <TextBlock FontSize="{DynamicResource BodyFontSize}"
-                               Foreground="{DynamicResource MutedTextBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,3">
-                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="{loc:Loc WelcomeWindow_Follow}" />
-                        <Run Text="{loc:Loc WelcomeWindow_ChipsBelowAnAccountClick}" />
                     </TextBlock>
                     <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}"
@@ -174,6 +157,41 @@
                         <Run Text="{loc:Loc WelcomeWindow_ClickThe}" />
                         <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="^" />
                         <Run Text="{loc:Loc WelcomeWindow_InTheSystemTrayAnd}" />
+                    </TextBlock>
+                    <TextBlock Text="{loc:Loc WelcomeWindow_WithMoreThanOneAccount}"
+                               FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
+                               Foreground="{DynamicResource CyanBrush}"
+                               Margin="0,12,0,6" />
+                    <TextBlock FontSize="{DynamicResource BodyFontSize}"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="&#x2630;" />
+                        <Run Text="{loc:Loc WelcomeWindow_OnTheLeftOfA}" />
+                    </TextBlock>
+                    <TextBlock FontSize="{DynamicResource BodyFontSize}"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource MagentaBrush}" Text="&#x2605;" />
+                        <Run Text="{loc:Loc WelcomeWindow_StarNextToARow}" />
+                    </TextBlock>
+                    <TextBlock FontSize="{DynamicResource BodyFontSize}"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run Text="{loc:Loc WelcomeWindow_TheDotLabeled}" />
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="{loc:Loc WelcomeWindow_InBatches}" />
+                        <Run Text=" / " />
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="{loc:Loc WelcomeWindow_Skipped}" />
+                        <Run Text="{loc:Loc WelcomeWindow_TogglesWhetherThisAccountJoins}" />
+                    </TextBlock>
+                    <TextBlock FontSize="{DynamicResource BodyFontSize}"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="{loc:Loc WelcomeWindow_Follow}" />
+                        <Run Text="{loc:Loc WelcomeWindow_ChipsBelowAnAccountClick}" />
                     </TextBlock>
                 </StackPanel>
             </Border>

@@ -18,7 +18,8 @@ public class DiagnosticsCollectorTests
 {
     private static DiagnosticsCollector BuildCollector(
         ISystemMemoryProbe? systemMemoryProbe = null,
-        IMemoryWatchdog? memoryWatchdog = null)
+        IMemoryWatchdog? memoryWatchdog = null,
+        IInstallIdentity? identity = null)
     {
         var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"rororo-diag-test-{Guid.NewGuid():N}.dat");
         return new DiagnosticsCollector(
@@ -28,8 +29,29 @@ public class DiagnosticsCollectorTests
             logDirectory: string.Empty,
             dataDirectory: string.Empty,
             systemMemoryProbe: systemMemoryProbe ?? new FakeSystemMemoryProbe(),
-            memoryWatchdog: memoryWatchdog ?? new FakeMemoryWatchdog());
+            memoryWatchdog: memoryWatchdog ?? new FakeMemoryWatchdog(),
+            identity: identity);
     }
+
+    [Fact]
+    public async Task Collect_WithIdentity_ReportsItsVersionAndChannel()
+    {
+        var snap = await BuildCollector(identity: new FakeIdentity("9.8.7", InstallChannel.Store)).CollectAsync();
+
+        Assert.Equal("9.8.7", snap.AppVersion);
+        Assert.Equal(InstallChannel.Store, snap.Channel);
+    }
+
+    [Fact]
+    public async Task Collect_WithoutIdentity_StillAnswersFromTheAssembly()
+    {
+        var snap = await BuildCollector().CollectAsync();
+
+        Assert.False(string.IsNullOrWhiteSpace(snap.AppVersion));
+        Assert.Null(snap.Channel);
+    }
+
+    private sealed record FakeIdentity(string Version, InstallChannel Channel) : IInstallIdentity;
 
     [Fact]
     public async Task Collect_ReportsInstalledAndAvailableRam()

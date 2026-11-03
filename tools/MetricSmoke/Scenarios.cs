@@ -1425,6 +1425,8 @@ public static class ScenarioTable
     }
 
     /// <summary>
+    /// v1.36: the account row's facts (Robux, membership, friends online, the note) join the streamer switch, and their one-assertion-per-fact rows live in StreamerIdentityProviderTests (Active_MasksEachFact_AndInactiveShowsIt), not here; this scenario never looks at rows.
+    ///
     /// The personal channel gets the masked name, the clan channel the real one. Asserted without ever
     /// learning the real name: the harness knows the MASKED name (the host hands plugins that one, by
     /// design) and checks that the Mine body carries it, the Clan body does not, and the two bodies

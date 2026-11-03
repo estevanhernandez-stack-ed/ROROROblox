@@ -70,7 +70,7 @@ internal static class KeyboardVocabulary
         new(Key.L, ModifierKeys.Control, "Ctrl+L", ShortcutAction.LaunchAll, "Launch multiple"),
         new(Key.J, ModifierKeys.Control, "Ctrl+J", ShortcutAction.SquadLaunch, "Squad Launch"),
         new(Key.F, ModifierKeys.Control, "Ctrl+F", ShortcutAction.FocusFilter, "Filter accounts"),
-        new(Key.G, ModifierKeys.Control, "Ctrl+G", ShortcutAction.OpenGames, "Games"),
+        new(Key.G, ModifierKeys.Control, "Ctrl+G", ShortcutAction.OpenGames, "Library"),
         new(Key.OemComma, ModifierKeys.Control, "Ctrl+,", ShortcutAction.OpenSettings, "Settings"),
         new(Key.H, ModifierKeys.Control, "Ctrl+H", ShortcutAction.OpenHistory, "History"),
         new(Key.D, ModifierKeys.Control, "Ctrl+D", ShortcutAction.OpenDiagnostics, "Diagnostics"),

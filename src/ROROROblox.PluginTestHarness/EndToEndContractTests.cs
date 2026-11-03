@@ -1822,6 +1822,7 @@ public class EndToEndContractTests
     private sealed class NoOpInputClock : ISystemInputClock
     {
         public uint LastInputTick => 0;
+        public uint NowTick => 0;
     }
 
     private sealed class NoOpForegroundAccountResolver : IForegroundAccountResolver

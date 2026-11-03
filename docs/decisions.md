@@ -730,3 +730,215 @@ Export writes exactly what `ThemeStore.SaveUserThemeAsync` writes for a custom t
 **Consequences:** Live on Neb at 14:29 with ELeonDog's game open and RoRoRo closed: started with the argument, startup logged "restarted by Windows … continuing without asking" and re-attached pid 33828 by title within a second, no dialog. Started without it at 14:30, the dialog appeared as before. A real WER or servicing restart is still unobserved; the argument path is what those restarts take.
 
 **Evidence:** `ApplicationRestart` (`RestartArgument`, `IsWindowsRestart`), `LeftoverStartupDecision` (`ContinueUnattended`), `App.OnStartup` leftover branch; `LeftoverStartupDecisionTests` (#255 section), `ApplicationRestartFlagsTests`; `docs/cart-runs/2026-10-26-restart-skips-leftover-dialog/`.
+
+### 2026-11-01 — Health states ship on measured signals, and the captcha mark is the follow flag with a face
+
+**Context:** The account-library cycle's PRD (`docs/cycles/2026-11-01-account-library/prd.md`) promises per-account health states on the roster. The scope named three: Expired, Needs 2FA, Captcha-marked. Checking the record at PRD time: task `g5fgibvy7` (captcha-marked accounts, 2026-08-09) reads as unbuilt, but v1.32 shipped the per-account `JoinViaFriend` flag on every launch path with the per-batch ask and the "It's fixed, join directly" clear, so the mark, acknowledge and unmark already exist and only the row's face is missing. The same task's cluster note records that nobody has measured whether a Roblox 403 (today's "Limited by Roblox") is the same condition as the in-client captcha, and no signal for "needs 2FA" has ever been named; `CookieCaptureWindow` words the case but no row state carries it.
+
+**Decision:** (A) The follow-marked health state is the existing `JoinViaFriend` flag given a glyph, a word and an action on the row. No second flag. (B) A health state ships only on a measured signal. The first build task runs the captcha experiment (put one account into the captcha state, record what the ticket and presence endpoints return) and records the result here. "Needs verification" ships if a signal distinct from Expired and from the plain 403 is found; otherwise the row keeps today's two words and the third state is dropped with a note, not shipped on a guess. (C) A 403 never auto-marks an account until (B) proves the equivalence.
+
+**Consequences:** The captcha rider shrinks from a feature to a surface change plus one experiment, and the three tasks circling the same gap (`g5fgibvy7`, `vpk6ay1eu`, the Ur Reset idea) get their shared answer from one measurement instead of three guesses. The risk accepted: the roster may ship with two health words rather than three. The risk refused: a state that fires on the wrong condition and teaches users to distrust the row.
+
+**Evidence:** `docs/features.md` (Join via friend, every path; Limited-session handling), `src/ROROROblox.App/ViewModels/AccountSummary.cs` (`SessionExpired`, `SessionLimited`, the status ladder), dashboard tasks `g5fgibvy7` and `vpk6ay1eu`, `docs/cycles/2026-11-01-account-library/prd.md` > Health states you can act on.
+
+### 2026-11-01 — Account facts: their own typed client, cached in the vault, and membership gated on Roblox Plus
+
+**Context:** The account-library cycle's spec (`docs/cycles/2026-11-01-account-library/spec.md` §2) adds Robux, membership and friends-online to every roster row. `IRobloxApi` has nine private test fakes that stop compiling when the interface grows. Robux is not a secret but is the kind of number a plain JSON file would embarrass someone with. Roblox Plus replaced Premium on 2026-04-30, and the only documented membership endpoint, `premiumfeatures.roblox.com/v1/users/{userId}/validate-membership`, is marked hidden in Roblox's own Swagger with "planned for deprecation on 4/30 (Roblox Plus launch)". The Swagger for economy has only the authenticated-user form, `GET /v1/user/currency`; the per-userId form the community wrappers use does not exist there.
+
+**Decision:** (A) The three facts endpoints live on a new `IAccountFactsApi` typed client with one constructor, registered beside `RobloxApi` with the same `RORORO/<version>` User-Agent and the same `UseCookies=false` primary handler, duplicated on purpose so the rule is visible at both registrations. (B) Cached facts and the private note live inside `accounts.dat` as appended optional fields on `StoredAccount`; nothing new on disk holds a secret. (C) Membership ships only if validate-membership answers for both a Plus cookie and a legacy-Premium cookie when build item 2 measures it; otherwise the fact is dropped with a note here. (D) A facts failure records a short reason and never sets `SessionExpired` or `SessionLimited`; `PresenceService` stays the only authority on health. (E) Facts refresh on panel expand, launch end and a one-per-minute timer picking the single stalest account older than ten minutes, through one worker at the backfill lane's 2.5 s ± 0.5 s pacing, and never as a startup sweep (the v1.1.2 anti-fraud lesson at `App.xaml.cs:899-914`).
+
+**Consequences:** One new fake in one new test file instead of nine edits. `accounts.dat` is rewritten about once a minute at steady state through the existing gated tmp-then-move path. The row may ship without a membership badge. The 2.5 s constant is lifted into `Core/BackfillPacing.cs` so `AccountUserIdBackfillService` and the facts worker read one number.
+
+**Evidence:** Roblox legacy API reference pages for Economy v1, Friends v1 and PremiumFeatures v1 (read 2026-11-01); `src/ROROROblox.Core/RobloxApi.cs` registration at `App.xaml.cs:1110-1119`; the nine `IRobloxApi` fakes listed in spec §2.2; dashboard decision `gwvtm29nokrTY78C0kZh`.
+
+### 2026-11-01 — Health is a ladder with a measured third rung, and the follow mark does not beat presence
+
+**Context:** The PRD (2026-11-01 entry above) ruled that a health state ships only on a measured signal. `RobloxApi` maps 401 to `CookieExpiredException` and 403 to `SessionLimitedException` and reads no headers. Roblox sends `rblx-challenge-id`, `rblx-challenge-type` and `rblx-challenge-metadata` on a 403 that wants a step-up; the type values are community-observed (`twostepverification`, `captcha`, `reauthentication`, `security-questions`, `proofofwork`), not documented. The existing `JoinViaFriend` flag has no face on the row.
+
+**Decision:** `AccountHealth { Ok, FollowMarked, Limited, NeedsVerification, Expired }` on `AccountSummary`. The candidate signal for Needs verification is a 403 on the authentication-ticket POST that carries `rblx-challenge-type`; a 403 without it stays Limited; 401 stays Expired. `SessionLimitedException` gains `ChallengeType` read from the header. Build item 1 records the status, every `rblx-*` header and the body for a captcha-state account, an expired cookie and a limited account before any state is called done; `NeedsVerification` is set only from that signal and is dropped if the limited account shows the same header. Expired, Needs verification and Limited beat presence in the secondary line as Expired does today; Follow-marked is a permanent badge on the name line and takes the secondary line only when the account is not running, so a marked account in a game still says where it is. A 403 never auto-marks an account.
+
+**Consequences:** Two derived brushes, no new theme slot, every state carries a glyph and a word for flatline. The action per state is a command that already exists except "Open Roblox for this account", a home launch. If the measurement finds no distinct header, the row keeps today's two words and the enum member stays unset.
+
+**Evidence:** `src/ROROROblox.App/ViewModels/AccountSummary.cs:742-834` (status ladder); `src/ROROROblox.Core/Diagnostics/PresenceService.cs` (`LimitedFlipThreshold = 3`); community client sources for the header names (roblox-api `challenge.rs`, RoZod); spec §1.
+
+### 2026-11-01 — #221 is a 100 ms foreground ring, not an input hook
+
+**Context:** `ActivityMonitor` polls `GetLastInputInfo` once a second and credits the account whose window is foreground at sample time (`ActivityMonitor.cs:93-111`). Issue #221's reproduction (bring B forward, tap, restore C within a second) credits C. The exact instant of input is available only through a low-level keyboard or mouse hook or a Raw Input sink, both of which give a Store binary a keylogger-shaped capability.
+
+**Decision:** Sample the foreground pid every 100 ms into a 32-entry ring keyed by `GetTickCount`-domain ticks, and on an advanced input tick credit the ring entry at or before `LASTINPUTINFO.dwTime`. No hook. The replay test fails on the old code and passes on the new, with a second row placing the switch-back inside the same 100 ms window so the ring, not just the faster period, is what passes.
+
+**Consequences:** Ten cheap Win32 calls a second. Attribution is exact to within one sample, which is inside a human reaction time. The macro wall holds: core observes, and reads nothing about what was typed.
+
+**Evidence:** `src/ROROROblox.Core/Diagnostics/ActivityMonitor.cs`, `ISystemInputClock.cs`, `Win32SystemInputClock.cs`; GitHub issue #221; spec §7.1.
+
+### 2026-11-01 — Two PRD riders shrank on reading the tree: Play as is a new control, #231 is already shipped
+
+**Context:** The PRD said Play as reuses "the same account picker Squad Launch uses" and that this cycle builds a tag-time catalog drift gate. `SquadLaunchWindow` picks a target; which accounts go is each row's `IsSelected` dot, and no account picker exists anywhere. `scripts/check-plugin-catalog-drift.ps1` landed 2026-10-19 (`86b0670`) and 2026-10-23 (`129e408`), runs as `Check plugin catalog drift` at `release.yml:88-94` between Test and the Velopack build, and ran green on the v1.34.0.0 and v1.35.0.0 tag runs; all five catalog rows already read `626Labs LLC`.
+
+**Decision:** Play as is a new `AccountPickerFlyout` (a `ContextMenu` over `MainViewModel.Accounts`, masked under streamer mode by binding the masked properties), not a reuse. #231 and tasks `eejy3xvcu` and `g5hjernie` close on the v1.35 run's step output quoted into their closing comments; nothing is rebuilt.
+
+**Consequences:** One more new control than the PRD counted, no new window, no modal fence moves. One fewer build item.
+
+**Evidence:** `src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml.cs` (constructor takes counts, returns `SelectedTarget`); `git log -- scripts/check-plugin-catalog-drift.ps1`; `gh run list --workflow=release.yml`; `docs/store/plugins-catalog.json`.
+
+### 2026-11-01 — The v1.36 build plan is Core first, baselines before any XAML, and the live probes are a checkpoint rather than a blocking item
+
+**Context:** The account-library cycle's spec (`docs/cycles/2026-11-01-account-library/spec.md`) named "run the captcha experiment" as build item 1 and gated two row states on live measurements: Needs verification on a `rblx-challenge-type` header seen on a captcha-state account and not on a limited one, and the membership badge on `validate-membership` answering for a Plus cookie. Putting an account into the captcha state and supplying cookies are a person's actions, not a worker's. Separately, spec §6 pins the collapsed row to v1.35's height while §2.1 adds a facts line under the status line; both cannot hold once facts arrive. And three of §6's measures (the v1.35 row height, the v1.35 startup time, the #222 windowless count) cannot be captured after the first XAML change.
+
+**Decision:** (A) Item 1 of `checklist.md` captures the three baselines on `5a8fe61` and changes no feature. (B) Items 3-5 (facts lane, Library join, `AccountPanelViewModel`) land Core-only and tested without WPF before any XAML. (C) The probes are a checkpoint: item 2 builds the vocabulary and a Core-referencing probe tool under `tools/EndpointProbe/` that never prints a cookie and writes redacted reports under `probes/`; C1 (after item 5) is where Este runs it and picks rendered mocks for the row, panel, Library and Play as flyout. The code is shaped so an unmeasured state never sets (`NeedsVerification` has one setter path; the membership badge is absent until the probe answers), so a probe not yet run does not block items 6-9, and the gate is re-checked at C2. (D) The facts line collapses when every fact is null and the note is empty, so an upgraded roster matches v1.35 to the pixel until the first refresh; the populated row's height delta is pinned as a second constant set by the C1 mock. (E) `TypedHttpClientRegistrationTests` gains an assertion that both `RobloxApi` and `AccountFactsApi` register with `UseCookies == false`, closing the "no test guards it" gap CLAUDE.md records, because this cycle adds a second place to get it wrong.
+
+**Consequences:** Sixteen items and three halts (C1 after 5, C2 after 7, C3 after 9), above the usual Cart count and stated as the honest size. An autonomous build can start tonight without Este's hands; the two states that need his measurements ship or drop at C1/C2 on evidence. Assumptions 21-28 in the checklist are his to reverse.
+
+**Evidence:** `docs/cycles/2026-11-01-account-library/checklist.md` (header, items 1-3, C1, assumptions); spec §1.2, §2.2, §6; `docs/cycles/2026-10-05-alerts/checklist.md` (the halt pattern and item 6b, the mid-build catalog sweep this plan schedules as item 13 instead).
+
+### 2026-11-02 — C1 picks: the facts line is A1, the Library is tiles, Play as is two lines
+
+**Context:** The v1.36 build halted at C1 for Este's picks against `docs/cycles/2026-11-01-account-library/mocks/c1-mocks.html`. The plan's assumption 21 said the facts line collapses when every fact is null and the note is empty, "so an upgraded roster matches v1.35 to the pixel until the first refresh". Item 5 primes last played from local history at load, before any network refresh.
+
+**Decision:** 0a keep (the follow mark stays on the name line), 0b cyan (a marked account at rest keeps the cyan dot), A1 (the facts line is its own line under the status line), C1 (square icon tiles), D2 (Play as rows on two lines, status under the name), E keep (a played place with only a saved private server still shows in Recent). B, the panel layout, is still open. Inside A1: last played counts as something to say, so an account with history shows the line from the first paint with last played alone.
+
+**Consequences:** The pixel-identical-to-v1.35 property narrows to accounts with no history and no note; `AccountRowCollapsedRenderTests` pins that case and a second constant for the populated line. The probes have not run, so Needs verification stays unset, the membership badge stays absent, and C2 re-checks both.
+
+**Evidence:** `docs/cycles/2026-11-01-account-library/mocks/README.md` (Picks, 2026-11-02); checklist items 6, 7, 9.
+
+### 2026-11-02 — The panel is B1, and the facts line spans the row instead of the name column
+
+**Context:** Este's first C1 reply named no B option; asked separately, he picked B1 (three columns). Item 6's first build (`3997bde`) put A1's facts line inside the name column, as the mock drew it. The mock's row had a slimmer actions column than the real one (no games box, no rightmost button), so at the declared 900 px the real name column sits at its 160 px minimum: every badge wrapped onto its own line and a populated row measured 174 px against the collapsed 92.
+
+**Decision:** The facts line is a second grid row inside `AccountRowBorder`, spanning the name and actions columns (`6ddfaa0`). Row 0 is `*`, not `Auto`: an `Auto` row 0 measured the collapsed row at 100 px, and the star row reproduces v1.35's implicit single row exactly. The expired rule, grip and avatar span both rows; the name and actions stay in row 0. B1 is the panel layout for item 7.
+
+**Consequences:** A populated row is one line taller (114 px at 96 DPI, 142 at 120) and the collapsed row is still v1.35's 92 / 115. On rows that show the Follow strip or tags, the facts line sits below them rather than directly under the status line; Este sees it at C2 and can overrule. B1's columns get narrow in German at 125%, so item 7 wraps or trims rather than clips. Mocks for later items are built from the real row's actions inventory.
+
+**Evidence:** `docs/cycles/2026-11-01-account-library/mocks/compare/item6-facts-row-*.png`; `AccountRowCollapsedRenderTests` (`PopulatedRowHeight96/120`); `src/ROROROblox.App/MainWindow.xaml` (the row Grid's `RowDefinitions`).
+
+### 2026-11-02 — The Library page: four tiles to a row, Remove asks in a bar, and Core stops wording the private-server suffix
+
+**Context:** Item 9 rebuilt `GamesPage` to the C1 and D2 picks. Four things the plan assumed did not hold in the tree. (1) The plan said the two `MessageBox` removal confirms become "the themed confirm the History page uses": the History page uses a stock `MessageBox` (`SessionHistoryPage.ShowMessage`), so there is no themed confirm to reuse, and a new modal would have moved `ModalDefaultButtonSafetyTests` and `WindowChromeFenceTests`, which the item says must not move. (2) The C1 mock drew six tiles across a 900 px window; the real page is 684 px of content beside the shell's rail, and the German "Spielen als" needs a 144 px tile, so the grid is four across at the shell's default size, three at its minimum. (3) WPF-UI's `VirtualizingWrapPanel` names its axes the other way round from the toolkit it was ported from: `Orientation="Horizontal"` arranges items in columns and scrolls sideways (the first render was a single sideways row); the page wants `Vertical`. (4) `FavoriteGame.DropdownLabel` was English prose in Core, and `NoRawXamlProseFenceTests` does not read `StringFormat` inside a binding, so it was never the guard the plan named.
+
+**Decision:** Remove asks in an in-page bar (Cancel takes focus, Escape cancels, the decision is `LibraryViewModel.RequestRemove` / `ConfirmRemoveAsync`), not in a window and not in a stock dialog. The tile is 144 x 246 with a 128 px icon; the list is one fixed-width right cell so header and rows line up in every language. Orientation is `Vertical`, spacing `BetweenItemsOnly`. `DropdownLabel` is deleted from Core; the row's game picker draws the `Shell_Games_PrivateSuffix` key from an item template. The Play as picker is a hand-themed `ContextMenu` (DividerBrush edge, because `InteractiveEdgeBrush` on a decorative border fails `InteractiveEdgeBindingTests`), lists every account, disables only Expired ones, and leaves Limited and follow-marked accounts pickable. `LibraryPageXamlTests` guards what the prose fence cannot: no `StringFormat`, no `MessageBox` under `Games/`, no trigger setter other than Visibility or IsEnabled.
+
+**Consequences:** Four tiles fully above the fold plus a partial second row at the shell's default size, where the mock promised about 12; if C3 wants more, the lever is the tile width, and the cost is German. A `ContextMenu` cannot be hosted in the render harness's tree, so the flyout is rendered detached through a VisualBrush and the disabled item's tooltip is not in the capture. Item 8's `LibraryView` / `LibraryFilters` allow-list entries are gone; the page names `LibraryViewToggle` and `LibraryFiltersRow`.
+
+**Evidence:** `docs/cycles/2026-11-01-account-library/mocks/compare/item9-*.png`; `LibraryGridRenderTests` (virtualisation at 100 entries, the DEFAULT and PRIVATE words in both layouts); `LibraryFlyoutTests`; `LibraryPageXamlTests`; `MainViewModelTests.PlayAs_*`.
+
+### 2026-11-02 — The Plus badge ships, and RobloxApi stops following redirects
+
+**Context:** C1 gated the membership badge on `validate-membership` answering for a Plus cookie. The live probes (all eight saved accounts, `docs/cycles/2026-11-01-account-library/probes/`) found it answering 200 for every cookie: `true` for one account, `false` for seven. Este confirmed that account is on Roblox Plus and the others are not. Separately, the item 3 cookie audit left `RobloxApi` following redirects because share-link resolution "may rely on" them.
+
+**Decision:** `App.ConfigureServices` constructs `AccountFactsService` with `membershipEnabled: true`; Core keeps the default `false`, so only a measured wiring turns it on. `RobloxApi`'s handler gets `AllowAutoRedirect = false`, matching the facts client: every cookie-carrying call it makes goes to a fixed roblox.com API endpoint, share links resolve by a POST to the resolve-link API rather than a redirect chase, and `www.roblox.com` appears only as a Referer. Needs verification stays unset: no account was in the captcha state, so the 403 comparison it depends on has not been made.
+
+**Consequences:** One more request per account per facts refresh (three instead of two), on a deprecation-marked endpoint; if it stops answering, the badge goes absent and the row's `LastError` says why. A Roblox endpoint moved behind a 3xx now fails visibly through `RobloxApi`'s existing non-success paths instead of silently re-sending `.ROBLOSECURITY` to the new location. `TypedHttpClientRegistrationTests.CookieCarryingClients_PrimaryHandler_DoNotFollowRedirects` covers both clients and was watched failing on `RobloxApi` first.
+
+**Evidence:** `docs/store/smoke-2026-11-01-account-library.md` (Probes, 2026-11-02); `src/ROROROblox.App/App.xaml.cs` (the facts service wiring); `src/ROROROblox.App/RobloxHttpClients.cs`; `src/ROROROblox.Core/RobloxApi.cs` (the endpoint constants).
+
+### 2026-11-02 — A membership failure only ever costs the badge
+
+**Context:** The entry above shipped the badge with the spec's §2.2 failure rule: a non-200 from `validate-membership` blanks membership and sets `LastError`, and a 401, 403, timeout or network error on it throws the whole refresh away. The rule was written while membership was off. With it on, a deprecation-marked endpoint that Roblox removes (a 404 or 410, or a host that stops resolving) would paint "last try failed (404)" on every row right after Robux and friends refreshed fine, or keep every row's Robux and friends stale. That is the case the gate's own comment named as its reason. A 403 from it cannot mean the session is dead either: the same cookie answered the other two calls a moment earlier.
+
+**Decision:** Membership is asked last and can only change the badge. No membership failure sets `LastError` or abandons the refresh. A transient one (timeout, network, any other exception, 408, 429, 5xx) keeps the last known badge; a definitive one (any other status, 401/403/404/410 included, or a 200 body that is not `true`/`false`) drops it to unknown rather than show it wrong. The reason goes to a Debug log line instead of the row. This deviates from the cycle spec's §2.2 ("anything else → null with `LastError` set") and from the Consequences line of the entry above.
+
+**Consequences:** If Roblox removes the endpoint, the badge disappears from every row and nothing else changes. A Plus account whose lookup blips keeps its badge until the next refresh answers. Robux and friends 401/403 handling is unchanged. `AccountFactsServiceTests.AFailedMembershipLookup_NeverCostsRobuxOrFriends_AndOnlyATransientOneKeepsTheBadge` covers 13 failure shapes against a stored "plus" and was watched failing on all 13 first; the two membership rows left the 401/403 theory.
+
+**Evidence:** `src/ROROROblox.Core/AccountFactsService.cs` (`FetchAsync`, `MapMembership`); `src/ROROROblox.Tests/AccountFactsServiceTests.cs`.
+
+### 2026-11-02 — The startup bar is judged without the compat fetch, and v1.36 passes it at +1.1%
+
+**Context:** Spec §6 sets a 10% startup bar: the branch's median from the `ROROROblox starting` banner to the `Startup mutex:` line, against `5a8fe61`, over five alternating cold starts each. The C2 run (`docs/store/smoke-2026-11-01-account-library.md`, Controlled A/B) measured +20.8% that way. Splitting each start at its logged steps put the entire gap in one segment, theme to gate, which is a single awaited network call (`RobloxCompatChecker.ResolveMutexNameAsync`, the `roblox-compat.json` fetch, 2 s bound) that neither build changed. That fetch is bimodal on this connection, about 475 ms or about 800-930 ms, in both builds, and the branch drew the slow mode more often.
+
+**Decision:** Este ruled that the bar is judged on startup minus the compat fetch (banner to theme plus gate to mutex). On that measure the branch median is 1072 ms against 1060 ms, +1.1%, a pass. The fast-fetch starts alone agree (+2.5%). A1 was excluded (it swept two plugin processes the Store RoRoRo left running) and not repeated, so v1.35 is n=4.
+
+**Consequences:** A future startup bar that includes a network call needs either the fetch excluded or many more starts. Five per build cannot outvote a 2:1 bimodal network segment. The facts lane's "never at startup" promise was checked in the same run: zero facts requests before the first 60 s tick on any branch start.
+
+**Evidence:** the smoke doc's Controlled A/B table (per-segment timings for all ten starts); `src/ROROROblox.App/App.xaml.cs` (the startup order around `ResolveMutexNameAsync`); `git diff 5a8fe61 HEAD -- src/ROROROblox.Core/RobloxCompatChecker.cs` (empty).
+
+### 2026-11-02 — C2 rework: coloured facts, the expander before the name, three per column
+
+**Context:** Este's C2 eyes-on pass picked three options from `mocks/c2-rework.html`: F2 (outlined, coloured facts), E1 (the panel expander moves into the name column, before the name, and opens cyan) and P1 (every panel column shows three entries, with the totals and a See all link in the headers). The approved capture is `mocks/c2-brand.png`.
+
+**Decision:** F2: Robux is a Cyan outline with Cyan text, friends online a Cyan outline with a 7 px Cyan dot before white text, Plus a Magenta outline with `HealthLimitedBrush` text in bold (raw Magenta text fails AA on the row in three themes). They are three styles BasedOn `FactBadgeStyle` in `ControlStyles.xaml` (`FactBadgeAccentStyle`, `FactBadgeAccentTextStyle`, `FactBadgePlusStyle`), theme slots only, no literals; the word stays "Plus" in the localized case (the mock drew PLUS). E1: a dedicated `PanelExpanderToggleButtonStyle` with its own template, the shared toggle's rest and hover and press unchanged, and open drawn as a Cyan outline and Cyan glyph with no fill (the shared template's checked state is the grey press sheen). The expander is 20x20 with -1 vertical margins, so it lays out at 18 DIP: the name line is 19 DIP on an ordinary row and 21 with the MAIN pill, a 20 px box with no margin grew the collapsed row from 92 to 93, and the four row-height pins (92, 115, 114, 142) hold unchanged. P1: `RecentCap`, `FavouritesCap` and `PrivateServersCap` are all 3 (spec 3.2 said 8); Favourites and Private servers keep the Library's own order and show the first three; each header reads "FAVOURITES · 6" (hidden when empty) and, only when the total is over three and the panel has an `openLibrary` delegate, a Cyan "See all" button that opens the Library page. Recent carries neither. The link lays out at the heading's 13 DIP with -1 margins (measured: without them the header grew 2 DIP and a heavy panel scrolled).
+
+Mine, not Este's, and open to a veto: the first measurement of the new text pairs on an expired row (`RowExpiredBg`) failed AA. `HealthLimited` measured 3.97 brand, 4.41 midnight, 3.54 magenta-heat and 3.45 flatline, and `Cyan` 3.54 under magenta-heat. So the two text-colouring styles fall back to `WhiteBrush` on an expired row through a `SessionExpired` DataTrigger; the outlines and the bold stay, and White on `RowExpiredBg` is a named pair now. The same shape already exists for the Follow-marked badge (Cyan text, 3.54:1 on an expired row under magenta-heat); it is not touched here.
+
+**Consequences:** Moving the expander out of the actions column took it from 630 to 598 DIP; at the declared 900 px the actions column's right edge overshoots the roster viewport by 14 DIP (46 before), so Remove still clips by 14. The same move costs the name column 28 DIP: the main row's name line wants 142 DIP against the column's 132, so the MAIN pill's right edge is clipped by 10 (an ordinary row fits). The two ways to give that back are raising the name column's `MinWidth` 160 to 170 (Remove then clips 24) or trimming the column's right margin; neither is taken without a ruling. The expander is now first in the tab order after the grip and before the name column's other buttons. The heavy-panel fit case (8 Recent, 6 Favourites, 4 private servers) fits the declared 900x600 with no roster scrollbar at 326 DIP of 326; the light panel measures the same, so the vertical budget has no slack either way. Ratchets moved with it: `AccessibleNamingFenceTests` scanned floor 217 to 219 (the two named See all links; the unnamed ceiling stays 1), the `FactBadgeNamingFenceTests` scan now matches `FactBadge*Style` (floor still 5), and `ButtonStateGateTests` and `RenderedStyleGateTests` each classify the new expander rank.
+
+**Evidence:** `mocks/c2-rework.html` and `mocks/c2-brand.png`; `mocks/compare/c2-*.png`; `src/ROROROblox.App/Controls/ControlStyles.xaml` (the three badge styles, `PanelExpanderToggleTemplate`); `src/ROROROblox.App/MainWindow.xaml` (name line, facts line, panel headers); `src/ROROROblox.App/ViewModels/AccountPanelViewModel.cs`; `MainWindowOneAccountFitsTests` (placement, overshoot, heavy panel); `AccountPanelXamlTests` (open state, expired fallback); `ButtonStateGateTests.ThePanelExpanderOpenState_ClearsBothFloors_UnderEveryTheme`; `ContrastPairGateTests.NamedPairs`.
+
+### 2026-11-02 — Remove never clipped after E1; the MAIN pill did, and the game picker gives it the room
+
+**Context:** The C2 rework entry above reports Remove overshooting the roster by 14 DIP at the declared 900 px (46 before the move), and item 7 reported v1.35 clipping it by 15 and 64. All of those came from one harness helper, `MainWindowOneAccountFitsTests.Measure`, which measured the actions' right edge from the roster `ScrollViewer`'s outer edge. The scroller has `Padding="24,12,24,16"` and `ViewportWidth` excludes that padding, so every figure carried an extra 24 DIP. Measured from the roster's content, Remove has had room since the expander moved (10 DIP spare at a 160 picker). The MAIN pill's clip was real: the main row's name line wants 142 DIP (expander, name, pill) and the name column gave it 132.
+
+**Decision:** The game picker's `MinWidth` goes from 160 to 132 (Este approved the 28 DIP cut to fix both clips; only the pill needed it). The helper now measures from the `ItemsControl`. `AtTheDeclared900px_RemoveAndTheMainPillBothFit` asserts both. It was run at three widths: at 132 it passes (Remove 14 DIP spare, pill 142 of 142 with no games saved, 142 of 143 with games); at 160 it fails on the pill; at 300 it fails on Remove.
+
+**Consequences:** At the minimum window size a long game name in the per-row picker trims about 28 DIP sooner. With no saved games, the empty picker's hint holds it wider than 132, so the pill fits with no DIP to spare in English and may clip in a longer language at 900 px. Two old records carry the inflated figures with a correction beside them: the checklist's item 7 note and the smoke doc's C2 run order. Nothing shipped on them.
+
+**Evidence:** `src/ROROROblox.Tests/Rendering/MainWindowOneAccountFitsTests.cs` (`Measure`, `AtTheDeclared900px_RemoveAndTheMainPillBothFit`); `src/ROROROblox.App/MainWindow.xaml` (the picker grid's comment); `docs/store/smoke-2026-11-01-account-library.md` (C2 eyes-on walk).
+
+### 2026-11-03 — The Plus badge draws our own plus glyph, not Roblox's mark
+
+**Context:** After the C2 walk Este asked whether the Plus membership badge could show Roblox's own Plus icon, the hexagon. That icon is a Roblox mark. The Store listing, the About box and the README all state that RoRoRo is not affiliated with Roblox Corporation and uses the word "Roblox" only to describe compatibility. Shipping their logo in the binary pushes against that statement and risks Store IP review.
+
+**Decision:** Option (a), Este's pick: the badge leads with a plus glyph drawn in-house (an 8 px Path, two strokes) beside the existing word, inside the existing magenta outline. Its stroke binds to the word's foreground, so the expired-row white fallback reaches it. It sits inside the text line, so the facts line keeps its height.
+
+**Consequences:** `AccountPanelXamlTests.ThePlusBadge_LeadsWithOurOwnPlusGlyph_InTheWordsColour_AndAddsNoHeight` pins the order, the colour in both states, and the height. It was watched failing three ways: the glyph missing, a hard-wired magenta stroke, and a 22 px glyph (badge 17 to 24 px). A 14 px glyph does not fail it, since it still fits the line. Revisit if Roblox publishes brand guidance permitting third-party use of the Plus icon.
+
+**Evidence:** `src/ROROROblox.App/MainWindow.xaml` (the Plus badge); `docs/cycles/2026-11-01-account-library/mocks/compare/c2-window-brand-96dpi.png`.
+
+## 2026-11-03: the welcome window grows to 810 px tall (v1.36 item 10)
+
+**Context:** The tour's step rows were a horizontal StackPanel, so detail lines never wrapped and ran off the right edge (visible in the item-10 captures, step 1 included, since v1.35). Fixing that into a two-column Grid made the tour want 804.7 px at 96 DPI against the declared 760, and `WindowContentFitsTests` (which now covers `WelcomeWindow`) failed.
+
+**Decision:** Wrapped details, and `Height` 760 to 810 (Width 600, MinHeight 600 unchanged), rather than trimming the step padding and margins by about 45 px or letting the frame clip. German and Russian still scroll about 43 px in the tips block, which is the ScrollViewer doing its job.
+
+**Consequences:** On a 768 px-high display the window is taller than the work area, as 760 already nearly was. If that matters, trim the rhythm instead of the content.
+
+### 2026-11-03 — The tour stays 760 tall; two shipped tour defects fixed with it
+
+**Context:** Item 10's worker made the tour's step details wrap (they ran off the right edge unwrapped, step 1 included, since v1.35). That made English want 804.7 px, and it raised the window to 810 to pass `WindowContentFitsTests`. The window is centred on its owner and **Got it** is its only exit, at the bottom: on a 1366x768 laptop an 810 px window runs past the work area and can hide it.
+
+**Decision:** The window goes back to 760. Spacing pays for it instead: step padding 12 to 8, the gap between steps 10 to 8, the outer margin 28 to 22, and the gap under the hero 22 to 16. Two defects in the tour that shipped through v1.35 are fixed in the same commit. The title read "Welcome toRoRoRo" in every language, because resx trims the trailing space of "Welcome to"; the gap is now a 9 px left margin on the RoRoRo half, pinned by `WelcomeTourTests.TheTitlesTwoHalves_AreSeparatedByAMargin_NotByATrimmedSpace` (watched failing with the margin removed). The tray tip carried an embedded newline and 24 spaces from its XAML origin, in English and all six catalogs, which rendered as a broken indent; it is one line now in all seven files, and the culture resx are regenerated.
+
+**Consequences:** English fits 760 with no scroll; German and Russian scroll a little inside the tour's ScrollViewer, with Got it always visible. The worker's entry above, which records 810, is superseded by this one.
+
+**Evidence:** `src/ROROROblox.App/About/WelcomeWindow.xaml`; `docs/cycles/2026-11-01-account-library/mocks/compare/item10-tour-*.png`.
+
+### 2026-11-03 — Item 11's riders: input credit at the input's tick, the install channel, two fences
+
+**Context:** Four riders from spec §7.1, §7.2, §7.4 and §7.5.
+
+**Decision:** #221. `ActivityMonitor` samples the foreground every 100 ms into a 32-entry `(tick, pid)` ring and credits the ring entry with the greatest tick at or before `LASTINPUTINFO.dwTime`. It uses no hook, because `WH_KEYBOARD_LL` or Raw Input would be keylogger-shaped on a Store binary. The 2026-09-29 replay credited C on the old code and B on the new; the red is recorded in the commit message. #52. Diagnostics reports `AppVersion.Display` (the About page's string) and an `InstallChannel` (Store, Sideload, Direct download, Dev). `IHostBuildIdentity` is registered by factory, because the type has two public ctors. A composition-root test fails when the identity is not handed to the collector. Two text-scan fences. `CursorFenceTests` found 22 sites against the spec's 18 and has a floor of 15. `ListingSheetParityFenceTests` checks 14 bullets, 20 features and a 200-character short description in all seven sheets. Both fences were mutation-checked.
+
+**Consequences:** `Sample()` runs ten times a second; its Trace line stays Trace. snapshot.txt gains an English, invariant `Channel` line under `App version`.
+
+**Evidence:** `af28ec2`, `b1bef61`'s cherry-pick, `e79b86f`, `b9a1ebe`.
+
+### 2026-11-03 — #222 builds the sweeper rather than closing on numbers
+
+**Context:** The spec's rule was to close #222 if one ten-launch day held windowless strays at or below one. That day never ran. The smoke table holds two point counts, both 0. C2 also saw a windowless client alive 40 minutes after an Open Roblox home launch.
+
+**Decision:** Build spec §7.3's sweeper branch. `Tray/IdleTrayClientSweeper` runs on its own 30 s `PeriodicTimer` and calls `StopIdleTrayClients(isTracked, minAge: 2 min)`. Its tracked set is `IRobloxProcessTracker.Attached`, the same source the pre-launch clear uses; the spec said `AccountsSnapshot`, but the clear never read it. The pre-launch clear passes `minAge: null`, so its rule is unchanged. An unknown start time is never swept.
+
+**Consequences:** The sweeper only touches `--launch-to-tray` clients. If the C2 stray was an ordinary windowless client, the sweeper does not catch it, and the dashboard task for it stays open.
+
+**Evidence:** the sweeper commit; `docs/store/smoke-2026-11-01-account-library.md` (#222 table).
+
+### 2026-11-03 — #230 takes the hint path; the hint already shipped
+
+**Context:** #230 rides only if task `y6u70eghn`'s host fix had merged. It is still in progress.
+
+**Decision:** Use the fallback. The Settings hint `SettingsPage_AlertSoundPluginsHint` ("Silent silences RoRoRo's own alerts only…") already exists (c7564f2), so the remaining work is naming it in the 1.36 release notes (item 15).
+
+**Evidence:** `src/ROROROblox.App/Properties/Strings.resx`.
+
+### 2026-11-03 — Health badges lead the facts line; the name and status trim; Remove stays on the row
+
+**Context:** Item 13's `LabelWrapMeasurementTests` rendered the real row in seven languages at the declared 900 px. The C1 mock put the health badge on the name line, but the mock row had no game pickers and no Remove. On the real row, an expired account's badge pushed the name to zero width in English. The MAIN pill read "HAUP" in German, because the name line was a horizontal StackPanel and the name's ellipsis never engaged. On expired and limited rows, Re-authenticate beside Launch As pushed Remove off the row; that had shipped for expired rows through v1.35. C2 missed all of it because Este has no expired, captcha or limited account.
+
+**Decision (Este's):**
+- The health and Follow-marked badges lead the facts line, and a badge row always shows it. The row comes out at the populated height, 114 at 96 DPI.
+- Re-authenticate takes Launch As's slot on expired rows. Launch As also collapses on limited rows, where it was only disabled. That part is mine: the option as offered said the game picker would shrink instead, but a 132 DIP picker could not give back the roughly 100 DIP needed.
+- The name and status lines are Grids, so their text trims and the full text is in a tooltip.
+- The game picker goes 132 to 120 DIP and Re-authenticate's padding 12 to 8. The room came from the picker, not the name column, because the actions column is shared across rows: a narrower name column would trim every French main account's name.
+
+**Consequences:** One expired account no longer widens every row's actions past 900 px. `HealthBadgeRenderTests` now pin badge rows at the populated height, with the badge in the facts line. A mid-row badge was a mock that did not survive real widths, so at the next C-checkpoint the mocks carry the real actions column.
+
+**Evidence:** `9830000`, `b44ce76`, `1986347`; `mocks/compare/item13-*`.

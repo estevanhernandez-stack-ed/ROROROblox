@@ -24,12 +24,18 @@ public class KnownIssuesStatusLineTests
     private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
     /// <summary>A DateTimeOffset for today at the given local hour, with the correct local offset already applied.</summary>
-    private static DateTimeOffset LocalToday(double hour) =>
-        new DateTimeOffset(DateTime.Today, TimeZoneInfo.Local.GetUtcOffset(DateTime.Today)).AddHours(hour);
+    private static DateTimeOffset LocalToday(double hour) => AtLocalWallClock(DateTime.Today.AddHours(hour));
 
     /// <summary>A DateTimeOffset for yesterday at the given local hour, with the correct local offset already applied.</summary>
-    private static DateTimeOffset LocalYesterday(double hour) =>
-        new DateTimeOffset(DateTime.Today.AddDays(-1), TimeZoneInfo.Local.GetUtcOffset(DateTime.Today.AddDays(-1))).AddHours(hour);
+    private static DateTimeOffset LocalYesterday(double hour) => AtLocalWallClock(DateTime.Today.AddDays(-1).AddHours(hour));
+
+    /// <summary>
+    /// The offset is taken at the wall-clock instant itself, not at midnight. Taking midnight's offset and
+    /// adding hours lands an hour off on a DST change day (2026-11-01: midnight is CDT, 10:30 is CST, so
+    /// "10:30" became 09:30 local and three tests failed for that day only).
+    /// </summary>
+    private static DateTimeOffset AtLocalWallClock(DateTime local) =>
+        new DateTimeOffset(local, TimeZoneInfo.Local.GetUtcOffset(local));
 
     [Fact]
     public void NoCheckHasFinishedYet_AndNothingIsVerified_SaysCheckingAndWithholdsAllClear()

@@ -93,6 +93,31 @@ public class UiRoutesSchemaTests
     }
 
     [Fact]
+    public void EveryDenyAidIsDeclared_AndThePanelsAndTheLibrarysLaunchControlsAreAmongThem()
+    {
+        var doc = LoadRoutes();
+        var aids = doc.GetProperty("denyAids").EnumerateArray().Select(x => x.GetString()!).ToList();
+        Assert.Equal(11, aids.Count);
+        Assert.Contains("DangerPanelLaunch", aids);
+        Assert.Contains("DangerOpenRobloxHome", aids);
+        Assert.Contains("DangerPlay", aids);     // v1.36 item 9: the Library's per-entry Play
+        Assert.Contains("DangerPlayAs", aids);   // v1.36 item 9: the Library's per-entry Play as
+
+        // Each id is a real AutomationId in the XAML that owns it, so a rename cannot leave a dead guard behind.
+        // The main window owns the account row's and the panel's; the Library page owns Play and Play as (the
+        // picker those open is a ContextMenu of account items, which carry no Danger id of their own).
+        var appDir = Path.Combine(XamlStyleScanner.FindRepoRoot()!, "src", "ROROROblox.App");
+        var xaml = string.Join(Environment.NewLine, new[]
+        {
+            Path.Combine(appDir, "MainWindow.xaml"),
+            Path.Combine(appDir, "Games", "GamesPage.xaml"),
+            Path.Combine(appDir, "Games", "AccountPickerFlyout.xaml"),
+        }.Select(File.ReadAllText));
+        foreach (var aid in aids)
+            Assert.Contains($"AutomationProperties.AutomationId=\"{aid}\"", xaml);
+    }
+
+    [Fact]
     public void NoRouteTargetsADeniedName()
     {
         var doc = LoadRoutes();
@@ -108,7 +133,10 @@ public class UiRoutesSchemaTests
         Assert.Contains("Stop", deny);
         Assert.Contains("Recycle", deny);
         Assert.Contains("Stop all", deny);
-        Assert.Equal(8, deny.Count);
+        Assert.Contains("Open Roblox home", deny); // v1.36 item 7: the panel's launch button
+        Assert.Contains("Play", deny);              // v1.36 item 9: the Library's launch buttons
+        Assert.Contains("Play as", deny);
+        Assert.Equal(11, deny.Count);
 
         var problems = new List<string>();
         foreach (var surface in Surfaces(doc))

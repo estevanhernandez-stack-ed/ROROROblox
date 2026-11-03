@@ -272,6 +272,127 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+    <!-- v1.36 C2 (E1, Este's pick 2026-11-02): the account panel's expander, which moved from the actions column
+         into the name column. It is the same rank as SecondaryToggleButtonStyle at rest and under the pointer (Navy
+         fill, derived edge, white glyph, the house hover and press sheens), with ONE difference, and it is the
+         point: OPEN is a Cyan outline and a Cyan glyph, the mock's call, where the shared toggle template fills the
+         checked state with the grey press sheen. A checked expander therefore never paints a fill. The checked state
+         lives here, in the template's triggers, so the row's XAML carries no colour trigger (a button's per-instance
+         style carries Visibility/IsEnabled setters only). Its own template rather than a trigger on
+         SecondaryToggleButtonStyle's: that template is shared by the header's default-game widget and the Library
+         chips, whose checked state stays the press sheen. Measured by ButtonStateGateTests (rest, hover, pressed,
+         disabled; the checked pair, Cyan on Navy, has its own fact there) and RenderedStyleGateTests. -->
+    <ControlTemplate x:Key="PanelExpanderToggleTemplate" TargetType="ToggleButton">
+        <Grid>
+            <Border x:Name="Chrome"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    SnapsToDevicePixels="True" />
+            <Border x:Name="HoverSheen"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.22"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <Border x:Name="PressSheen"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.38"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <ContentPresenter Margin="{TemplateBinding Padding}"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              RecognizesAccessKey="True" SnapsToDevicePixels="True" />
+        </Grid>
+        <ControlTemplate.Triggers>
+            <!-- Open: outline and glyph, never a fill. Listed first so the pointer states below can still layer a
+                 sheen over an open expander. -->
+            <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource CyanBrush}" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="HoverSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="PressSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="PanelExpanderToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Template" Value="{StaticResource PanelExpanderToggleTemplate}" />
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!-- v1.36 C3 (Este's pick 2026-11-03): the Library chips are the mock's rounded pills. The expander's rank and
+         checked state exactly (Navy fill, derived edge, white label, house sheens; ON = Cyan outline and Cyan label, no
+         fill), with one difference: every border is rounded, the two sheens included, so a hover or press wash never
+         paints square corners outside the pill. A radius larger than half the height clamps to a full semicircle.
+         Measured by ButtonStateGateTests (the shared state pairs, APillChipsCheckedState against Bg, and the matching
+         radii) and RenderedStyleGateTests. -->
+    <ControlTemplate x:Key="PillToggleTemplate" TargetType="ToggleButton">
+        <Grid>
+            <Border x:Name="Chrome"
+                    CornerRadius="14"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    SnapsToDevicePixels="True" />
+            <Border x:Name="HoverSheen"
+                    CornerRadius="14"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.22"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <Border x:Name="PressSheen"
+                    CornerRadius="14"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.38"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <ContentPresenter Margin="{TemplateBinding Padding}"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              RecognizesAccessKey="True" SnapsToDevicePixels="True" />
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource CyanBrush}" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="HoverSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="PressSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="PillToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Template" Value="{StaticResource PillToggleTemplate}" />
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
     <!-- Primary. Navy field, white text, cyan edge. Measured 9.39:1 in brand, 8.05:1 in midnight,
          4.90:1 in magenta-heat — this recipe was always fine. It is here so it stops being copied
          by hand, not because it was broken. -->
@@ -494,6 +615,64 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
         <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <!-- v1.36 facts-line badge (A1): a thin outlined pill at meta size, one per fact on the account
+         row (Robux, membership, friends online, last played, the note's first line). The outline is
+         the divider brush (decoration, not a control edge); the text takes the ordinary themed text
+         brush and size through TextElement so the child TextBlock inherits them and the pill sets no
+         colour of its own. The note badge overrides Foreground to the muted brush at the call site.
+         Every element carrying this style names itself (FactBadgeNamingFenceTests). -->
+    <Style x:Key="FactBadgeStyle" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="Margin" Value="0,0,6,3" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextElement.FontSize" Value="{DynamicResource MetaFontSize}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource WhiteBrush}" />
+    </Style>
+
+    <!-- v1.36 C2 (F2, Este's pick 2026-11-02): colour on three of the five facts, as variants of the pill above
+         rather than literals at the call site. Theme slots only, so each follows all four themes.
+         FactBadgeAccentStyle: a Cyan outline, text left at the base white (friends online; the call site adds a
+         small Cyan dot). FactBadgeAccentTextStyle: the same outline with Cyan text (Robux).
+         FactBadgePlusStyle: a Magenta outline with HealthLimitedBrush text, bold. Raw MagentaBrush TEXT fails AA on
+         the row in three themes (the reason the Limited health badge reads HealthLimitedBrush, the lightened
+         magenta), so Magenta is only ever the outline here. Under magenta-heat Magenta and Cyan are one value and
+         under flatline both are achromatic: the badges still tell themselves apart by their words, which is why
+         colour is the third carrier and never the only one. They are decoration like the base pill (a hairline
+         role 1.4.11 does not govern), and every use still names itself (FactBadgeNamingFenceTests).
+
+         EXPIRED ROWS ARE THE ONE PLACE THE COLOURED TEXT STANDS DOWN. The text pairs are measured on RowBg (Cyan 8.64:1
+         in brand, HealthLimited 4.54:1) by ContrastPairGateTests.NamedPairs, and measuring them on RowExpiredBg, the
+         amber-tinted surface an expired row repaints to, FAILED AA: HealthLimited 3.97 brand, 4.41 midnight, 3.54
+         magenta-heat, 3.45 flatline, and Cyan 3.54 under magenta-heat (2026-11-02). So the two styles that colour TEXT
+         (Accent text, Plus) carry a DataTrigger on the row's SessionExpired that returns the text to WhiteBrush, the text
+         colour every other fact already has there; the outline colour and the bold stay. The trigger reads the row's
+         DataContext, which is why these two styles only make sense inside an account row. White on RowExpiredBg is
+         a named pair of its own. -->
+    <Style x:Key="FactBadgeAccentStyle" TargetType="Border" BasedOn="{StaticResource FactBadgeStyle}">
+        <Setter Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
+    </Style>
+    <Style x:Key="FactBadgeAccentTextStyle" TargetType="Border" BasedOn="{StaticResource FactBadgeAccentStyle}">
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource CyanBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding SessionExpired}" Value="True">
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource WhiteBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="FactBadgePlusStyle" TargetType="Border" BasedOn="{StaticResource FactBadgeStyle}">
+        <Setter Property="BorderBrush" Value="{DynamicResource MagentaBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource HealthLimitedBrush}" />
+        <Setter Property="TextElement.FontWeight" Value="Bold" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding SessionExpired}" Value="True">
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource WhiteBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================ INPUTS (F-029, F-049) ============================

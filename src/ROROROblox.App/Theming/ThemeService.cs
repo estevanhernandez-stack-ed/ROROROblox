@@ -376,6 +376,14 @@ internal sealed class ThemeService : IThemeAppliedSource
         ApplySlot(resources, ThemeSlots.OnMagenta,
             ContrastGuard.BestForeground(theme.Magenta, [theme.White, theme.Navy], ContrastGuard.MinimumTextRatio));
 
+        // The fourth health colour: the midpoint of the theme's own expired-amber and magenta.
+        // Derived rather than a slot for the same reason the edge is (invariant 6, the contract
+        // does not grow), and so a user theme already on disk gets four distinct health colours.
+        ApplySlot(resources, ThemeSlots.HealthVerify,
+            ContrastGuard.Flatten(theme.RowExpiredAccent, theme.Magenta, 0.5));
+        ApplySlot(resources, ThemeSlots.HealthLimited,
+            ContrastGuard.EnsureTextAgainstAll([theme.Bg, theme.RowBg], theme.Magenta, ContrastGuard.MinimumTextRatio));
+
         // WPF-UI's checkbox accent, taken over. See ThemeSlots' block comment above these four keys
         // for why they are keys of the library's rather than ours, and why they are written here
         // instead of declared in ControlStyles.xaml. The short version: the library's template

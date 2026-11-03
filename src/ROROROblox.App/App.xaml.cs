@@ -40,6 +40,9 @@ public partial class App : Application
     /// <summary>F-103. Adopts clients Roblox restarts for itself; see OrphanedClientSweeper.</summary>
     private Tray.OrphanedClientSweeper? _orphanSweeper;
 
+    /// <summary>#222. Ends idle tray clients that outlive a launch; its own 30 s timer, see IdleTrayClientSweeper.</summary>
+    private Tray.IdleTrayClientSweeper? _idleTraySweeper;
+
     /// <summary>
     /// The plugin-host listener's bind task, set by <see cref="StartPluginHostListener"/> and
     /// awaited by <see cref="StartPluginAutostart"/>. Null when the host failed to start, in
@@ -729,6 +732,7 @@ public partial class App : Application
         WireMutexLost(mutex, tray);
         WireMainAvatarTrayPainter();
         WireRobloxWindowDecorator();
+        WireIdleTrayClientSweeper();
         WirePluginEventBus();
         WireActivityMonitor();
         await WireMemoryWatchdogAsync();
@@ -943,6 +947,13 @@ public partial class App : Application
             var backfill = _services.GetRequiredService<AccountUserIdBackfillService>();
             await Task.Delay(5_000).ConfigureAwait(false);
             await backfill.RunAsync().ConfigureAwait(false);
+
+            // Account facts: the slow timer is armed only now, after the backfill has finished, and
+            // its first tick is a full TimerTick (60 s) from here. Nothing about facts runs before
+            // this line except a user's own panel expand.
+            _services.GetRequiredService<AccountFactsService>().StartTimer();
+            // Panels that resolved open at load asked for no icon then (it is a network lane); now is the time.
+            _services.GetRequiredService<MainViewModel>().RequestIconsForOpenPanels();
         }
         catch (Exception ex)
         {
@@ -1101,22 +1112,9 @@ public partial class App : Application
                 : new StartupRegistration());
         services.AddSingleton<IProcessStarter, ProcessStarter>();
 
-        // RobloxApi over a managed HttpClient (factory handles lifetime + DNS rotation).
-        // UseCookies=false is load-bearing: RobloxApi sets the .ROBLOSECURITY cookie manually
-        // per-request via request.Headers.Add("Cookie", ...). With the default cookie container
-        // enabled, the first auth-ticket request leaks its account's cookie into the container
-        // and every subsequent Launch As routes through that same account — every alt opens as
-        // the first user. This is the actual root cause of the multi-instance bug v1.2 saw.
-        services.AddHttpClient<IRobloxApi, RobloxApi>(client =>
-        {
-            client.DefaultRequestHeaders.UserAgent.Clear();
-            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
-            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
-        })
-        .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
-        {
-            UseCookies = false,
-        });
+        // RobloxApi and AccountFactsApi, each over its own managed HttpClient with UseCookies=false
+        // (load-bearing; see RobloxHttpClients for why, and for the test that reads both handlers).
+        services.AddRobloxHttpClients();
 
         // Compat checker uses its own HttpClient — different UA + different host pattern.
         services.AddHttpClient<IRobloxCompatChecker, RobloxCompatChecker>(client =>
@@ -1289,6 +1287,33 @@ public partial class App : Application
         // RunStartupChecksAsync; idempotent on subsequent runs. Lives in Core for testability.
         services.AddSingleton<AccountUserIdBackfillService>();
 
+        // Account facts lane (v1.36): Robux, friends online, membership. Constructing this does
+        // NOTHING: no request, no timer, no thread. The slow timer is armed by RunStartupChecksAsync
+        // only after the backfill above has finished (the v1.1.2 anti-fraud lesson, quoted in the
+        // service). The roster delegate reads AccountsSnapshot lazily, never Accounts: it fires on
+        // the worker's threadpool thread, and MainViewModel depends on this service, so resolving
+        // MainViewModel here eagerly would form a construction cycle (same shape as PresenceService).
+        services.AddSingleton(sp => new AccountFactsService(
+            sp.GetRequiredService<IAccountStore>(),
+            sp.GetRequiredService<IAccountFactsApi>(),
+            () => sp.GetRequiredService<MainViewModel>().AccountsSnapshot
+                    .Select(a => new FactsTarget(a.Id, a.RobloxUserId, a.Facts, a.SessionExpired))
+                    .ToList(),
+            sp.GetRequiredService<ILogger<AccountFactsService>>(),
+            // Membership on (2026-11-02): the C1 probe measured validate-membership answering for
+            // every cookie, true only for the account Este confirmed is on Plus. Core keeps it off by
+            // default so a construction site that has not measured it cannot turn it on by accident.
+            membershipEnabled: true,
+            icons: sp.GetRequiredService<IGameIconCache>()));
+
+        // Library join (v1.36): favourites + saved servers + Recent. ListAsync is a pure read; icon
+        // lookups happen only when a caller asks for a place on screen, and they ride the facts
+        // worker above (one request at a time, the shared pacing).
+        services.AddSingleton<IGameIconCache>(sp => new GameIconCache(
+            sp.GetRequiredService<IRobloxApi>(),
+            log: sp.GetService<ILogger<GameIconCache>>()));
+        services.AddSingleton<LibraryCatalog>();
+
         // Tray avatar painter — owns its own HttpClient (default UA fine for public Roblox CDN
         // avatar URLs). TrayService is registered as ITrayService elsewhere; the painter takes
         // the concrete type because SetCustomStateIcons is App-internal.
@@ -1389,6 +1414,13 @@ public partial class App : Application
             () => sp.GetRequiredService<ROROROblox.Core.Notify.PhoneNotifyConfigService>().Current,
             () => AlertCadenceSetting));
 
+        // #52: the version and channel Diagnostics reports. Same IHostBuildIdentity the plugin host uses.
+        // A factory, not the type form: HostBuildIdentity has two public ctors and only the parameterless one is production.
+        services.AddSingleton<ROROROblox.App.Plugins.IHostBuildIdentity>(_ => new ROROROblox.App.Plugins.HostBuildIdentity());
+        services.AddSingleton<IInstallIdentity>(sp => new Distribution.InstallIdentity(
+            sp.GetRequiredService<Distribution.IDistributionMode>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IHostBuildIdentity>()));
+
         services.AddSingleton<IDiagnosticsCollector>(sp => new DiagnosticsCollector(
             sp.GetRequiredService<IAccountStore>(),
             sp.GetRequiredService<IRobloxProcessTracker>(),
@@ -1396,7 +1428,8 @@ public partial class App : Application
             AppLogging.LogDirectory,
             dataDir,
             sp.GetRequiredService<ISystemMemoryProbe>(),
-            sp.GetRequiredService<IMemoryWatchdog>()));
+            sp.GetRequiredService<IMemoryWatchdog>(),
+            sp.GetRequiredService<IInstallIdentity>()));
 
         // ViewModel + Window.
         services.AddSingleton<MainViewModel>();
@@ -1695,12 +1728,7 @@ public partial class App : Application
         ArgumentNullException.ThrowIfNull(_services);
         return page switch
         {
-            Shell.ShellPage.Games => new Games.GamesPage(
-                _services.GetRequiredService<IFavoriteGameStore>(),
-                _services.GetRequiredService<IPrivateServerStore>(),
-                _services.GetRequiredService<IRobloxApi>(),
-                // The refresh the modal did on close, now done when the data changes.
-                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync()),
+            Shell.ShellPage.Games => BuildLibraryPage(),
             Shell.ShellPage.Settings => BuildSettingsPage(),
             Shell.ShellPage.History => new History.SessionHistoryPage(
                 _services.GetRequiredService<ISessionHistoryStore>(),
@@ -1724,6 +1752,32 @@ public partial class App : Application
                 _services.GetRequiredService<IShellOpener>()),
             _ => throw new ArgumentOutOfRangeException(nameof(page), page, null),
         };
+    }
+
+    /// <summary>
+    /// The Library page (v1.36 item 9): the view model is built here, beside <c>MainViewModel</c>, so the page
+    /// is wiring. Paste routing needs the main view model's share-link resolver; Play and Play as go through
+    /// <c>LaunchAccountByIdAsync</c>, the one launch path; the Play as picker lists the live roster.
+    /// </summary>
+    private Games.GamesPage BuildLibraryPage()
+    {
+        ArgumentNullException.ThrowIfNull(_services);
+        var main = _services.GetRequiredService<MainViewModel>();
+        var viewModel = new Games.LibraryViewModel(
+            _services.GetRequiredService<LibraryCatalog>(),
+            _services.GetRequiredService<IFavoriteGameStore>(),
+            _services.GetRequiredService<IPrivateServerStore>(),
+            _services.GetRequiredService<IRobloxApi>(),
+            _services.GetRequiredService<IAppSettings>(),
+            url => main.ResolveShareUrlAsync(url),
+            // AccountsSnapshot, never Accounts: PlayAsync may resolve off the UI thread.
+            () => main.AccountsSnapshot,
+            (accountId, target) => main.LaunchAccountByIdAsync(accountId, target),
+            // The refresh the modal did on close, now done when the data changes.
+            libraryChanged: () => _ = main.ReloadGamesAsync(),
+            icons: _services.GetRequiredService<IGameIconCache>(),
+            ui: new Threading.WpfUiDispatcher());
+        return new Games.GamesPage(viewModel, main.Accounts);
     }
 
     /// <summary>Where a known issue's "RoRoRo can help" button goes (spec §4).</summary>
@@ -1834,6 +1888,30 @@ public partial class App : Application
     /// settings) — see <see cref="WireMemoryWatchdogAsync"/>.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// #222. Starts the idle tray client sweeper. Runs in the Wire* block, after the startup gate
+    /// has answered (the Leftover branch has already cleared windowless strays silently) and after
+    /// the plugin pipe is bound, so it can never act on a client the gate is still deciding about.
+    /// A passenger feature: failure is logged and never blocks startup.
+    /// </summary>
+    private void WireIdleTrayClientSweeper()
+    {
+        try
+        {
+            var tracker = _services.GetRequiredService<IRobloxProcessTracker>();
+            _idleTraySweeper = new Tray.IdleTrayClientSweeper(
+                _services.GetRequiredService<IRobloxInstanceStopper>(),
+                // Same source as the pre-launch clear in MainViewModel: the tracker's pid copy.
+                trackedPids: () => tracker.Attached.Values.Select(p => p.Pid).ToHashSet(),
+                log: _loggerFactory?.CreateLogger<Tray.IdleTrayClientSweeper>());
+            _idleTraySweeper.Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "WireIdleTrayClientSweeper failed; idle tray clients are only cleared before a launch.");
+        }
+    }
+
     private void WireRobloxWindowDecorator()
     {
         if (_services is null) return;
@@ -3470,6 +3548,16 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "Orphan sweeper dispose threw on exit; ignoring.");
+            }
+
+            try
+            {
+                _idleTraySweeper?.Dispose();
+                _idleTraySweeper = null;
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "Idle tray sweeper dispose threw on exit; ignoring.");
             }
 
             // Stop the activity-monitor sample timer before the provider disposes (same shape

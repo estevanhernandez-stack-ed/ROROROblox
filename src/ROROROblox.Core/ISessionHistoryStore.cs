@@ -29,6 +29,15 @@ public interface ISessionHistoryStore
     /// </summary>
     Task MarkOutcomeAsync(Guid sessionId, string outcomeHint);
 
+    /// <summary>
+    /// Patch the game of one row (v1.36): a follow launch is written with no place, and presence
+    /// fills it in when the account first lands. Changes <see cref="LaunchSession.GameName"/>,
+    /// <see cref="LaunchSession.PlaceId"/> and <see cref="LaunchSession.PrivateServerId"/> on the row
+    /// with this id and nothing else. A null <paramref name="gameName"/> keeps the row's name.
+    /// No-op if the row's been pruned.
+    /// </summary>
+    Task UpdateGameAsync(Guid id, string? gameName, long? placeId, Guid? privateServerId);
+
     /// <summary>Drop everything. UI surfaces this behind a confirmation dialog.</summary>
     Task ClearAsync();
 }

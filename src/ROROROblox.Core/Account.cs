@@ -23,4 +23,22 @@ public sealed record Account(
     bool JoinViaFriend = false,
     string? StreamerName = null,
     string? StreamerAvatarId = null,
-    bool AutoRejoin = false);
+    bool AutoRejoin = false,
+    AccountFacts? Facts = null,
+    string? Note = null,
+    bool? PanelExpanded = null)
+{
+    /// <summary>Longest note the store keeps, in characters. Spec 2026-11-01 §2.4.</summary>
+    public const int MaxNoteLength = 200;
+
+    /// <summary>Trim; empty or whitespace becomes null; cap at <see cref="MaxNoteLength"/>. The one rule every path a note enters (the store, the panel's box) applies.</summary>
+    public static string? NormalizeNote(string? note)
+    {
+        if (string.IsNullOrWhiteSpace(note))
+        {
+            return null;
+        }
+        var trimmed = note.Trim();
+        return trimmed.Length > MaxNoteLength ? trimmed[..MaxNoteLength].TrimEnd() : trimmed;
+    }
+}

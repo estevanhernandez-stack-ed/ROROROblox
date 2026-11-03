@@ -9,7 +9,15 @@ namespace ROROROblox.App.ViewModels;
 /// </summary>
 internal sealed record SquadPlan(
     IReadOnlyList<AccountSummary> Direct,
-    IReadOnlyList<AccountSummary> Flagged);
+    IReadOnlyList<AccountSummary> Flagged)
+{
+    /// <summary>
+    /// How many accounts in this batch join by following the main (the follow-marked, non-main
+    /// accounts). The batch banner names the count: "2 will follow the main". Same list as
+    /// <see cref="Flagged"/>; the name says what the number means to the person reading it.
+    /// </summary>
+    public int FollowMarkedCount => Flagged.Count;
+}
 
 /// <summary>
 /// Pure split of an eligible batch-launch list into its direct and flagged sub-batches. Lifted out

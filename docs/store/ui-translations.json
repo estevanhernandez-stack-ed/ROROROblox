@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "3c6eae2",
-  "generatedUtc": "2026-10-26T19:45:21+00:00",
+  "sourceCommit": "1986347",
+  "generatedUtc": "2026-11-03T19:06:44+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -821,14 +821,14 @@
     },
     {
       "field": "GamesPage_Games",
-      "en": "Games",
+      "en": "Library",
       "translations": {
-        "fr": "Jeux",
-        "de": "Spiele",
-        "ru": "Игры",
-        "pt-br": "Jogos",
-        "pl": "Gry",
-        "es": "Juegos"
+        "fr": "Bibliothèque",
+        "de": "Bibliothek",
+        "ru": "Библиотека",
+        "pt-br": "Biblioteca",
+        "pl": "Biblioteka",
+        "es": "Biblioteca"
       }
     },
     {
@@ -1577,14 +1577,14 @@
     },
     {
       "field": "MainWindow_AddGamesFromToolsGames",
-      "en": "Add games from Tools → Games",
+      "en": "Add in the Library",
       "translations": {
-        "fr": "Ajoutez des jeux depuis Outils → Jeux",
-        "de": "Spiele über Werkzeuge → Spiele hinzufügen",
-        "ru": "Добавьте игры через «Инструменты → Игры»",
-        "pt-br": "Adicione jogos em Ferramentas → Jogos",
-        "pl": "Dodaj gry z Narzędzia → Gry",
-        "es": "Añade juegos desde Herramientas → Juegos"
+        "fr": "Ajoutez via la Bibliothèque",
+        "de": "In der Bibliothek hinzufügen",
+        "ru": "Добавьте в Библиотеку",
+        "pt-br": "Adicione na Biblioteca",
+        "pl": "Dodaj w Bibliotece",
+        "es": "Añade en la Biblioteca"
       }
     },
     {
@@ -1925,14 +1925,14 @@
     },
     {
       "field": "MainWindow_Games",
-      "en": "Games",
+      "en": "Library",
       "translations": {
-        "fr": "Jeux",
-        "de": "Spiele",
-        "ru": "Игры",
-        "pt-br": "Jogos",
-        "pl": "Gry",
-        "es": "Juegos"
+        "fr": "Bibliothèque",
+        "de": "Bibliothek",
+        "ru": "Библиотека",
+        "pt-br": "Biblioteca",
+        "pl": "Biblioteka",
+        "es": "Biblioteca"
       }
     },
     {
@@ -2117,14 +2117,14 @@
     },
     {
       "field": "MainWindow_ManageGames",
-      "en": "Manage games…",
+      "en": "Manage Library…",
       "translations": {
-        "fr": "Gérer les jeux…",
-        "de": "Spiele verwalten…",
-        "ru": "Управление играми…",
-        "pt-br": "Gerenciar jogos…",
-        "pl": "Zarządzaj grami…",
-        "es": "Gestionar juegos…"
+        "fr": "Gérer la Bibliothèque…",
+        "de": "Bibliothek verwalten…",
+        "ru": "Управление Библиотекой…",
+        "pt-br": "Gerenciar a Biblioteca…",
+        "pl": "Zarządzaj Biblioteką…",
+        "es": "Gestionar la Biblioteca…"
       }
     },
     {
@@ -5153,14 +5153,14 @@
     },
     {
       "field": "ShellWindow_Games",
-      "en": "Games",
+      "en": "Library",
       "translations": {
-        "fr": "Jeux",
-        "de": "Spiele",
-        "ru": "Игры",
-        "pt-br": "Jogos",
-        "pl": "Gry",
-        "es": "Juegos"
+        "fr": "Bibliothèque",
+        "de": "Bibliothek",
+        "ru": "Библиотека",
+        "pt-br": "Biblioteca",
+        "pl": "Biblioteka",
+        "es": "Biblioteca"
       }
     },
     {
@@ -5560,18 +5560,6 @@
       }
     },
     {
-      "field": "WelcomeWindow_ClickLaunchAsOrLaunch",
-      "en": "Click Launch As. Or Launch multiple for every selected alt at once.",
-      "translations": {
-        "fr": "Cliquez sur Lancer en tant que. Ou Lancer plusieurs pour tous les alts sélectionnés en une fois.",
-        "de": "Klicke auf Starten als. Oder Mehrere starten für jeden ausgewählten Alt auf einmal.",
-        "ru": "Нажмите «Запустить как». Или «Запустить несколько» для всех выбранных альтов сразу.",
-        "pt-br": "Clique em Iniciar como. Ou em Iniciar vários para todos os alts selecionados de uma vez.",
-        "pl": "Kliknij Uruchom jako. Albo Uruchom wiele dla wszystkich wybranych kont naraz.",
-        "es": "Haz clic en Iniciar como. O en Iniciar varias para cada alt seleccionada a la vez."
-      }
-    },
-    {
       "field": "WelcomeWindow_ClickThe",
       "en": "Click the",
       "translations": {
@@ -5585,14 +5573,14 @@
     },
     {
       "field": "WelcomeWindow_ClosingXMinimizesToTray",
-      "en": "Closing X minimizes to tray; right-click the tray icon for Preferences, History,\n                        Diagnostics, or Quit.",
+      "en": "Closing X minimizes to tray; right-click the tray icon for Preferences, History, Diagnostics, or Quit.",
       "translations": {
-        "fr": "La fermeture par X réduit dans la barre d'état système ; cliquez avec le bouton droit sur l'icône de la barre d'état système pour Préférences, Historique,\n                        Diagnostics ou Quitter.",
-        "de": "Das Schließen mit X minimiert in den Infobereich; Rechtsklick auf das Infobereich-Symbol für Einstellungen, Verlauf,\n                        Diagnose oder Beenden.",
-        "ru": "Закрытие крестиком сворачивает в область уведомлений; щёлкните значок в области уведомлений правой кнопкой для настроек, истории,\n                        диагностики или выхода.",
-        "pt-br": "Fechar no X minimiza para a bandeja do sistema; clique com o botão direito no ícone da bandeja para Preferências, Histórico,\n                        Diagnóstico, ou Sair.",
-        "pl": "Zamknięcie przez X minimalizuje do zasobnika systemowego; kliknij prawym przyciskiem ikonę w zasobniku, aby uzyskać Preferencje, Historię,\n                        Diagnostykę lub Zakończ.",
-        "es": "La X de cerrar minimiza a la bandeja del sistema; haz clic derecho en el icono de la bandeja para Preferencias, Historial,\n                        Diagnóstico o Salir."
+        "fr": "La fermeture par X réduit dans la barre d'état système ; cliquez avec le bouton droit sur l'icône de la barre d'état système pour Préférences, Historique, Diagnostics ou Quitter.",
+        "de": "Das Schließen mit X minimiert in den Infobereich; Rechtsklick auf das Infobereich-Symbol für Einstellungen, Verlauf, Diagnose oder Beenden.",
+        "ru": "Закрытие крестиком сворачивает в область уведомлений; щёлкните значок в области уведомлений правой кнопкой для настроек, истории, диагностики или выхода.",
+        "pt-br": "Fechar no X minimiza para a bandeja do sistema; clique com o botão direito no ícone da bandeja para Preferências, Histórico, Diagnóstico, ou Sair.",
+        "pl": "Zamknięcie przez X minimalizuje do zasobnika systemowego; kliknij prawym przyciskiem ikonę w zasobniku, aby uzyskać Preferencje, Historię, Diagnostykę lub Zakończ.",
+        "es": "La X de cerrar minimiza a la bandeja del sistema; haz clic derecho en el icono de la bandeja para Preferencias, Historial, Diagnóstico o Salir."
       }
     },
     {
@@ -5656,18 +5644,6 @@
       }
     },
     {
-      "field": "WelcomeWindow_MultiInstanceIsOnBy",
-      "en": "Multi-Instance is on by default — Roblox windows open side by side without fighting each other for the singleton.",
-      "translations": {
-        "fr": "Multi-Instance est activé par défaut — les fenêtres Roblox s'ouvrent côte à côte sans se disputer le singleton.",
-        "de": "Multi-Instance ist standardmäßig an — Roblox-Fenster öffnen sich nebeneinander, ohne um den Singleton zu konkurrieren.",
-        "ru": "Multi-Instance включён по умолчанию — окна Roblox открываются рядом, не борясь друг с другом за singleton.",
-        "pt-br": "O Multi-Instance está ativado por padrão — as janelas do Roblox abrem lado a lado sem brigar entre si pelo singleton.",
-        "pl": "Multi-Instance jest domyślnie włączone — okna Roblox otwierają się obok siebie, nie walcząc ze sobą o singleton.",
-        "es": "Multi-Instance está activado de forma predeterminada — las ventanas de Roblox se abren una al lado de la otra sin pelearse por el singleton."
-      }
-    },
-    {
       "field": "WelcomeWindow_OnTheLeftOfA",
       "en": "on the left of a row — drag to reorder.",
       "translations": {
@@ -5677,18 +5653,6 @@
         "pt-br": "à esquerda de uma linha — arraste para reordenar.",
         "pl": "po lewej stronie wiersza — przeciągnij, aby zmienić kolejność.",
         "es": "a la izquierda de una fila — arrastra para reordenar."
-      }
-    },
-    {
-      "field": "WelcomeWindow_OpenGamesAndAddThe",
-      "en": "Open Games and add the place you launch into.",
-      "translations": {
-        "fr": "Ouvrez Jeux et ajoutez la place où vous lancez.",
-        "de": "Öffne Spiele und füge den Ort hinzu, in den du startest.",
-        "ru": "Откройте «Игры» и добавьте место, куда запускаетесь.",
-        "pt-br": "Abra Jogos e adicione o lugar em que você inicia.",
-        "pl": "Otwórz Gry i dodaj miejsce, do którego się uruchamiasz.",
-        "es": "Abre Juegos y añade el lugar en el que inicias."
       }
     },
     {
@@ -5713,30 +5677,6 @@
         "pt-br": "RoRoRo",
         "pl": "RoRoRo",
         "es": "RoRoRo"
-      }
-    },
-    {
-      "field": "WelcomeWindow_RunMultipleRobloxClientsSide",
-      "en": "Run multiple Roblox clients side by side. Three steps and you're set.",
-      "translations": {
-        "fr": "Exécutez plusieurs clients Roblox côte à côte. Trois étapes et c'est prêt.",
-        "de": "Starte mehrere Roblox-Clients nebeneinander. Drei Schritte und du bist startklar.",
-        "ru": "Запускайте несколько клиентов Roblox одновременно. Три шага — и всё готово.",
-        "pt-br": "Execute vários clientes do Roblox lado a lado. Três passos e está pronto.",
-        "pl": "Uruchamiaj wiele klientów Roblox obok siebie. Trzy kroki i gotowe.",
-        "es": "Ejecuta varios clientes de Roblox uno al lado del otro. Tres pasos y listo."
-      }
-    },
-    {
-      "field": "WelcomeWindow_SearchByNameOrPaste",
-      "en": "Search by name or paste a roblox.com/games/<id> URL. The default game is what Launch As uses.",
-      "translations": {
-        "fr": "Recherchez par nom ou collez une URL roblox.com/games/<id>. Le jeu par défaut est celui qu'utilise Lancer en tant que.",
-        "de": "Suche nach Namen oder füge eine roblox.com/games/<id>-URL ein. Das Standardspiel ist das, was Starten als verwendet.",
-        "ru": "Найдите по названию или вставьте URL roblox.com/games/<id>. Игру по умолчанию использует «Запустить как».",
-        "pt-br": "Busque por nome ou cole uma URL roblox.com/games/<id>. O jogo padrão é o que o Iniciar como usa.",
-        "pl": "Wyszukaj według nazwy lub wklej adres roblox.com/games/<id>. Domyślna gra to ta, której używa Uruchom jako.",
-        "es": "Busca por nombre o pega una URL roblox.com/games/<id>. El juego predeterminado es el que usa Iniciar como."
       }
     },
     {
@@ -5900,11 +5840,11 @@
       "en": "Re-authenticate",
       "translations": {
         "fr": "Se réauthentifier",
-        "de": "Erneut anmelden",
-        "ru": "Пройти аутентификацию заново",
+        "de": "Neu anmelden",
+        "ru": "Войти заново",
         "pt-br": "Reautenticar",
-        "pl": "Uwierzytelnij ponownie",
-        "es": "Volver a autenticar"
+        "pl": "Zaloguj ponownie",
+        "es": "Reautenticar"
       }
     },
     {
@@ -7501,6 +7441,654 @@
         "pt-br": "{0} desmarcadas",
         "pl": "{0} odznaczonych",
         "es": "{0} sin seleccionar"
+      }
+    },
+    {
+      "field": "Shell_Health_Expired",
+      "en": "Session expired",
+      "translations": {
+        "fr": "Session expirée",
+        "de": "Sitzung abgelaufen",
+        "ru": "Сессия истекла",
+        "pt-br": "Sessão expirada",
+        "pl": "Sesja wygasła",
+        "es": "Sesión caducada"
+      }
+    },
+    {
+      "field": "Shell_Health_NeedsVerification",
+      "en": "Needs verification",
+      "translations": {
+        "fr": "Vérification requise",
+        "de": "Verifizierung nötig",
+        "ru": "Нужна проверка",
+        "pt-br": "Requer verificação",
+        "pl": "Wymaga weryfikacji",
+        "es": "Requiere verificación"
+      }
+    },
+    {
+      "field": "Shell_Health_Limited",
+      "en": "Limited by Roblox",
+      "translations": {
+        "fr": "Limité par Roblox",
+        "de": "Von Roblox eingeschränkt",
+        "ru": "Ограничено Roblox",
+        "pt-br": "Limitado pelo Roblox",
+        "pl": "Ograniczone przez Roblox",
+        "es": "Limitado por Roblox"
+      }
+    },
+    {
+      "field": "Shell_Health_FollowMarked",
+      "en": "Joins by following",
+      "translations": {
+        "fr": "Rejoint en suivant",
+        "de": "Tritt per Folgen bei",
+        "ru": "Присоединяется следом",
+        "pt-br": "Entra seguindo",
+        "pl": "Dołącza przez znajomego",
+        "es": "Se une siguiendo"
+      }
+    },
+    {
+      "field": "Shell_Health_Action_Reauthenticate",
+      "en": "Re-authenticate",
+      "translations": {
+        "fr": "Se réauthentifier",
+        "de": "Neu anmelden",
+        "ru": "Войти заново",
+        "pt-br": "Reautenticar",
+        "pl": "Zaloguj ponownie",
+        "es": "Reautenticar"
+      }
+    },
+    {
+      "field": "Shell_Health_Action_OpenRoblox",
+      "en": "Open Roblox for this account",
+      "translations": {
+        "fr": "Ouvrir Roblox pour ce compte",
+        "de": "Roblox für dieses Konto öffnen",
+        "ru": "Открыть Roblox для этого аккаунта",
+        "pt-br": "Abrir o Roblox para esta conta",
+        "pl": "Otwórz Roblox dla tego konta",
+        "es": "Abrir Roblox para esta cuenta"
+      }
+    },
+    {
+      "field": "Shell_Health_Action_ToggleMark",
+      "en": "Toggle the mark",
+      "translations": {
+        "fr": "Basculer la marque",
+        "de": "Markierung umschalten",
+        "ru": "Переключить отметку",
+        "pt-br": "Alternar a marcação",
+        "pl": "Przełącz oznaczenie",
+        "es": "Alternar la marca"
+      }
+    },
+    {
+      "field": "Shell_Health_BadgeName",
+      "en": "{0}, {1}",
+      "translations": {
+        "fr": "{0}, {1}",
+        "de": "{0}, {1}",
+        "ru": "{0}, {1}",
+        "pt-br": "{0}, {1}",
+        "pl": "{0}, {1}",
+        "es": "{0}, {1}"
+      }
+    },
+    {
+      "field": "Shell_Fact_Masked",
+      "en": "••••",
+      "translations": {
+        "fr": "••••",
+        "de": "••••",
+        "ru": "••••",
+        "pt-br": "••••",
+        "pl": "••••",
+        "es": "••••"
+      }
+    },
+    {
+      "field": "Shell_Fact_Hidden",
+      "en": "hidden",
+      "translations": {
+        "fr": "masqué",
+        "de": "verborgen",
+        "ru": "скрыто",
+        "pt-br": "oculto",
+        "pl": "ukryte",
+        "es": "oculto"
+      }
+    },
+    {
+      "field": "Shell_Fact_Unknown",
+      "en": "unknown",
+      "translations": {
+        "fr": "inconnu",
+        "de": "unbekannt",
+        "ru": "неизвестно",
+        "pt-br": "desconhecido",
+        "pl": "nieznane",
+        "es": "desconocido"
+      }
+    },
+    {
+      "field": "Shell_Fact_Robux_Name",
+      "en": "Robux, {0}",
+      "translations": {
+        "fr": "Robux, {0}",
+        "de": "Robux, {0}",
+        "ru": "Robux, {0}",
+        "pt-br": "Robux, {0}",
+        "pl": "Robux, {0}",
+        "es": "Robux, {0}"
+      }
+    },
+    {
+      "field": "Shell_Fact_Membership_Name",
+      "en": "Membership, {0}",
+      "translations": {
+        "fr": "Abonnement, {0}",
+        "de": "Mitgliedschaft, {0}",
+        "ru": "Подписка, {0}",
+        "pt-br": "Assinatura, {0}",
+        "pl": "Członkostwo, {0}",
+        "es": "Membresía, {0}"
+      }
+    },
+    {
+      "field": "Shell_Fact_Friends_Name",
+      "en": "Friends online, {0}",
+      "translations": {
+        "fr": "Amis en ligne, {0}",
+        "de": "Freunde online, {0}",
+        "ru": "Друзья в сети, {0}",
+        "pt-br": "Amigos online, {0}",
+        "pl": "Znajomi online, {0}",
+        "es": "Amigos en línea, {0}"
+      }
+    },
+    {
+      "field": "Shell_Fact_LastPlayed_Name",
+      "en": "Last played, {0}",
+      "translations": {
+        "fr": "Dernière partie, {0}",
+        "de": "Zuletzt gespielt, {0}",
+        "ru": "Последний запуск, {0}",
+        "pt-br": "Última partida, {0}",
+        "pl": "Ostatnio grane, {0}",
+        "es": "Última partida, {0}"
+      }
+    },
+    {
+      "field": "Shell_Fact_Note_Name",
+      "en": "Note, {0}",
+      "translations": {
+        "fr": "Note, {0}",
+        "de": "Notiz, {0}",
+        "ru": "Заметка, {0}",
+        "pt-br": "Nota, {0}",
+        "pl": "Notatka, {0}",
+        "es": "Nota, {0}"
+      }
+    },
+    {
+      "field": "Shell_Fact_FriendsOnline_one",
+      "en": "{0} friend online",
+      "translations": {
+        "fr": "{0} ami en ligne",
+        "de": "{0} Freund online",
+        "ru": "{0} друг в сети",
+        "pt-br": "{0} amigo online",
+        "pl": "{0} znajomy online",
+        "es": "{0} amigo en línea"
+      }
+    },
+    {
+      "field": "Shell_Fact_FriendsOnline_other",
+      "en": "{0} friends online",
+      "translations": {
+        "fr": "{0} amis en ligne",
+        "de": "{0} Freunde online",
+        "ru": "{0} друга в сети",
+        "pt-br": "{0} amigos online",
+        "pl": "{0} znajomych online",
+        "es": "{0} amigos en línea"
+      }
+    },
+    {
+      "field": "Shell_Fact_FriendsOnline_few",
+      "en": "{0} friends online",
+      "translations": {
+        "fr": "{0} amis en ligne",
+        "de": "{0} Freunde online",
+        "ru": "{0} друга в сети",
+        "pt-br": "{0} amigos online",
+        "pl": "{0} znajomych online",
+        "es": "{0} amigos en línea"
+      }
+    },
+    {
+      "field": "Shell_Fact_FriendsOnline_many",
+      "en": "{0} friends online",
+      "translations": {
+        "fr": "{0} amis en ligne",
+        "de": "{0} Freunde online",
+        "ru": "{0} друзей в сети",
+        "pt-br": "{0} amigos online",
+        "pl": "{0} znajomych online",
+        "es": "{0} amigos en línea"
+      }
+    },
+    {
+      "field": "Shell_Fact_Updated",
+      "en": "Updated {0}",
+      "translations": {
+        "fr": "Mis à jour {0}",
+        "de": "Aktualisiert {0}",
+        "ru": "Обновлено {0}",
+        "pt-br": "Atualizado {0}",
+        "pl": "Zaktualizowano {0}",
+        "es": "Actualizado {0}"
+      }
+    },
+    {
+      "field": "Shell_Fact_UpdatedFailed",
+      "en": "Updated {0} · last try failed ({1})",
+      "translations": {
+        "fr": "Mis à jour {0} · dernier essai échoué ({1})",
+        "de": "Aktualisiert {0} · letzter Versuch fehlgeschlagen ({1})",
+        "ru": "Обновлено {0} · последняя попытка не удалась ({1})",
+        "pt-br": "Atualizado {0} · a última tentativa falhou ({1})",
+        "pl": "Zaktualizowano {0} · ostatnia próba nie powiodła się ({1})",
+        "es": "Actualizado {0} · el último intento falló ({1})"
+      }
+    },
+    {
+      "field": "Shell_Fact_NeverUpdatedFailed",
+      "en": "Not updated yet · last try failed ({0})",
+      "translations": {
+        "fr": "Pas encore mis à jour · dernier essai échoué ({0})",
+        "de": "Noch nicht aktualisiert · letzter Versuch fehlgeschlagen ({0})",
+        "ru": "Ещё не обновлено · последняя попытка не удалась ({0})",
+        "pt-br": "Ainda não atualizado · a última tentativa falhou ({0})",
+        "pl": "Jeszcze nie zaktualizowano · ostatnia próba nie powiodła się ({0})",
+        "es": "Aún sin actualizar · el último intento falló ({0})"
+      }
+    },
+    {
+      "field": "Shell_Panel_Expander_Name",
+      "en": "Show recent games for {0}",
+      "translations": {
+        "fr": "Afficher les jeux récents de {0}",
+        "de": "Letzte Spiele von {0} anzeigen",
+        "ru": "Показать недавние игры для {0}",
+        "pt-br": "Mostrar jogos recentes de {0}",
+        "pl": "Pokaż ostatnie gry konta {0}",
+        "es": "Mostrar juegos recientes de {0}"
+      }
+    },
+    {
+      "field": "Shell_Panel_Heading_Recent",
+      "en": "RECENT",
+      "translations": {
+        "fr": "RÉCENTS",
+        "de": "ZULETZT",
+        "ru": "НЕДАВНИЕ",
+        "pt-br": "RECENTES",
+        "pl": "OSTATNIE",
+        "es": "RECIENTES"
+      }
+    },
+    {
+      "field": "Shell_Panel_Heading_Favourites",
+      "en": "FAVOURITES",
+      "translations": {
+        "fr": "FAVORIS",
+        "de": "FAVORITEN",
+        "ru": "ИЗБРАННОЕ",
+        "pt-br": "FAVORITOS",
+        "pl": "ULUBIONE",
+        "es": "FAVORITOS"
+      }
+    },
+    {
+      "field": "Shell_Panel_Heading_PrivateServers",
+      "en": "PRIVATE SERVERS",
+      "translations": {
+        "fr": "SERVEURS PRIVÉS",
+        "de": "PRIVATE SERVER",
+        "ru": "ПРИВАТНЫЕ СЕРВЕРЫ",
+        "pt-br": "SERVIDORES PRIVADOS",
+        "pl": "PRYWATNE SERWERY",
+        "es": "SERVIDORES PRIVADOS"
+      }
+    },
+    {
+      "field": "Shell_Panel_SeeAll",
+      "en": "See all",
+      "translations": {
+        "fr": "Tout voir",
+        "de": "Alle anzeigen",
+        "ru": "Показать все",
+        "pt-br": "Ver tudo",
+        "pl": "Zobacz wszystko",
+        "es": "Ver todo"
+      }
+    },
+    {
+      "field": "Shell_Panel_SeeAll_Favourites_Name",
+      "en": "See all favourites",
+      "translations": {
+        "fr": "Voir tous les favoris",
+        "de": "Alle Favoriten anzeigen",
+        "ru": "Показать все избранное",
+        "pt-br": "Ver todos os favoritos",
+        "pl": "Zobacz wszystkie ulubione",
+        "es": "Ver todos los favoritos"
+      }
+    },
+    {
+      "field": "Shell_Panel_SeeAll_PrivateServers_Name",
+      "en": "See all private servers",
+      "translations": {
+        "fr": "Voir tous les serveurs privés",
+        "de": "Alle privaten Server anzeigen",
+        "ru": "Показать все приватные серверы",
+        "pt-br": "Ver todos os servidores privados",
+        "pl": "Zobacz wszystkie prywatne serwery",
+        "es": "Ver todos los servidores privados"
+      }
+    },
+    {
+      "field": "Shell_Panel_Empty_Recent",
+      "en": "Nothing played yet. Launch a game and it shows up here.",
+      "translations": {
+        "fr": "Rien n'a encore été joué. Lancez un jeu et il apparaîtra ici.",
+        "de": "Noch nichts gespielt. Starte ein Spiel, dann erscheint es hier.",
+        "ru": "Пока ничего не запускалось. Запустите игру, и она появится здесь.",
+        "pt-br": "Nada jogado ainda. Inicie um jogo e ele aparece aqui.",
+        "pl": "Jeszcze w nic nie grano. Uruchom grę, a pojawi się tutaj.",
+        "es": "Todavía no se ha jugado nada. Lanza un juego y aparecerá aquí."
+      }
+    },
+    {
+      "field": "Shell_Panel_Empty_Favourites",
+      "en": "No favourites yet. Save one from Recent, or add games in the Library.",
+      "translations": {
+        "fr": "Aucun favori pour l'instant. Enregistrez-en un depuis Récents ou ajoutez des jeux dans la Bibliothèque.",
+        "de": "Noch keine Favoriten. Speichere einen aus „Zuletzt“ oder füge Spiele in der Bibliothek hinzu.",
+        "ru": "Пока нет избранного. Сохраните игру из списка «Недавние» или добавьте игры в Библиотеке.",
+        "pt-br": "Nenhum favorito ainda. Salve um de Recentes ou adicione jogos na Biblioteca.",
+        "pl": "Brak ulubionych. Zapisz grę z listy Ostatnie albo dodaj gry w Bibliotece.",
+        "es": "Aún no hay favoritos. Guarda uno desde Recientes o añade juegos en la Biblioteca."
+      }
+    },
+    {
+      "field": "Shell_Panel_Empty_PrivateServers",
+      "en": "No private servers saved. Paste a server link in the Library to add one.",
+      "translations": {
+        "fr": "Aucun serveur privé enregistré. Collez un lien de serveur dans la Bibliothèque pour en ajouter un.",
+        "de": "Keine privaten Server gespeichert. Füge einen Serverlink in der Bibliothek ein, um einen hinzuzufügen.",
+        "ru": "Нет сохранённых приватных серверов. Вставьте ссылку на сервер в Библиотеке, чтобы добавить его.",
+        "pt-br": "Nenhum servidor privado salvo. Cole um link de servidor na Biblioteca para adicionar um.",
+        "pl": "Brak zapisanych prywatnych serwerów. Wklej link do serwera w Bibliotece, aby go dodać.",
+        "es": "No hay servidores privados guardados. Pega un enlace de servidor en la Biblioteca para añadir uno."
+      }
+    },
+    {
+      "field": "Shell_Panel_OpenHome",
+      "en": "Open Roblox home",
+      "translations": {
+        "fr": "Ouvrir l'accueil de Roblox",
+        "de": "Roblox-Startseite öffnen",
+        "ru": "Открыть главную Roblox",
+        "pt-br": "Abrir a página inicial do Roblox",
+        "pl": "Otwórz stronę główną Roblox",
+        "es": "Abrir el inicio de Roblox"
+      }
+    },
+    {
+      "field": "Shell_Panel_OpenHome_Name",
+      "en": "Open Roblox home as {0}",
+      "translations": {
+        "fr": "Ouvrir l'accueil de Roblox en tant que {0}",
+        "de": "Roblox-Startseite als {0} öffnen",
+        "ru": "Открыть главную Roblox как {0}",
+        "pt-br": "Abrir a página inicial do Roblox como {0}",
+        "pl": "Otwórz stronę główną Roblox jako {0}",
+        "es": "Abrir el inicio de Roblox como {0}"
+      }
+    },
+    {
+      "field": "Shell_Panel_Note_Placeholder",
+      "en": "Private note, only you see it",
+      "translations": {
+        "fr": "Note privée, visible de vous seul",
+        "de": "Private Notiz, nur für dich sichtbar",
+        "ru": "Личная заметка, видна только вам",
+        "pt-br": "Nota privada, só você vê",
+        "pl": "Prywatna notatka, widoczna tylko dla Ciebie",
+        "es": "Nota privada, solo tú la ves"
+      }
+    },
+    {
+      "field": "Shell_Panel_Note_Name",
+      "en": "Private note for {0}",
+      "translations": {
+        "fr": "Note privée pour {0}",
+        "de": "Private Notiz für {0}",
+        "ru": "Личная заметка для {0}",
+        "pt-br": "Nota privada para {0}",
+        "pl": "Prywatna notatka dla {0}",
+        "es": "Nota privada para {0}"
+      }
+    },
+    {
+      "field": "Shell_Panel_Save",
+      "en": "Save",
+      "translations": {
+        "fr": "Enregistrer",
+        "de": "Speichern",
+        "ru": "Сохранить",
+        "pt-br": "Salvar",
+        "pl": "Zapisz",
+        "es": "Guardar"
+      }
+    },
+    {
+      "field": "Shell_Panel_Save_Name",
+      "en": "Save {0} to favourites",
+      "translations": {
+        "fr": "Enregistrer {0} dans les favoris",
+        "de": "{0} zu den Favoriten hinzufügen",
+        "ru": "Сохранить {0} в избранное",
+        "pt-br": "Salvar {0} nos favoritos",
+        "pl": "Zapisz {0} w ulubionych",
+        "es": "Guardar {0} en favoritos"
+      }
+    },
+    {
+      "field": "Shell_Panel_Entry_Name",
+      "en": "Launch {0}, {1}",
+      "translations": {
+        "fr": "Lancer {0}, {1}",
+        "de": "{0} starten, {1}",
+        "ru": "Запустить {0}, {1}",
+        "pt-br": "Iniciar {0}, {1}",
+        "pl": "Uruchom {0}, {1}",
+        "es": "Lanzar {0}, {1}"
+      }
+    },
+    {
+      "field": "Shell_Panel_Tag_Default",
+      "en": "DEFAULT",
+      "translations": {
+        "fr": "PAR DÉFAUT",
+        "de": "STANDARD",
+        "ru": "ПО УМОЛЧ.",
+        "pt-br": "PADRÃO",
+        "pl": "DOMYŚLNE",
+        "es": "PREDET."
+      }
+    },
+    {
+      "field": "Shell_Panel_Tag_Private",
+      "en": "PRIVATE",
+      "translations": {
+        "fr": "PRIVÉ",
+        "de": "PRIVAT",
+        "ru": "ПРИВАТНЫЙ",
+        "pt-br": "PRIVADO",
+        "pl": "PRYWATNY",
+        "es": "PRIVADO"
+      }
+    },
+    {
+      "field": "Shell_Panel_Meta_NotPlayed",
+      "en": "Not played by this account",
+      "translations": {
+        "fr": "Pas joué par ce compte",
+        "de": "Von diesem Konto nicht gespielt",
+        "ru": "Этот аккаунт не играл",
+        "pt-br": "Não jogado por esta conta",
+        "pl": "Nie grano z tego konta",
+        "es": "Esta cuenta no lo ha jugado"
+      }
+    },
+    {
+      "field": "Shell_Panel_Meta_InRecent",
+      "en": "{0} in recent sessions",
+      "translations": {
+        "fr": "{0} dans les sessions récentes",
+        "de": "{0} in letzten Sitzungen",
+        "ru": "{0} в недавних сессиях",
+        "pt-br": "{0} em sessões recentes",
+        "pl": "{0} w ostatnich sesjach",
+        "es": "{0} en sesiones recientes"
+      }
+    },
+    {
+      "field": "Shell_Panel_Duration_Minutes",
+      "en": "{0} min",
+      "translations": {
+        "fr": "{0} min",
+        "de": "{0} Min.",
+        "ru": "{0} мин",
+        "pt-br": "{0} min",
+        "pl": "{0} min",
+        "es": "{0} min"
+      }
+    },
+    {
+      "field": "Shell_Panel_Duration_Hours",
+      "en": "{0} hr",
+      "translations": {
+        "fr": "{0} h",
+        "de": "{0} Std.",
+        "ru": "{0} ч",
+        "pt-br": "{0} h",
+        "pl": "{0} godz",
+        "es": "{0} h"
+      }
+    },
+    {
+      "field": "Shell_Panel_Duration_LessThanMinute",
+      "en": "<1 min",
+      "translations": {
+        "fr": "<1 min",
+        "de": "<1 Min.",
+        "ru": "<1 мин",
+        "pt-br": "<1 min",
+        "pl": "<1 min",
+        "es": "<1 min"
+      }
+    },
+    {
+      "field": "Shell_Panel_Entry_PrivateUnsaved",
+      "en": "This private server is not saved, so it cannot be relaunched from here. Save its link in the Library.",
+      "translations": {
+        "fr": "Ce serveur privé n'est pas enregistré, il ne peut donc pas être relancé d'ici. Enregistrez son lien dans la Bibliothèque.",
+        "de": "Dieser private Server ist nicht gespeichert und lässt sich von hier nicht erneut starten. Speichere seinen Link in der Bibliothek.",
+        "ru": "Этот приватный сервер не сохранён, поэтому запустить его отсюда снова нельзя. Сохраните его ссылку в Библиотеке.",
+        "pt-br": "Este servidor privado não está salvo, então não dá para reiniciá-lo daqui. Salve o link dele na Biblioteca.",
+        "pl": "Ten prywatny serwer nie jest zapisany, więc nie można go stąd ponownie uruchomić. Zapisz jego link w Bibliotece.",
+        "es": "Este servidor privado no está guardado, así que no se puede volver a lanzar desde aquí. Guarda su enlace en la Biblioteca."
+      }
+    },
+    {
+      "field": "Shell_Status_NeedsVerification",
+      "en": "Needs verification — open Roblox for this account",
+      "translations": {
+        "fr": "Vérification requise — ouvrez Roblox pour ce compte",
+        "de": "Verifizierung nötig — Roblox für dieses Konto öffnen",
+        "ru": "Нужна проверка — откройте Roblox для этого аккаунта",
+        "pt-br": "Requer verificação — abra o Roblox para esta conta",
+        "pl": "Wymaga weryfikacji — otwórz Roblox dla tego konta",
+        "es": "Requiere verificación: abre Roblox para esta cuenta"
+      }
+    },
+    {
+      "field": "Shell_Status_FollowMarkedReady",
+      "en": "Joins by following · Ready",
+      "translations": {
+        "fr": "Rejoint en suivant · Prêt",
+        "de": "Tritt per Folgen bei · Bereit",
+        "ru": "Присоединяется следом · Готово",
+        "pt-br": "Entra seguindo · Pronto",
+        "pl": "Dołącza przez podążanie · Gotowe",
+        "es": "Se une siguiendo · Listo"
+      }
+    },
+    {
+      "field": "Shell_Launch_Clause_FollowMarked_one",
+      "en": "{0} will follow the main",
+      "translations": {
+        "fr": "{0} suivra le compte principal",
+        "de": "{0} folgt dem Hauptkonto",
+        "ru": "{0} последует за основным аккаунтом",
+        "pt-br": "{0} seguirá a conta principal",
+        "pl": "{0} podąży za kontem głównym",
+        "es": "{0} seguirá a la cuenta principal"
+      }
+    },
+    {
+      "field": "Shell_Launch_Clause_FollowMarked_other",
+      "en": "{0} will follow the main",
+      "translations": {
+        "fr": "{0} suivront le compte principal",
+        "de": "{0} folgen dem Hauptkonto",
+        "ru": "{0} последуют за основным аккаунтом",
+        "pt-br": "{0} seguirão a conta principal",
+        "pl": "{0} podąży za kontem głównym",
+        "es": "{0} seguirán a la cuenta principal"
+      }
+    },
+    {
+      "field": "Shell_Launch_Clause_FollowMarked_few",
+      "en": "{0} will follow the main",
+      "translations": {
+        "fr": "{0} suivront le compte principal",
+        "de": "{0} folgen dem Hauptkonto",
+        "ru": "{0} последуют за основным аккаунтом",
+        "pt-br": "{0} seguirão a conta principal",
+        "pl": "{0} podążą za kontem głównym",
+        "es": "{0} seguirán a la cuenta principal"
+      }
+    },
+    {
+      "field": "Shell_Launch_Clause_FollowMarked_many",
+      "en": "{0} will follow the main",
+      "translations": {
+        "fr": "{0} suivront le compte principal",
+        "de": "{0} folgen dem Hauptkonto",
+        "ru": "{0} последуют за основным аккаунтом",
+        "pt-br": "{0} seguirão a conta principal",
+        "pl": "{0} podąży za kontem głównym",
+        "es": "{0} seguirán a la cuenta principal"
       }
     },
     {
@@ -9556,6 +10144,66 @@
       }
     },
     {
+      "field": "Diag_Label_Channel",
+      "en": "Channel",
+      "translations": {
+        "fr": "Canal",
+        "de": "Kanal",
+        "ru": "Канал",
+        "pt-br": "Canal",
+        "pl": "Kanał",
+        "es": "Canal"
+      }
+    },
+    {
+      "field": "Diag_Channel_Store",
+      "en": "Microsoft Store",
+      "translations": {
+        "fr": "Microsoft Store",
+        "de": "Microsoft Store",
+        "ru": "Microsoft Store",
+        "pt-br": "Microsoft Store",
+        "pl": "Microsoft Store",
+        "es": "Microsoft Store"
+      }
+    },
+    {
+      "field": "Diag_Channel_Sideload",
+      "en": "Sideload",
+      "translations": {
+        "fr": "Installation manuelle",
+        "de": "Sideload",
+        "ru": "Ручная установка",
+        "pt-br": "Instalação manual",
+        "pl": "Instalacja ręczna",
+        "es": "Instalación manual"
+      }
+    },
+    {
+      "field": "Diag_Channel_DirectDownload",
+      "en": "Direct download",
+      "translations": {
+        "fr": "Téléchargement direct",
+        "de": "Direkter Download",
+        "ru": "Прямая загрузка",
+        "pt-br": "Download direto",
+        "pl": "Pobranie bezpośrednie",
+        "es": "Descarga directa"
+      }
+    },
+    {
+      "field": "Diag_Channel_Dev",
+      "en": "Dev build",
+      "translations": {
+        "fr": "Build de développement",
+        "de": "Entwickler-Build",
+        "ru": "Сборка разработчика",
+        "pt-br": "Build de desenvolvimento",
+        "pl": "Kompilacja deweloperska",
+        "es": "Compilación de desarrollo"
+      }
+    },
+    {
       "field": "Diag_Label_DotNet",
       "en": ".NET runtime",
       "translations": {
@@ -10285,6 +10933,18 @@
         "pt-br": "Ontem",
         "pl": "Wczoraj",
         "es": "Ayer"
+      }
+    },
+    {
+      "field": "Shell_History_FollowingAFriend",
+      "en": "Following a friend",
+      "translations": {
+        "fr": "Suit un ami",
+        "de": "Folgt einem Freund",
+        "ru": "Следует за другом",
+        "pt-br": "Seguindo um amigo",
+        "pl": "Podąża za znajomym",
+        "es": "Siguiendo a un amigo"
       }
     },
     {
@@ -12233,14 +12893,14 @@
     },
     {
       "field": "Shell_Title_Games",
-      "en": "Games",
+      "en": "Library",
       "translations": {
-        "fr": "Jeux",
-        "de": "Spiele",
-        "ru": "Игры",
-        "pt-br": "Jogos",
-        "pl": "Gry",
-        "es": "Juegos"
+        "fr": "Bibliothèque",
+        "de": "Bibliothek",
+        "ru": "Библиотека",
+        "pt-br": "Biblioteca",
+        "pl": "Biblioteka",
+        "es": "Biblioteca"
       }
     },
     {
@@ -13573,6 +14233,534 @@
         "pt-br": "{0} continua parando ao iniciar. Reiniciar não vai resolver: mande o seu log do RoRoRo para a 626 Labs.",
         "pl": "{0} raz po raz przerywa działanie przy uruchamianiu. Ponowne uruchomienie tego nie naprawi: wyślij swój log RoRoRo do 626 Labs.",
         "es": "{0} se detiene una y otra vez al iniciarse. Reiniciarlo no lo arreglará: envía tu registro de RoRoRo a 626 Labs."
+      }
+    },
+    {
+      "field": "Library_Box_Placeholder",
+      "en": "Search your games or paste a Roblox link",
+      "translations": {
+        "fr": "Cherchez vos jeux ou collez un lien Roblox",
+        "de": "Spiele durchsuchen oder Roblox-Link einfügen",
+        "ru": "Ищите свои игры или вставьте ссылку Roblox",
+        "pt-br": "Pesquise seus jogos ou cole um link do Roblox",
+        "pl": "Szukaj w swoich grach lub wklej link Roblox",
+        "es": "Busca tus juegos o pega un enlace de Roblox"
+      }
+    },
+    {
+      "field": "Library_Box_Name",
+      "en": "Search the Library or paste a Roblox link",
+      "translations": {
+        "fr": "Rechercher dans la Bibliothèque ou coller un lien Roblox",
+        "de": "Bibliothek durchsuchen oder Roblox-Link einfügen",
+        "ru": "Поиск по Библиотеке или вставка ссылки Roblox",
+        "pt-br": "Pesquisar na Biblioteca ou colar um link do Roblox",
+        "pl": "Przeszukaj Bibliotekę lub wklej link Roblox",
+        "es": "Buscar en la Biblioteca o pegar un enlace de Roblox"
+      }
+    },
+    {
+      "field": "Library_Box_Tip",
+      "en": "Type to filter. Enter adds a pasted game, place id or private-server link, or searches Roblox.",
+      "translations": {
+        "fr": "Tapez pour filtrer. Entrée ajoute un jeu, un identifiant de lieu ou un lien de serveur privé collé, ou lance une recherche sur Roblox.",
+        "de": "Tippen filtert. Enter fügt ein eingefügtes Spiel, eine Place-ID oder einen Link zu einem privaten Server hinzu oder durchsucht Roblox.",
+        "ru": "Печатайте для фильтрации. Enter добавляет вставленную игру, ID места или ссылку на приватный сервер либо запускает поиск в Roblox.",
+        "pt-br": "Digite para filtrar. Enter adiciona um jogo, ID de local ou link de servidor privado colado, ou pesquisa no Roblox.",
+        "pl": "Pisz, aby filtrować. Enter dodaje wklejoną grę, ID miejsca lub link do prywatnego serwera albo przeszukuje Roblox.",
+        "es": "Escribe para filtrar. Intro añade un juego, un id de lugar o un enlace de servidor privado pegado, o busca en Roblox."
+      }
+    },
+    {
+      "field": "Library_View_Name",
+      "en": "Library layout",
+      "translations": {
+        "fr": "Affichage de la Bibliothèque",
+        "de": "Bibliothek-Ansicht",
+        "ru": "Вид Библиотеки",
+        "pt-br": "Exibição da Biblioteca",
+        "pl": "Widok Biblioteki",
+        "es": "Vista de la Biblioteca"
+      }
+    },
+    {
+      "field": "Library_View_Grid",
+      "en": "Grid",
+      "translations": {
+        "fr": "Grille",
+        "de": "Raster",
+        "ru": "Сетка",
+        "pt-br": "Grade",
+        "pl": "Siatka",
+        "es": "Cuadrícula"
+      }
+    },
+    {
+      "field": "Library_View_List",
+      "en": "List",
+      "translations": {
+        "fr": "Liste",
+        "de": "Liste",
+        "ru": "Список",
+        "pt-br": "Lista",
+        "pl": "Lista",
+        "es": "Lista"
+      }
+    },
+    {
+      "field": "Library_Filters_Name",
+      "en": "Show these kinds",
+      "translations": {
+        "fr": "Afficher ces types",
+        "de": "Diese Arten anzeigen",
+        "ru": "Показывать эти типы",
+        "pt-br": "Mostrar estes tipos",
+        "pl": "Pokaż te rodzaje",
+        "es": "Mostrar estos tipos"
+      }
+    },
+    {
+      "field": "Library_Chip_Recent",
+      "en": "Recent",
+      "translations": {
+        "fr": "Récents",
+        "de": "Zuletzt",
+        "ru": "Недавние",
+        "pt-br": "Recentes",
+        "pl": "Ostatnie",
+        "es": "Recientes"
+      }
+    },
+    {
+      "field": "Library_Chip_Favourites",
+      "en": "Favourites",
+      "translations": {
+        "fr": "Favoris",
+        "de": "Favoriten",
+        "ru": "Избранное",
+        "pt-br": "Favoritos",
+        "pl": "Ulubione",
+        "es": "Favoritos"
+      }
+    },
+    {
+      "field": "Library_Chip_PrivateServers",
+      "en": "Private servers",
+      "translations": {
+        "fr": "Serveurs privés",
+        "de": "Private Server",
+        "ru": "Приватные серверы",
+        "pt-br": "Servidores privados",
+        "pl": "Prywatne serwery",
+        "es": "Servidores privados"
+      }
+    },
+    {
+      "field": "Library_Play",
+      "en": "Play",
+      "translations": {
+        "fr": "Jouer",
+        "de": "Spielen",
+        "ru": "Играть",
+        "pt-br": "Jogar",
+        "pl": "Graj",
+        "es": "Jugar"
+      }
+    },
+    {
+      "field": "Library_PlayAs",
+      "en": "Play as",
+      "translations": {
+        "fr": "Jouer avec",
+        "de": "Spielen als",
+        "ru": "Играть как",
+        "pt-br": "Jogar como",
+        "pl": "Graj jako",
+        "es": "Jugar como"
+      }
+    },
+    {
+      "field": "Library_Play_Name",
+      "en": "Play {0}",
+      "translations": {
+        "fr": "Jouer à {0}",
+        "de": "{0} spielen",
+        "ru": "Играть в {0}",
+        "pt-br": "Jogar {0}",
+        "pl": "Graj w {0}",
+        "es": "Jugar a {0}"
+      }
+    },
+    {
+      "field": "Library_PlayAs_Name",
+      "en": "Play {0} as another account",
+      "translations": {
+        "fr": "Jouer à {0} avec un autre compte",
+        "de": "{0} mit einem anderen Konto spielen",
+        "ru": "Играть в {0} с другого аккаунта",
+        "pt-br": "Jogar {0} com outra conta",
+        "pl": "Graj w {0} z innego konta",
+        "es": "Jugar a {0} con otra cuenta"
+      }
+    },
+    {
+      "field": "Library_More_Name",
+      "en": "More actions for {0}",
+      "translations": {
+        "fr": "Plus d'actions pour {0}",
+        "de": "Weitere Aktionen für {0}",
+        "ru": "Другие действия для {0}",
+        "pt-br": "Mais ações para {0}",
+        "pl": "Więcej działań dla {0}",
+        "es": "Más acciones para {0}"
+      }
+    },
+    {
+      "field": "Library_Meta_NeverPlayed",
+      "en": "Never played",
+      "translations": {
+        "fr": "Jamais joué",
+        "de": "Nie gespielt",
+        "ru": "Ещё не играли",
+        "pt-br": "Nunca jogado",
+        "pl": "Nigdy nie grano",
+        "es": "Nunca jugado"
+      }
+    },
+    {
+      "field": "Library_Meta_Played",
+      "en": "{0} · {1}",
+      "translations": {
+        "fr": "{0} · {1}",
+        "de": "{0} · {1}",
+        "ru": "{0} · {1}",
+        "pt-br": "{0} · {1}",
+        "pl": "{0} · {1}",
+        "es": "{0} · {1}"
+      }
+    },
+    {
+      "field": "Library_Kind_Favourite",
+      "en": "Favourite",
+      "translations": {
+        "fr": "Favori",
+        "de": "Favorit",
+        "ru": "Избранное",
+        "pt-br": "Favorito",
+        "pl": "Ulubiona",
+        "es": "Favorito"
+      }
+    },
+    {
+      "field": "Library_Kind_PrivateServer",
+      "en": "Private server",
+      "translations": {
+        "fr": "Serveur privé",
+        "de": "Privater Server",
+        "ru": "Приватный сервер",
+        "pt-br": "Servidor privado",
+        "pl": "Prywatny serwer",
+        "es": "Servidor privado"
+      }
+    },
+    {
+      "field": "Library_Kind_Recent",
+      "en": "Recent",
+      "translations": {
+        "fr": "Récent",
+        "de": "Zuletzt",
+        "ru": "Недавняя",
+        "pt-br": "Recente",
+        "pl": "Ostatnia",
+        "es": "Reciente"
+      }
+    },
+    {
+      "field": "Library_Col_Game",
+      "en": "Game",
+      "translations": {
+        "fr": "Jeu",
+        "de": "Spiel",
+        "ru": "Игра",
+        "pt-br": "Jogo",
+        "pl": "Gra",
+        "es": "Juego"
+      }
+    },
+    {
+      "field": "Library_Col_Kind",
+      "en": "Kind",
+      "translations": {
+        "fr": "Type",
+        "de": "Art",
+        "ru": "Тип",
+        "pt-br": "Tipo",
+        "pl": "Rodzaj",
+        "es": "Tipo"
+      }
+    },
+    {
+      "field": "Library_Col_LastPlayed",
+      "en": "Last played",
+      "translations": {
+        "fr": "Dernière partie",
+        "de": "Zuletzt gespielt",
+        "ru": "Последний запуск",
+        "pt-br": "Última partida",
+        "pl": "Ostatnio grane",
+        "es": "Última partida"
+      }
+    },
+    {
+      "field": "Library_Col_Total",
+      "en": "Total",
+      "translations": {
+        "fr": "Total",
+        "de": "Gesamt",
+        "ru": "Всего",
+        "pt-br": "Total",
+        "pl": "Łącznie",
+        "es": "Total"
+      }
+    },
+    {
+      "field": "GamesPage_EmptyLibrary",
+      "en": "Your Library is empty.",
+      "translations": {
+        "fr": "Votre Bibliothèque est vide.",
+        "de": "Deine Bibliothek ist leer.",
+        "ru": "Ваша Библиотека пуста.",
+        "pt-br": "Sua Biblioteca está vazia.",
+        "pl": "Twoja Biblioteka jest pusta.",
+        "es": "Tu Biblioteca está vacía."
+      }
+    },
+    {
+      "field": "GamesPage_EmptyLibrary_Hint",
+      "en": "Search for a game or paste a game or private-server link above. Saved games show up in every account's panel.",
+      "translations": {
+        "fr": "Recherchez un jeu ci-dessus ou collez le lien d'un jeu ou d'un serveur privé. Les jeux enregistrés apparaissent dans le panneau de chaque compte.",
+        "de": "Suche oben nach einem Spiel oder füge den Link eines Spiels oder privaten Servers ein. Gespeicherte Spiele erscheinen im Bereich jedes Kontos.",
+        "ru": "Найдите игру выше или вставьте ссылку на игру или приватный сервер. Сохранённые игры появятся на панели каждого аккаунта.",
+        "pt-br": "Pesquise um jogo acima ou cole o link de um jogo ou de um servidor privado. Os jogos salvos aparecem no painel de cada conta.",
+        "pl": "Wyszukaj grę powyżej lub wklej link do gry albo prywatnego serwera. Zapisane gry pojawiają się w panelu każdego konta.",
+        "es": "Busca un juego arriba o pega el enlace de un juego o de un servidor privado. Los juegos guardados aparecen en el panel de cada cuenta."
+      }
+    },
+    {
+      "field": "Library_NoMatch",
+      "en": "Nothing in your Library matches. Press Enter to search Roblox.",
+      "translations": {
+        "fr": "Rien dans votre Bibliothèque ne correspond. Appuyez sur Entrée pour chercher sur Roblox.",
+        "de": "Keine Treffer in deiner Bibliothek. Drücke Enter, um Roblox zu durchsuchen.",
+        "ru": "В вашей Библиотеке ничего не найдено. Нажмите Enter, чтобы искать в Roblox.",
+        "pt-br": "Nada na sua Biblioteca corresponde. Pressione Enter para buscar no Roblox.",
+        "pl": "Nic w Twojej Bibliotece nie pasuje. Naciśnij Enter, aby przeszukać Roblox.",
+        "es": "Nada en tu Biblioteca coincide. Pulsa Intro para buscar en Roblox."
+      }
+    },
+    {
+      "field": "Library_FromRoblox",
+      "en": "From Roblox",
+      "translations": {
+        "fr": "Depuis Roblox",
+        "de": "Von Roblox",
+        "ru": "Из Roblox",
+        "pt-br": "Do Roblox",
+        "pl": "Z Roblox",
+        "es": "Desde Roblox"
+      }
+    },
+    {
+      "field": "Library_By",
+      "en": "by {0}",
+      "translations": {
+        "fr": "par {0}",
+        "de": "von {0}",
+        "ru": "автор: {0}",
+        "pt-br": "por {0}",
+        "pl": "autor: {0}",
+        "es": "de {0}"
+      }
+    },
+    {
+      "field": "Library_Playing",
+      "en": "{0} playing",
+      "translations": {
+        "fr": "{0} en jeu",
+        "de": "{0} spielen gerade",
+        "ru": "играют: {0}",
+        "pt-br": "{0} jogando",
+        "pl": "grają: {0}",
+        "es": "{0} jugando"
+      }
+    },
+    {
+      "field": "Library_PlaceId",
+      "en": "Place ID {0}",
+      "translations": {
+        "fr": "ID du lieu {0}",
+        "de": "Place-ID {0}",
+        "ru": "ID места {0}",
+        "pt-br": "ID do local {0}",
+        "pl": "ID miejsca {0}",
+        "es": "ID de lugar {0}"
+      }
+    },
+    {
+      "field": "Library_Cancel",
+      "en": "Cancel",
+      "translations": {
+        "fr": "Annuler",
+        "de": "Abbrechen",
+        "ru": "Отмена",
+        "pt-br": "Cancelar",
+        "pl": "Anuluj",
+        "es": "Cancelar"
+      }
+    },
+    {
+      "field": "Library_PlayAs_Menu_Name",
+      "en": "Choose an account to play as",
+      "translations": {
+        "fr": "Choisissez un compte pour jouer",
+        "de": "Konto zum Spielen wählen",
+        "ru": "Выберите аккаунт для игры",
+        "pt-br": "Escolha uma conta para jogar",
+        "pl": "Wybierz konto, którym chcesz grać",
+        "es": "Elige una cuenta con la que jugar"
+      }
+    },
+    {
+      "field": "Library_PlayAs_ExpiredReason",
+      "en": "Session expired. Re-authenticate this account in the main window.",
+      "translations": {
+        "fr": "Session expirée. Réauthentifiez ce compte dans la fenêtre principale.",
+        "de": "Sitzung abgelaufen. Melde dieses Konto im Hauptfenster erneut an.",
+        "ru": "Сессия истекла. Пройдите аутентификацию для этого аккаунта заново в главном окне.",
+        "pt-br": "Sessão expirada. Reautentique esta conta na janela principal.",
+        "pl": "Sesja wygasła. Uwierzytelnij to konto ponownie w głównym oknie.",
+        "es": "Sesión caducada. Vuelve a autenticar esta cuenta en la ventana principal."
+      }
+    },
+    {
+      "field": "Library_PlayAs_Item_Name",
+      "en": "{0}, {1}",
+      "translations": {
+        "fr": "{0}, {1}",
+        "de": "{0}, {1}",
+        "ru": "{0}, {1}",
+        "pt-br": "{0}, {1}",
+        "pl": "{0}, {1}",
+        "es": "{0}, {1}"
+      }
+    },
+    {
+      "field": "Library_NoAccount",
+      "en": "Add an account first, then play.",
+      "translations": {
+        "fr": "Ajoutez d'abord un compte, puis jouez.",
+        "de": "Füge zuerst ein Konto hinzu, dann kannst du spielen.",
+        "ru": "Сначала добавьте аккаунт, потом играйте.",
+        "pt-br": "Adicione uma conta primeiro e depois jogue.",
+        "pl": "Najpierw dodaj konto, potem graj.",
+        "es": "Añade primero una cuenta y luego juega."
+      }
+    },
+    {
+      "field": "Shell_Games_PrivateSuffix",
+      "en": "(private server)",
+      "translations": {
+        "fr": "(serveur privé)",
+        "de": "(privater Server)",
+        "ru": "(приватный сервер)",
+        "pt-br": "(servidor privado)",
+        "pl": "(prywatny serwer)",
+        "es": "(servidor privado)"
+      }
+    },
+    {
+      "field": "Library_Add_Name",
+      "en": "Add {0} to the Library",
+      "translations": {
+        "fr": "Ajouter {0} à la Bibliothèque",
+        "de": "{0} zur Bibliothek hinzufügen",
+        "ru": "Добавить {0} в Библиотеку",
+        "pt-br": "Adicionar {0} à Biblioteca",
+        "pl": "Dodaj {0} do Biblioteki",
+        "es": "Añadir {0} a la Biblioteca"
+      }
+    },
+    {
+      "field": "WelcomeWindow_OnePlaceToLaunchRoblox",
+      "en": "One place to launch Roblox: your account, your games, your settings. Add more accounts later and they run side by side.",
+      "translations": {
+        "fr": "Un seul endroit pour lancer Roblox : votre compte, vos jeux, vos réglages. Ajoutez d'autres comptes plus tard et ils s'exécuteront côte à côte.",
+        "de": "Ein Ort zum Starten von Roblox: dein Konto, deine Spiele, deine Einstellungen. Füge später weitere Konten hinzu, dann laufen sie nebeneinander.",
+        "ru": "Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте ещё аккаунты позже, и они будут работать бок о бок.",
+        "pt-br": "Um só lugar para iniciar o Roblox: sua conta, seus jogos, suas configurações. Adicione mais contas depois e elas rodam lado a lado.",
+        "pl": "Jedno miejsce do uruchamiania Roblox: twoje konto, twoje gry, twoje ustawienia. Dodaj później więcej kont, a będą działać obok siebie.",
+        "es": "Un lugar para iniciar Roblox: tu cuenta, tus juegos, tus ajustes. Añade más cuentas después y se ejecutarán una al lado de la otra."
+      }
+    },
+    {
+      "field": "WelcomeWindow_PickOrPlayFromThePanel",
+      "en": "Play from the panel under your account.",
+      "translations": {
+        "fr": "Jouez depuis le panneau sous votre compte.",
+        "de": "Spiele über das Panel unter deinem Konto.",
+        "ru": "Играйте с панели под вашим аккаунтом.",
+        "pt-br": "Jogue pelo painel sob a sua conta.",
+        "pl": "Graj z panelu pod swoim kontem.",
+        "es": "Juega desde el panel bajo tu cuenta."
+      }
+    },
+    {
+      "field": "WelcomeWindow_PickOrPlayFromThePanel_Detail",
+      "en": "Recent, Favourites and Private servers are right there. No game yet? Open Roblox home, or add one in the Library.",
+      "translations": {
+        "fr": "Récents, Favoris et Serveurs privés sont juste là. Pas encore de jeu ? Ouvrez l'accueil de Roblox ou ajoutez-en un dans la Bibliothèque.",
+        "de": "Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Öffne die Roblox-Startseite oder füge eines in der Bibliothek hinzu.",
+        "ru": "Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Откройте главную Roblox или добавьте игру в Библиотеку.",
+        "pt-br": "Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abra a página inicial do Roblox ou adicione um na Biblioteca.",
+        "pl": "Ostatnie, Ulubione i Prywatne serwery są tuż obok. Nie masz jeszcze gry? Otwórz stronę główną Roblox albo dodaj ją w Bibliotece.",
+        "es": "Recientes, Favoritos y Servidores privados están ahí mismo. ¿Aún sin juego? Abre el inicio de Roblox o añade uno en la Biblioteca."
+      }
+    },
+    {
+      "field": "WelcomeWindow_WhenYouWantAlts",
+      "en": "When you want alts, add another account.",
+      "translations": {
+        "fr": "Quand vous voulez des alts, ajoutez un autre compte.",
+        "de": "Wenn du Alts willst, füge ein weiteres Konto hinzu.",
+        "ru": "Когда нужны альты, добавьте ещё один аккаунт.",
+        "pt-br": "Quando quiser alts, adicione outra conta.",
+        "pl": "Gdy potrzebujesz więcej kont, dodaj kolejne.",
+        "es": "Cuando quieras alts, añade otra cuenta."
+      }
+    },
+    {
+      "field": "WelcomeWindow_WhenYouWantAlts_Detail",
+      "en": "With two or more, Launch multiple and Squad Launch appear, and each account opens its own Roblox window.",
+      "translations": {
+        "fr": "À partir de deux, Lancer plusieurs et Squad Launch apparaissent, et chaque compte ouvre sa propre fenêtre Roblox.",
+        "de": "Ab zwei Konten erscheinen Mehrere starten und Squad Launch, und jedes Konto öffnet sein eigenes Roblox-Fenster.",
+        "ru": "При двух и более появляются «Запустить несколько» и Squad Launch, и каждый аккаунт открывает собственное окно Roblox.",
+        "pt-br": "Com duas ou mais, Iniciar vários e Squad Launch aparecem, e cada conta abre a própria janela do Roblox.",
+        "pl": "Przy dwóch lub więcej pojawiają się Uruchom wiele i Squad Launch, a każde konto otwiera własne okno Roblox.",
+        "es": "Con dos o más aparecen Iniciar varias y Squad Launch, y cada cuenta abre su propia ventana de Roblox."
+      }
+    },
+    {
+      "field": "WelcomeWindow_WithMoreThanOneAccount",
+      "en": "With more than one account",
+      "translations": {
+        "fr": "Avec plus d'un compte",
+        "de": "Mit mehr als einem Konto",
+        "ru": "Если аккаунтов больше одного",
+        "pt-br": "Com mais de uma conta",
+        "pl": "Przy więcej niż jednym koncie",
+        "es": "Con más de una cuenta"
       }
     }
   ]

@@ -154,6 +154,27 @@ public interface IAccountStore
     Task SetAutoRejoinAsync(Guid id, bool autoRejoin);
 
     /// <summary>
+    /// Cache the last fetched <see cref="AccountFacts"/> for an account. Lives in the DPAPI blob
+    /// beside the cookie (a balance is not a secret, but it is the kind of number a plain JSON file
+    /// would embarrass someone with). Silent no-op on unknown id + no-op-write avoidance when the
+    /// value is unchanged, matching <see cref="SetJoinViaFriendAsync"/>. Not carried by export.
+    /// </summary>
+    Task SetFactsAsync(Guid id, AccountFacts facts);
+
+    /// <summary>
+    /// Persist the free-text account note. Trimmed; null, empty or whitespace becomes null; capped at
+    /// <see cref="Account.MaxNoteLength"/> characters. Silent no-op on unknown id + no-op-write
+    /// avoidance. The note travels in account export and import, the way tags do.
+    /// </summary>
+    Task UpdateNoteAsync(Guid id, string? note);
+
+    /// <summary>
+    /// Persist whether the account's panel is expanded on the main window. Silent no-op on unknown
+    /// id + no-op-write avoidance. Per-machine view state: not carried by export.
+    /// </summary>
+    Task SetPanelExpandedAsync(Guid id, bool expanded);
+
+    /// <summary>
     /// Merge import for account transport (v1.6.0 — spec §1). Non-destructive: merge by Roblox
     /// userId. Each record whose userId is NOT already present among local accounts is added (new
     /// Guid, CreatedAt=now, all fields incl. RobloxUserId, cookie DPAPI-encrypted). Records whose

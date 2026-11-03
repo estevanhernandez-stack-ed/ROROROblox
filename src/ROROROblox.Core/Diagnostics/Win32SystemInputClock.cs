@@ -12,6 +12,8 @@ namespace ROROROblox.Core.Diagnostics;
 /// </summary>
 public sealed class Win32SystemInputClock : ISystemInputClock
 {
+    public uint NowTick => unchecked((uint)Environment.TickCount);
+
     public uint LastInputTick
     {
         get

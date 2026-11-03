@@ -644,4 +644,97 @@ public class RobloxApiTests
         await Assert.ThrowsAsync<CookieExpiredException>(() => api.GetAuthTicketAsync(TestCookie));
         Assert.Equal(3, stub.Requests.Count);
     }
+
+    // === SessionLimitedException.ChallengeType (v1.36 item 2) ===
+    // Roblox names a step-up challenge on the 403 with rblx-challenge-type. Read from the post-CSRF
+    // 403 only; the handshake 403 is the dance, never a refusal.
+
+    [Fact]
+    public async Task GetAuthTicketAsync_403WithChallengeType_CarriesItOnTheException()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1"))); // handshake
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1"),
+            ("rblx-challenge-type", "captcha"), ("rblx-challenge-id", "id-1")));
+
+        var ex = await Assert.ThrowsAsync<SessionLimitedException>(() => api.GetAuthTicketAsync(TestCookie));
+
+        Assert.Equal("captcha", ex.ChallengeType);
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_Bare403_HasNullChallengeType()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1")));
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1")));
+
+        var ex = await Assert.ThrowsAsync<SessionLimitedException>(() => api.GetAuthTicketAsync(TestCookie));
+
+        Assert.Null(ex.ChallengeType);
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_ChallengeHeaderOnTheHandshake403_IsIgnored()
+    {
+        // The first POST's 403 carries a challenge header AND the csrf token: still the dance. The
+        // second POST is a bare 403, so the type must come out null.
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1"),
+            ("rblx-challenge-type", "captcha")));
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1")));
+
+        var ex = await Assert.ThrowsAsync<SessionLimitedException>(() => api.GetAuthTicketAsync(TestCookie));
+
+        Assert.Null(ex.ChallengeType);
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_RotationRetry403WithChallenge_ReadsTheRetryResponse()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1")));
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-2"))); // rotation
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-2"),
+            ("rblx-challenge-type", "twostepverification")));
+
+        var ex = await Assert.ThrowsAsync<SessionLimitedException>(() => api.GetAuthTicketAsync(TestCookie));
+
+        Assert.Equal("twostepverification", ex.ChallengeType);
+        Assert.Equal(3, stub.Requests.Count);
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_401_IsStillCookieExpired_EvenWithAChallengeHeader()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1")));
+        stub.EnqueueResponse(Response(HttpStatusCode.Unauthorized, ("rblx-challenge-type", "captcha")));
+
+        await Assert.ThrowsAsync<CookieExpiredException>(() => api.GetAuthTicketAsync(TestCookie));
+    }
+
+    [Fact]
+    public async Task GetPresenceAsync_403WithChallengeType_CarriesIt()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("rblx-challenge-type", "captcha")));
+
+        var ex = await Assert.ThrowsAsync<SessionLimitedException>(
+            () => api.GetPresenceAsync(TestCookie, new[] { 123L }));
+
+        Assert.Equal("captcha", ex.ChallengeType);
+    }
+
+    [Fact]
+    public async Task GetPresenceAsync_Bare403_HasNullChallengeType()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden));
+
+        var ex = await Assert.ThrowsAsync<SessionLimitedException>(
+            () => api.GetPresenceAsync(TestCookie, new[] { 123L }));
+
+        Assert.Null(ex.ChallengeType);
+    }
 }

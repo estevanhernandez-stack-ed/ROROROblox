@@ -363,4 +363,54 @@ public class SessionStatsStoreTests : IDisposable
         Assert.Equal(1, s.Accounts[Alt].StreakDays);      // the landing, only
         Assert.Equal(0, s.Accounts[Other].StreakDays);    // launched, never landed
     }
+
+    // ---- v1.36 item 4: GameStat.LastPlayedUtc ----
+
+    [Fact]
+    public async Task LastPlayedUtc_StampsOnLaunchRecorded_AndOnlyMovesForward()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 999L, "Pet Sim", Day(5)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 999L, "Pet Sim", Day(2))); // an older replay
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Other, 111L, "Other", Day(1)));
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(Day(5), s.Games[999L].LastPlayedUtc);
+        Assert.Equal(Day(1), s.Games[111L].LastPlayedUtc);
+        Assert.Equal(2, s.Games[999L].Launches);
+    }
+
+    [Fact]
+    public async Task ALegacyGameRow_ReadsNullLastPlayed_AndTheFillEventFillsItOnce()
+    {
+        await File.WriteAllTextAsync(_tempPath,
+            """{"version":1,"games":{"999":{"lastKnownName":"Old","launches":3,"uptimeTicks":0}},"backfilled":true}""");
+        var store = NewStore();
+        Assert.Null((await store.ReadAsync()).Games[999L].LastPlayedUtc);
+
+        await store.ApplyAsync(new StatsEvent.GameLastPlayedFilled(999L, Day(4)));
+        await store.ApplyAsync(new StatsEvent.GameLastPlayedFilled(999L, Day(9))); // already set: untouched
+        await store.ApplyAsync(new StatsEvent.GameLastPlayedFilled(12345L, Day(9))); // no such game: no row invented
+
+        var s = await store.ReadAsync();
+        Assert.Equal(Day(4), s.Games[999L].LastPlayedUtc);
+        Assert.Single(s.Games);
+    }
+
+    [Fact]
+    public async Task GamePlaceResolved_CountsTheGameOnce_WithoutTouchingTheAccountOrTheDay()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, null, "Following a friend", Day(3))); // a follow launch: no place
+
+        await store.ApplyAsync(new StatsEvent.GamePlaceResolved(777L, "Landed Game", Day(3)));
+
+        var s = await store.ReadAsync();
+        Assert.Equal(1, s.Games[777L].Launches);
+        Assert.Equal("Landed Game", s.Games[777L].LastKnownName);
+        Assert.Equal(Day(3), s.Games[777L].LastPlayedUtc);
+        Assert.Equal(1, s.Accounts[Alt].Launches);   // not doubled
+        Assert.Equal(1, s.Days[DayKey.For(Day(3))].Launches);
+    }
 }

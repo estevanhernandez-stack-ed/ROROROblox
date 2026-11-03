@@ -61,10 +61,14 @@ internal sealed class LaunchEligibilityResult
     /// clauses; with no skips, no parenthetical is added. The headline fix: when 1 of 7 is skipped
     /// for being running, the banner says so — no more silent 6-of-7.
     /// </summary>
-    public string PartialBanner(int dispatched, string verb)
+    public string PartialBanner(int dispatched, string verb, int followMarked = 0, bool suppressFollowClause = false)
     {
         var head = Loc.Plural("Shell_Launch_Dispatched", dispatched, verb);
         var clauses = NonZeroClauses();
+        // Not a skip: these launch, by following the main (held with a reason when the main is not
+        // joinable, as today). It rides the same parenthetical so the count is read, not hunted for.
+        // With one saved account there is nothing to follow, so the clause is moot (spec 2026-11-01 3.8).
+        if (followMarked > 0 && !suppressFollowClause) clauses.Add(Loc.Plural("Shell_Launch_Clause_FollowMarked", followMarked));
         if (clauses.Count == 0)
         {
             return head;

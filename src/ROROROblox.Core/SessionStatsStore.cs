@@ -114,6 +114,7 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
                     var g = b.Games.TryGetValue(place, out var gv) ? gv : new GameRow();
                     g.Launches++;
                     if (!string.IsNullOrWhiteSpace(l.GameName)) g.LastKnownName = l.GameName;
+                    if (g.LastPlayedUtc is not { } seen || l.AtUtc > seen) g.LastPlayedUtc = l.AtUtc;
                     b.Games[place] = g;
                 }
 
@@ -159,6 +160,23 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
                 }
                 break;
             }
+
+            case StatsEvent.GamePlaceResolved r:
+            {
+                var g = b.Games.TryGetValue(r.PlaceId, out var gv) ? gv : new GameRow();
+                g.Launches++;
+                if (!string.IsNullOrWhiteSpace(r.GameName)) g.LastKnownName = r.GameName;
+                if (g.LastPlayedUtc is not { } seen || r.AtUtc > seen) g.LastPlayedUtc = r.AtUtc;
+                b.Games[r.PlaceId] = g;
+                break;
+            }
+
+            case StatsEvent.GameLastPlayedFilled f:
+                if (b.Games.TryGetValue(f.PlaceId, out var filled) && filled.LastPlayedUtc is null)
+                {
+                    filled.LastPlayedUtc = f.AtUtc;
+                }
+                break;
 
             case StatsEvent.ConcurrencyObserved c:
                 // Only ever upward. A detach must not lower the record.
@@ -315,7 +333,7 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
                 kv => new AccountStat(kv.Value.Launches, TimeSpan.FromTicks(kv.Value.UptimeTicks), kv.Value.LastSeenUtc, kv.Value.StreakDays, kv.Value.LongestStreakDays)),
             Games.ToDictionary(
                 kv => kv.Key,
-                kv => new GameStat(kv.Value.LastKnownName, kv.Value.Launches, TimeSpan.FromTicks(kv.Value.UptimeTicks))),
+                kv => new GameStat(kv.Value.LastKnownName, kv.Value.Launches, TimeSpan.FromTicks(kv.Value.UptimeTicks), kv.Value.LastPlayedUtc)),
             Days.ToDictionary(
                 kv => kv.Key,
                 kv => new DayStat(kv.Value.Launches, TimeSpan.FromTicks(kv.Value.UptimeTicks))),
@@ -346,6 +364,7 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
         public string? LastKnownName { get; set; }
         public int Launches { get; set; }
         public long UptimeTicks { get; set; }
+        public DateTimeOffset? LastPlayedUtc { get; set; }
     }
 
     private sealed class DayRow

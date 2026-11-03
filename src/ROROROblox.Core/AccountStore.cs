@@ -55,7 +55,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId, a.JoinViaFriend, a.StreamerName, a.StreamerAvatarId, a.AutoRejoin))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId, a.JoinViaFriend, a.StreamerName, a.StreamerAvatarId, a.AutoRejoin, a.Facts, a.Note, a.PanelExpanded))
                 .ToList();
         }
         finally
@@ -74,6 +74,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
         }
+        CookieValidation.ThrowIfControlCharacters(cookie, nameof(cookie));
 
         await _gate.WaitAsync().ConfigureAwait(false);
         try
@@ -98,7 +99,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 JoinViaFriend: false); // a fresh account is never flagged
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId, JoinViaFriend: false, StreamerName: stored.StreamerName, StreamerAvatarId: stored.StreamerAvatarId, AutoRejoin: false);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId, JoinViaFriend: false, StreamerName: stored.StreamerName, StreamerAvatarId: stored.StreamerAvatarId, AutoRejoin: false, Facts: stored.Facts, Note: stored.Note, PanelExpanded: stored.PanelExpanded);
         }
         finally
         {
@@ -233,6 +234,84 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    public async Task SetFactsAsync(Guid id, AccountFacts facts)
+    {
+        ArgumentNullException.ThrowIfNull(facts);
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (Equals(blob.Accounts[idx].Facts, facts))
+            {
+                return; // no-op write avoidance: a refresh that changed nothing costs no DPAPI roundtrip.
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { Facts = facts };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task UpdateNoteAsync(Guid id, string? note)
+    {
+        var normalized = NormalizeNote(note);
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (string.Equals(blob.Accounts[idx].Note, normalized, StringComparison.Ordinal))
+            {
+                return; // no-op write avoidance.
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { Note = normalized };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetPanelExpandedAsync(Guid id, bool expanded)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (blob.Accounts[idx].PanelExpanded == expanded)
+            {
+                return; // no-op write avoidance. Null (never chosen) is not equal to either value, so the first choice persists.
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { PanelExpanded = expanded };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private static string? NormalizeNote(string? note) => Account.NormalizeNote(note);
+
     public async Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder)
     {
         ArgumentNullException.ThrowIfNull(idsInOrder);
@@ -345,6 +424,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             throw new ArgumentException("Cookie must not be empty.", nameof(newCookie));
         }
+        CookieValidation.ThrowIfControlCharacters(newCookie, nameof(newCookie));
 
         await _gate.WaitAsync().ConfigureAwait(false);
         try
@@ -612,7 +692,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
                     IsSelected: stored.IsSelected,
                     JoinViaFriend: stored.JoinViaFriend,
                     StreamerName: stored.StreamerName,
-                    StreamerAvatarId: stored.StreamerAvatarId));
+                    StreamerAvatarId: stored.StreamerAvatarId,
+                    Note: stored.Note)); // Facts and PanelExpanded never travel: a cache, and a per-machine view state.
             }
 
             return new AccountExportResult(records, skipped);
@@ -644,6 +725,14 @@ public sealed class AccountStore : IAccountStore, IDisposable
 
             foreach (var record in records)
             {
+                // A cookie with a control character can never be attached to a request (the header
+                // write throws and echoes it), so the record is skipped, not stored. Checked before the
+                // userId joins the merge set so it cannot shadow a valid record for the same user.
+                if (CookieValidation.HasControlCharacters(record.Cookie))
+                {
+                    skipped++;
+                    continue;
+                }
                 if (!presentUserIds.Add(record.RobloxUserId))
                 {
                     skipped++; // userId already present locally or earlier in this same batch
@@ -670,7 +759,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
                     Tags: record.Tags is { Count: > 0 } ? record.Tags : null,
                     JoinViaFriend: record.JoinViaFriend,
                     StreamerName: record.StreamerName,
-                    StreamerAvatarId: record.StreamerAvatarId));
+                    StreamerAvatarId: record.StreamerAvatarId,
+                    Note: NormalizeNote(record.Note)));
                 imported++;
             }
 
@@ -783,7 +873,14 @@ public sealed class AccountStore : IAccountStore, IDisposable
         bool JoinViaFriend = false,
         string? StreamerName = null,
         string? StreamerAvatarId = null,
-        bool AutoRejoin = false);
+        bool AutoRejoin = false,
+        AccountFacts? Facts = null,
+        string? Note = null,
+        bool? PanelExpanded = null)
+    {
+        // The synthesized ToString would print every member, Cookie included.
+        public sealed override string ToString() => $"StoredAccount {{ Id = {Id}, Cookie = <redacted> }}";
+    }
 
     internal sealed record StoredAccountsBlob(
         int Version,
