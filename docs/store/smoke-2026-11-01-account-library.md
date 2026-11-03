@@ -100,6 +100,36 @@ The test's data folder is kept at `%LOCALAPPDATA%\ROROROblox.fresh-c2-20261103`;
 
 Open from the walk: Este asked whether the Plus badge can be Roblox's own Plus icon. Not decided here.
 
+## C3 Library walk, 2026-11-03 (build B at `6f34258`, Este)
+
+Eight real accounts (one follow-marked, none expired), then the 100-favourite run: `favorites.json` was backed up, seeded to 100 entries (1 real, 99 with fake place ids, half carrying one real icon URL so no icon lookups fired), and restored afterwards to its 1 real entry.
+
+| Check | Result |
+|---|---|
+| a. Scroll 100 favourites, grid and list | pass |
+| b. Type three letters: the filter keeps up, no spinner | pass |
+| c. Long names trim with an ellipsis | pass |
+| 1. Grid and list: live icons, Default and Private words, last played and total | pass |
+| 2. Chips filter, show the check, toggle with Space | pass |
+| 3. The one box: three letters, a game URL, a place id, a private-server link | pass |
+| 4. Play as: the follow-marked account reads "Joins by following"; a pick launches as that account | pass (log: estehernandez, `target=Place`, `Direct`) |
+| 5. Streamer mode masks the picker | pass |
+| 6. Keyboard: box focused on load, Enter submits, Tab reaches Play and Play as, arrows walk the picker | pass |
+| 7. Four themes | pass |
+| Windows at 125% (roster, panel, facts line, Library) | pass, nothing clipped |
+
+Expired accounts in Play as: none on this roster; covered by `LibraryViewModelTests` (disabled in the picker, `CookieExpired` if forced) and the item-9 flyout captures.
+
+Este's calls at C3:
+- **4 tiles across at 900 px** (the mock drew 6): keep. German "Spielen als" needs the 144 px tile.
+- **The tile's ⋯ menu** (not in the mock): keep.
+- **The chips:** the mock's rounded pills, on = Cyan outline and label; built the same day (`PillToggleButtonStyle`).
+- **Panel order** and the rest of C2's calls stand.
+
+Two things the walk surfaced:
+- **The render suite is not DPI-neutral.** With Windows at 125%, eight row-height pins failed by 1-2 px on a clean `HEAD` as well, and every capture re-rendered differently. CI runs at 100%. Run the suite and the captures here at 100% only.
+- **A windowless Roblox from the C2 Open Roblox home test** was still running 40 minutes later (B's tracker followed the launcher pid and logged it as exited). Filed on the dashboard; not yet shown to be ours.
+
 ## Probes, 2026-11-02 (C2 step 1, first pass)
 
 All eight saved accounts, `--live`, 15:24-15:25 UTC, reports in `docs/cycles/2026-11-01-account-library/probes/` (named by local-id prefix; no names, no server ids).

@@ -74,6 +74,15 @@ public class LibraryPageXamlTests
         }
     }
 
+    /// <summary>C3 (Este, 2026-11-03): the chips are the mock's rounded pills, whose checked state is the Cyan outline.</summary>
+    [Fact]
+    public void TheChipsAreRoundedPills()
+    {
+        var style = Regex.Match(GamesPage, @"<Style x:Key=""LibraryChipStyle""[^>]*>", RegexOptions.Singleline);
+        Assert.True(style.Success, "LibraryChipStyle not found");
+        Assert.Contains("BasedOn=\"{StaticResource PillToggleButtonStyle}\"", style.Value);
+    }
+
     [Fact]
     public void EveryInteractiveElementOnTheLibraryPageIsNamed()
     {

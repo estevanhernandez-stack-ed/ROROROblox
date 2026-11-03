@@ -137,7 +137,12 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     /// </summary>
     private static readonly string[] BorderlessFilled = ["CtaButtonStyle", "WarningButtonStyle"];
 
-    private static readonly string[] SurfaceSupplied = ["AppTextBoxStyle", "AppPasswordBoxStyle"];
+    // v1.36 C3: PillToggleButtonStyle (the Library chips) is here, not in FullyMeasured, because a pill does not cover its
+    // own corners by design (CornerRadius 14 on a ~27 px control): rendered bare, the magenta host shows through all four
+    // and the gate rightly refuses the sample (measured 2026-11-03: #FF00FF x115, third most common). In the app the chips
+    // sit on the page surface, which is what the surface wrapper supplies. Its checked pair is measured separately in
+    // ButtonStateGateTests.APillChipsCheckedState_ClearsBothFloors_UnderEveryTheme.
+    private static readonly string[] SurfaceSupplied = ["AppTextBoxStyle", "AppPasswordBoxStyle", "PillToggleButtonStyle"];
 
     /// <summary>
     /// A CLOSED list, so a style added later cannot land here by accident — it lands in

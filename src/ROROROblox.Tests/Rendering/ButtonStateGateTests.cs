@@ -64,6 +64,9 @@ public class ButtonStateGateTests
         // v1.36 C2 (E1): the panel expander's rank. Same resting pair, hover and press as the secondary toggle;
         // its checked state is a Cyan outline and glyph rather than the press sheen, measured separately below.
         "PanelExpanderToggleButtonStyle",
+        // v1.36 C3 (Este, 2026-11-03): the Library chips' rank, the mock's rounded pill. Same resting pair, hover and
+        // press as the expander; checked is the same Cyan outline and text, measured below against the page (Bg).
+        "PillToggleButtonStyle",
     };
 
     public static TheoryData<string> AllRanks()
@@ -406,12 +409,48 @@ public class ButtonStateGateTests
     [InlineData("midnight")]
     [InlineData("magenta-heat")]
     [InlineData("flatline")]
-    public void ThePanelExpanderOpenState_ClearsBothFloors_UnderEveryTheme(string themeId)
+    public void ThePanelExpanderOpenState_ClearsBothFloors_UnderEveryTheme(string themeId) =>
+        AssertOpenStateClearsBothFloors("PanelExpanderToggleButtonStyle", ThemeSlots.RowBg, themeId);
+
+    /// <summary>
+    /// The Library chips' checked state (C3, Este's pick: the mock's rounded pill, on = Cyan outline and Cyan text). Same
+    /// measurement as the expander's, against the surface the chips actually sit on: the page background, not a row.
+    /// </summary>
+    [Theory]
+    [InlineData("brand")]
+    [InlineData("midnight")]
+    [InlineData("magenta-heat")]
+    [InlineData("flatline")]
+    public void APillChipsCheckedState_ClearsBothFloors_UnderEveryTheme(string themeId) =>
+        AssertOpenStateClearsBothFloors("PillToggleButtonStyle", ThemeSlots.Bg, themeId);
+
+    /// <summary>
+    /// A pill's sheens must be as round as its chrome, or the hover and press washes paint square corners outside the
+    /// rounded edge. All three borders carry the same non-zero radius.
+    /// </summary>
+    [Fact]
+    public void APill_RoundsItsChromeAndBothSheensAlike()
+    {
+        var radii = Sta.Run(() =>
+        {
+            var dict = ThemedRender.Resources(ThemeById("brand"));
+            var ctl = (System.Windows.Controls.Primitives.ToggleButton)ThemedRender.Styled(dict, "PillToggleButtonStyle");
+            ctl.Resources = dict;
+            ctl.ApplyTemplate();
+            return new[] { "Chrome", "HoverSheen", "PressSheen" }
+                .Select(n => ((Border)ctl.Template.FindName(n, ctl)).CornerRadius).ToArray();
+        }, "pill corner radii");
+
+        Assert.True(radii[0].TopLeft > 0, $"the pill's chrome is square (CornerRadius {radii[0]})");
+        Assert.All(radii, r => Assert.Equal(radii[0], r));
+    }
+
+    private static void AssertOpenStateClearsBothFloors(string styleKey, string surfaceSlot, string themeId)
     {
         var m = Sta.Run(() =>
         {
             var dict = ThemedRender.Resources(ThemeById(themeId));
-            var ctl = (System.Windows.Controls.Primitives.ToggleButton)ThemedRender.Styled(dict, "PanelExpanderToggleButtonStyle");
+            var ctl = (System.Windows.Controls.Primitives.ToggleButton)ThemedRender.Styled(dict, styleKey);
             ctl.Resources = dict;
             ctl.ApplyTemplate();
             var resting = Hex(((Border)ctl.Template.FindName("Chrome", ctl)).BorderBrush);
@@ -421,8 +460,8 @@ public class ButtonStateGateTests
             var chrome = (Border)ctl.Template.FindName("Chrome", ctl);
             var press = (Border)ctl.Template.FindName("PressSheen", ctl);
             return (Fill: Hex(chrome.Background), Edge: Hex(chrome.BorderBrush), Glyph: Hex(ctl.Foreground),
-                Row: Hex((Brush)dict[ThemeSlots.RowBg]), PressShown: press.Visibility == Visibility.Visible, RestingEdge: resting);
-        }, $"expander open state under {themeId}");
+                Row: Hex((Brush)dict[surfaceSlot]), PressShown: press.Visibility == Visibility.Visible, RestingEdge: resting);
+        }, $"{styleKey} open state under {themeId}");
 
         var glyph = ContrastGuard.RatioBetween(m.Fill, m.Glyph);
         var edgeOnFill = ContrastGuard.RatioBetween(m.Fill, m.Edge);

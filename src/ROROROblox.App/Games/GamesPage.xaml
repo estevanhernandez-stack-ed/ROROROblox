@@ -23,9 +23,10 @@
     -->
 
     <UserControl.Resources>
-        <!-- Pill-less chip: the rank is the app's secondary toggle; the check glyph beside the label is the
-             second signal, so flatline (which collapses colour) can still tell on from off. -->
-        <Style x:Key="LibraryChipStyle" TargetType="ToggleButton" BasedOn="{StaticResource SecondaryToggleButtonStyle}">
+        <!-- The mock's rounded pill (C3, Este, 2026-11-03; it was a square secondary toggle through item 9): ON is a
+             Cyan outline and label. The check glyph beside the label stays as the second signal, so flatline (which
+             collapses colour) can still tell on from off. -->
+        <Style x:Key="LibraryChipStyle" TargetType="ToggleButton" BasedOn="{StaticResource PillToggleButtonStyle}">
             <Setter Property="Padding" Value="10,4" />
             <Setter Property="Margin" Value="0,0,8,0" />
             <Setter Property="FontSize" Value="{DynamicResource BodyFontSize}" />

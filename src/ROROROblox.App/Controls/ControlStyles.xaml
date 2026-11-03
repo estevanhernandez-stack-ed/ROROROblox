@@ -334,6 +334,65 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+    <!-- v1.36 C3 (Este's pick 2026-11-03): the Library chips are the mock's rounded pills. The expander's rank and
+         checked state exactly (Navy fill, derived edge, white label, house sheens; ON = Cyan outline and Cyan label, no
+         fill), with one difference: every border is rounded, the two sheens included, so a hover or press wash never
+         paints square corners outside the pill. A radius larger than half the height clamps to a full semicircle.
+         Measured by ButtonStateGateTests (the shared state pairs, APillChipsCheckedState against Bg, and the matching
+         radii) and RenderedStyleGateTests. -->
+    <ControlTemplate x:Key="PillToggleTemplate" TargetType="ToggleButton">
+        <Grid>
+            <Border x:Name="Chrome"
+                    CornerRadius="14"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    SnapsToDevicePixels="True" />
+            <Border x:Name="HoverSheen"
+                    CornerRadius="14"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.22"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <Border x:Name="PressSheen"
+                    CornerRadius="14"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.38"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <ContentPresenter Margin="{TemplateBinding Padding}"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              RecognizesAccessKey="True" SnapsToDevicePixels="True" />
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource CyanBrush}" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="HoverSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="PressSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="PillToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Template" Value="{StaticResource PillToggleTemplate}" />
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
     <!-- Primary. Navy field, white text, cyan edge. Measured 9.39:1 in brand, 8.05:1 in midnight,
          4.90:1 in magenta-heat — this recipe was always fine. It is here so it stops being copied
          by hand, not because it was broken. -->
