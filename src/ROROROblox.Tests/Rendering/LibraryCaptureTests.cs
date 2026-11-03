@@ -23,6 +23,7 @@ namespace ROROROblox.Tests.Rendering;
 /// not in the picture.
 /// </para>
 /// </summary>
+[Collection("MutatesUiCulture")]
 public class LibraryCaptureTests
 {
     private sealed class OptInFactAttribute : FactAttribute

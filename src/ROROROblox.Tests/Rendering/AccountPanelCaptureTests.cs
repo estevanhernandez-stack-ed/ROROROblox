@@ -25,6 +25,7 @@ namespace ROROROblox.Tests.Rendering;
 /// rendered at the requested DPI; a real 125% display re-runs layout and is not reproduced here.
 /// </para>
 /// </summary>
+[Collection("MutatesUiCulture")]
 public class AccountPanelCaptureTests
 {
     private sealed class OptInFactAttribute : FactAttribute

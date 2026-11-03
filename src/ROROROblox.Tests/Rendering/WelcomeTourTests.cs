@@ -22,6 +22,7 @@ namespace ROROROblox.Tests.Rendering;
 /// <c>item10-*.png</c> under <c>docs/cycles/2026-11-01-account-library/mocks/compare/</c>.
 /// </para>
 /// </summary>
+[Collection("MutatesUiCulture")]
 public class WelcomeTourTests
 {
     private static string XamlPath()
