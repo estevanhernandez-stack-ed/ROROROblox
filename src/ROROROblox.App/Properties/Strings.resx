@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -17,8 +17,7 @@
     <comment>src/ROROROblox.App/About/AboutPage.xaml:98 xaml-text</comment>
   </data>
   <data name="AboutPage_CookiesAreEncryptedWithWindows" xml:space="preserve">
-    <value>Cookies are encrypted with Windows DPAPI per user. They never leave this machine.
-                    A copy of accounts.dat moved to another PC will not decrypt.</value>
+    <value>Cookies are encrypted with Windows DPAPI per user. They never leave this machine. A copy of accounts.dat moved to another PC will not decrypt.</value>
     <comment>src/ROROROblox.App/About/AboutPage.xaml:182 xaml-text</comment>
   </data>
   <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
@@ -38,8 +37,7 @@
     <comment>src/ROROROblox.App/About/AboutPage.xaml:94 xaml-text</comment>
   </data>
   <data name="AboutPage_RobloxIsATrademarkOf" xml:space="preserve">
-    <value>"Roblox" is a trademark of Roblox Corporation. RoRoRo is not affiliated with,
-                    endorsed by, or sponsored by Roblox Corporation.</value>
+    <value>"Roblox" is a trademark of Roblox Corporation. RoRoRo is not affiliated with, endorsed by, or sponsored by Roblox Corporation.</value>
     <comment>src/ROROROblox.App/About/AboutPage.xaml:187 xaml-text</comment>
   </data>
   <data name="AboutPage_Rororo" xml:space="preserve">
@@ -47,10 +45,7 @@
     <comment>src/ROROROblox.App/About/AboutPage.xaml:80 xaml-text</comment>
   </data>
   <data name="AboutPage_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Run multiple Roblox clients side by side, signed in as different saved accounts.
-                    Holds the Roblox singleton mutex so subsequent clients don't fight for it; uses
-                    Roblox's documented authentication-ticket flow for per-account launches. Clean
-                    reimplementation; not a fork.</value>
+    <value>Run multiple Roblox clients side by side, signed in as different saved accounts. Holds the Roblox singleton mutex so subsequent clients don't fight for it; uses Roblox's documented authentication-ticket flow for per-account launches. Clean reimplementation; not a fork.</value>
     <comment>src/ROROROblox.App/About/AboutPage.xaml:118 xaml-text</comment>
   </data>
   <data name="AboutPage_Version" xml:space="preserve">

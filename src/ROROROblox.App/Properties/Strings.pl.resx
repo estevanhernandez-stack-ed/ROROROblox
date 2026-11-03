@@ -16,8 +16,7 @@
     <value>Produkt 626 Labs</value>
   </data>
   <data name="AboutPage_CookiesAreEncryptedWithWindows" xml:space="preserve">
-    <value>Pliki cookie są szyfrowane za pomocą Windows DPAPI dla każdego użytkownika. Nigdy nie opuszczają tego komputera.
-                    Kopia accounts.dat przeniesiona na inny komputer nie zostanie odszyfrowana.</value>
+    <value>Pliki cookie są szyfrowane za pomocą Windows DPAPI dla każdego użytkownika. Nigdy nie opuszczają tego komputera. Kopia accounts.dat przeniesiona na inny komputer nie zostanie odszyfrowana.</value>
   </data>
   <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
     <value>W oknie narzędzi klawisze Ctrl+1 do Ctrl+7 również przenoszą bezpośrednio do strony.</value>
@@ -32,17 +31,13 @@
     <value>Uruchamianie wielu klientów dla Windows.</value>
   </data>
   <data name="AboutPage_RobloxIsATrademarkOf" xml:space="preserve">
-    <value>„Roblox” jest znakiem towarowym Roblox Corporation. RoRoRo nie jest powiązane z,
-                    wspierane ani sponsorowane przez Roblox Corporation.</value>
+    <value>„Roblox” jest znakiem towarowym Roblox Corporation. RoRoRo nie jest powiązane z, wspierane ani sponsorowane przez Roblox Corporation.</value>
   </data>
   <data name="AboutPage_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
   </data>
   <data name="AboutPage_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Uruchamiaj wiele klientów Roblox obok siebie, zalogowanych na różne zapisane konta.
-                    Przytrzymuje muteks singletona Roblox, aby kolejne klienty nie biły się o niego; korzysta z
-                    udokumentowanego przez Roblox przepływu biletów uwierzytelniania przy uruchomieniach poszczególnych kont. Czysta
-                    reimplementacja, nie odgałęzienie.</value>
+    <value>Uruchamiaj wiele klientów Roblox obok siebie, zalogowanych na różne zapisane konta. Przytrzymuje muteks singletona Roblox, aby kolejne klienty nie biły się o niego; korzysta z udokumentowanego przez Roblox przepływu biletów uwierzytelniania przy uruchomieniach poszczególnych kont. Czysta reimplementacja, nie odgałęzienie.</value>
   </data>
   <data name="AboutPage_Version" xml:space="preserve">
     <value>Wersja</value>

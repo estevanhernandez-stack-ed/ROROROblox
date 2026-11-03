@@ -16,8 +16,7 @@
     <value>Un produit 626 Labs</value>
   </data>
   <data name="AboutPage_CookiesAreEncryptedWithWindows" xml:space="preserve">
-    <value>Les cookies sont chiffrés avec Windows DPAPI, par utilisateur. Ils ne quittent jamais cette machine.
-                    Une copie de accounts.dat déplacée vers un autre PC ne se déchiffrera pas.</value>
+    <value>Les cookies sont chiffrés avec Windows DPAPI, par utilisateur. Ils ne quittent jamais cette machine. Une copie de accounts.dat déplacée vers un autre PC ne se déchiffrera pas.</value>
   </data>
   <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
     <value>Dans la fenêtre des outils, Ctrl+1 à Ctrl+7 sautent aussi directement à une page.</value>
@@ -32,17 +31,13 @@
     <value>Multi-lanceur pour Windows.</value>
   </data>
   <data name="AboutPage_RobloxIsATrademarkOf" xml:space="preserve">
-    <value>« Roblox » est une marque déposée de Roblox Corporation. RoRoRo n'est pas affilié à Roblox Corporation,
-                    ni approuvé ou parrainé par celle-ci.</value>
+    <value>« Roblox » est une marque déposée de Roblox Corporation. RoRoRo n'est pas affilié à Roblox Corporation, ni approuvé ou parrainé par celle-ci.</value>
   </data>
   <data name="AboutPage_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
   </data>
   <data name="AboutPage_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Exécutez plusieurs clients Roblox côte à côte, connectés avec différents comptes enregistrés.
-                    Retient le mutex singleton de Roblox pour que les clients suivants ne se le disputent pas ; utilise
-                    le flux de ticket d'authentification documenté de Roblox pour les lancements par compte. Réimplémentation
-                    propre ; pas un fork.</value>
+    <value>Exécutez plusieurs clients Roblox côte à côte, connectés avec différents comptes enregistrés. Retient le mutex singleton de Roblox pour que les clients suivants ne se le disputent pas ; utilise le flux de ticket d'authentification documenté de Roblox pour les lancements par compte. Réimplémentation propre ; pas un fork.</value>
   </data>
   <data name="AboutPage_Version" xml:space="preserve">
     <value>Version</value>

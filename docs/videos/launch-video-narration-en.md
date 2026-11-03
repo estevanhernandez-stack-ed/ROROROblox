@@ -53,23 +53,35 @@ come back as *speakable* text, not listing copy.
 - OVERLAY: `save once. launch as.`
 - VO: `Save all your alts and manage your accounts. One click each, with live status and the game each one is actually in.`
 
-### squad (slide 3)
+### manager (slide 3)
+- OVERLAY: `every account, at a glance`
+- VO: `Now every account shows its Robux, Plus, and friends online. Open one up, and its games are right there. Recent, favorites, private servers.`
+
+### health (slide 4)
+- OVERLAY: `it tells you what's wrong`
+- VO: `And when an account needs you, it says so. Session expired, needs verification, limited by Roblox. One click to fix it.`
+
+### library (slide 5)
+- OVERLAY: `one library. play as anyone.`
+- VO: `Every game you've played lands in the Library. Search it, filter it, and pick which account plays.`
+
+### squad (slide 6)
 - OVERLAY: `same private server. all of them.`
 - VO: `Squad Launch is the best part. One link, and every single account lands in the SAME private server, together.`
 
-### history (slide 4)
+### history (slide 7)
 - OVERLAY: `it keeps score now`
 - VO: `And it keeps score! Peak alts at once, total uptime, a leaderboard of your alts with login streaks. All computed on your machine, nothing leaves it.`
 
-### themes (slide 5)
+### themes (slide 8)
 - OVERLAY: `AI builds your theme`
 - VO: `Four built-in themes, plus a theme builder where an AI designs you a custom one from a vibe description.`
 
-### trust (slide 6)
+### trust (slide 9)
 - OVERLAY: `your password never touches it`
 - VO: `Your password never touches the app, ever. And there's a pile of quality of life on top. Just read the list!`
 
-### cta (slide 7)
+### cta (slide 10)
 - OVERLAY: `scan it, open on desktop`
 - VO: `Free on the Microsoft Store, Windows AND Mac. Scan the code, save the page, grab it on your desktop. RoRoRo, from six-two-six Labs. Imagine something else.`
 

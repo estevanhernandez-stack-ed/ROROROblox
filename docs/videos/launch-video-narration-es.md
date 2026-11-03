@@ -20,19 +20,31 @@ stays as digits in any OVERLAY.
 - OVERLAY: `guarda una vez. lanza como.`
 - VO: `Guarda todos tus alts y gestiona tus cuentas. Un clic por cuenta, estado en vivo y el juego en el que está cada una.`
 
-### squad (slide 3)
+### manager (slide 3)
+- OVERLAY: `cada cuenta, de un vistazo`
+- VO: `Ahora cada cuenta muestra sus Robux, su Plus y sus amigos en línea. Abre una, y sus juegos están ahí mismo. Recientes, favoritos, servidores privados.`
+
+### health (slide 4)
+- OVERLAY: `te dice qué está mal`
+- VO: `Y cuando una cuenta te necesita, te lo dice. Sesión caducada, requiere verificación, limitado por Roblox. Un clic para arreglarlo.`
+
+### library (slide 5)
+- OVERLAY: `una biblioteca. elige quién juega`
+- VO: `Cada juego que has jugado llega a la Biblioteca. Búscalo, fíltralo y elige qué cuenta juega.`
+
+### squad (slide 6)
 - OVERLAY: `mismo servidor privado. todas.`
 - VO: `Squad Launch es lo mejor. Un enlace, y cada cuenta aterriza en el MISMO servidor privado, juntas.`
 
-### history (slide 4)
+### history (slide 7)
 - OVERLAY: `ahora lleva la cuenta`
 - VO: `¡Y lleva la cuenta! Pico de alts, tiempo total, un ranking con rachas de acceso. Todo se calcula en tu máquina, nada sale.`
 
-### themes (slide 5)
+### themes (slide 8)
 - OVERLAY: `la IA crea tu tema`
 - VO: `Cuatro temas integrados, y un creador donde una IA diseña el tuyo con la vibra que describas.`
 
-### trust (slide 6)
+### trust (slide 9)
 - OVERLAY: `tu contraseña nunca la toca`
 - VO: `Tu contraseña nunca toca la app, nunca. Y además, un montón de mejoras. ¡Échale un vistazo a la lista!`
 
@@ -43,7 +55,7 @@ stays as digits in any OVERLAY.
 > than a translation one. Either accept a slightly quicker read on this slide, or say
 > which claim to cut and it comes back inside budget.
 
-### cta (slide 7)
+### cta (slide 10)
 - OVERLAY: `escanea, abre en tu compu`
 - VO: `Gratis en Microsoft Store, Windows Y Mac. Escanea el código, guarda la página, bájalo en tu compu. RoRoRo, de seis-dos-seis Labs. Imagina algo diferente.`
 

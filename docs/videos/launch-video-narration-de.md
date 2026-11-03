@@ -24,23 +24,35 @@ stays as digits in any OVERLAY.
 - OVERLAY: `einmal speichern. starte als.`
 - VO: `Speichere alle Alts und verwalte deine Accounts. Je ein Klick, mit Live-Status und dem Spiel, in dem jeder steckt.`
 
-### squad (slide 3)
+### manager (slide 3)
+- OVERLAY: `jeder Account auf einen Blick`
+- VO: `Jetzt zeigt jeder Account seine Robux, Plus und Freunde online. Klapp einen auf, und seine Spiele sind direkt da. Zuletzt, Favoriten, private Server.`
+
+### health (slide 4)
+- OVERLAY: `er sagt dir, was nicht stimmt`
+- VO: `Und wenn ein Account dich braucht, sagt er es dir. Sitzung abgelaufen, Verifizierung nötig, von Roblox eingeschränkt. Ein Klick, und es ist behoben.`
+
+### library (slide 5)
+- OVERLAY: `eine Bibliothek. spiel als jeder.`
+- VO: `Jedes Spiel, das du gespielt hast, landet in der Bibliothek. Durchsuchen, filtern und aussuchen, welcher Account spielt.`
+
+### squad (slide 6)
 - OVERLAY: `gleicher Privatserver. alle.`
 - VO: `Squad Launch ist das Beste. Ein Link, und jeder einzelne Account landet auf dem GLEICHEN privaten Server, zusammen.`
 
-### history (slide 4)
+### history (slide 7)
 - OVERLAY: `jetzt mit Statistik`
 - VO: `Und es führt Buch! Höchstzahl gleichzeitiger Alts, Gesamtlaufzeit, eine Rangliste deiner Alts mit Login-Serien. Alles auf deinem Rechner berechnet, nichts verlässt ihn.`
 
-### themes (slide 5)
+### themes (slide 8)
 - OVERLAY: `KI baut dein Theme`
 - VO: `Vier eingebaute Themes, plus ein Theme-Builder, in dem eine KI dir aus einer Stimmungsbeschreibung ein eigenes entwirft.`
 
-### trust (slide 6)
+### trust (slide 9)
 - OVERLAY: `dein Passwort bleibt draußen`
 - VO: `Dein Passwort gelangt nie in die App, niemals. Und obendrauf gibt's jede Menge Komfort. Schau dir die Liste an!`
 
-### cta (slide 7)
+### cta (slide 10)
 - OVERLAY: `scannen, am Rechner öffnen`
 - VO: `Kostenlos im Microsoft Store, Windows UND Mac. Scanne den Code, speichere die Seite, hol es dir auf den Rechner. RoRoRo, von sechs-zwei-sechs Labs. Imagine something else.`
 

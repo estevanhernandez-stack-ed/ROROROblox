@@ -16,8 +16,7 @@
     <value>Продукт 626 Labs</value>
   </data>
   <data name="AboutPage_CookiesAreEncryptedWithWindows" xml:space="preserve">
-    <value>Файлы cookie шифруются с помощью Windows DPAPI для каждого пользователя. Они никогда не покидают этот компьютер.
-                    Копия accounts.dat, перенесённая на другой ПК, не расшифруется.</value>
+    <value>Файлы cookie шифруются с помощью Windows DPAPI для каждого пользователя. Они никогда не покидают этот компьютер. Копия accounts.dat, перенесённая на другой ПК, не расшифруется.</value>
   </data>
   <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
     <value>В окне инструментов Ctrl+1 — Ctrl+7 также сразу открывают нужную страницу.</value>
@@ -32,17 +31,13 @@
     <value>Мультилаунчер для Windows.</value>
   </data>
   <data name="AboutPage_RobloxIsATrademarkOf" xml:space="preserve">
-    <value>«Roblox» — товарный знак Roblox Corporation. RoRoRo не аффилирована с Roblox Corporation,
-                    не одобрена и не спонсируется ею.</value>
+    <value>«Roblox» — товарный знак Roblox Corporation. RoRoRo не аффилирована с Roblox Corporation, не одобрена и не спонсируется ею.</value>
   </data>
   <data name="AboutPage_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
   </data>
   <data name="AboutPage_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Запускайте несколько клиентов Roblox одновременно, войдя в разные сохранённые аккаунты.
-                    Удерживает singleton-мьютекс Roblox, чтобы последующие клиенты не боролись за него; использует
-                    документированный процесс аутентификационного тикета Roblox для запуска каждого аккаунта. Чистая
-                    переработка; не форк.</value>
+    <value>Запускайте несколько клиентов Roblox одновременно, войдя в разные сохранённые аккаунты. Удерживает singleton-мьютекс Roblox, чтобы последующие клиенты не боролись за него; использует документированный процесс аутентификационного тикета Roblox для запуска каждого аккаунта. Чистая переработка; не форк.</value>
   </data>
   <data name="AboutPage_Version" xml:space="preserve">
     <value>Версия</value>

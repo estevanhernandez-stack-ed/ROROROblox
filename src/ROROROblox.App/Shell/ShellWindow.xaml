@@ -24,6 +24,7 @@
         </Grid.ColumnDefinitions>
 
         <ListBox x:Name="ShellNav" Grid.Column="0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  AutomationProperties.Name="{loc:Loc ShellWindow_Destinations}"
                  Background="Transparent"
                  BorderThickness="0"

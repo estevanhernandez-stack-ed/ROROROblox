@@ -16,8 +16,7 @@
     <value>Un producto de 626 Labs</value>
   </data>
   <data name="AboutPage_CookiesAreEncryptedWithWindows" xml:space="preserve">
-    <value>Las cookies se cifran con Windows DPAPI por usuario. Nunca salen de este equipo.
-                    Una copia de accounts.dat trasladada a otro PC no se podrá descifrar.</value>
+    <value>Las cookies se cifran con Windows DPAPI por usuario. Nunca salen de este equipo. Una copia de accounts.dat trasladada a otro PC no se podrá descifrar.</value>
   </data>
   <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
     <value>Dentro de la ventana de herramientas, Ctrl+1 a Ctrl+7 también saltan directamente a una página.</value>
@@ -32,17 +31,13 @@
     <value>Lanzador múltiple para Windows.</value>
   </data>
   <data name="AboutPage_RobloxIsATrademarkOf" xml:space="preserve">
-    <value>"Roblox" es una marca comercial de Roblox Corporation. RoRoRo no está afiliado a
-                    Roblox Corporation, ni cuenta con su respaldo o patrocinio.</value>
+    <value>"Roblox" es una marca comercial de Roblox Corporation. RoRoRo no está afiliado a Roblox Corporation, ni cuenta con su respaldo o patrocinio.</value>
   </data>
   <data name="AboutPage_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
   </data>
   <data name="AboutPage_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Ejecuta varios clientes de Roblox uno al lado del otro, con la sesión iniciada en distintas cuentas guardadas.
-                    Mantiene el mutex singleton de Roblox para que los clientes siguientes no compitan por él; usa
-                    el flujo documentado de tickets de autenticación de Roblox para los inicios por cuenta. Reimplementación
-                    limpia; no es un fork.</value>
+    <value>Ejecuta varios clientes de Roblox uno al lado del otro, con la sesión iniciada en distintas cuentas guardadas. Mantiene el mutex singleton de Roblox para que los clientes siguientes no compitan por él; usa el flujo documentado de tickets de autenticación de Roblox para los inicios por cuenta. Reimplementación limpia; no es un fork.</value>
   </data>
   <data name="AboutPage_Version" xml:space="preserve">
     <value>Versión</value>

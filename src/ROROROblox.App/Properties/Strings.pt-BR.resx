@@ -16,8 +16,7 @@
     <value>Um produto da 626 Labs</value>
   </data>
   <data name="AboutPage_CookiesAreEncryptedWithWindows" xml:space="preserve">
-    <value>Os cookies são criptografados com o Windows DPAPI por usuário. Eles nunca saem desta máquina.
-                    Uma cópia de accounts.dat movida para outro PC não será descriptografada.</value>
+    <value>Os cookies são criptografados com o Windows DPAPI por usuário. Eles nunca saem desta máquina. Uma cópia de accounts.dat movida para outro PC não será descriptografada.</value>
   </data>
   <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
     <value>Dentro da janela de ferramentas, Ctrl+1 a Ctrl+7 também pulam direto para uma página.</value>
@@ -32,17 +31,13 @@
     <value>Iniciador múltiplo para Windows.</value>
   </data>
   <data name="AboutPage_RobloxIsATrademarkOf" xml:space="preserve">
-    <value>"Roblox" é uma marca registrada da Roblox Corporation. RoRoRo não é afiliada,
-                    endossada nem patrocinada pela Roblox Corporation.</value>
+    <value>"Roblox" é uma marca registrada da Roblox Corporation. RoRoRo não é afiliada, endossada nem patrocinada pela Roblox Corporation.</value>
   </data>
   <data name="AboutPage_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
   </data>
   <data name="AboutPage_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Execute vários clientes do Roblox lado a lado, conectados como contas salvas diferentes.
-                    Mantém o mutex singleton do Roblox para que os clientes seguintes não briguem por ele; usa
-                    o fluxo documentado de ticket de autenticação do Roblox para iniciar cada conta. Reimplementação
-                    limpa; não é um fork.</value>
+    <value>Execute vários clientes do Roblox lado a lado, conectados como contas salvas diferentes. Mantém o mutex singleton do Roblox para que os clientes seguintes não briguem por ele; usa o fluxo documentado de ticket de autenticação do Roblox para iniciar cada conta. Reimplementação limpa; não é um fork.</value>
   </data>
   <data name="AboutPage_Version" xml:space="preserve">
     <value>Versão</value>

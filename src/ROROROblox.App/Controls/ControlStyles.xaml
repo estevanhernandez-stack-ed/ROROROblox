@@ -845,8 +845,18 @@
                                    Fill="{DynamicResource CyanBrush}"
                                    RadiusX="1.5" RadiusY="1.5"
                                    Visibility="Hidden" />
+                        <!-- Wraps (2026-11-03): long translated labels were cut at the rail's edge, "Bekannte
+                             Roblox-Proble" and "Problemas conhecidos d", in every Store screenshot of the shell. The
+                             implicit TextBlock style reaches the TextBlock WPF generates for string content; the
+                             rails disable horizontal scrolling so items are measured at the rail's width. -->
                         <ContentPresenter Grid.Column="1" Margin="12,9"
-                                          VerticalAlignment="Center" />
+                                          VerticalAlignment="Center">
+                            <ContentPresenter.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                </Style>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">

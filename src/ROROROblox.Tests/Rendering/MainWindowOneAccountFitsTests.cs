@@ -225,6 +225,34 @@ public class MainWindowOneAccountFitsTests
     }
 
     /// <summary>
+    /// The MAIN pill follows the name. Item 13 made the name line a Grid so the name trims, but a stretched Grid gave the
+    /// name's star column the whole name column, and on any window wider than the content MAIN floated to the column's
+    /// far edge (seen in the 1180 px marketing frames, 2026-11-03). The gap between the name's text and the pill must be
+    /// the pill's own 10 DIP margin.
+    /// </summary>
+    [WindowRenderFact]
+    public void TheMainPill_SitsRightAfterTheName_NotAtTheColumnEdge()
+    {
+        var (gap, column, line) = ThemedWindowRender.Inspect(
+            BuiltIn("brand"), "main row name-to-pill gap",
+            () => PanelWindowFixtures.Build(1, expanded: false, savedGames: true),
+            content =>
+            {
+                var nameLine = (Panel)System.Windows.Media.VisualTreeHelper.GetParent(PanelWindowFixtures.Expanders(content)[0]);
+                var name = nameLine.Children.OfType<TextBlock>().First();
+                var pill = nameLine.Children.OfType<Border>().First(b => b.Visibility == Visibility.Visible);
+                // The TEXT's end, not the TextBlock's: a stretched TextBlock fills its cell, so its ActualWidth hides the gap
+                // (the first version of this test read ActualWidth and passed with the bug in place).
+                var nameRight = name.TransformToAncestor(nameLine).Transform(new Point(Math.Min(name.DesiredSize.Width, name.ActualWidth), 0)).X;
+                var pillLeft = pill.TransformToAncestor(nameLine).Transform(new Point(0, 0)).X;
+                var col = ((FrameworkElement)System.Windows.Media.VisualTreeHelper.GetParent(nameLine)).ActualWidth;
+                return (pillLeft - nameRight, col, nameLine.ActualWidth);
+            });
+        _output.WriteLine($"name-to-pill gap {gap:F1} DIP; name line {line:F1} of a {column:F1} DIP column");
+        Assert.True(gap <= 10.5, $"MAIN sits {gap:F1} DIP after the name; it should follow it at its 10 DIP margin.");
+    }
+
+    /// <summary>
     /// Este's C2 ruling (2026-11-02): at the declared 900 px nothing on the row clips. E1 moved the expander into the name
     /// column, which left Remove 14 DIP past the viewport and the main row's MAIN pill 10 DIP past its column; the game
     /// picker's MinWidth went from 160 to 132 to give both back. Asserted with and without saved games (the empty picker

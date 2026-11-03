@@ -4,23 +4,30 @@
 en/  fr/  de/  ru/  pt-BR/  pl/  es/      10 files each
 ```
 
-Every folder is a complete upload set. Seven frames per language are captured in that
-language; three carry over from English and say so in the filename with an **`-en`** suffix.
+Every folder is a complete upload set of ten, in carousel order. Since v1.36 (2026-11-03) the set is
+built from two sources, and two frames carry over from English with an **`-en`** suffix.
 
-| file | in the translated folders | why |
+| file | source | in the translated folders |
 |---|---|---|
-| `01-accounts-running` | captured | account rows, buttons and status are all localized |
-| `03-about` … `08-theme-builder` | captured | six app surfaces, all localized text |
-| `02-themes-en` | English | a 2×2 theme panel. It shows colours, not words |
-| `09-compact-en` | English | a strip of running clients; almost no chrome in frame |
-| `10-multi-instance-en` | English | eight Roblox windows and a sliver of RoRoRo |
+| `01-accounts` | test harness (`MarketingFrameTests`), fake accounts | rendered in that language |
+| `02-account-panel` | test harness | rendered in that language |
+| `03-account-health` | test harness | rendered in that language |
+| `04-library` | test harness | rendered in that language |
+| `05-multi-instance-en` | the 2026-08 composite of eight Roblox windows | English: almost no RoRoRo chrome in frame |
+| `06-history` … `09-plugins` | live app, streamer mode, `capture-store-screenshots.ps1` | captured in that language |
+| `10-compact-en` | the 2026-08 live capture | English: a strip of running clients |
 
-The `-en` suffix is the point: a reviewer glancing at `pl/` can see at once which three
-frames are not Polish, rather than having to know. It costs ~17 MB of duplicated PNGs
-across six folders, and `10-multi-instance-en.png` is 2.6 MB of that on its own — worth
-knowing if repo weight ever becomes the deciding factor.
+**Why the harness for 01-04.** Store frames from the live app must be captured in streamer mode (real
+account names never reach a shipped asset), and streamer mode masks exactly what v1.36 adds: Robux,
+Plus, friends online and the note read as dots. `MarketingFrameTests` renders the real windows from the
+real XAML with made-up accounts (NovaBuilds, PetGrinder07, AltThree, GardenKeeper, BloxRunner) and
+composites them with `New-StoreFrame`'s exact math. Set `RORORO_MARKETING_FRAMES=1` and run the test to
+regenerate; output lands in `../screenshots-v136/<lang>/` and `docs/videos/v136-shots/<lang>/`.
 
-**Uploading a listing:** take the whole folder. No cross-referencing.
+**Dropped in v1.36:** About and Diagnostics (a live Diagnostics frame says "Channel: Dev build").
+
+**Uploading a listing:** take the whole folder. No cross-referencing. Captions in `listing-copy*.md`
+follow file-number order.
 
 ## Regenerating
 
