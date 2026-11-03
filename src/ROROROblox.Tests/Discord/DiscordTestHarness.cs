@@ -441,7 +441,7 @@ internal static class DiscordTestHarness
         public int StopAll() => 0;
         public bool StopAccount(Guid accountId) => true;
         public int StopWindowless() => 0;
-        public int StopIdleTrayClients(Func<int, bool> isTracked) => 0;
+        public int StopIdleTrayClients(Func<int, bool> isTracked, TimeSpan? minAge) => 0;
     }
 
     private sealed class FakeRobloxRunningProbe : IRobloxRunningProbe

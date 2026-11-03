@@ -255,7 +255,7 @@ public class RobloxInstanceStopperTests
                 new RobloxProcessInfo(606, false, LoaderCmd)),  // untracked browser-started loader
             killByPid: killed.Add, waitForExitByPid: (_, _) => true);
 
-        var count = stopper.StopIdleTrayClients(tracked.Contains);
+        var count = stopper.StopIdleTrayClients(tracked.Contains, null);
 
         Assert.Equal(1, count);
         Assert.Equal(new[] { 101 }, killed);
@@ -269,7 +269,7 @@ public class RobloxInstanceStopperTests
             new FakeProbeWithWindows(new InvalidOperationException("scan failed")),
             killByPid: killed.Add, waitForExitByPid: (_, _) => true);
 
-        Assert.Equal(0, stopper.StopIdleTrayClients(_ => false));
+        Assert.Equal(0, stopper.StopIdleTrayClients(_ => false, null));
         Assert.Empty(killed);
     }
 
@@ -283,7 +283,7 @@ public class RobloxInstanceStopperTests
                 new RobloxProcessInfo(202, false, LoaderCmd)),
             killByPid: killed.Add, waitForExitByPid: (_, _) => true);
 
-        Assert.Equal(0, stopper.StopIdleTrayClients(_ => false));
+        Assert.Equal(0, stopper.StopIdleTrayClients(_ => false, null));
         Assert.Empty(killed);
     }
 
@@ -291,7 +291,7 @@ public class RobloxInstanceStopperTests
     public void StopIdleTrayClients_NullTracker_Throws()
     {
         var stopper = new RobloxInstanceStopper(new FakeProbeWithWindows());
-        Assert.Throws<ArgumentNullException>(() => stopper.StopIdleTrayClients(null!));
+        Assert.Throws<ArgumentNullException>(() => stopper.StopIdleTrayClients(null!, null));
     }
 
     [Fact]

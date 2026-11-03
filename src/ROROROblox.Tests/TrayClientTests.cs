@@ -46,4 +46,66 @@ public class TrayClientTests
     [Fact]
     public void Classifier_FalseForRobloxPlayerLoader()
         => Assert.False(TrayClient.IsIdleTrayClient(new RobloxProcessInfo(1, false, Exe + " roblox-player:1+launchmode:play+gameinfo:abc"), _ => false));
+
+    // #222 age floor. Now is fixed so every row is deterministic.
+    private static readonly DateTimeOffset Now = new(2026, 11, 3, 12, 0, 0, TimeSpan.Zero);
+    private static readonly TimeSpan Floor = TimeSpan.FromMinutes(2);
+    private const string TrayCmd = Exe + " --launch-to-tray";
+
+    private static bool Idle(bool hasWindow, string? cmd, DateTimeOffset? started, bool tracked = false, TimeSpan? minAge = null)
+        => TrayClient.IsIdleTrayClient(new RobloxProcessInfo(1, hasWindow, cmd, started), _ => tracked, minAge, Now);
+
+    [Fact]
+    public void Age_UnderTwoMinutes_NeverSwept()
+        => Assert.False(Idle(false, TrayCmd, Now - TimeSpan.FromSeconds(119), minAge: Floor));
+
+    [Fact]
+    public void Age_FutureStartTime_NeverSwept()
+        => Assert.False(Idle(false, TrayCmd, Now + TimeSpan.FromMinutes(5), minAge: Floor));
+
+    [Fact]
+    public void Age_Windowed_NeverSwept()
+        => Assert.False(Idle(true, TrayCmd, Now - TimeSpan.FromMinutes(40), minAge: Floor));
+
+    [Fact]
+    public void Age_Tracked_NeverSwept()
+        => Assert.False(Idle(false, TrayCmd, Now - TimeSpan.FromMinutes(40), tracked: true, minAge: Floor));
+
+    [Fact]
+    public void Age_NullCommandLine_FailsClosed()
+        => Assert.False(Idle(false, null, Now - TimeSpan.FromMinutes(40), minAge: Floor));
+
+    [Fact]
+    public void Age_UnknownStartTime_FailsClosed()
+        => Assert.False(Idle(false, TrayCmd, null, minAge: Floor));
+
+    [Fact]
+    public void Age_NonTrayLoader_NeverSwept()
+        => Assert.False(Idle(false, Exe + " roblox-player:1+launchmode:play", Now - TimeSpan.FromMinutes(40), minAge: Floor));
+
+    [Theory]
+    [InlineData(120)]
+    [InlineData(2400)]
+    public void Age_OverFloorAndIdleTray_Swept(int seconds)
+        => Assert.True(Idle(false, TrayCmd, Now - TimeSpan.FromSeconds(seconds), minAge: Floor));
+
+    [Fact]
+    public void NullMinAge_KeepsOldRuleExactly()
+    {
+        // Brand new and unknown start time are both swept when there is no floor: the pre-launch clear is unchanged.
+        Assert.True(Idle(false, TrayCmd, Now, minAge: null));
+        Assert.True(Idle(false, TrayCmd, null, minAge: null));
+        Assert.False(Idle(true, TrayCmd, null, minAge: null));
+        Assert.False(Idle(false, TrayCmd, null, tracked: true, minAge: null));
+        Assert.False(Idle(false, null, null, minAge: null));
+    }
+
+    [Fact]
+    public void Probe_ReadStartedAt_UnreadableIsNull_ReadableIsUtc()
+    {
+        Assert.Null(RobloxRunningProbe.ReadStartedAt(() => throw new System.ComponentModel.Win32Exception(5)));
+        Assert.Null(RobloxRunningProbe.ReadStartedAt(() => throw new InvalidOperationException()));
+        var utc = new DateTime(2026, 11, 3, 12, 0, 0, DateTimeKind.Utc);
+        Assert.Equal(new DateTimeOffset(utc), RobloxRunningProbe.ReadStartedAt(() => utc));
+    }
 }

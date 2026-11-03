@@ -19,9 +19,17 @@ public static class TrayClient
 {
     public const string Flag = "--launch-to-tray";
 
-    public static bool IsIdleTrayClient(RobloxProcessInfo p, Func<int, bool> isTracked)
+    /// <summary>
+    /// <paramref name="minAge"/> is the optional age floor (#222 sweeper). Null keeps the original
+    /// rule exactly. With a floor, a client younger than it is never idle (a client still creating
+    /// its window is young by any measure), and an unknown start time fails closed. A start time in
+    /// the future (clock skew) reads as age zero, so it is also never swept.
+    /// <paramref name="now"/> is a test seam; it defaults to the wall clock.
+    /// </summary>
+    public static bool IsIdleTrayClient(RobloxProcessInfo p, Func<int, bool> isTracked, TimeSpan? minAge = null, DateTimeOffset? now = null)
         => !p.HasWindow
            && p.CommandLine is { } cmd
            && cmd.Contains(Flag, StringComparison.OrdinalIgnoreCase)
-           && !isTracked(p.Pid);
+           && !isTracked(p.Pid)
+           && (minAge is not { } floor || (p.StartedAt is { } started && (now ?? DateTimeOffset.UtcNow) - started >= floor));
 }

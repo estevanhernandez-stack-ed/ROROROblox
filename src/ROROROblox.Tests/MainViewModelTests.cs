@@ -1987,7 +1987,7 @@ public class MainViewModelTests
         public Func<int, bool>? LastIsTracked;
         public List<string>? OrderLog;
         public Exception? ThrowOnStopIdle;
-        public int StopIdleTrayClients(Func<int, bool> isTracked)
+        public int StopIdleTrayClients(Func<int, bool> isTracked, TimeSpan? minAge)
         {
             StopIdleTrayClientsCalls++;
             LastIsTracked = isTracked;

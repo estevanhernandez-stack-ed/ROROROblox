@@ -40,6 +40,9 @@ public partial class App : Application
     /// <summary>F-103. Adopts clients Roblox restarts for itself; see OrphanedClientSweeper.</summary>
     private Tray.OrphanedClientSweeper? _orphanSweeper;
 
+    /// <summary>#222. Ends idle tray clients that outlive a launch; its own 30 s timer, see IdleTrayClientSweeper.</summary>
+    private Tray.IdleTrayClientSweeper? _idleTraySweeper;
+
     /// <summary>
     /// The plugin-host listener's bind task, set by <see cref="StartPluginHostListener"/> and
     /// awaited by <see cref="StartPluginAutostart"/>. Null when the host failed to start, in
@@ -729,6 +732,7 @@ public partial class App : Application
         WireMutexLost(mutex, tray);
         WireMainAvatarTrayPainter();
         WireRobloxWindowDecorator();
+        WireIdleTrayClientSweeper();
         WirePluginEventBus();
         WireActivityMonitor();
         await WireMemoryWatchdogAsync();
@@ -1884,6 +1888,30 @@ public partial class App : Application
     /// settings) — see <see cref="WireMemoryWatchdogAsync"/>.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// #222. Starts the idle tray client sweeper. Runs in the Wire* block, after the startup gate
+    /// has answered (the Leftover branch has already cleared windowless strays silently) and after
+    /// the plugin pipe is bound, so it can never act on a client the gate is still deciding about.
+    /// A passenger feature: failure is logged and never blocks startup.
+    /// </summary>
+    private void WireIdleTrayClientSweeper()
+    {
+        try
+        {
+            var tracker = _services.GetRequiredService<IRobloxProcessTracker>();
+            _idleTraySweeper = new Tray.IdleTrayClientSweeper(
+                _services.GetRequiredService<IRobloxInstanceStopper>(),
+                // Same source as the pre-launch clear in MainViewModel: the tracker's pid copy.
+                trackedPids: () => tracker.Attached.Values.Select(p => p.Pid).ToHashSet(),
+                log: _loggerFactory?.CreateLogger<Tray.IdleTrayClientSweeper>());
+            _idleTraySweeper.Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "WireIdleTrayClientSweeper failed; idle tray clients are only cleared before a launch.");
+        }
+    }
+
     private void WireRobloxWindowDecorator()
     {
         if (_services is null) return;
@@ -3520,6 +3548,16 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "Orphan sweeper dispose threw on exit; ignoring.");
+            }
+
+            try
+            {
+                _idleTraySweeper?.Dispose();
+                _idleTraySweeper = null;
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "Idle tray sweeper dispose threw on exit; ignoring.");
             }
 
             // Stop the activity-monitor sample timer before the provider disposes (same shape

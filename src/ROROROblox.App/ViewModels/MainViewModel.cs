@@ -2027,7 +2027,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             try
             {
                 var trackedPids = _processTracker.Attached.Values.Select(p => p.Pid).ToHashSet();
-                await Task.Run(() => _instanceStopper.StopIdleTrayClients(trackedPids.Contains));
+                await Task.Run(() => _instanceStopper.StopIdleTrayClients(trackedPids.Contains, minAge: null));
             }
             catch (Exception ex)
             {

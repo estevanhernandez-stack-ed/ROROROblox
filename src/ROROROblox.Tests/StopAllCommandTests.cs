@@ -22,7 +22,7 @@ public class StopAllCommandTests
         public int StopAll() { Calls.Add("StopAll"); return 3; }
         public bool StopAccount(Guid accountId) => true;
         public int StopWindowless() => 0;
-        public int StopIdleTrayClients(Func<int, bool> isTracked) => 0;
+        public int StopIdleTrayClients(Func<int, bool> isTracked, TimeSpan? minAge) => 0;
     }
 
     private sealed class FakeRunningProbe : IRobloxRunningProbe
