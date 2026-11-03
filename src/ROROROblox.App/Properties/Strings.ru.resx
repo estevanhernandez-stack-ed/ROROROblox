@@ -3642,7 +3642,7 @@ RoRoRo спрашивает про обводку кнопок только дл
     <value>Избранное</value>
   </data>
   <data name="Library_Kind_PrivateServer" xml:space="preserve">
-    <value>Приватный</value>
+    <value>Приватный сервер</value>
   </data>
   <data name="Library_Kind_Recent" xml:space="preserve">
     <value>Недавняя</value>

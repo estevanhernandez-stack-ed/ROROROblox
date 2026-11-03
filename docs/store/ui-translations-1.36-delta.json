@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "f3dea11",
-  "generatedUtc": "2026-11-03T18:57:10+00:00",
+  "sourceCommit": "b44ce76",
+  "generatedUtc": "2026-11-03T19:03:01+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -1053,10 +1053,10 @@
       "translations": {
         "fr": "Serveur privé",
         "de": "Privater Server",
-        "ru": "Приватный",
-        "pt-br": "Privado",
-        "pl": "Prywatny",
-        "es": "Privado"
+        "ru": "Приватный сервер",
+        "pt-br": "Servidor privado",
+        "pl": "Prywatny serwer",
+        "es": "Servidor privado"
       }
     },
     {
@@ -1187,7 +1187,7 @@
         "de": "{0} spielen gerade",
         "ru": "играют: {0}",
         "pt-br": "{0} jogando",
-        "pl": "gra: {0}",
+        "pl": "grają: {0}",
         "es": "{0} jugando"
       }
     },

@@ -3642,7 +3642,7 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
     <value>Ulubiona</value>
   </data>
   <data name="Library_Kind_PrivateServer" xml:space="preserve">
-    <value>Prywatny</value>
+    <value>Prywatny serwer</value>
   </data>
   <data name="Library_Kind_Recent" xml:space="preserve">
     <value>Ostatnia</value>
@@ -3675,7 +3675,7 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
     <value>autor: {0}</value>
   </data>
   <data name="Library_Playing" xml:space="preserve">
-    <value>gra: {0}</value>
+    <value>grają: {0}</value>
   </data>
   <data name="Library_PlaceId" xml:space="preserve">
     <value>ID miejsca {0}</value>

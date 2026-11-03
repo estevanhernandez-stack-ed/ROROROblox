@@ -3642,7 +3642,7 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
     <value>Favorito</value>
   </data>
   <data name="Library_Kind_PrivateServer" xml:space="preserve">
-    <value>Privado</value>
+    <value>Servidor privado</value>
   </data>
   <data name="Library_Kind_Recent" xml:space="preserve">
     <value>Recente</value>

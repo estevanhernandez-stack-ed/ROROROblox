@@ -137,7 +137,9 @@
 
         <!-- List column widths, shared by the header and every row so they line up. The right block is one fixed cell:
              Play, Play as and the more button, wide enough for the longest of the six languages. -->
-        <GridLength x:Key="ListKindWidth">84</GridLength>
+        <!-- Kind 84 to 116 on 2026-11-03 (item 13): "Private server" clipped at 84 in es, pl, pt-BR and ru, and the
+             abbreviated "Privado" dropped the noun (the verifier ruled it inaccurate). The Game column is star and absorbs it. -->
+        <GridLength x:Key="ListKindWidth">116</GridLength>
         <GridLength x:Key="ListLastWidth">108</GridLength>
         <GridLength x:Key="ListTotalWidth">56</GridLength>
         <GridLength x:Key="ListActionsWidth">216</GridLength>
