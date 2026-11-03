@@ -239,11 +239,18 @@ public class CheckedAccentGateTests
     /// resolving nothing and the blue quietly back — with every assertion above still green, because
     /// they all read OUR dictionary. This reads the shipped <c>DefaultCheckBoxStyle</c> and asserts
     /// its template still references each key by name.
+    /// <para>
+    /// On the render host, not a fresh <c>Sta</c> thread (2026-11-02). Saving the style loads its template,
+    /// and that needs the real App: with no Application the pack:// scheme is unregistered ("Invalid port"),
+    /// and with no App resources WPF-UI's <c>SymbolIcon</c> constructor throws on an empty FontSize. On
+    /// <c>Sta</c> it passed only when an earlier render test had already built the App, so it failed run
+    /// alone and on CI x64 whenever test order put it first.
+    /// </para>
     /// </summary>
-    [Fact]
+    [WindowRenderFact]
     public void TheLibrarysTemplateStillReadsEveryKeyWeOverride()
     {
-        var markup = Sta.Run(() =>
+        var markup = WindowRenderHost.Run(() =>
         {
             var dict = new ResourceDictionary
             {
