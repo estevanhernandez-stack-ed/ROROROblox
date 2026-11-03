@@ -595,12 +595,12 @@ additive with `contract_version` unchanged; otherwise the Settings page's Silent
 covers and the release notes name it.
 
 **Acceptance:**
-- [ ] #260 has the evidence request posted; its lane is recorded in `docs/decisions.md` when the reporter
+- [x] #260 has the evidence request posted; its lane is recorded in `docs/decisions.md` when the reporter
       answers; the cycle does not wait on the answer.
 - [x] #222 is closed with the smoke-doc numbers quoted, **or** `TrayClientTests` has the age rows (under
       two minutes never swept; windowed never swept; tracked never swept; null command line fails closed)
       and the sweeper's timer is its own.
-- [ ] #231, `eejy3xvcu` and `g5hjernie` are closed with the quoted step output; nothing in
+- [x] #231, `eejy3xvcu` and `g5hjernie` are closed with the quoted step output; nothing in
       `plugins-catalog.json` was edited by hand this cycle.
 - [x] The banner sits above the existing "Approved-shape" line, dated, pointing at the ruling; nothing
       below it was rewritten.
