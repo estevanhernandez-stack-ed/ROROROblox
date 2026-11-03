@@ -845,7 +845,7 @@ T: dict[str, dict[str, str]] = {
         "fr": "Un seul endroit pour lancer Roblox : votre compte, vos jeux, vos réglages. Ajoutez d'autres comptes plus tard et ils s'exécuteront côte à côte.",
         "pl": "Jedno miejsce do uruchamiania Roblox: twoje konto, twoje gry, twoje ustawienia. Dodaj później więcej kont, a będą działać obok siebie.",
         "pt-BR": "Um só lugar para iniciar o Roblox: sua conta, seus jogos, suas configurações. Adicione mais contas depois e elas rodam lado a lado.",
-        "ru": "Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте аккаунты позже, и они будут работать бок о бок.",
+        "ru": "Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте ещё аккаунты позже, и они будут работать бок о бок.",
     },
     "WelcomeWindow_PickOrPlayFromThePanel": {
         "de": "Spiele über das Panel unter deinem Konto.",
@@ -853,7 +853,7 @@ T: dict[str, dict[str, str]] = {
         "fr": "Jouez depuis le panneau sous votre compte.",
         "pl": "Graj z panelu pod swoim kontem.",
         "pt-BR": "Jogue pelo painel sob a sua conta.",
-        "ru": "Играйте из панели под вашим аккаунтом.",
+        "ru": "Играйте с панели под вашим аккаунтом.",
     },
     "WelcomeWindow_PickOrPlayFromThePanel_Detail": {
         "de": "Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Öffne die Roblox-Startseite oder füge eines in der Bibliothek hinzu.",

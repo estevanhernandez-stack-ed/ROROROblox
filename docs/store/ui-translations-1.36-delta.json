@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "b44ce76",
-  "generatedUtc": "2026-11-03T19:03:01+00:00",
+  "sourceCommit": "1986347",
+  "generatedUtc": "2026-11-03T19:06:44+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -1293,7 +1293,7 @@
       "translations": {
         "fr": "Un seul endroit pour lancer Roblox : votre compte, vos jeux, vos réglages. Ajoutez d'autres comptes plus tard et ils s'exécuteront côte à côte.",
         "de": "Ein Ort zum Starten von Roblox: dein Konto, deine Spiele, deine Einstellungen. Füge später weitere Konten hinzu, dann laufen sie nebeneinander.",
-        "ru": "Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте аккаунты позже, и они будут работать бок о бок.",
+        "ru": "Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте ещё аккаунты позже, и они будут работать бок о бок.",
         "pt-br": "Um só lugar para iniciar o Roblox: sua conta, seus jogos, suas configurações. Adicione mais contas depois e elas rodam lado a lado.",
         "pl": "Jedno miejsce do uruchamiania Roblox: twoje konto, twoje gry, twoje ustawienia. Dodaj później więcej kont, a będą działać obok siebie.",
         "es": "Un lugar para iniciar Roblox: tu cuenta, tus juegos, tus ajustes. Añade más cuentas después y se ejecutarán una al lado de la otra."
@@ -1305,7 +1305,7 @@
       "translations": {
         "fr": "Jouez depuis le panneau sous votre compte.",
         "de": "Spiele über das Panel unter deinem Konto.",
-        "ru": "Играйте из панели под вашим аккаунтом.",
+        "ru": "Играйте с панели под вашим аккаунтом.",
         "pt-br": "Jogue pelo painel sob a sua conta.",
         "pl": "Graj z panelu pod swoim kontem.",
         "es": "Juega desde el panel bajo tu cuenta."

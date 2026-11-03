@@ -3702,10 +3702,10 @@ RoRoRo спрашивает про обводку кнопок только дл
     <value>Добавить {0} в Библиотеку</value>
   </data>
   <data name="WelcomeWindow_OnePlaceToLaunchRoblox" xml:space="preserve">
-    <value>Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте аккаунты позже, и они будут работать бок о бок.</value>
+    <value>Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте ещё аккаунты позже, и они будут работать бок о бок.</value>
   </data>
   <data name="WelcomeWindow_PickOrPlayFromThePanel" xml:space="preserve">
-    <value>Играйте из панели под вашим аккаунтом.</value>
+    <value>Играйте с панели под вашим аккаунтом.</value>
   </data>
   <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
     <value>Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Откройте главную Roblox или добавьте игру в Библиотеку.</value>
