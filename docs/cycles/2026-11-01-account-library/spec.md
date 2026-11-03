@@ -246,6 +246,8 @@ members since 2026-04-30 and lost its badge on 2026-05-30, so **the badge word i
 (default — confirm on next interactive run); if the probe shows the endpoint answers `false` for a known
 Plus account, the fact is dropped under the gate above rather than shown wrong.
 
+> **Superseded 2026-11-02** (`docs/decisions.md`, "A membership failure only ever costs the badge"): no membership failure sets `LastError` or abandons the refresh, a 401 or 403 included. A transient one keeps the last known badge; a definitive one drops it to unknown.
+
 A 401 or 403 from any of the three is recorded in `LastError` and shown as the age hint's reason. **It
 never sets `SessionExpired` or `SessionLimited`**: `PresenceService` stays the only authority on health
 (the PRD's "never flips the account's health state on its own"), and a facts failure is one more reason

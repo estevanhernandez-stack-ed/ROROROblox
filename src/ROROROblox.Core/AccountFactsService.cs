@@ -43,17 +43,17 @@ public sealed class AccountFactsUpdatedEventArgs : EventArgs
 /// test can assert zero.
 /// </para>
 /// <para>
-/// A 401 or 403 from any call is recorded in <see cref="AccountFacts.LastError"/> and nothing else.
-/// This class has no reference to the presence service or the view model: presence stays the only
-/// authority on an account's health, and a facts failure is one more reason to let it decide.
+/// A 401 or 403 from the Robux or friends call is recorded in <see cref="AccountFacts.LastError"/> and
+/// nothing else. This class has no reference to the presence service or the view model: presence stays
+/// the only authority on an account's health, and a facts failure is one more reason to let it decide.
 /// </para>
 /// <para>
-/// MEMBERSHIP IS OFF BY DEFAULT. The validate-membership endpoint is undocumented and marked for
-/// deprecation (Roblox Plus replaced Premium on 2026-04-30), and its only measurement is checkpoint
-/// C1's. Until then no request is made to it, <see cref="AccountFacts.Membership"/> stays null and no
-/// membership <see cref="AccountFacts.LastError"/> is ever set (a dead endpoint would otherwise paint
-/// "last try failed (404)" on every row whose Robux and friends refreshed fine). C1 flips it, by passing
-/// <c>membershipEnabled: true</c> at the composition root, only on a measured answer.
+/// MEMBERSHIP IS OFF BY DEFAULT IN CORE. The validate-membership endpoint is undocumented and marked for
+/// deprecation (Roblox Plus replaced Premium on 2026-04-30). C1 measured it answering for every account
+/// on 2026-11-02 and the app passes <c>membershipEnabled: true</c>. Because Roblox can still remove it,
+/// it can only ever cost the badge: no membership failure sets <see cref="AccountFacts.LastError"/> (a
+/// removed endpoint would paint "last try failed (404)" on every row whose Robux and friends refreshed
+/// fine) or throws the refresh away.
 /// </para>
 /// <para>
 /// Cookie hygiene: the plaintext cookie lives in a local for the span of one refresh, is passed to
@@ -497,10 +497,11 @@ public sealed class AccountFactsService : IDisposable
     }
 
     /// <summary>
-    /// The calls, sequentially (two, or three when <see cref="MembershipEnabled"/>). Robux and friends-online are the core: any failure there, and a
-    /// 401 or 403 from any of the three, abandons the refresh and keeps the previous values whole
-    /// (a row never mixes a fresh Robux with a stale friends count under one age). Membership is the
-    /// gated, deprecation-marked one: a non-auth failure there only blanks membership.
+    /// The calls, sequentially (two, or three when <see cref="MembershipEnabled"/>). Robux and friends-online are the core: any failure there
+    /// abandons the refresh and keeps the previous values whole (a row never mixes a fresh Robux with a
+    /// stale friends count under one age). Membership is the gated, deprecation-marked one, asked last:
+    /// its failures, a 401 or 403 included (the same cookie just answered the other two), only ever
+    /// touch the badge; see <see cref="MapMembership"/>.
     /// </summary>
     private async Task<FetchOutcome> FetchAsync(string cookie, long? userId, AccountFacts? previous, CancellationToken ct)
     {
@@ -545,47 +546,50 @@ public sealed class AccountFactsService : IDisposable
             return FetchOutcome.Ok(new AccountFacts(robux, null, friends, null, null));
         }
 
-        MembershipProbe probe;
+        string? membership;
         try
         {
             Interlocked.Increment(ref _requestCount);
-            probe = await _api.GetMembershipAsync(cookie, userId.Value, ct).ConfigureAwait(false);
+            var probe = await _api.GetMembershipAsync(cookie, userId.Value, ct).ConfigureAwait(false);
+            membership = MapMembership(probe, previous?.Membership);
         }
         catch (Exception ex) when (Describe(ex, ct) is { } code)
         {
-            return FetchOutcome.Failed(code);
+            _log.LogDebug("Facts: the membership lookup failed ({Code}); keeping the last known badge.", code);
+            membership = previous?.Membership;
         }
 
-        if (probe.Status is 401 or 403)
-        {
-            return FetchOutcome.Failed(probe.Status.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        }
-        var (membership, membershipError) = MapMembership(probe);
-        return FetchOutcome.Ok(new AccountFacts(robux, membership, friends, null, membershipError));
+        return FetchOutcome.Ok(new AccountFacts(robux, membership, friends, null, null));
     }
 
     /// <summary>
     /// 200 with body <c>true</c> is "plus" (the badge word for any true: the endpoint cannot tell
     /// Plus from legacy Premium, and Premium closed to new members 2026-04-30); 200 with
-    /// <c>false</c> is "none"; anything else is unknown (null) with the reason. A 403 is unknown,
-    /// not "none" (handled by the caller before this point).
+    /// <c>false</c> is "none". Anything else sets no error (2026-11-02): a transient answer (408, 429,
+    /// 5xx) keeps <paramref name="previous"/>, and a definitive one (a removed endpoint's 404 or 410, a
+    /// 401 or 403, a body we cannot read) drops the badge to unknown rather than show it wrong. A 403
+    /// is unknown, never "none".
     /// </summary>
-    private static (string? Membership, string? Error) MapMembership(MembershipProbe probe)
+    private string? MapMembership(MembershipProbe probe, string? previous)
     {
         if (probe.Status == 200)
         {
             var body = probe.Body?.Trim();
             if (string.Equals(body, "true", StringComparison.OrdinalIgnoreCase))
             {
-                return (MembershipPlus, null);
+                return MembershipPlus;
             }
             if (string.Equals(body, "false", StringComparison.OrdinalIgnoreCase))
             {
-                return (MembershipNone, null);
+                return MembershipNone;
             }
-            return (null, "membership-body");
         }
-        return (null, probe.Status.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        var transient = probe.Status is 408 or 429 or >= 500;
+        _log.LogDebug("Facts: membership answered {Status}{Unreadable}; {Outcome}.",
+            probe.Status, probe.Status == 200 ? " with an unreadable body" : "",
+            transient ? "keeping the last known badge" : "dropping the badge");
+        return transient ? previous : null;
     }
 
     /// <summary>

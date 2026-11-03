@@ -302,15 +302,12 @@ public class AccountFactsServiceTests
     [InlineData("robux", 403, 1)]
     [InlineData("friends", 401, 2)]
     [InlineData("friends", 403, 2)]
-    [InlineData("membership", 401, 3)]
-    [InlineData("membership", 403, 3)]
-    public async Task A401Or403_FromAnyCall_LeavesPreviousValuesStanding_AndSetsLastError(string failingKind, int status, int callsMade)
+    public async Task A401Or403_FromRobuxOrFriends_LeavesPreviousValuesStanding_AndSetsLastError(string failingKind, int status, int callsMade)
     {
         using var rig = await Rig.CreateAsync(1);
         var previous = new AccountFacts(Robux: 50, Membership: "none", FriendsOnline: 2, FetchedAtUtc: T0 - TimeSpan.FromMinutes(20), LastError: null);
         await rig.SeedAsync(0, previous);
-        rig.Api.Throw = (_, kind) => kind == failingKind && kind != "membership" ? new AccountFactsRequestException(status) : null;
-        rig.Api.MembershipStatus = failingKind == "membership" ? status : 200;
+        rig.Api.Throw = (_, kind) => kind == failingKind ? new AccountFactsRequestException(status) : null;
 
         Assert.True(rig.Service.Enqueue(rig.Ids[0]));
         await rig.PumpUntilAsync(() => rig.Updates.Count == 1);
@@ -318,7 +315,7 @@ public class AccountFactsServiceTests
         var expected = previous with { LastError = status.ToString() };
         Assert.Equal(expected, Assert.Single(rig.Updates).Facts);
         Assert.Equal(expected, Assert.Single(await rig.Store.ListAsync()).Facts);
-        Assert.Equal(callsMade, rig.Api.Snapshot().Count); // a rejected cookie is not asked a fourth question
+        Assert.Equal(callsMade, rig.Api.Snapshot().Count); // a rejected cookie is not asked another question
     }
 
     [Theory]
@@ -379,14 +376,10 @@ public class AccountFactsServiceTests
     // ---- membership mapping ----
 
     [Theory]
-    [InlineData(200, "true", "plus", null)]
-    [InlineData(200, "True", "plus", null)]
-    [InlineData(200, " false\n", "none", null)]
-    [InlineData(200, "", null, "membership-body")]
-    [InlineData(200, "{\"isPremium\":true}", null, "membership-body")]
-    [InlineData(404, null, null, "404")]
-    [InlineData(500, "oops", null, "500")]
-    public async Task Membership_MapsTheProbe(int status, string? body, string? expectedMembership, string? expectedError)
+    [InlineData(200, "true", "plus")]
+    [InlineData(200, "True", "plus")]
+    [InlineData(200, " false\n", "none")]
+    public async Task Membership_MapsTheProbe(int status, string? body, string? expectedMembership)
     {
         using var rig = await Rig.CreateAsync(1);
         rig.Api.MembershipStatus = status;
@@ -397,10 +390,60 @@ public class AccountFactsServiceTests
 
         var facts = Assert.Single(rig.Updates).Facts;
         Assert.Equal(expectedMembership, facts.Membership);
-        Assert.Equal(expectedError, facts.LastError);
-        Assert.Equal(100, facts.Robux);       // the other two facts are not poisoned by the gated endpoint
+        Assert.Null(facts.LastError);
+        Assert.Equal(100, facts.Robux);
         Assert.Equal(2, facts.FriendsOnline);
         Assert.NotNull(facts.FetchedAtUtc);
+    }
+
+    /// <summary>
+    /// The deprecation-marked endpoint can only ever cost the badge (2026-11-02, when C1 turned it on). Robux and
+    /// friends are fresh, the same cookie just answered both, so no membership failure sets LastError (which would
+    /// paint "last try failed" on every row) or throws the refresh away. A transient failure keeps the last known
+    /// badge; a definitive one, a removed endpoint above all, drops it rather than show it wrong. Every row here
+    /// starts from a stored "plus".
+    /// </summary>
+    [Theory]
+    [InlineData(404, null, null, null)]
+    [InlineData(410, null, null, null)]
+    [InlineData(401, null, null, null)]
+    [InlineData(403, null, null, null)]
+    [InlineData(200, "", null, null)]
+    [InlineData(200, "{\"isPremium\":true}", null, null)]
+    [InlineData(500, "oops", null, "plus")]
+    [InlineData(503, null, null, "plus")]
+    [InlineData(429, null, null, "plus")]
+    [InlineData(408, null, null, "plus")]
+    [InlineData(200, "true", "timeout", "plus")]
+    [InlineData(200, "true", "network", "plus")]
+    [InlineData(200, "true", "error", "plus")]
+    public async Task AFailedMembershipLookup_NeverCostsRobuxOrFriends_AndOnlyATransientOneKeepsTheBadge(
+        int status, string? body, string? thrown, string? expectedMembership)
+    {
+        using var rig = await Rig.CreateAsync(1);
+        await rig.SeedAsync(0, new AccountFacts(50, "plus", 1, T0 - TimeSpan.FromMinutes(20), "403"));
+        rig.Api.Robux = 1240;
+        rig.Api.Friends = 3;
+        rig.Api.MembershipStatus = status;
+        rig.Api.MembershipBody = body;
+        rig.Api.Throw = (_, kind) => kind != "membership" ? null : thrown switch
+        {
+            "timeout" => new TaskCanceledException("the request timed out"),
+            "network" => new HttpRequestException("name not resolved"),
+            "error" => new InvalidOperationException("boom"),
+            _ => null,
+        };
+
+        Assert.True(rig.Service.Enqueue(rig.Ids[0]));
+        await rig.PumpUntilAsync(() => rig.Updates.Count == 1);
+
+        var facts = Assert.Single(rig.Updates).Facts;
+        Assert.Equal(1240, facts.Robux);
+        Assert.Equal(3, facts.FriendsOnline);
+        Assert.Null(facts.LastError); // the old robux 403 clears too: this refresh's robux and friends succeeded
+        Assert.True(facts.FetchedAtUtc >= T0);
+        Assert.Equal(expectedMembership, facts.Membership);
+        Assert.Equal(facts, Assert.Single(await rig.Store.ListAsync()).Facts);
     }
 
     // ---- membership is off until C1 measures it ----
