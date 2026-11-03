@@ -1410,6 +1410,12 @@ public partial class App : Application
             () => sp.GetRequiredService<ROROROblox.Core.Notify.PhoneNotifyConfigService>().Current,
             () => AlertCadenceSetting));
 
+        // #52: the version and channel Diagnostics reports. Same IHostBuildIdentity the plugin host uses.
+        services.AddSingleton<ROROROblox.App.Plugins.IHostBuildIdentity, ROROROblox.App.Plugins.HostBuildIdentity>();
+        services.AddSingleton<IInstallIdentity>(sp => new Distribution.InstallIdentity(
+            sp.GetRequiredService<Distribution.IDistributionMode>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IHostBuildIdentity>()));
+
         services.AddSingleton<IDiagnosticsCollector>(sp => new DiagnosticsCollector(
             sp.GetRequiredService<IAccountStore>(),
             sp.GetRequiredService<IRobloxProcessTracker>(),
@@ -1417,7 +1423,8 @@ public partial class App : Application
             AppLogging.LogDirectory,
             dataDir,
             sp.GetRequiredService<ISystemMemoryProbe>(),
-            sp.GetRequiredService<IMemoryWatchdog>()));
+            sp.GetRequiredService<IMemoryWatchdog>(),
+            sp.GetRequiredService<IInstallIdentity>()));
 
         // ViewModel + Window.
         services.AddSingleton<MainViewModel>();

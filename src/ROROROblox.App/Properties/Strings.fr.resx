@@ -2564,6 +2564,21 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   <data name="Diag_Label_Version" xml:space="preserve">
     <value>Version</value>
   </data>
+  <data name="Diag_Label_Channel" xml:space="preserve">
+    <value>Canal</value>
+  </data>
+  <data name="Diag_Channel_Store" xml:space="preserve">
+    <value>Microsoft Store</value>
+  </data>
+  <data name="Diag_Channel_Sideload" xml:space="preserve">
+    <value>Installation manuelle</value>
+  </data>
+  <data name="Diag_Channel_DirectDownload" xml:space="preserve">
+    <value>Téléchargement direct</value>
+  </data>
+  <data name="Diag_Channel_Dev" xml:space="preserve">
+    <value>Build de développement</value>
+  </data>
   <data name="Diag_Label_DotNet" xml:space="preserve">
     <value>Runtime .NET</value>
   </data>

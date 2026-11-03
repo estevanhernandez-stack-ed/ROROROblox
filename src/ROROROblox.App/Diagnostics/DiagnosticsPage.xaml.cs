@@ -52,6 +52,7 @@ internal partial class DiagnosticsPage : UserControl
         AddSection(Loc.Get("Diag_Section_Application"), new[]
         {
             (Loc.Get("Diag_Label_Version"), s.AppVersion),
+            (Loc.Get("Diag_Label_Channel"), ChannelLabel(s.Channel)),
             (Loc.Get("Diag_Label_DotNet"), s.DotNetVersion),
             (Loc.Get("Diag_Label_OS"), s.OsVersion),
             ("Multi-Instance", s.MultiInstanceHeld ? Loc.Get("Diag_On") : Loc.Get("Diag_Off")),
@@ -89,6 +90,26 @@ internal partial class DiagnosticsPage : UserControl
             (Loc.Get("Diag_Label_Data"), s.DataDirectory),
         });
     }
+
+    /// <summary>The page's channel word, localized. Null means no identity was wired.</summary>
+    private static string ChannelLabel(InstallChannel? channel) => channel switch
+    {
+        InstallChannel.Store => Loc.Get("Diag_Channel_Store"),
+        InstallChannel.Sideload => Loc.Get("Diag_Channel_Sideload"),
+        InstallChannel.DirectDownload => Loc.Get("Diag_Channel_DirectDownload"),
+        InstallChannel.Dev => Loc.Get("Diag_Channel_Dev"),
+        _ => Loc.Get("Diag_NotDetected"),
+    };
+
+    /// <summary>The support bundle's channel word: English and invariant, whatever the UI language.</summary>
+    internal static string ChannelText(InstallChannel? channel) => channel switch
+    {
+        InstallChannel.Store => "Store",
+        InstallChannel.Sideload => "Sideload",
+        InstallChannel.DirectDownload => "DirectDownload",
+        InstallChannel.Dev => "Dev",
+        _ => "not detected",
+    };
 
     private static string FormatGb(long bytes) => $"{bytes / 1024d / 1024d / 1024d:F1} GB";
 
@@ -226,44 +247,7 @@ internal partial class DiagnosticsPage : UserControl
         var snapshotEntry = archive.CreateEntry("snapshot.txt");
         using (var writer = new StreamWriter(snapshotEntry.Open(), Encoding.UTF8))
         {
-            // F-034: the header of the file a clan member attaches to a bug report. Everything
-            // else in this bundle is an identifier; this line is read by a person.
-            writer.WriteLine($"{Branding.ProductName} support snapshot");
-            writer.WriteLine($"Captured (UTC): {snapshot.CapturedAtUtc:O}");
-            writer.WriteLine();
-            writer.WriteLine($"App version       : {snapshot.AppVersion}");
-            writer.WriteLine($".NET runtime      : {snapshot.DotNetVersion}");
-            writer.WriteLine($"OS                : {snapshot.OsVersion}");
-            // The bundle body stays English by policy — a clan member pastes it into a bug report a
-            // maintainer reads. So these compose English from the snapshot's data, the same way the
-            // "yes"/"no" lines below already do, rather than reusing the localized UI-panel strings.
-            writer.WriteLine($"Multi-Instance    : {(snapshot.MultiInstanceHeld ? "ON" : "OFF")}");
-            writer.WriteLine($"Saved accounts    : {snapshot.AccountCount}");
-            writer.WriteLine($"Live clients      : {snapshot.LiveProcessCount}");
-            writer.WriteLine();
-            writer.WriteLine($"Roblox installed  : {(snapshot.RobloxInstalled ? "yes" : "no")}");
-            writer.WriteLine($"Roblox version    : {snapshot.RobloxInstalledVersion ?? "not detected"}");
-            writer.WriteLine();
-            writer.WriteLine($"WebView2 installed: {(snapshot.WebView2Installed ? "yes" : "no")}");
-            writer.WriteLine($"WebView2 version  : {snapshot.WebView2Version ?? "not detected"}");
-            writer.WriteLine();
-            writer.WriteLine($"Installed RAM     : {FormatGb(snapshot.TotalPhysicalMemoryBytes)}");
-            writer.WriteLine($"Available RAM     : {FormatGb(snapshot.AvailablePhysicalMemoryBytes)}");
-            if (snapshot.AccountMemory.Count > 0)
-            {
-                writer.WriteLine("Per-account memory:");
-                // Short id only — no display names, no local names, no cookies. This bundle
-                // gets pasted into Discord.
-                foreach (var a in snapshot.AccountMemory)
-                {
-                    var shortId = a.AccountId.ToString("N")[..8];
-                    var suffix = a.ReadOk ? string.Empty : "(stale)";
-                    writer.WriteLine($"  {shortId}: {FormatGb(a.PrivateBytes)}{suffix}");
-                }
-            }
-            writer.WriteLine();
-            writer.WriteLine($"Logs path         : {snapshot.LogDirectory}");
-            writer.WriteLine($"Data path         : {snapshot.DataDirectory}");
+            WriteSnapshotText(writer, snapshot);
         }
 
         // 2. Latest log files (up to 3 most recent).
@@ -289,6 +273,53 @@ internal partial class DiagnosticsPage : UserControl
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// The body of snapshot.txt. Split out of <see cref="BuildSupportBundle"/> so a test can read
+    /// the lines without a zip; English and invariant by policy.
+    /// </summary>
+    internal static void WriteSnapshotText(TextWriter writer, DiagnosticsSnapshot snapshot)
+    {
+        // F-034: the header of the file a clan member attaches to a bug report. Everything
+        // else in this bundle is an identifier; this line is read by a person.
+        writer.WriteLine($"{Branding.ProductName} support snapshot");
+        writer.WriteLine($"Captured (UTC): {snapshot.CapturedAtUtc:O}");
+        writer.WriteLine();
+        writer.WriteLine($"App version       : {snapshot.AppVersion}");
+        writer.WriteLine($"Channel           : {ChannelText(snapshot.Channel)}");
+        writer.WriteLine($".NET runtime      : {snapshot.DotNetVersion}");
+        writer.WriteLine($"OS                : {snapshot.OsVersion}");
+        // The bundle body stays English by policy — a clan member pastes it into a bug report a
+        // maintainer reads. So these compose English from the snapshot's data, the same way the
+        // "yes"/"no" lines below already do, rather than reusing the localized UI-panel strings.
+        writer.WriteLine($"Multi-Instance    : {(snapshot.MultiInstanceHeld ? "ON" : "OFF")}");
+        writer.WriteLine($"Saved accounts    : {snapshot.AccountCount}");
+        writer.WriteLine($"Live clients      : {snapshot.LiveProcessCount}");
+        writer.WriteLine();
+        writer.WriteLine($"Roblox installed  : {(snapshot.RobloxInstalled ? "yes" : "no")}");
+        writer.WriteLine($"Roblox version    : {snapshot.RobloxInstalledVersion ?? "not detected"}");
+        writer.WriteLine();
+        writer.WriteLine($"WebView2 installed: {(snapshot.WebView2Installed ? "yes" : "no")}");
+        writer.WriteLine($"WebView2 version  : {snapshot.WebView2Version ?? "not detected"}");
+        writer.WriteLine();
+        writer.WriteLine($"Installed RAM     : {FormatGb(snapshot.TotalPhysicalMemoryBytes)}");
+        writer.WriteLine($"Available RAM     : {FormatGb(snapshot.AvailablePhysicalMemoryBytes)}");
+        if (snapshot.AccountMemory.Count > 0)
+        {
+            writer.WriteLine("Per-account memory:");
+            // Short id only — no display names, no local names, no cookies. This bundle
+            // gets pasted into Discord.
+            foreach (var a in snapshot.AccountMemory)
+            {
+                var shortId = a.AccountId.ToString("N")[..8];
+                var suffix = a.ReadOk ? string.Empty : "(stale)";
+                writer.WriteLine($"  {shortId}: {FormatGb(a.PrivateBytes)}{suffix}");
+            }
+        }
+        writer.WriteLine();
+        writer.WriteLine($"Logs path         : {snapshot.LogDirectory}");
+        writer.WriteLine($"Data path         : {snapshot.DataDirectory}");
     }
 
     private static string RedactSecrets(string line)

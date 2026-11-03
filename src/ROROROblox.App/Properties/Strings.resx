@@ -2613,6 +2613,11 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Diag_Section_PerAccountMemory" xml:space="preserve"><value>Per-Account Memory</value><comment>Diagnostics section title (localized Phase D step 3)</comment></data>
   <data name="Diag_Section_Paths" xml:space="preserve"><value>Paths</value><comment>Diagnostics section title (localized Phase D step 3)</comment></data>
   <data name="Diag_Label_Version" xml:space="preserve"><value>Version</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_Channel" xml:space="preserve"><value>Channel</value><comment>Diagnostics row label: which install channel this copy came from (#52)</comment></data>
+  <data name="Diag_Channel_Store" xml:space="preserve"><value>Microsoft Store</value><comment>Diagnostics channel value; product noun, stays English</comment></data>
+  <data name="Diag_Channel_Sideload" xml:space="preserve"><value>Sideload</value><comment>Diagnostics channel value: signed MSIX installed outside the Store</comment></data>
+  <data name="Diag_Channel_DirectDownload" xml:space="preserve"><value>Direct download</value><comment>Diagnostics channel value: the Setup.exe from GitHub</comment></data>
+  <data name="Diag_Channel_Dev" xml:space="preserve"><value>Dev build</value><comment>Diagnostics channel value: a build run from source</comment></data>
   <data name="Diag_Label_DotNet" xml:space="preserve"><value>.NET runtime</value><comment>Diagnostics row label; ".NET" stays English (localized Phase D step 3)</comment></data>
   <data name="Diag_Label_OS" xml:space="preserve"><value>OS</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
   <data name="Diag_Label_SavedAccounts" xml:space="preserve"><value>Saved accounts</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>

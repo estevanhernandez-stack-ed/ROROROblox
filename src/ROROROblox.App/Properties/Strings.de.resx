@@ -2564,6 +2564,21 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="Diag_Label_Version" xml:space="preserve">
     <value>Version</value>
   </data>
+  <data name="Diag_Label_Channel" xml:space="preserve">
+    <value>Kanal</value>
+  </data>
+  <data name="Diag_Channel_Store" xml:space="preserve">
+    <value>Microsoft Store</value>
+  </data>
+  <data name="Diag_Channel_Sideload" xml:space="preserve">
+    <value>Sideload</value>
+  </data>
+  <data name="Diag_Channel_DirectDownload" xml:space="preserve">
+    <value>Direkter Download</value>
+  </data>
+  <data name="Diag_Channel_Dev" xml:space="preserve">
+    <value>Entwickler-Build</value>
+  </data>
   <data name="Diag_Label_DotNet" xml:space="preserve">
     <value>.NET-Runtime</value>
   </data>

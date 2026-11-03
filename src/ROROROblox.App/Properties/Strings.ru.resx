@@ -2564,6 +2564,21 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="Diag_Label_Version" xml:space="preserve">
     <value>Версия</value>
   </data>
+  <data name="Diag_Label_Channel" xml:space="preserve">
+    <value>Канал</value>
+  </data>
+  <data name="Diag_Channel_Store" xml:space="preserve">
+    <value>Microsoft Store</value>
+  </data>
+  <data name="Diag_Channel_Sideload" xml:space="preserve">
+    <value>Ручная установка</value>
+  </data>
+  <data name="Diag_Channel_DirectDownload" xml:space="preserve">
+    <value>Прямая загрузка</value>
+  </data>
+  <data name="Diag_Channel_Dev" xml:space="preserve">
+    <value>Сборка разработчика</value>
+  </data>
   <data name="Diag_Label_DotNet" xml:space="preserve">
     <value>Среда выполнения .NET</value>
   </data>

@@ -32,4 +32,5 @@ public sealed record DiagnosticsSnapshot(
     DateTimeOffset CapturedAtUtc,
     long TotalPhysicalMemoryBytes,
     long AvailablePhysicalMemoryBytes,
-    IReadOnlyList<AccountMemory> AccountMemory);
+    IReadOnlyList<AccountMemory> AccountMemory,
+    InstallChannel? Channel = null);

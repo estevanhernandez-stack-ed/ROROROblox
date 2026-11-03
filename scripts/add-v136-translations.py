@@ -887,6 +887,28 @@ T: dict[str, dict[str, str]] = {
         "pt-BR": "Com mais de uma conta",
         "ru": "Если аккаунтов больше одного",
     },
+    # ---- item 11 (b): #52 Diagnostics says which install channel this is ----------------------
+    # "Microsoft Store" is a product noun and stays English everywhere. The snapshot.txt line is
+    # English and invariant and does not use these.
+    "Diag_Label_Channel": {
+        "de": "Kanal", "es": "Canal", "fr": "Canal", "pl": "Kanał", "pt-BR": "Canal", "ru": "Канал",
+    },
+    "Diag_Channel_Store": {
+        "de": "Microsoft Store", "es": "Microsoft Store", "fr": "Microsoft Store",
+        "pl": "Microsoft Store", "pt-BR": "Microsoft Store", "ru": "Microsoft Store",
+    },
+    "Diag_Channel_Sideload": {
+        "de": "Sideload", "es": "Instalación manual", "fr": "Installation manuelle",
+        "pl": "Instalacja ręczna", "pt-BR": "Instalação manual", "ru": "Ручная установка",
+    },
+    "Diag_Channel_DirectDownload": {
+        "de": "Direkter Download", "es": "Descarga directa", "fr": "Téléchargement direct",
+        "pl": "Pobranie bezpośrednie", "pt-BR": "Download direto", "ru": "Прямая загрузка",
+    },
+    "Diag_Channel_Dev": {
+        "de": "Entwickler-Build", "es": "Compilación de desarrollo", "fr": "Build de développement",
+        "pl": "Kompilacja deweloperska", "pt-BR": "Build de desenvolvimento", "ru": "Сборка разработчика",
+    },
 }
 
 
