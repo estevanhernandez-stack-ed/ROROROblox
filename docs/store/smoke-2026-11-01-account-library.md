@@ -76,7 +76,7 @@ All eight saved accounts, `--live`, 15:24-15:25 UTC, reports in `docs/cycles/202
 - **Needs verification:** not measured. No account was in the captcha, expired or limited state, so no 403 with a `rblx-challenge-type` exists to compare. It stays unset until a captcha-state account (the clan's follow-cancel-follow) and, ideally, a limited one are probed.
 - The first live run's report carried the main's Roblox name and its live `gameId` (server instance id); the repo is public. Deleted unpublished; the probe now names reports by local-id prefix and scrubs `gameId`/`jobId`, with tests.
 
-## Controlled A/B, pending C2
+## Controlled A/B, run 2026-11-02 (C2 step 3)
 
 The 10% startup bar (spec §6) is decided here, on a machine with no live session:
 
@@ -86,7 +86,27 @@ The 10% startup bar (spec §6) is decided here, on a machine with no live sessio
 4. For each start read the same two log lines: the `ROROROblox starting` banner and the following `Startup mutex:` line; record the delta in ms and the class of the start (anything but a clean start is excluded and repeated).
 5. Record the five numbers and the median per build in a table here. Pass: the branch median is within 10% of the `5a8fe61` median, with zero `AccountFactsApi` request lines before the first expand or tick.
 
-Not run yet.
+**Run 2026-11-02, 21:38-21:52 local**, this machine, the live data folder (both builds read the same eight-account vault), no Roblox client, Ur Task autostart on for both (one plugin process per start). A script launched the builds alternately and Este quit each from the tray. A is the `5a8fe61` worktree build; B is the branch build of 20:57 (app code at `85f1443`). Both banners read v1.35.0, so starts were matched to builds by launch time.
+
+| Start | Banner to `Startup mutex:` | Banner to theme | Theme to gate (compat fetch) | Gate to mutex | Class |
+|---|---|---|---|---|---|
+| A1 | 2551 ms | 264 | 931 | 1356 | not clean: swept 2 plugin processes the Store RoRoRo left running (F-101); excluded |
+| B1 | 2160 ms | 258 | 750 | 1152 | clean |
+| A2 | 2053 ms | 107 | 926 | 1020 | clean |
+| B2 | 1564 ms | 107 | 476 | 981 | clean |
+| A3 | 1521 ms | 100 | 479 | 942 | clean |
+| B3 | 1859 ms | 104 | 787 | 968 | clean |
+| A4 | 1556 ms | 107 | 478 | 971 | clean |
+| B4 | 1867 ms | 107 | 795 | 965 | clean |
+| A5 | 1471 ms | 100 | 469 | 902 | clean |
+| B5 | 1554 ms | 107 | 484 | 963 | clean |
+
+- **As specified** (banner to `Startup mutex:`): A median 1538.5 ms (n=4), B median 1859 ms (n=5), **+20.8%. Fails as measured.**
+- **Why that is not the branch.** Theme to gate is one awaited network call, `RobloxCompatChecker.ResolveMutexNameAsync` (the signed `roblox-compat.json` fetch, 2 s bound). Neither that file nor its HttpClient registration changed since `5a8fe61`. It is bimodal in both builds: about 470-485 ms (A3, A4, A5, B2, B5) or about 750-930 ms (A1, A2, B1, B3, B4). B drew the slow mode in 3 of 5 starts, A in 1 of its 4 clean ones.
+- **Ruling, Este, 2026-11-02: the bar is judged on startup minus the compat fetch** (banner to theme plus gate to mutex). A: 1002, 1042, 1078, 1127, median 1060 ms. B: 1070, 1072, 1072, 1088, 1410, median 1072 ms. **+1.1%. Pass.**
+- Cross-check, fast-fetch starts only, full window: A 1471, 1521, 1556 (median 1521); B 1554, 1564 (median 1559). +2.5%.
+- **Facts lane: zero `AccountFactsApi` request lines before the first tick, on every B start.** B1 stayed open 283 s untouched: its first request came 69 s after the banner, then one account per 60 s tick, 12 calls, all 200 (membership included). B2-B5 quit inside 60 s with zero calls.
+- Not done: A1 was excluded and not repeated, so A is n=4.
 
 ## #222: windowless strays (measurement from v1.35)
 

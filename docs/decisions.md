@@ -840,3 +840,13 @@ Export writes exactly what `ThemeStore.SaveUserThemeAsync` writes for a custom t
 **Consequences:** If Roblox removes the endpoint, the badge disappears from every row and nothing else changes. A Plus account whose lookup blips keeps its badge until the next refresh answers. Robux and friends 401/403 handling is unchanged. `AccountFactsServiceTests.AFailedMembershipLookup_NeverCostsRobuxOrFriends_AndOnlyATransientOneKeepsTheBadge` covers 13 failure shapes against a stored "plus" and was watched failing on all 13 first; the two membership rows left the 401/403 theory.
 
 **Evidence:** `src/ROROROblox.Core/AccountFactsService.cs` (`FetchAsync`, `MapMembership`); `src/ROROROblox.Tests/AccountFactsServiceTests.cs`.
+
+### 2026-11-02 — The startup bar is judged without the compat fetch, and v1.36 passes it at +1.1%
+
+**Context:** Spec §6 sets a 10% startup bar: the branch's median from the `ROROROblox starting` banner to the `Startup mutex:` line, against `5a8fe61`, over five alternating cold starts each. The C2 run (`docs/store/smoke-2026-11-01-account-library.md`, Controlled A/B) measured +20.8% that way. Splitting each start at its logged steps put the entire gap in one segment, theme to gate, which is a single awaited network call (`RobloxCompatChecker.ResolveMutexNameAsync`, the `roblox-compat.json` fetch, 2 s bound) that neither build changed. That fetch is bimodal on this connection, about 475 ms or about 800-930 ms, in both builds, and the branch drew the slow mode more often.
+
+**Decision:** Este ruled that the bar is judged on startup minus the compat fetch (banner to theme plus gate to mutex). On that measure the branch median is 1072 ms against 1060 ms, +1.1%, a pass. The fast-fetch starts alone agree (+2.5%). A1 was excluded (it swept two plugin processes the Store RoRoRo left running) and not repeated, so v1.35 is n=4.
+
+**Consequences:** A future startup bar that includes a network call needs either the fetch excluded or many more starts. Five per build cannot outvote a 2:1 bimodal network segment. The facts lane's "never at startup" promise was checked in the same run: zero facts requests before the first 60 s tick on any branch start.
+
+**Evidence:** the smoke doc's Controlled A/B table (per-segment timings for all ten starts); `src/ROROROblox.App/App.xaml.cs` (the startup order around `ResolveMutexNameAsync`); `git diff 5a8fe61 HEAD -- src/ROROROblox.Core/RobloxCompatChecker.cs` (empty).
