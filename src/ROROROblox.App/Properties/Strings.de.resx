@@ -3666,7 +3666,7 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
     <value>Suche oben nach einem Spiel oder füge den Link eines Spiels oder privaten Servers ein. Gespeicherte Spiele erscheinen im Bereich jedes Kontos.</value>
   </data>
   <data name="Library_NoMatch" xml:space="preserve">
-    <value>In deiner Bibliothek passt nichts. Drücke Enter, um Roblox zu durchsuchen.</value>
+    <value>Keine Treffer in deiner Bibliothek. Drücke Enter, um Roblox zu durchsuchen.</value>
   </data>
   <data name="Library_FromRoblox" xml:space="preserve">
     <value>Von Roblox</value>
@@ -3708,7 +3708,7 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
     <value>Spiele über das Panel unter deinem Konto.</value>
   </data>
   <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
-    <value>Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Roblox-Startseite öffnen, oder füge eines in der Bibliothek hinzu.</value>
+    <value>Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Öffne die Roblox-Startseite oder füge eines in der Bibliothek hinzu.</value>
   </data>
   <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
     <value>Wenn du Alts willst, füge ein weiteres Konto hinzu.</value>

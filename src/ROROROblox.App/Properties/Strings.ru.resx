@@ -408,7 +408,7 @@
     <value>Добавить метку этому аккаунту</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Добавьте через Библиотеку</value>
+    <value>Добавьте в Библиотеке</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>добавить метку</value>
@@ -1917,7 +1917,7 @@
     <value>Друзья в сети, {0}</value>
   </data>
   <data name="Shell_Fact_LastPlayed_Name" xml:space="preserve">
-    <value>Последняя игра, {0}</value>
+    <value>Последний запуск, {0}</value>
   </data>
   <data name="Shell_Fact_Note_Name" xml:space="preserve">
     <value>Заметка, {0}</value>
@@ -1944,7 +1944,7 @@
     <value>Ещё не обновлено · последняя попытка не удалась ({0})</value>
   </data>
   <data name="Shell_Panel_Expander_Name" xml:space="preserve">
-    <value>Показать недавние игры: {0}</value>
+    <value>Показать недавние игры для {0}</value>
   </data>
   <data name="Shell_Panel_Heading_Recent" xml:space="preserve">
     <value>НЕДАВНИЕ</value>
@@ -3654,7 +3654,7 @@ RoRoRo спрашивает про обводку кнопок только дл
     <value>Тип</value>
   </data>
   <data name="Library_Col_LastPlayed" xml:space="preserve">
-    <value>Последняя игра</value>
+    <value>Последний запуск</value>
   </data>
   <data name="Library_Col_Total" xml:space="preserve">
     <value>Всего</value>
@@ -3708,7 +3708,7 @@ RoRoRo спрашивает про обводку кнопок только дл
     <value>Играйте из панели под вашим аккаунтом.</value>
   </data>
   <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
-    <value>Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Открыть главную Roblox или добавьте её в Библиотеке.</value>
+    <value>Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Откройте главную Roblox или добавьте игру в Библиотеку.</value>
   </data>
   <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
     <value>Когда нужны альты, добавьте ещё один аккаунт.</value>

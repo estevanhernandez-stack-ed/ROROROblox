@@ -208,7 +208,7 @@ T: dict[str, dict[str, str]] = {
         "fr": "Dernière partie, {0}",
         "pl": "Ostatnio grane, {0}",
         "pt-BR": "Jogado por último, {0}",
-        "ru": "Последняя игра, {0}",
+        "ru": "Последний запуск, {0}",
     },
     "Shell_Fact_Note_Name": {
         "de": "Notiz, {0}",
@@ -281,7 +281,7 @@ T: dict[str, dict[str, str]] = {
         "fr": "Afficher les jeux récents de {0}",
         "pl": "Pokaż ostatnie gry konta {0}",
         "pt-BR": "Mostrar jogos recentes de {0}",
-        "ru": "Показать недавние игры: {0}",
+        "ru": "Показать недавние игры для {0}",
     },
     "Shell_Panel_Heading_Recent": {
         "de": "ZULETZT",
@@ -414,7 +414,7 @@ T: dict[str, dict[str, str]] = {
     "Shell_Panel_Meta_InRecent": {
         "de": "{0} in letzten Sitzungen",
         "es": "{0} en sesiones recientes",
-        "fr": "{0} sur les sessions récentes",
+        "fr": "{0} dans les sessions récentes",
         "pl": "{0} w ostatnich sesjach",
         "pt-BR": "{0} em sessões recentes",
         "ru": "{0} в недавних сессиях",
@@ -502,7 +502,7 @@ T: dict[str, dict[str, str]] = {
         "fr": "Ajoutez via la Bibliothèque",
         "pl": "Dodaj w Bibliotece",
         "pt-BR": "Adicione na Biblioteca",
-        "ru": "Добавьте через Библиотеку",
+        "ru": "Добавьте в Библиотеке",
     },
     # ---- item 9: the Library page (grid, list, chips, one box, Play as) ----------------------
     "Library_Box_Placeholder": {
@@ -687,7 +687,7 @@ T: dict[str, dict[str, str]] = {
         "fr": "Dernière partie",
         "pl": "Ostatnio grane",
         "pt-BR": "Jogado por último",
-        "ru": "Последняя игра",
+        "ru": "Последний запуск",
     },
     "Library_Col_Total": {
         "de": "Gesamt",
@@ -714,7 +714,7 @@ T: dict[str, dict[str, str]] = {
         "ru": "Найдите игру выше или вставьте ссылку на игру или приватный сервер. Сохранённые игры появятся на панели каждого аккаунта.",
     },
     "Library_NoMatch": {
-        "de": "In deiner Bibliothek passt nichts. Drücke Enter, um Roblox zu durchsuchen.",
+        "de": "Keine Treffer in deiner Bibliothek. Drücke Enter, um Roblox zu durchsuchen.",
         "es": "Nada en tu Biblioteca coincide. Pulsa Intro para buscar en Roblox.",
         "fr": "Rien dans votre Bibliothèque ne correspond. Appuyez sur Entrée pour chercher sur Roblox.",
         "pl": "Nic w Twojej Bibliotece nie pasuje. Naciśnij Enter, aby przeszukać Roblox.",
@@ -856,12 +856,12 @@ T: dict[str, dict[str, str]] = {
         "ru": "Играйте из панели под вашим аккаунтом.",
     },
     "WelcomeWindow_PickOrPlayFromThePanel_Detail": {
-        "de": "Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Roblox-Startseite öffnen, oder füge eines in der Bibliothek hinzu.",
-        "es": "Recientes, Favoritos y Servidores privados están ahí mismo. ¿Aún sin juego? Abrir el inicio de Roblox, o añade uno en la Biblioteca.",
-        "fr": "Récents, Favoris et Serveurs privés sont juste là. Pas encore de jeu ? Ouvrir l'accueil de Roblox, ou ajoutez-en un dans la Bibliothèque.",
+        "de": "Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Öffne die Roblox-Startseite oder füge eines in der Bibliothek hinzu.",
+        "es": "Recientes, Favoritos y Servidores privados están ahí mismo. ¿Aún sin juego? Abre el inicio de Roblox o añade uno en la Biblioteca.",
+        "fr": "Récents, Favoris et Serveurs privés sont juste là. Pas encore de jeu ? Ouvrez l'accueil de Roblox ou ajoutez-en un dans la Bibliothèque.",
         "pl": "Ostatnie, Ulubione i Prywatne serwery są tuż obok. Nie masz jeszcze gry? Otwórz stronę główną Roblox albo dodaj ją w Bibliotece.",
-        "pt-BR": "Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abrir a página inicial do Roblox, ou adicione um na Biblioteca.",
-        "ru": "Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Открыть главную Roblox или добавьте её в Библиотеке.",
+        "pt-BR": "Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abra a página inicial do Roblox ou adicione um na Biblioteca.",
+        "ru": "Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Откройте главную Roblox или добавьте игру в Библиотеку.",
     },
     "WelcomeWindow_WhenYouWantAlts": {
         "de": "Wenn du Alts willst, füge ein weiteres Konto hinzu.",

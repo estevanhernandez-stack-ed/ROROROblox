@@ -2004,7 +2004,7 @@
     <value>Pas joué par ce compte</value>
   </data>
   <data name="Shell_Panel_Meta_InRecent" xml:space="preserve">
-    <value>{0} sur les sessions récentes</value>
+    <value>{0} dans les sessions récentes</value>
   </data>
   <data name="Shell_Panel_Duration_Minutes" xml:space="preserve">
     <value>{0} min</value>
@@ -3708,7 +3708,7 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
     <value>Jouez depuis le panneau sous votre compte.</value>
   </data>
   <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
-    <value>Récents, Favoris et Serveurs privés sont juste là. Pas encore de jeu ? Ouvrir l'accueil de Roblox, ou ajoutez-en un dans la Bibliothèque.</value>
+    <value>Récents, Favoris et Serveurs privés sont juste là. Pas encore de jeu ? Ouvrez l'accueil de Roblox ou ajoutez-en un dans la Bibliothèque.</value>
   </data>
   <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
     <value>Quand vous voulez des alts, ajoutez un autre compte.</value>

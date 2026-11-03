@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "5503bb7",
-  "generatedUtc": "2026-11-03T17:15:57+00:00",
+  "sourceCommit": "caf5830",
+  "generatedUtc": "2026-11-03T17:21:56+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -1581,7 +1581,7 @@
       "translations": {
         "fr": "Ajoutez via la Bibliothèque",
         "de": "In der Bibliothek hinzufügen",
-        "ru": "Добавьте через Библиотеку",
+        "ru": "Добавьте в Библиотеке",
         "pt-br": "Adicione na Biblioteca",
         "pl": "Dodaj w Bibliotece",
         "es": "Añade en la Biblioteca"
@@ -7617,7 +7617,7 @@
       "translations": {
         "fr": "Dernière partie, {0}",
         "de": "Zuletzt gespielt, {0}",
-        "ru": "Последняя игра, {0}",
+        "ru": "Последний запуск, {0}",
         "pt-br": "Jogado por último, {0}",
         "pl": "Ostatnio grane, {0}",
         "es": "Última partida, {0}"
@@ -7725,7 +7725,7 @@
       "translations": {
         "fr": "Afficher les jeux récents de {0}",
         "de": "Letzte Spiele von {0} anzeigen",
-        "ru": "Показать недавние игры: {0}",
+        "ru": "Показать недавние игры для {0}",
         "pt-br": "Mostrar jogos recentes de {0}",
         "pl": "Pokaż ostatnie gry konta {0}",
         "es": "Mostrar juegos recientes de {0}"
@@ -7963,7 +7963,7 @@
       "field": "Shell_Panel_Meta_InRecent",
       "en": "{0} in recent sessions",
       "translations": {
-        "fr": "{0} sur les sessions récentes",
+        "fr": "{0} dans les sessions récentes",
         "de": "{0} in letzten Sitzungen",
         "ru": "{0} в недавних сессиях",
         "pt-br": "{0} em sessões recentes",
@@ -14505,7 +14505,7 @@
       "translations": {
         "fr": "Dernière partie",
         "de": "Zuletzt gespielt",
-        "ru": "Последняя игра",
+        "ru": "Последний запуск",
         "pt-br": "Jogado por último",
         "pl": "Ostatnio grane",
         "es": "Última partida"
@@ -14552,7 +14552,7 @@
       "en": "Nothing in your Library matches. Press Enter to search Roblox.",
       "translations": {
         "fr": "Rien dans votre Bibliothèque ne correspond. Appuyez sur Entrée pour chercher sur Roblox.",
-        "de": "In deiner Bibliothek passt nichts. Drücke Enter, um Roblox zu durchsuchen.",
+        "de": "Keine Treffer in deiner Bibliothek. Drücke Enter, um Roblox zu durchsuchen.",
         "ru": "В вашей Библиотеке ничего не найдено. Нажмите Enter, чтобы искать в Roblox.",
         "pt-br": "Nada na sua Biblioteca corresponde. Pressione Enter para buscar no Roblox.",
         "pl": "Nic w Twojej Bibliotece nie pasuje. Naciśnij Enter, aby przeszukać Roblox.",
@@ -14719,12 +14719,12 @@
       "field": "WelcomeWindow_PickOrPlayFromThePanel_Detail",
       "en": "Recent, Favourites and Private servers are right there. No game yet? Open Roblox home, or add one in the Library.",
       "translations": {
-        "fr": "Récents, Favoris et Serveurs privés sont juste là. Pas encore de jeu ? Ouvrir l'accueil de Roblox, ou ajoutez-en un dans la Bibliothèque.",
-        "de": "Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Roblox-Startseite öffnen, oder füge eines in der Bibliothek hinzu.",
-        "ru": "Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Открыть главную Roblox или добавьте её в Библиотеке.",
-        "pt-br": "Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abrir a página inicial do Roblox, ou adicione um na Biblioteca.",
+        "fr": "Récents, Favoris et Serveurs privés sont juste là. Pas encore de jeu ? Ouvrez l'accueil de Roblox ou ajoutez-en un dans la Bibliothèque.",
+        "de": "Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Öffne die Roblox-Startseite oder füge eines in der Bibliothek hinzu.",
+        "ru": "Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Откройте главную Roblox или добавьте игру в Библиотеку.",
+        "pt-br": "Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abra a página inicial do Roblox ou adicione um na Biblioteca.",
         "pl": "Ostatnie, Ulubione i Prywatne serwery są tuż obok. Nie masz jeszcze gry? Otwórz stronę główną Roblox albo dodaj ją w Bibliotece.",
-        "es": "Recientes, Favoritos y Servidores privados están ahí mismo. ¿Aún sin juego? Abrir el inicio de Roblox, o añade uno en la Biblioteca."
+        "es": "Recientes, Favoritos y Servidores privados están ahí mismo. ¿Aún sin juego? Abre el inicio de Roblox o añade uno en la Biblioteca."
       }
     },
     {

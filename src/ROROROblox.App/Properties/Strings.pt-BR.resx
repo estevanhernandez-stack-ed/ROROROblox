@@ -3708,7 +3708,7 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
     <value>Jogue pelo painel sob a sua conta.</value>
   </data>
   <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
-    <value>Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abrir a página inicial do Roblox, ou adicione um na Biblioteca.</value>
+    <value>Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abra a página inicial do Roblox ou adicione um na Biblioteca.</value>
   </data>
   <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
     <value>Quando quiser alts, adicione outra conta.</value>

@@ -3708,7 +3708,7 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
     <value>Juega desde el panel bajo tu cuenta.</value>
   </data>
   <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
-    <value>Recientes, Favoritos y Servidores privados están ahí mismo. ¿Aún sin juego? Abrir el inicio de Roblox, o añade uno en la Biblioteca.</value>
+    <value>Recientes, Favoritos y Servidores privados están ahí mismo. ¿Aún sin juego? Abre el inicio de Roblox o añade uno en la Biblioteca.</value>
   </data>
   <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
     <value>Cuando quieras alts, añade otra cuenta.</value>
