@@ -568,8 +568,13 @@
                              the name at infinite width, so its CharacterEllipsis never engaged and the pills after it
                              were clipped at the column edge instead: the MAIN pill read HAUP in German at 900 px, and
                              clipped in all six translated languages (LabelWrapMeasurementTests). Now the name takes the
-                             star column and trims (its tooltip carries the full name); the pills keep their width. -->
-                        <Grid>
+                             star column and trims (its tooltip carries the full name); the pills keep their width.
+                             HorizontalAlignment="Left" is load-bearing: the Grid sizes to its content, so the star
+                             column is the name's own width and MAIN sits right after it. Stretched, the star column
+                             took the whole name column and MAIN floated to its far edge on a wide window (found in the
+                             1180 px marketing frames, 2026-11-03). When space runs out the Grid is clamped to the
+                             column, the star column shrinks, and the name trims as before. -->
+                        <Grid HorizontalAlignment="Left">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -617,8 +622,9 @@
                         </Grid>
                         <!-- Item 13 (2026-11-03): a Grid, not a horizontal StackPanel, so the status sentence trims (full
                              text in its tooltip) instead of being cut mid-word at the column edge. The chips and the
-                             selection dot after it sit in the Auto column and keep their width. -->
-                        <Grid Margin="0,4,0,0">
+                             selection dot after it sit in the Auto column and keep their width. Left-aligned for the
+                             same reason as the name line: the chips follow the text instead of floating to the edge. -->
+                        <Grid Margin="0,4,0,0" HorizontalAlignment="Left">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
