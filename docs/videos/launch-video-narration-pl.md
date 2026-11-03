@@ -30,11 +30,11 @@ stays as digits in any OVERLAY.
 
 ### health (slide 4)
 - OVERLAY: `powie ci, co jest nie tak`
-- VO: `A kiedy konto cię potrzebuje, mówi o tym. Sesja wygasła, wymaga weryfikacji, ograniczone przez Roblox. Jedno kliknięcie i gotowe.`
+- VO: `A kiedy konto cię potrzebuje, mówi o tym. Sesja wygasła, wymaga weryfikacji, ograniczone przez Roblox. Jedno kliknięcie, by to naprawić.`
 
 ### library (slide 5)
-- OVERLAY: `jedna biblioteka. graj jako każdy.`
-- VO: `Każda gra, w którą grasz, trafia do Biblioteki. Przeszukuj, filtruj i wybierz, które konto gra.`
+- OVERLAY: `jedna biblioteka. wybierz konto.`
+- VO: `Każda zagrana gra trafia do Biblioteki. Przeszukuj, filtruj i wybierz, które konto gra.`
 
 ### squad (slide 6)
 - OVERLAY: `ten sam priv. wszystkie.`

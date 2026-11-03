@@ -113,7 +113,7 @@
         "de": "Und wenn ein Account dich braucht, sagt er es dir. Sitzung abgelaufen, Verifizierung nötig, von Roblox eingeschränkt. Ein Klick, und es ist behoben.",
         "ru": "А если аккаунту нужна ваша помощь, он об этом скажет. Сессия истекла, нужна проверка, ограничено Roblox. Один клик, и всё исправлено.",
         "pt-br": "E quando uma conta precisa de você, ela avisa. Sessão expirada, requer verificação, limitado pelo Roblox. Um clique para resolver.",
-        "pl": "A kiedy konto cię potrzebuje, mówi o tym. Sesja wygasła, wymaga weryfikacji, ograniczone przez Roblox. Jedno kliknięcie i gotowe.",
+        "pl": "A kiedy konto cię potrzebuje, mówi o tym. Sesja wygasła, wymaga weryfikacji, ograniczone przez Roblox. Jedno kliknięcie, by to naprawić.",
         "es": "Y cuando una cuenta te necesita, te lo dice. Sesión caducada, requiere verificación, limitado por Roblox. Un clic para arreglarlo."
       },
       "charCap": 600
@@ -122,12 +122,12 @@
       "field": "library_overlay",
       "en": "one library. play as anyone.",
       "translations": {
-        "fr": "une bibliothèque. jouez avec tous.",
+        "fr": "bibliothèque. choisissez qui joue.",
         "de": "eine Bibliothek. spiel als jeder.",
         "ru": "одна библиотека. играйте любым.",
-        "pt-br": "uma biblioteca. jogue como quiser.",
-        "pl": "jedna biblioteka. graj jako każdy.",
-        "es": "una biblioteca. juega como quieras"
+        "pt-br": "uma biblioteca. escolha quem joga.",
+        "pl": "jedna biblioteka. wybierz konto.",
+        "es": "una biblioteca. elige quién juega"
       },
       "charCap": 34
     },
@@ -139,7 +139,7 @@
         "de": "Jedes Spiel, das du gespielt hast, landet in der Bibliothek. Durchsuchen, filtern und aussuchen, welcher Account spielt.",
         "ru": "Каждая игра, в которую вы играли, попадает в Библиотеку. Ищите, фильтруйте и выбирайте, каким аккаунтом играть.",
         "pt-br": "Todo jogo que você jogou vai para a Biblioteca. Pesquise, filtre e escolha qual conta joga.",
-        "pl": "Każda gra, w którą grasz, trafia do Biblioteki. Przeszukuj, filtruj i wybierz, które konto gra.",
+        "pl": "Każda zagrana gra trafia do Biblioteki. Przeszukuj, filtruj i wybierz, które konto gra.",
         "es": "Cada juego que has jugado llega a la Biblioteca. Búscalo, fíltralo y elige qué cuenta juega."
       },
       "charCap": 600

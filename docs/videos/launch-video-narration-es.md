@@ -29,7 +29,7 @@ stays as digits in any OVERLAY.
 - VO: `Y cuando una cuenta te necesita, te lo dice. Sesión caducada, requiere verificación, limitado por Roblox. Un clic para arreglarlo.`
 
 ### library (slide 5)
-- OVERLAY: `una biblioteca. juega como quieras`
+- OVERLAY: `una biblioteca. elige quién juega`
 - VO: `Cada juego que has jugado llega a la Biblioteca. Búscalo, fíltralo y elige qué cuenta juega.`
 
 ### squad (slide 6)
