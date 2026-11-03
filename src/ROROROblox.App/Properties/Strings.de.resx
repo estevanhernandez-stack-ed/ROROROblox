@@ -1473,7 +1473,7 @@
     <value>Auf Original zurücksetzen</value>
   </data>
   <data name="MainWindow_Reauthenticate" xml:space="preserve">
-    <value>Anmelden</value>
+    <value>Neu anmelden</value>
   </data>
   <data name="SettingsPage_Language" xml:space="preserve">
     <value>Sprache</value>
@@ -1887,7 +1887,7 @@
     <value>Tritt per Folgen bei</value>
   </data>
   <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve">
-    <value>Erneut anmelden</value>
+    <value>Neu anmelden</value>
   </data>
   <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve">
     <value>Roblox für dieses Konto öffnen</value>

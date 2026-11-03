@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "9830000",
-  "generatedUtc": "2026-11-03T18:52:03+00:00",
+  "sourceCommit": "f3dea11",
+  "generatedUtc": "2026-11-03T18:57:10+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -5840,7 +5840,7 @@
       "en": "Re-authenticate",
       "translations": {
         "fr": "Se réauthentifier",
-        "de": "Anmelden",
+        "de": "Neu anmelden",
         "ru": "Войти заново",
         "pt-br": "Reautenticar",
         "pl": "Zaloguj ponownie",
@@ -7487,7 +7487,7 @@
         "de": "Tritt per Folgen bei",
         "ru": "Присоединяется следом",
         "pt-br": "Entra seguindo",
-        "pl": "Dołącza przez podążanie",
+        "pl": "Dołącza przez znajomego",
         "es": "Se une siguiendo"
       }
     },
@@ -7496,11 +7496,11 @@
       "en": "Re-authenticate",
       "translations": {
         "fr": "Se réauthentifier",
-        "de": "Erneut anmelden",
-        "ru": "Пройти аутентификацию заново",
+        "de": "Neu anmelden",
+        "ru": "Войти заново",
         "pt-br": "Reautenticar",
-        "pl": "Uwierzytelnij ponownie",
-        "es": "Volver a autenticar"
+        "pl": "Zaloguj ponownie",
+        "es": "Reautenticar"
       }
     },
     {

@@ -1884,10 +1884,10 @@
     <value>Ograniczone przez Roblox</value>
   </data>
   <data name="Shell_Health_FollowMarked" xml:space="preserve">
-    <value>Dołącza przez podążanie</value>
+    <value>Dołącza przez znajomego</value>
   </data>
   <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve">
-    <value>Uwierzytelnij ponownie</value>
+    <value>Zaloguj ponownie</value>
   </data>
   <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve">
     <value>Otwórz Roblox dla tego konta</value>

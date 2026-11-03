@@ -1020,7 +1020,7 @@
                         <Button Content="{loc:Loc MainWindow_Reauthenticate}"
                                 Command="{Binding DataContext.ReauthenticateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
-                                Padding="10,6" Margin="0,0,8,0">
+                                Padding="8,6" Margin="0,0,8,0">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource WarningButtonStyle}">
                                     <Setter Property="Visibility" Value="Collapsed" />

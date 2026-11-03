@@ -1887,7 +1887,7 @@
     <value>Se une siguiendo</value>
   </data>
   <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve">
-    <value>Volver a autenticar</value>
+    <value>Reautenticar</value>
   </data>
   <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve">
     <value>Abrir Roblox para esta cuenta</value>

@@ -843,7 +843,7 @@
   "Shell_Headroom_RoomFor": "Puede que solo haya espacio para {0} más",
   "Shell_Headroom_WontFit": "Puede que no haya espacio para otro cliente",
   "Shell_Health_Action_OpenRoblox": "Abrir Roblox para esta cuenta",
-  "Shell_Health_Action_Reauthenticate": "Volver a autenticar",
+  "Shell_Health_Action_Reauthenticate": "Reautenticar",
   "Shell_Health_Action_ToggleMark": "Alternar la marca",
   "Shell_Health_BadgeName": "{0}, {1}",
   "Shell_Health_Expired": "Sesión caducada",

@@ -843,7 +843,7 @@
   "Shell_Headroom_RoomFor": "Возможно, есть место ещё только для {0}",
   "Shell_Headroom_WontFit": "Возможно, для ещё одного клиента места нет",
   "Shell_Health_Action_OpenRoblox": "Открыть Roblox для этого аккаунта",
-  "Shell_Health_Action_Reauthenticate": "Пройти аутентификацию заново",
+  "Shell_Health_Action_Reauthenticate": "Войти заново",
   "Shell_Health_Action_ToggleMark": "Переключить отметку",
   "Shell_Health_BadgeName": "{0}, {1}",
   "Shell_Health_Expired": "Сессия истекла",

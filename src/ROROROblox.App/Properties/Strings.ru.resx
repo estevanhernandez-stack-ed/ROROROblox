@@ -1887,7 +1887,7 @@
     <value>Присоединяется следом</value>
   </data>
   <data name="Shell_Health_Action_Reauthenticate" xml:space="preserve">
-    <value>Пройти аутентификацию заново</value>
+    <value>Войти заново</value>
   </data>
   <data name="Shell_Health_Action_OpenRoblox" xml:space="preserve">
     <value>Открыть Roblox для этого аккаунта</value>

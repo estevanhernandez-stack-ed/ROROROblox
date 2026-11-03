@@ -58,17 +58,17 @@ T: dict[str, dict[str, str]] = {
         "de": "Tritt per Folgen bei",
         "es": "Se une siguiendo",
         "fr": "Rejoint en suivant",
-        "pl": "Dołącza przez podążanie",
+        "pl": "Dołącza przez znajomego",
         "pt-BR": "Entra seguindo",
         "ru": "Присоединяется следом",
     },
     "Shell_Health_Action_Reauthenticate": {
-        "de": "Erneut anmelden",
-        "es": "Volver a autenticar",
+        "de": "Neu anmelden",
+        "es": "Reautenticar",
         "fr": "Se réauthentifier",
-        "pl": "Uwierzytelnij ponownie",
+        "pl": "Zaloguj ponownie",
         "pt-BR": "Reautenticar",
-        "ru": "Пройти аутентификацию заново",
+        "ru": "Войти заново",
     },
     "Shell_Health_Action_OpenRoblox": {
         "de": "Roblox für dieses Konto öffnen",
@@ -913,7 +913,7 @@ T: dict[str, dict[str, str]] = {
     # Re-authenticate took Launch As's slot on an expired row; in these four languages it was still wider than the
     # slot it took, and Remove clipped by 9 (es) to 119 (ru) DIP. fr and pt-BR fit and keep their values.
     "MainWindow_Reauthenticate": {
-        "de": "Anmelden",
+        "de": "Neu anmelden",
         "es": "Reautenticar",
         "fr": "Se réauthentifier",
         "pl": "Zaloguj ponownie",
