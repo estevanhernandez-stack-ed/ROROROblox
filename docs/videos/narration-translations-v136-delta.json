@@ -45,11 +45,11 @@
       "en": "it tells you what's wrong",
       "translations": {
         "fr": "il vous dit ce qui cloche",
-        "de": "er sagt dir, was los ist",
+        "de": "er sagt dir, was nicht stimmt",
         "ru": "он скажет, что не так",
-        "pt-br": "ela avisa o que deu errado",
+        "pt-br": "ela avisa o que está errado",
         "pl": "powie ci, co jest nie tak",
-        "es": "te dice qué pasa"
+        "es": "te dice qué está mal"
       },
       "charCap": 34
     },
@@ -70,12 +70,12 @@
       "field": "library_overlay",
       "en": "one library. play as anyone.",
       "translations": {
-        "fr": "une bibliothèque. chaque compte.",
-        "de": "eine Bibliothek. jeder Account.",
-        "ru": "одна библиотека. любой аккаунт.",
-        "pt-br": "uma biblioteca. qualquer conta.",
-        "pl": "jedna biblioteka. dowolne konto.",
-        "es": "una biblioteca. cualquier cuenta."
+        "fr": "une bibliothèque. jouez avec tous.",
+        "de": "eine Bibliothek. spiel als jeder.",
+        "ru": "одна библиотека. играйте любым.",
+        "pt-br": "uma biblioteca. jogue como quiser.",
+        "pl": "jedna biblioteka. graj jako każdy.",
+        "es": "una biblioteca. juega como quieras"
       },
       "charCap": 34
     },

@@ -29,11 +29,11 @@ stays as digits in any OVERLAY.
 - VO: `Jetzt zeigt jeder Account seine Robux, Plus und Freunde online. Klapp einen auf, und seine Spiele sind direkt da. Zuletzt, Favoriten, private Server.`
 
 ### health (slide 4)
-- OVERLAY: `er sagt dir, was los ist`
+- OVERLAY: `er sagt dir, was nicht stimmt`
 - VO: `Und wenn ein Account dich braucht, sagt er es dir. Sitzung abgelaufen, Verifizierung nötig, von Roblox eingeschränkt. Ein Klick, und es ist behoben.`
 
 ### library (slide 5)
-- OVERLAY: `eine Bibliothek. jeder Account.`
+- OVERLAY: `eine Bibliothek. spiel als jeder.`
 - VO: `Jedes Spiel, das du gespielt hast, landet in der Bibliothek. Durchsuchen, filtern und aussuchen, welcher Account spielt.`
 
 ### squad (slide 6)

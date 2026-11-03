@@ -25,11 +25,11 @@ stays as digits in any OVERLAY.
 - VO: `Agora cada conta mostra seus Robux, o Plus e os amigos online. Abra uma, e os jogos dela estão bem ali. Recentes, favoritos, servidores privados.`
 
 ### health (slide 4)
-- OVERLAY: `ela avisa o que deu errado`
+- OVERLAY: `ela avisa o que está errado`
 - VO: `E quando uma conta precisa de você, ela avisa. Sessão expirada, requer verificação, limitado pelo Roblox. Um clique para resolver.`
 
 ### library (slide 5)
-- OVERLAY: `uma biblioteca. qualquer conta.`
+- OVERLAY: `uma biblioteca. jogue como quiser.`
 - VO: `Todo jogo que você jogou vai para a Biblioteca. Pesquise, filtre e escolha qual conta joga.`
 
 ### squad (slide 6)

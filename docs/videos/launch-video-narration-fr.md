@@ -29,7 +29,7 @@ stays as digits in any OVERLAY.
 - VO: `Et quand un compte a besoin de vous, il le dit. Session expirée, vérification requise, limité par Roblox. Un clic pour régler ça.`
 
 ### library (slide 5)
-- OVERLAY: `une bibliothèque. chaque compte.`
+- OVERLAY: `une bibliothèque. jouez avec tous.`
 - VO: `Chaque jeu auquel vous avez joué arrive dans la Bibliothèque. Cherchez, filtrez, et choisissez le compte qui joue.`
 
 ### squad (slide 6)
