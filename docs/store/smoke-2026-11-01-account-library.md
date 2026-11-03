@@ -55,11 +55,33 @@ Both A/B builds exist, built in Release and not launched:
 2. **Quiet the machine:** close every Roblox client, quit the Store RoRoRo from the tray.
 3. **Startup A/B:** the protocol below. Este starts and quits; the session reads the two log lines per start.
 4. **Eyes-on walk, build B:** checklist C2 (a), (b) and (d), plus three open calls:
-   - **Remove clips at 900 px.** Measured in the render harness, v1.35 already cuts it by 15 px with games saved and 64 px with none (the empty games box widens to fit its hint); the panel expander adds 32. Confirm with real fonts, then pick: cap the empty games box's width, move the expander into the name column, or move Remove to the right-click menu.
+   - **Remove clips at 900 px.** Measured in the render harness, v1.35 already cuts it by 15 px with games saved and 64 px with none (the empty games box widens to fit its hint); the panel expander adds 32. Confirm with real fonts, then pick: cap the empty games box's width, move the expander into the name column, or move Remove to the right-click menu. **Corrected 2026-11-02:** these clip figures came from a harness helper that measured the actions' right edge from the roster ScrollViewer's outer edge, which counts its 24 DIP left padding, then compared it with the inner viewport, which does not. Every figure was 24 DIP too high; see docs/decisions.md, "Remove never clipped after E1".
    - **One-account fit.** A fresh install and a light panel (3 Recent) fit at 900x600; 4 or more Recent entries scroll the roster, and Recent caps at 8. Keep, or lower what the panel shows.
    - **The expander's open state** is the house grey press fill, not the mock's cyan outline.
 5. **One-account path:** park the data folder aside, start build B, Add account: the panel opens with three empty states and Open Roblox home launches that account. Restore the folder.
 6. **Probe gate (e):** whatever step 1 measured decides Needs verification and the Plus badge.
+
+## C2 eyes-on walk, 2026-11-02 (build B, Este)
+
+Eight accounts on this machine's vault, maximized window, build B at `084203e`, then again at `d0b5c4a` after the rework.
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Facts line; Plus on the main and on no alt | pass (Plus on the main only; all eight probes answered 200 live) |
+| 2 | Streamer mode: Robux masked, no note | pass |
+| 3 | Panel contents (re-walked on the rework: three per column, count, See all) | pass |
+| 4 | Drag-reorder with a panel open | pass |
+| 5 | Keyboard (re-walked on the rework: expander before the name in Tab order) | pass |
+| 6 | Compact mode hides and restores the expanders and panels | pass |
+
+Este's calls at C2:
+- **Remove at 900 px:** move the expander into the name column (7b), placed before the name (E1).
+- **Panel capacity:** show fewer, so three per column with a count and See all (P1).
+- **The expander's open state:** cyan, as in the mock.
+- **Color on the facts line:** a new ask, picked as F2 (`mocks/c2-rework.html`).
+- **Expired rows:** the colored text falls back to white there; fine as built.
+- **The Library order** in the panel stays as built.
+- **The 900 px minimum:** the game picker's MinWidth goes from 160 to 132 so the MAIN pill fits beside the expander. Remove fits there with or without the change; the "still clips by 14" was the 24 DIP measuring error below.
 
 ## Probes, 2026-11-02 (C2 step 1, first pass)
 

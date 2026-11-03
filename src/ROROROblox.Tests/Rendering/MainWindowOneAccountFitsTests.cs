@@ -54,7 +54,11 @@ public class MainWindowOneAccountFitsTests
                 var name = ThemedWindowRender.Find(content,
                     fe => fe is StackPanel && Grid.GetColumn(fe) == 3 && fe.Parent is Grid g && g.RowDefinitions.Count == 2,
                     "the row's name column");
-                var origin = actions.TransformToAncestor(scroller).Transform(new Point(0, 0));
+                // Measured from the roster's CONTENT (the ItemsControl), not the ScrollViewer: the scroller has Padding
+                // "24,12,24,16", and ViewportWidth excludes it, so an edge measured from the scroller's own origin carried an
+                // extra 24 DIP. Every "Remove clips by N" printed before 2026-11-02 was 24 DIP too high (C2's "14" was -10).
+                var items = ThemedWindowRender.Find(content, fe => fe.Name == "AccountsItemsControl", "AccountsItemsControl");
+                var origin = actions.TransformToAncestor(items).Transform(new Point(0, 0));
                 return new Fit(
                     scroller.ComputedVerticalScrollBarVisibility, scroller.ViewportHeight, scroller.ExtentHeight,
                     scroller.ViewportWidth, row.ActualWidth, name.ActualWidth, actions.ActualWidth,
@@ -217,6 +221,39 @@ public class MainWindowOneAccountFitsTests
             Assert.True(r.First && r.BeforeName, $"{r.Which}: the expander is not the first child of the name line, before the name");
             Assert.Equal(r.LineWithout, r.LineWith, precision: 2);
             Assert.Equal(r.RowWithout, r.RowWith, precision: 2);
+        }
+    }
+
+    /// <summary>
+    /// Este's C2 ruling (2026-11-02): at the declared 900 px nothing on the row clips. E1 moved the expander into the name
+    /// column, which left Remove 14 DIP past the viewport and the main row's MAIN pill 10 DIP past its column; the game
+    /// picker's MinWidth went from 160 to 132 to give both back. Asserted with and without saved games (the empty picker
+    /// grows to fit its hint), on the main row, whose name line is the widest (expander, name, MAIN pill).
+    /// </summary>
+    [WindowRenderFact]
+    public void AtTheDeclared900px_RemoveAndTheMainPillBothFit()
+    {
+        foreach (var games in new[] { false, true })
+        {
+            var fit = Measure(96, accounts: 1, savedGames: games);
+            _output.WriteLine($"savedGames={games}: actions right edge {fit.ActionsRightEdge:F1} against a {fit.ViewportWidth:F1} viewport "
+                + $"(roster scrollbar {fit.ScrollBar}, extent {fit.ExtentHeight:F1} of {fit.ViewportHeight:F1})");
+            Assert.True(fit.ActionsRightEdge <= fit.ViewportWidth + 0.5,
+                $"savedGames={games}: the actions column ends at {fit.ActionsRightEdge:F1} DIP, past the {fit.ViewportWidth:F1} DIP viewport, so Remove clips.");
+
+            var (wants, has) = ThemedWindowRender.Inspect(
+                BuiltIn("brand"), $"main row name line, savedGames={games}",
+                () => PanelWindowFixtures.Build(1, expanded: false, savedGames: games),
+                content =>
+                {
+                    var nameLine = (StackPanel)System.Windows.Media.VisualTreeHelper.GetParent(PanelWindowFixtures.Expanders(content)[0]);
+                    var column = (FrameworkElement)System.Windows.Media.VisualTreeHelper.GetParent(nameLine);
+                    var natural = nameLine.Children.Cast<UIElement>().Where(c => c.Visibility == Visibility.Visible).Sum(c => c.DesiredSize.Width);
+                    return (natural, column.ActualWidth);
+                });
+            _output.WriteLine($"savedGames={games}: the main row's name line wants {wants:F1} DIP of a {has:F1} DIP column");
+            Assert.True(wants <= has + 0.5,
+                $"savedGames={games}: the main row's name line (expander, name, MAIN pill) wants {wants:F1} DIP but its column is {has:F1}; the pill clips.");
         }
     }
 

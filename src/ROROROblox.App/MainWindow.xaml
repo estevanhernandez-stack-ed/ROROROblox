@@ -1079,8 +1079,12 @@
                         <!-- Per-account game picker. Empty-state hint overlays the ComboBox until
                              at least one game is in the library, otherwise it looks broken.
                              MinWidth tuned down from 200 to give the name column room to breathe;
-                             ComboBox grows naturally if the row width allows. -->
-                        <Grid Margin="0,0,8,0" MinWidth="160" VerticalAlignment="Center">
+                             ComboBox grows naturally if the row width allows. 160 to 132 on 2026-11-02 (C2):
+                             the expander moved into the name column, and at the declared 900 px the main row's
+                             name line (expander, name, MAIN pill) wanted 142 DIP of a 132 DIP column, so the pill
+                             clipped. Remove did not (an earlier "clips by 14" over-counted the roster's padding).
+                             (MainWindowOneAccountFitsTests.AtTheDeclared900px_RemoveAndTheMainPillBothFit). -->
+                        <Grid Margin="0,0,8,0" MinWidth="132" VerticalAlignment="Center">
                             <ComboBox AutomationProperties.Name="{loc:Loc MainWindow_GameOrPrivateServerTo}"
                                       ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
