@@ -44,6 +44,22 @@ public class WelcomeTourTests
         return m.Index;
     }
 
+    /// <summary>
+    /// The title is two TextBlocks ("Welcome to" white, "RoRoRo" cyan). resx trims the trailing space of the first, so
+    /// from the localization pass (#158) through v1.35 the title read "Welcome toRoRoRo" in every language. The gap is a
+    /// left margin on the second block now; this keeps it there.
+    /// </summary>
+    [Fact]
+    public void TheTitlesTwoHalves_AreSeparatedByAMargin_NotByATrimmedSpace()
+    {
+        var xaml = File.ReadAllText(XamlPath());
+        var m = System.Text.RegularExpressions.Regex.Match(xaml, @"<TextBlock Text=""\{loc:Loc WelcomeWindow_Rororo\}""[^>]*>");
+        Assert.True(m.Success, "the RoRoRo half of the title was not found");
+        var margin = System.Text.RegularExpressions.Regex.Match(m.Value, @"Margin=""(\d+),");
+        Assert.True(margin.Success && int.Parse(margin.Groups[1].Value) > 0,
+            "the RoRoRo half of the title has no left margin, so it butts against \"Welcome to\" (resx trims the space)");
+    }
+
     [Fact]
     public void TheTourReadsLauncherFirstThenStepsThenTheMultiAccountTips()
     {

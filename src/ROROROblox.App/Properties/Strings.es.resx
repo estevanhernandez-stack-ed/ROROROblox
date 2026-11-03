@@ -1407,8 +1407,7 @@
     <value>Haz clic en el</value>
   </data>
   <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
-    <value>La X de cerrar minimiza a la bandeja del sistema; haz clic derecho en el icono de la bandeja para Preferencias, Historial,
-                        Diagnóstico o Salir.</value>
+    <value>La X de cerrar minimiza a la bandeja del sistema; haz clic derecho en el icono de la bandeja para Preferencias, Historial, Diagnóstico o Salir.</value>
   </data>
   <data name="WelcomeWindow_Compact" xml:space="preserve">
     <value>Compacto</value>

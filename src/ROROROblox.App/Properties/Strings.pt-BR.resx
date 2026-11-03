@@ -1407,8 +1407,7 @@
     <value>Clique no</value>
   </data>
   <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
-    <value>Fechar no X minimiza para a bandeja do sistema; clique com o botão direito no ícone da bandeja para Preferências, Histórico,
-                        Diagnóstico, ou Sair.</value>
+    <value>Fechar no X minimiza para a bandeja do sistema; clique com o botão direito no ícone da bandeja para Preferências, Histórico, Diagnóstico, ou Sair.</value>
   </data>
   <data name="WelcomeWindow_Compact" xml:space="preserve">
     <value>Compacto</value>

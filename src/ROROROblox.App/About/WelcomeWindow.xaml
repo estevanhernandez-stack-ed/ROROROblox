@@ -5,7 +5,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="{loc:Loc WelcomeWindow_WelcomeToRororo}"
         AutomationProperties.AutomationId="WelcomeWindow"
-        Height="810" Width="600"
+        Height="760" Width="600"
         WindowStartupLocation="CenterOwner"
         MinHeight="600" MinWidth="520" ResizeMode="CanResize"
         Background="{DynamicResource BgBrush}"
@@ -15,8 +15,8 @@
         <Style x:Key="StepStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource RowBgBrush}" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="14,12" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Margin" Value="0,0,0,8" />
         </Style>
         <Style x:Key="StepNumberStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource CyanBrush}" />
@@ -28,7 +28,7 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="32,28">
+    <Grid Margin="32,22">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -40,7 +40,9 @@
                 <TextBlock Text="{loc:Loc WelcomeWindow_WelcomeTo}"
                            FontFamily="{DynamicResource DisplayFontFamily}" FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
-                <TextBlock Text="{loc:Loc WelcomeWindow_Rororo}"
+                <!-- The space between the two halves is a margin, not text: resx trims the trailing space of
+                     "Welcome to", so through v1.35 the title read "Welcome toRoRoRo" in every language. -->
+                <TextBlock Text="{loc:Loc WelcomeWindow_Rororo}" Margin="9,0,0,0"
                            FontFamily="{DynamicResource DisplayFontFamily}" FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                            Foreground="{DynamicResource CyanBrush}" />
             </StackPanel>
@@ -51,7 +53,7 @@
                        TextWrapping="Wrap" />
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" Margin="0,22,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" Margin="0,16,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
             <Border Style="{StaticResource StepStyle}">
                 <Grid>

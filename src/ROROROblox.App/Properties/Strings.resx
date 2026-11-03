@@ -1870,8 +1870,7 @@
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:175 xaml-text</comment>
   </data>
   <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
-    <value>Closing X minimizes to tray; right-click the tray icon for Preferences, History,
-                        Diagnostics, or Quit.</value>
+    <value>Closing X minimizes to tray; right-click the tray icon for Preferences, History, Diagnostics, or Quit.</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:166 xaml-text</comment>
   </data>
   <data name="WelcomeWindow_Compact" xml:space="preserve">

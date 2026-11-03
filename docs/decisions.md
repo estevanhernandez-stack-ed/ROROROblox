@@ -890,3 +890,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Decision:** Wrapped details, and `Height` 760 to 810 (Width 600, MinHeight 600 unchanged), rather than trimming the step padding and margins by about 45 px or letting the frame clip. German and Russian still scroll about 43 px in the tips block, which is the ScrollViewer doing its job.
 
 **Consequences:** On a 768 px-high display the window is taller than the work area, as 760 already nearly was. If that matters, trim the rhythm instead of the content.
+
+### 2026-11-03 — The tour stays 760 tall; two shipped tour defects fixed with it
+
+**Context:** Item 10's worker made the tour's step details wrap (they ran off the right edge unwrapped, step 1 included, since v1.35). That made English want 804.7 px, and it raised the window to 810 to pass `WindowContentFitsTests`. The window is centred on its owner and **Got it** is its only exit, at the bottom: on a 1366x768 laptop an 810 px window runs past the work area and can hide it.
+
+**Decision:** The window goes back to 760. Spacing pays for it instead: step padding 12 to 8, the gap between steps 10 to 8, the outer margin 28 to 22, and the gap under the hero 22 to 16. Two defects in the tour that shipped through v1.35 are fixed in the same commit. The title read "Welcome toRoRoRo" in every language, because resx trims the trailing space of "Welcome to"; the gap is now a 9 px left margin on the RoRoRo half, pinned by `WelcomeTourTests.TheTitlesTwoHalves_AreSeparatedByAMargin_NotByATrimmedSpace` (watched failing with the margin removed). The tray tip carried an embedded newline and 24 spaces from its XAML origin, in English and all six catalogs, which rendered as a broken indent; it is one line now in all seven files, and the culture resx are regenerated.
+
+**Consequences:** English fits 760 with no scroll; German and Russian scroll a little inside the tour's ScrollViewer, with Got it always visible. The worker's entry above, which records 810, is superseded by this one.
+
+**Evidence:** `src/ROROROblox.App/About/WelcomeWindow.xaml`; `docs/cycles/2026-11-01-account-library/mocks/compare/item10-tour-*.png`.

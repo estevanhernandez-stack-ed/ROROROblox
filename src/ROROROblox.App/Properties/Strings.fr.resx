@@ -1407,8 +1407,7 @@
     <value>Cliquez sur le</value>
   </data>
   <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
-    <value>La fermeture par X réduit dans la barre d'état système ; cliquez avec le bouton droit sur l'icône de la barre d'état système pour Préférences, Historique,
-                        Diagnostics ou Quitter.</value>
+    <value>La fermeture par X réduit dans la barre d'état système ; cliquez avec le bouton droit sur l'icône de la barre d'état système pour Préférences, Historique, Diagnostics ou Quitter.</value>
   </data>
   <data name="WelcomeWindow_Compact" xml:space="preserve">
     <value>Compact</value>

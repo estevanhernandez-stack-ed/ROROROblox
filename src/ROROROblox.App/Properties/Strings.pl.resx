@@ -1407,8 +1407,7 @@
     <value>Kliknij</value>
   </data>
   <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
-    <value>Zamknięcie przez X minimalizuje do zasobnika systemowego; kliknij prawym przyciskiem ikonę w zasobniku, aby uzyskać Preferencje, Historię,
-                        Diagnostykę lub Zakończ.</value>
+    <value>Zamknięcie przez X minimalizuje do zasobnika systemowego; kliknij prawym przyciskiem ikonę w zasobniku, aby uzyskać Preferencje, Historię, Diagnostykę lub Zakończ.</value>
   </data>
   <data name="WelcomeWindow_Compact" xml:space="preserve">
     <value>Kompaktowy</value>

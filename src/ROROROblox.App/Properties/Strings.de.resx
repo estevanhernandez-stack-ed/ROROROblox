@@ -1407,8 +1407,7 @@
     <value>Klicke auf das</value>
   </data>
   <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
-    <value>Das Schließen mit X minimiert in den Infobereich; Rechtsklick auf das Infobereich-Symbol für Einstellungen, Verlauf,
-                        Diagnose oder Beenden.</value>
+    <value>Das Schließen mit X minimiert in den Infobereich; Rechtsklick auf das Infobereich-Symbol für Einstellungen, Verlauf, Diagnose oder Beenden.</value>
   </data>
   <data name="WelcomeWindow_Compact" xml:space="preserve">
     <value>Kompakt</value>
