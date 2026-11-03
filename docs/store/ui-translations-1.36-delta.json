@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "d088a46",
-  "generatedUtc": "2026-11-03T17:25:19+00:00",
+  "sourceCommit": "9830000",
+  "generatedUtc": "2026-11-03T18:52:03+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -85,6 +85,18 @@
         "pt-br": "Fechar no X minimiza para a bandeja do sistema; clique com o botão direito no ícone da bandeja para Preferências, Histórico, Diagnóstico, ou Sair.",
         "pl": "Zamknięcie przez X minimalizuje do zasobnika systemowego; kliknij prawym przyciskiem ikonę w zasobniku, aby uzyskać Preferencje, Historię, Diagnostykę lub Zakończ.",
         "es": "La X de cerrar minimiza a la bandeja del sistema; haz clic derecho en el icono de la bandeja para Preferencias, Historial, Diagnóstico o Salir."
+      }
+    },
+    {
+      "field": "MainWindow_Reauthenticate",
+      "en": "Re-authenticate",
+      "translations": {
+        "fr": "Se réauthentifier",
+        "de": "Anmelden",
+        "ru": "Войти заново",
+        "pt-br": "Reautenticar",
+        "pl": "Zaloguj ponownie",
+        "es": "Reautenticar"
       }
     },
     {
@@ -262,7 +274,7 @@
         "fr": "Dernière partie, {0}",
         "de": "Zuletzt gespielt, {0}",
         "ru": "Последний запуск, {0}",
-        "pt-br": "Jogado por último, {0}",
+        "pt-br": "Última partida, {0}",
         "pl": "Ostatnio grane, {0}",
         "es": "Última partida, {0}"
       }
@@ -573,10 +585,10 @@
       "translations": {
         "fr": "PAR DÉFAUT",
         "de": "STANDARD",
-        "ru": "ПО УМОЛЧАНИЮ",
+        "ru": "ПО УМОЛЧ.",
         "pt-br": "PADRÃO",
         "pl": "DOMYŚLNE",
-        "es": "PREDETERMINADO"
+        "es": "PREDET."
       }
     },
     {
@@ -1041,10 +1053,10 @@
       "translations": {
         "fr": "Serveur privé",
         "de": "Privater Server",
-        "ru": "Приватный сервер",
-        "pt-br": "Servidor privado",
-        "pl": "Prywatny serwer",
-        "es": "Servidor privado"
+        "ru": "Приватный",
+        "pt-br": "Privado",
+        "pl": "Prywatny",
+        "es": "Privado"
       }
     },
     {
@@ -1090,7 +1102,7 @@
         "fr": "Dernière partie",
         "de": "Zuletzt gespielt",
         "ru": "Последний запуск",
-        "pt-br": "Jogado por último",
+        "pt-br": "Última partida",
         "pl": "Ostatnio grane",
         "es": "Última partida"
       }
@@ -1348,5 +1360,5 @@
       }
     }
   ],
-  "slice": "v1.36 delta vs main: 104 new, 7 changed"
+  "slice": "v1.36 delta vs main: 104 new, 8 changed"
 }
