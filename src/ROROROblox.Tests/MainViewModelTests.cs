@@ -2664,8 +2664,13 @@ public class MainViewModelTests
             Assert.Empty(row.Panel.Recent);
             Assert.Equal(0, api.CallCount);
 
+            // Wait on the facts write, not the facts call: the worker writes sharedPath after the call returns, and
+            // the finally below deletes it. Waiting on CallCount let the delete race that write (CI x64, 2026-11-02).
+            var factsWritten = 0;
+            service.AccountFactsUpdated += (_, _) => Interlocked.Exchange(ref factsWritten, 1);
             tracker.RaiseExited(new RobloxProcessEventArgs(row.Id, 9001));
-            await WaitForAsync(() => Task.FromResult(row.Panel.Recent.Count == 1 && api.CallCount > 0));
+            await WaitForAsync(() => Task.FromResult(row.Panel.Recent.Count == 1 && Volatile.Read(ref factsWritten) == 1));
+            Assert.True(api.CallCount > 0);
 
             Assert.Single(history.Ended);
             Assert.Equal(8737899170, row.Panel.Recent[0].Entry.PlaceId);
