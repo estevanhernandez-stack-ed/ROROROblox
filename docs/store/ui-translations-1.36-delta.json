@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "caf5830",
-  "generatedUtc": "2026-11-03T17:21:56+00:00",
+  "sourceCommit": "d088a46",
+  "generatedUtc": "2026-11-03T17:25:19+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -33,7 +33,7 @@
       "translations": {
         "fr": "Ajoutez via la Bibliothèque",
         "de": "In der Bibliothek hinzufügen",
-        "ru": "Добавьте в Библиотеке",
+        "ru": "Добавьте в Библиотеку",
         "pt-br": "Adicione na Biblioteca",
         "pl": "Dodaj w Bibliotece",
         "es": "Añade en la Biblioteca"

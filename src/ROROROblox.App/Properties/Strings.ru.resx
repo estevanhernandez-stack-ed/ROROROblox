@@ -408,7 +408,7 @@
     <value>Добавить метку этому аккаунту</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Добавьте в Библиотеке</value>
+    <value>Добавьте в Библиотеку</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>добавить метку</value>

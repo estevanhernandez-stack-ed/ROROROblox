@@ -502,7 +502,7 @@ T: dict[str, dict[str, str]] = {
         "fr": "Ajoutez via la Bibliothèque",
         "pl": "Dodaj w Bibliotece",
         "pt-BR": "Adicione na Biblioteca",
-        "ru": "Добавьте в Библиотеке",
+        "ru": "Добавьте в Библиотеку",
     },
     # ---- item 9: the Library page (grid, list, chips, one box, Play as) ----------------------
     "Library_Box_Placeholder": {
