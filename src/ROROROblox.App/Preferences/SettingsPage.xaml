@@ -26,6 +26,7 @@
             </Grid.ColumnDefinitions>
 
             <ListBox x:Name="SettingsNav" Grid.Column="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      Background="Transparent"
                      BorderThickness="0"
                      FontSize="{DynamicResource HeadingFontSize}"

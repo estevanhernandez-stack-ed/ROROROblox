@@ -16,8 +16,7 @@
     <value>Ein Produkt von 626 Labs</value>
   </data>
   <data name="AboutPage_CookiesAreEncryptedWithWindows" xml:space="preserve">
-    <value>Cookies werden pro Benutzer mit Windows DPAPI verschlüsselt. Sie verlassen diesen Rechner nie.
-                    Eine auf einen anderen PC kopierte accounts.dat lässt sich nicht entschlüsseln.</value>
+    <value>Cookies werden pro Benutzer mit Windows DPAPI verschlüsselt. Sie verlassen diesen Rechner nie. Eine auf einen anderen PC kopierte accounts.dat lässt sich nicht entschlüsseln.</value>
   </data>
   <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
     <value>Im Werkzeugfenster springen auch Ctrl+1 bis Ctrl+7 direkt zu einer Seite.</value>
@@ -32,17 +31,13 @@
     <value>Multi-Launcher für Windows.</value>
   </data>
   <data name="AboutPage_RobloxIsATrademarkOf" xml:space="preserve">
-    <value>„Roblox“ ist eine Marke der Roblox Corporation. RoRoRo ist nicht mit der Roblox Corporation
-                    verbunden, wird von ihr nicht unterstützt oder gesponsert.</value>
+    <value>„Roblox“ ist eine Marke der Roblox Corporation. RoRoRo ist nicht mit der Roblox Corporation verbunden, wird von ihr nicht unterstützt oder gesponsert.</value>
   </data>
   <data name="AboutPage_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
   </data>
   <data name="AboutPage_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Starte mehrere Roblox-Clients nebeneinander, jeweils mit einem anderen gespeicherten Konto angemeldet.
-                    Hält den Roblox-Singleton-Mutex, damit nachfolgende Clients nicht darum konkurrieren; nutzt
-                    Roblox' dokumentierten Authentifizierungs-Ticket-Ablauf für Starts pro Konto. Saubere
-                    Neuimplementierung, kein Fork.</value>
+    <value>Starte mehrere Roblox-Clients nebeneinander, jeweils mit einem anderen gespeicherten Konto angemeldet. Hält den Roblox-Singleton-Mutex, damit nachfolgende Clients nicht darum konkurrieren; nutzt Roblox' dokumentierten Authentifizierungs-Ticket-Ablauf für Starts pro Konto. Saubere Neuimplementierung, kein Fork.</value>
   </data>
   <data name="AboutPage_Version" xml:space="preserve">
     <value>Version</value>
