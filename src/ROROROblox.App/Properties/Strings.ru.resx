@@ -1403,9 +1403,6 @@
   <data name="WelcomeWindow_ClickAddAccount" xml:space="preserve">
     <value>Нажмите «+ Добавить аккаунт».</value>
   </data>
-  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
-    <value>Нажмите «Запустить как». Или «Запустить несколько» для всех выбранных альтов сразу.</value>
-  </data>
   <data name="WelcomeWindow_ClickThe" xml:space="preserve">
     <value>Нажмите</value>
   </data>
@@ -1428,26 +1425,14 @@
   <data name="WelcomeWindow_InTheSystemTrayAnd" xml:space="preserve">
     <value>в области уведомлений и вытащите RoRoRo наружу, чтобы он оставался видимым.</value>
   </data>
-  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
-    <value>Multi-Instance включён по умолчанию — окна Roblox открываются рядом, не борясь друг с другом за singleton.</value>
-  </data>
   <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
     <value>слева от строки — перетащите, чтобы изменить порядок.</value>
-  </data>
-  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
-    <value>Откройте «Игры» и добавьте место, куда запускаетесь.</value>
   </data>
   <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
     <value>Быстрые подсказки по элементам строки</value>
   </data>
   <data name="WelcomeWindow_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
-  </data>
-  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Запускайте несколько клиентов Roblox одновременно. Три шага — и всё готово.</value>
-  </data>
-  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
-    <value>Найдите по названию или вставьте URL roblox.com/games/&lt;id&gt;. Игру по умолчанию использует «Запустить как».</value>
   </data>
   <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
     <value>Войдите на roblox.com во всплывающем окне. Мы сохраняем cookie, шифруем его и никогда не видим ваш пароль.</value>
@@ -3701,5 +3686,23 @@ RoRoRo спрашивает про обводку кнопок только дл
   </data>
   <data name="Library_Add_Name" xml:space="preserve">
     <value>Добавить {0} в Библиотеку</value>
+  </data>
+  <data name="WelcomeWindow_OnePlaceToLaunchRoblox" xml:space="preserve">
+    <value>Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте аккаунты позже, и они будут работать бок о бок.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel" xml:space="preserve">
+    <value>Играйте из панели под вашим аккаунтом.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
+    <value>Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Открыть главную Roblox или добавьте её в Библиотеке.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
+    <value>Когда нужны альты, добавьте ещё один аккаунт.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts_Detail" xml:space="preserve">
+    <value>При двух и более появляются «Запустить несколько» и Squad Launch, и каждый аккаунт открывает собственное окно Roblox.</value>
+  </data>
+  <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
+    <value>Если аккаунтов больше одного</value>
   </data>
 </root>

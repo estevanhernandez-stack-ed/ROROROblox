@@ -1865,10 +1865,6 @@
     <value>Click + Add account.</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:61 xaml-text</comment>
   </data>
-  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
-    <value>Click Launch As. Or Launch multiple for every selected alt at once.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:99 xaml-text</comment>
-  </data>
   <data name="WelcomeWindow_ClickThe" xml:space="preserve">
     <value>Click the</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:175 xaml-text</comment>
@@ -1898,17 +1894,9 @@
     <value>in the system tray and drag RoRoRo out to keep it visible.</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:177 xaml-text</comment>
   </data>
-  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
-    <value>Multi-Instance is on by default — Roblox windows open side by side without fighting each other for the singleton.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:102 xaml-text</comment>
-  </data>
   <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
     <value>on the left of a row — drag to reorder.</value>
     <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:124 xaml-text</comment>
-  </data>
-  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
-    <value>Open Games and add the place you launch into.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:80 xaml-text</comment>
   </data>
   <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
     <value>Quick tips for the row controls</value>
@@ -1917,14 +1905,6 @@
   <data name="WelcomeWindow_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
     <comment>duplicate value; key kept addressable for x:Static</comment>
-  </data>
-  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Run multiple Roblox clients side by side. Three steps and you're set.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:45 xaml-text</comment>
-  </data>
-  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
-    <value>Search by name or paste a roblox.com/games/&lt;id&gt; URL. The default game is what Launch As uses.</value>
-    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:83 xaml-text</comment>
   </data>
   <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
     <value>Sign in to roblox.com in the popup. We capture the cookie, encrypt it, and never see your password.</value>
@@ -3195,4 +3175,10 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Library_NoAccount" xml:space="preserve"><value>Add an account first, then play.</value><comment>Status when Play has no account to launch (v1.36 item 9)</comment></data>
   <data name="Shell_Games_PrivateSuffix" xml:space="preserve"><value>(private server)</value><comment>Suffix on a saved private server in a row's game picker (v1.36 item 9, was hardcoded in Core)</comment></data>
   <data name="Library_Add_Name" xml:space="preserve"><value>Add {0} to the Library</value><comment>Accessible name of the Add button on a search result; {0}=game name (v1.36 item 9)</comment></data>
+  <data name="WelcomeWindow_OnePlaceToLaunchRoblox" xml:space="preserve"><value>One place to launch Roblox: your account, your games, your settings. Add more accounts later and they run side by side.</value><comment>WelcomeWindow hero subtitle (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel" xml:space="preserve"><value>Play from the panel under your account.</value><comment>WelcomeWindow step 2 title (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve"><value>Recent, Favourites and Private servers are right there. No game yet? Open Roblox home, or add one in the Library.</value><comment>WelcomeWindow step 2 detail (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve"><value>When you want alts, add another account.</value><comment>WelcomeWindow step 3 title (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_WhenYouWantAlts_Detail" xml:space="preserve"><value>With two or more, Launch multiple and Squad Launch appear, and each account opens its own Roblox window.</value><comment>WelcomeWindow step 3 detail (v1.36 item 10)</comment></data>
+  <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve"><value>With more than one account</value><comment>WelcomeWindow quick-tips heading for the multi-account tips (v1.36 item 10)</comment></data>
 </root>

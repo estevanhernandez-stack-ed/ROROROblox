@@ -44,6 +44,8 @@ public class WindowContentFitsTests
         { "WebView2NotInstalledWindow", () => new App.Modals.WebView2NotInstalledWindow() },
         { "StopAllConfirmWindow", () => new App.Modals.StopAllConfirmWindow(3) },
         { "LeftoverProcessesWindow", () => new App.Modals.LeftoverProcessesWindow(2, 1) },
+        // v1.36 item 10: the tour grew a heading; 810 tall by 600 wide is its own declared frame (was 760; the wrapped step details and the new heading want ~805).
+        { "WelcomeWindow", () => new App.About.WelcomeWindow() },
         // The shell measured with a minimal page, and that is a statement about scope, not a
         // dodge: the shell's PAGES scroll by design (F-113's lesson carried into the F-013 fold —
         // a page cannot grow its host, so it scrolls instead of clipping), which means a real

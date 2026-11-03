@@ -882,3 +882,11 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** `AccountPanelXamlTests.ThePlusBadge_LeadsWithOurOwnPlusGlyph_InTheWordsColour_AndAddsNoHeight` pins the order, the colour in both states, and the height. It was watched failing three ways: the glyph missing, a hard-wired magenta stroke, and a 22 px glyph (badge 17 to 24 px). A 14 px glyph does not fail it, since it still fits the line. Revisit if Roblox publishes brand guidance permitting third-party use of the Plus icon.
 
 **Evidence:** `src/ROROROblox.App/MainWindow.xaml` (the Plus badge); `docs/cycles/2026-11-01-account-library/mocks/compare/c2-window-brand-96dpi.png`.
+
+## 2026-11-03: the welcome window grows to 810 px tall (v1.36 item 10)
+
+**Context:** The tour's step rows were a horizontal StackPanel, so detail lines never wrapped and ran off the right edge (visible in the item-10 captures, step 1 included, since v1.35). Fixing that into a two-column Grid made the tour want 804.7 px at 96 DPI against the declared 760, and `WindowContentFitsTests` (which now covers `WelcomeWindow`) failed.
+
+**Decision:** Wrapped details, and `Height` 760 to 810 (Width 600, MinHeight 600 unchanged), rather than trimming the step padding and margins by about 45 px or letting the frame clip. German and Russian still scroll about 43 px in the tips block, which is the ScrollViewer doing its job.
+
+**Consequences:** On a 768 px-high display the window is taller than the work area, as 760 already nearly was. If that matters, trim the rhythm instead of the content.

@@ -1403,9 +1403,6 @@
   <data name="WelcomeWindow_ClickAddAccount" xml:space="preserve">
     <value>Kliknij + Dodaj konto.</value>
   </data>
-  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
-    <value>Kliknij Uruchom jako. Albo Uruchom wiele dla wszystkich wybranych kont naraz.</value>
-  </data>
   <data name="WelcomeWindow_ClickThe" xml:space="preserve">
     <value>Kliknij</value>
   </data>
@@ -1428,26 +1425,14 @@
   <data name="WelcomeWindow_InTheSystemTrayAnd" xml:space="preserve">
     <value>w zasobniku systemowym i przeciągnij RoRoRo na zewnątrz, aby pozostał widoczny.</value>
   </data>
-  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
-    <value>Multi-Instance jest domyślnie włączone — okna Roblox otwierają się obok siebie, nie walcząc ze sobą o singleton.</value>
-  </data>
   <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
     <value>po lewej stronie wiersza — przeciągnij, aby zmienić kolejność.</value>
-  </data>
-  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
-    <value>Otwórz Gry i dodaj miejsce, do którego się uruchamiasz.</value>
   </data>
   <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
     <value>Szybkie wskazówki dotyczące elementów sterujących wiersza</value>
   </data>
   <data name="WelcomeWindow_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
-  </data>
-  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Uruchamiaj wiele klientów Roblox obok siebie. Trzy kroki i gotowe.</value>
-  </data>
-  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
-    <value>Wyszukaj według nazwy lub wklej adres roblox.com/games/&lt;id&gt;. Domyślna gra to ta, której używa Uruchom jako.</value>
   </data>
   <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
     <value>Zaloguj się na roblox.com w wyskakującym oknie. Przechwytujemy plik cookie, szyfrujemy go i nigdy nie widzimy Twojego hasła.</value>
@@ -3701,5 +3686,23 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   </data>
   <data name="Library_Add_Name" xml:space="preserve">
     <value>Dodaj {0} do Biblioteki</value>
+  </data>
+  <data name="WelcomeWindow_OnePlaceToLaunchRoblox" xml:space="preserve">
+    <value>Jedno miejsce do uruchamiania Roblox: twoje konto, twoje gry, twoje ustawienia. Dodaj później więcej kont, a będą działać obok siebie.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel" xml:space="preserve">
+    <value>Graj z panelu pod swoim kontem.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
+    <value>Ostatnie, Ulubione i Prywatne serwery są tuż obok. Nie masz jeszcze gry? Otwórz stronę główną Roblox albo dodaj ją w Bibliotece.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
+    <value>Gdy potrzebujesz więcej kont, dodaj kolejne.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts_Detail" xml:space="preserve">
+    <value>Przy dwóch lub więcej pojawiają się Uruchom wiele i Squad Launch, a każde konto otwiera własne okno Roblox.</value>
+  </data>
+  <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
+    <value>Przy więcej niż jednym koncie</value>
   </data>
 </root>

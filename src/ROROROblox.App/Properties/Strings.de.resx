@@ -1403,9 +1403,6 @@
   <data name="WelcomeWindow_ClickAddAccount" xml:space="preserve">
     <value>Klicke auf + Konto hinzufügen.</value>
   </data>
-  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
-    <value>Klicke auf Starten als. Oder Mehrere starten für jeden ausgewählten Alt auf einmal.</value>
-  </data>
   <data name="WelcomeWindow_ClickThe" xml:space="preserve">
     <value>Klicke auf das</value>
   </data>
@@ -1428,26 +1425,14 @@
   <data name="WelcomeWindow_InTheSystemTrayAnd" xml:space="preserve">
     <value>im Infobereich und ziehe RoRoRo heraus, damit es sichtbar bleibt.</value>
   </data>
-  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
-    <value>Multi-Instance ist standardmäßig an — Roblox-Fenster öffnen sich nebeneinander, ohne um den Singleton zu konkurrieren.</value>
-  </data>
   <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
     <value>links in einer Zeile — ziehen, um neu anzuordnen.</value>
-  </data>
-  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
-    <value>Öffne Spiele und füge den Ort hinzu, in den du startest.</value>
   </data>
   <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
     <value>Schnelle Tipps zu den Zeilen-Bedienelementen</value>
   </data>
   <data name="WelcomeWindow_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
-  </data>
-  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Starte mehrere Roblox-Clients nebeneinander. Drei Schritte und du bist startklar.</value>
-  </data>
-  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
-    <value>Suche nach Namen oder füge eine roblox.com/games/&lt;id&gt;-URL ein. Das Standardspiel ist das, was Starten als verwendet.</value>
   </data>
   <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
     <value>Melde dich im Popup bei roblox.com an. Wir erfassen das Cookie, verschlüsseln es und sehen dein Passwort nie.</value>
@@ -3701,5 +3686,23 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   </data>
   <data name="Library_Add_Name" xml:space="preserve">
     <value>{0} zur Bibliothek hinzufügen</value>
+  </data>
+  <data name="WelcomeWindow_OnePlaceToLaunchRoblox" xml:space="preserve">
+    <value>Ein Ort zum Starten von Roblox: dein Konto, deine Spiele, deine Einstellungen. Füge später weitere Konten hinzu, dann laufen sie nebeneinander.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel" xml:space="preserve">
+    <value>Spiele über das Panel unter deinem Konto.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
+    <value>Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Roblox-Startseite öffnen, oder füge eines in der Bibliothek hinzu.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
+    <value>Wenn du Alts willst, füge ein weiteres Konto hinzu.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts_Detail" xml:space="preserve">
+    <value>Ab zwei Konten erscheinen Mehrere starten und Squad Launch, und jedes Konto öffnet sein eigenes Roblox-Fenster.</value>
+  </data>
+  <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
+    <value>Mit mehr als einem Konto</value>
   </data>
 </root>

@@ -1403,9 +1403,6 @@
   <data name="WelcomeWindow_ClickAddAccount" xml:space="preserve">
     <value>Clique em + Adicionar conta.</value>
   </data>
-  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
-    <value>Clique em Iniciar como. Ou em Iniciar vários para todos os alts selecionados de uma vez.</value>
-  </data>
   <data name="WelcomeWindow_ClickThe" xml:space="preserve">
     <value>Clique no</value>
   </data>
@@ -1428,26 +1425,14 @@
   <data name="WelcomeWindow_InTheSystemTrayAnd" xml:space="preserve">
     <value>na bandeja do sistema e arraste o RoRoRo para fora para mantê-lo visível.</value>
   </data>
-  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
-    <value>O Multi-Instance está ativado por padrão — as janelas do Roblox abrem lado a lado sem brigar entre si pelo singleton.</value>
-  </data>
   <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
     <value>à esquerda de uma linha — arraste para reordenar.</value>
-  </data>
-  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
-    <value>Abra Jogos e adicione o lugar em que você inicia.</value>
   </data>
   <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
     <value>Dicas rápidas para os controles da linha</value>
   </data>
   <data name="WelcomeWindow_Rororo" xml:space="preserve">
     <value>RoRoRo</value>
-  </data>
-  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
-    <value>Execute vários clientes do Roblox lado a lado. Três passos e está pronto.</value>
-  </data>
-  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
-    <value>Busque por nome ou cole uma URL roblox.com/games/&lt;id&gt;. O jogo padrão é o que o Iniciar como usa.</value>
   </data>
   <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
     <value>Entre em roblox.com no pop-up. Capturamos o cookie, o criptografamos e nunca vemos sua senha.</value>
@@ -3701,5 +3686,23 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   </data>
   <data name="Library_Add_Name" xml:space="preserve">
     <value>Adicionar {0} à Biblioteca</value>
+  </data>
+  <data name="WelcomeWindow_OnePlaceToLaunchRoblox" xml:space="preserve">
+    <value>Um só lugar para iniciar o Roblox: sua conta, seus jogos, suas configurações. Adicione mais contas depois e elas rodam lado a lado.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel" xml:space="preserve">
+    <value>Jogue pelo painel sob a sua conta.</value>
+  </data>
+  <data name="WelcomeWindow_PickOrPlayFromThePanel_Detail" xml:space="preserve">
+    <value>Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abrir a página inicial do Roblox, ou adicione um na Biblioteca.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve">
+    <value>Quando quiser alts, adicione outra conta.</value>
+  </data>
+  <data name="WelcomeWindow_WhenYouWantAlts_Detail" xml:space="preserve">
+    <value>Com duas ou mais, Iniciar vários e Squad Launch aparecem, e cada conta abre a própria janela do Roblox.</value>
+  </data>
+  <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
+    <value>Com mais de uma conta</value>
   </data>
 </root>

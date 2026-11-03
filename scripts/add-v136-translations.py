@@ -834,13 +834,72 @@ T: dict[str, dict[str, str]] = {
         "pt-BR": "Ver todos os servidores privados",
         "ru": "Показать все приватные серверы",
     },
+    # ---- item 10: the tour speaks to one account first --------------------------------------
+    # UI names are the app's own labels per culture, reused not re-translated: MainWindow_AddAccount,
+    # MainWindow_LaunchMultiple, MainWindow_SquadLaunch, Shell_Title_Games (the Library),
+    # Library_Chip_* / Shell_Panel_Heading_* (Recent, Favourites, Private servers) and
+    # Shell_Panel_OpenHome (Open Roblox home). Register follows each culture's existing WelcomeWindow rows.
+    "WelcomeWindow_OnePlaceToLaunchRoblox": {
+        "de": "Ein Ort zum Starten von Roblox: dein Konto, deine Spiele, deine Einstellungen. Füge später weitere Konten hinzu, dann laufen sie nebeneinander.",
+        "es": "Un lugar para iniciar Roblox: tu cuenta, tus juegos, tus ajustes. Añade más cuentas después y se ejecutarán una al lado de la otra.",
+        "fr": "Un seul endroit pour lancer Roblox : votre compte, vos jeux, vos réglages. Ajoutez d'autres comptes plus tard et ils s'exécuteront côte à côte.",
+        "pl": "Jedno miejsce do uruchamiania Roblox: twoje konto, twoje gry, twoje ustawienia. Dodaj później więcej kont, a będą działać obok siebie.",
+        "pt-BR": "Um só lugar para iniciar o Roblox: sua conta, seus jogos, suas configurações. Adicione mais contas depois e elas rodam lado a lado.",
+        "ru": "Одно место, чтобы запускать Roblox: ваш аккаунт, ваши игры, ваши настройки. Добавьте аккаунты позже, и они будут работать бок о бок.",
+    },
+    "WelcomeWindow_PickOrPlayFromThePanel": {
+        "de": "Spiele über das Panel unter deinem Konto.",
+        "es": "Juega desde el panel bajo tu cuenta.",
+        "fr": "Jouez depuis le panneau sous votre compte.",
+        "pl": "Graj z panelu pod swoim kontem.",
+        "pt-BR": "Jogue pelo painel sob a sua conta.",
+        "ru": "Играйте из панели под вашим аккаунтом.",
+    },
+    "WelcomeWindow_PickOrPlayFromThePanel_Detail": {
+        "de": "Zuletzt, Favoriten und Private Server findest du gleich dort. Noch kein Spiel? Roblox-Startseite öffnen, oder füge eines in der Bibliothek hinzu.",
+        "es": "Recientes, Favoritos y Servidores privados están ahí mismo. ¿Aún sin juego? Abrir el inicio de Roblox, o añade uno en la Biblioteca.",
+        "fr": "Récents, Favoris et Serveurs privés sont juste là. Pas encore de jeu ? Ouvrir l'accueil de Roblox, ou ajoutez-en un dans la Bibliothèque.",
+        "pl": "Ostatnie, Ulubione i Prywatne serwery są tuż obok. Nie masz jeszcze gry? Otwórz stronę główną Roblox albo dodaj ją w Bibliotece.",
+        "pt-BR": "Recentes, Favoritos e Servidores privados estão logo ali. Ainda sem jogo? Abrir a página inicial do Roblox, ou adicione um na Biblioteca.",
+        "ru": "Недавние, Избранное и Приватные серверы находятся прямо там. Ещё нет игры? Открыть главную Roblox или добавьте её в Библиотеке.",
+    },
+    "WelcomeWindow_WhenYouWantAlts": {
+        "de": "Wenn du Alts willst, füge ein weiteres Konto hinzu.",
+        "es": "Cuando quieras alts, añade otra cuenta.",
+        "fr": "Quand vous voulez des alts, ajoutez un autre compte.",
+        "pl": "Gdy potrzebujesz więcej kont, dodaj kolejne.",
+        "pt-BR": "Quando quiser alts, adicione outra conta.",
+        "ru": "Когда нужны альты, добавьте ещё один аккаунт.",
+    },
+    "WelcomeWindow_WhenYouWantAlts_Detail": {
+        "de": "Ab zwei Konten erscheinen Mehrere starten und Squad Launch, und jedes Konto öffnet sein eigenes Roblox-Fenster.",
+        "es": "Con dos o más aparecen Iniciar varias y Squad Launch, y cada cuenta abre su propia ventana de Roblox.",
+        "fr": "À partir de deux, Lancer plusieurs et Squad Launch apparaissent, et chaque compte ouvre sa propre fenêtre Roblox.",
+        "pl": "Przy dwóch lub więcej pojawiają się Uruchom wiele i Squad Launch, a każde konto otwiera własne okno Roblox.",
+        "pt-BR": "Com duas ou mais, Iniciar vários e Squad Launch aparecem, e cada conta abre a própria janela do Roblox.",
+        "ru": "При двух и более появляются «Запустить несколько» и Squad Launch, и каждый аккаунт открывает собственное окно Roblox.",
+    },
+    "WelcomeWindow_WithMoreThanOneAccount": {
+        "de": "Mit mehr als einem Konto",
+        "es": "Con más de una cuenta",
+        "fr": "Avec plus d'un compte",
+        "pl": "Przy więcej niż jednym koncie",
+        "pt-BR": "Com mais de uma conta",
+        "ru": "Если аккаунтов больше одного",
+    },
 }
 
 
 # Translation rows whose NEUTRAL key a later item deletes belong here, with the reason recorded,
 # rather than hand-deleted out of six JSON files. gen-culture-resx.py refuses to render a catalog
 # carrying a key the neutral file does not have, and it is right to: a stale row reads as coverage.
-STALE: dict[str, str] = {}
+STALE: dict[str, str] = {
+    "WelcomeWindow_OpenGamesAndAddThe": "item 10: tour step 2 now points at the panel (PickOrPlayFromThePanel)",
+    "WelcomeWindow_SearchByNameOrPaste": "item 10: tour step 2 now points at the panel (PickOrPlayFromThePanel)",
+    "WelcomeWindow_ClickLaunchAsOrLaunch": "item 10: tour step 3 is now WhenYouWantAlts",
+    "WelcomeWindow_MultiInstanceIsOnBy": "item 10: tour step 3 is now WhenYouWantAlts",
+    "WelcomeWindow_RunMultipleRobloxClientsSide": "item 10: hero subtitle is now OnePlaceToLaunchRoblox",
+}
 
 
 def neutral_keys() -> set[str]:
