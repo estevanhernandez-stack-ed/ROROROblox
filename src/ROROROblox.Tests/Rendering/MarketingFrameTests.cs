@@ -17,8 +17,8 @@ namespace ROROROblox.Tests.Rendering;
 /// live app masks the new account facts). The REAL <c>MainWindow</c> and <c>GamesPage</c> are built over fake data:
 /// every account, game, server, number and avatar here is made up or a public game name. Nothing is fetched.
 /// <para>
-/// Per culture (en, de, es, fr, pl, pt-BR, ru) under the brand theme at 96 DPI, four frames: <c>accounts-panel</c>,
-/// <c>accounts-health</c>, <c>library-grid</c>, <c>library-list</c>. Each writes the raw window PNG
+/// Per culture (en, de, es, fr, pl, pt-BR, ru) under the brand theme at 96 DPI, five frames: <c>accounts-panel</c>,
+/// <c>accounts-running</c>, <c>accounts-health</c>, <c>library-grid</c>, <c>library-list</c>. Each writes the raw window PNG
 /// (<c>docs/videos/v136-shots/&lt;lang&gt;/</c>, what the trailer renderer reads) and the 1920x1080 store composite
 /// (<c>docs/store/screenshots-v136/&lt;lang&gt;/</c>), the composite doing exactly what <c>New-StoreFrame</c> in
 /// <c>scripts/capture-ui.ps1</c> does: navy #0F1F31 ground, window unscaled and centred, a three-rectangle shadow.
@@ -74,8 +74,9 @@ public class MarketingFrameTests
 
     private static readonly Frame[] Frames =
     [
-        new("accounts-panel", () => BuildAccounts(health: false), AccountsWidth, AccountsHeight),
-        new("accounts-health", () => BuildAccounts(health: true), AccountsWidth, HealthHeight),
+        new("accounts-panel", () => BuildAccounts("panel"), AccountsWidth, AccountsHeight),
+        new("accounts-running", () => BuildAccounts("running"), AccountsWidth, AccountsHeight),
+        new("accounts-health", () => BuildAccounts("health"), AccountsWidth, HealthHeight),
         new("library-grid", () => BuildLibrary("grid", LibraryGridHeight), LibraryWidth, LibraryGridHeight),
         new("library-list", () => BuildLibrary("list", LibraryListHeight), LibraryWidth, LibraryListHeight),
     ];
@@ -298,8 +299,19 @@ public class MarketingFrameTests
         new(Guid.NewGuid(), account, "Alt", null, game, place, server is not null,
             DateTimeOffset.UtcNow - ago, DateTimeOffset.UtcNow - ago + TimeSpan.FromMinutes(minutes), null, server);
 
-    private static Window BuildAccounts(bool health)
+    /// <summary>
+    /// <paramref name="mode"/>: "panel" (NovaBuilds' panel open, two rows in a game), "health" (four accounts in the
+    /// health states), "running" (no panel, three rows in a game).
+    /// </summary>
+    private static Window BuildAccounts(string mode)
     {
+        var health = mode == "health";
+        var running = mode == "running";
+        var inGame = running
+            ? new Dictionary<int, (string Game, long Place)> { [0] = ("Pet Simulator 99", 8737899170), [1] = ("Adopt Me!", 920587237), [3] = ("Grow a Garden", 126884695634066) }
+            : health
+                ? new Dictionary<int, (string Game, long Place)>()
+                : new Dictionary<int, (string Game, long Place)> { [0] = ("Pet Simulator 99", 8737899170), [1] = ("Adopt Me!", 920587237) };
         var now = DateTimeOffset.UtcNow;
         var store = new LibraryPageFixtures.MemFavorites();
         store.Items.Add(new FavoriteGame(8737899170, 1, "Pet Simulator 99", "", IsDefault: true, AddedAt: now));
@@ -312,6 +324,7 @@ public class MarketingFrameTests
         built.Vm.ReloadGamesAsync().GetAwaiter().GetResult();
         var pet = built.Vm.AvailableGames.First(g => g.PlaceId == 8737899170);
         var adopt = built.Vm.AvailableGames.First(g => g.PlaceId == 920587237);
+        var grow = built.Vm.AvailableGames.First(g => g.PlaceId == 126884695634066);
 
         // name, avatar colours, robux, membership, friends online, note, last played ago
         var people = new (string Name, Color A, Color B, long Robux, string? Plus, int Friends, string? Note, TimeSpan Ago, string LastGame)[]
@@ -334,7 +347,7 @@ public class MarketingFrameTests
                 Facts: new AccountFacts(p.Robux, p.Plus, p.Friends, now.AddMinutes(-3), null),
                 Note: p.Note));
             var id = row.Id;
-            var expanded = !health && i == 0;
+            var expanded = mode == "panel" && i == 0;
             var panel = new AccountPanelViewModel(
                 row,
                 () => Task.FromResult<IReadOnlyList<LaunchSession>>(expanded ? NovaHistory(id) : []),
@@ -344,19 +357,19 @@ public class MarketingFrameTests
                 openLibrary: () => { });
             row.AttachPanel(panel);
             panel.PrimeLastPlayed([Session(id, p.LastGame, 1L, p.Ago, 30)]);
-            row.SelectedGame = i == 1 ? adopt : pet;
+            row.SelectedGame = i == 1 ? adopt : i == 3 ? grow : pet;
             row.FpsCap = 60;
             built.Vm.Accounts.Add(row);
 
-            if (!health && i < 2)
+            if (inGame.TryGetValue(i, out var here))
             {
                 // In a game, the way presence makes a row read: the dot, "In <game> · <age>" and the Stop / Recycle
                 // buttons come from IsRunning + presence, all set here so nothing waits on a poll.
                 row.IsRunning = true;
                 row.RunningSinceUtc = now - p.Ago;
                 row.PresenceState = Core.UserPresenceType.InGame;
-                row.CurrentGameName = i == 0 ? "Pet Simulator 99" : "Adopt Me!";
-                row.CurrentPlaceId = i == 0 ? 8737899170 : 920587237;
+                row.CurrentGameName = here.Game;
+                row.CurrentPlaceId = here.Place;
                 row.InGameSinceUtc = now - p.Ago;
             }
         }
@@ -368,7 +381,7 @@ public class MarketingFrameTests
             built.Vm.Accounts[3].SessionLimited = true;
             built.Vm.Accounts[3].JoinViaFriend = true;
         }
-        else
+        else if (mode == "panel")
         {
             built.Vm.Accounts[0].Panel!.IsExpanded = true;
         }
@@ -381,8 +394,8 @@ public class MarketingFrameTests
         Set("_multiInstanceState", MultiInstanceState.On);
         if (!health)
         {
-            Set("_liveProcessCount", 2);
-            Set("_aggregateClientBytes", 5_400_000_000L);
+            Set("_liveProcessCount", inGame.Count);
+            Set("_aggregateClientBytes", inGame.Count * 2_700_000_000L);
         }
 
         var window = new ROROROblox.App.MainWindow(built.Vm) { Width = AccountsWidth, Height = health ? HealthHeight : AccountsHeight };
