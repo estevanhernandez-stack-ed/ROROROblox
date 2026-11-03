@@ -1281,7 +1281,16 @@
                         <Border Style="{StaticResource FactBadgePlusStyle}"
                                 AutomationProperties.Name="{Binding MembershipAccessibleName}"
                                 Visibility="{Binding ShowMembershipBadge, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <TextBlock Text="{Binding MembershipText}" />
+                            <!-- Our own plus glyph, not Roblox's hexagon mark (Este, 2026-11-03: their icon is a trademark
+                                 and the listing claims no affiliation). Its stroke follows the word, so the expired-row
+                                 white fallback reaches it; 8 px fits inside the text line, so the badge keeps its height. -->
+                            <StackPanel Orientation="Horizontal">
+                                <Path x:Name="PlusGlyph" Data="M4,0 V8 M0,4 H8"
+                                      Width="8" Height="8" Margin="0,0,4,0" VerticalAlignment="Center"
+                                      StrokeThickness="2" SnapsToDevicePixels="True"
+                                      Stroke="{Binding Foreground, ElementName=PlusWord}" />
+                                <TextBlock x:Name="PlusWord" Text="{Binding MembershipText}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Border>
                         <Border Style="{StaticResource FactBadgeAccentStyle}"
                                 AutomationProperties.Name="{Binding FriendsOnlineAccessibleName}"

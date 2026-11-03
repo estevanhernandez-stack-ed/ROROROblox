@@ -262,6 +262,49 @@ public class AccountPanelXamlTests
         Assert.NotEqual(cyan, white);                           // vacuity: the two states are different colours
     }
 
+    /// <summary>
+    /// Este's call after C3 (2026-11-03, option a): the Plus badge leads with a plus glyph of our own drawing, not Roblox's
+    /// hexagon mark (a Roblox trademark; the listing claims no affiliation). The glyph is decoration on a badge that already
+    /// names itself, it takes the word's colour in both states (so the expired-row white fallback reaches it too), and it
+    /// costs the facts line no height: the Plus badge stays exactly as tall as the Robux badge beside it.
+    /// </summary>
+    [WindowRenderFact]
+    public void ThePlusBadge_LeadsWithOurOwnPlusGlyph_InTheWordsColour_AndAddsNoHeight()
+    {
+        string Hex(Brush? b) => b is SolidColorBrush s ? $"#{s.Color.R:X2}{s.Color.G:X2}{s.Color.B:X2}" : "<not a solid brush>";
+
+        foreach (var expired in new[] { false, true })
+        {
+            var m = ThemedWindowRender.Inspect(
+                MainWindowOneAccountFitsTests.BuiltIn("brand"), $"plus glyph, expired={expired}",
+                () => PanelWindowFixtures.Build(1, expanded: false, savedGames: true, plus: true,
+                    beforeOpen: (row, _) => { row.SessionExpired = expired; return Task.CompletedTask; }),
+                content =>
+                {
+                    var word = (TextBlock)ThemedWindowRender.Find(content, fe => fe is TextBlock { Text: "Plus" }, "the Plus text");
+                    var line = (Panel)VisualTreeHelper.GetParent(word);
+                    var glyph = (System.Windows.Shapes.Path)ThemedWindowRender.Find(content, fe => fe.Name == "PlusGlyph", "the plus glyph");
+                    Border Badge(DependencyObject node)
+                    {
+                        while (node is not null and not Border) node = VisualTreeHelper.GetParent(node);
+                        return (Border)node!;
+                    }
+
+                    var robux = (TextBlock)ThemedWindowRender.Find(content, fe => fe is TextBlock { Text: "R$ 1,240" }, "the Robux text");
+                    return (First: ReferenceEquals(line.Children[0], glyph) && line.Children.IndexOf(word) == 1,
+                        SameBadge: ReferenceEquals(Badge(glyph), Badge(word)),
+                        Stroke: Hex(glyph.Stroke), Word: Hex(word.Foreground),
+                        Unnamed: string.IsNullOrEmpty(AutomationProperties.GetName(glyph)),
+                        PlusHeight: Badge(word).ActualHeight, RobuxHeight: Badge(robux).ActualHeight);
+                });
+
+            Assert.True(m.First && m.SameBadge, $"expired={expired}: the glyph is not the first thing in the Plus badge, before the word");
+            Assert.Equal(m.Word, m.Stroke);
+            Assert.True(m.Unnamed, $"expired={expired}: the glyph carries its own accessible name; it is decoration (a Path has no peer) and the badge already names itself");
+            Assert.Equal(m.RobuxHeight, m.PlusHeight, precision: 2);
+        }
+    }
+
     [WindowRenderFact]
     public void SpaceOnTheExpander_TogglesThePanel()
     {

@@ -872,3 +872,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** At the minimum window size a long game name in the per-row picker trims about 28 DIP sooner. With no saved games, the empty picker's hint holds it wider than 132, so the pill fits with no DIP to spare in English and may clip in a longer language at 900 px. Two old records carry the inflated figures with a correction beside them: the checklist's item 7 note and the smoke doc's C2 run order. Nothing shipped on them.
 
 **Evidence:** `src/ROROROblox.Tests/Rendering/MainWindowOneAccountFitsTests.cs` (`Measure`, `AtTheDeclared900px_RemoveAndTheMainPillBothFit`); `src/ROROROblox.App/MainWindow.xaml` (the picker grid's comment); `docs/store/smoke-2026-11-01-account-library.md` (C2 eyes-on walk).
+
+### 2026-11-03 — The Plus badge draws our own plus glyph, not Roblox's mark
+
+**Context:** After the C2 walk Este asked whether the Plus membership badge could show Roblox's own Plus icon, the hexagon. That icon is a Roblox mark. The Store listing, the About box and the README all state that RoRoRo is not affiliated with Roblox Corporation and uses the word "Roblox" only to describe compatibility. Shipping their logo in the binary pushes against that statement and risks Store IP review.
+
+**Decision:** Option (a), Este's pick: the badge leads with a plus glyph drawn in-house (an 8 px Path, two strokes) beside the existing word, inside the existing magenta outline. Its stroke binds to the word's foreground, so the expired-row white fallback reaches it. It sits inside the text line, so the facts line keeps its height.
+
+**Consequences:** `AccountPanelXamlTests.ThePlusBadge_LeadsWithOurOwnPlusGlyph_InTheWordsColour_AndAddsNoHeight` pins the order, the colour in both states, and the height. It was watched failing three ways: the glyph missing, a hard-wired magenta stroke, and a 22 px glyph (badge 17 to 24 px). A 14 px glyph does not fail it, since it still fits the line. Revisit if Roblox publishes brand guidance permitting third-party use of the Plus icon.
+
+**Evidence:** `src/ROROROblox.App/MainWindow.xaml` (the Plus badge); `docs/cycles/2026-11-01-account-library/mocks/compare/c2-window-brand-96dpi.png`.
