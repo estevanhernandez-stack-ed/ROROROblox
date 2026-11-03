@@ -775,7 +775,7 @@
   "Shell_Fact_FriendsOnline_other": "{0} amigos online",
   "Shell_Fact_Friends_Name": "Amigos online, {0}",
   "Shell_Fact_Hidden": "oculto",
-  "Shell_Fact_LastPlayed_Name": "Jogado por último, {0}",
+  "Shell_Fact_LastPlayed_Name": "Última partida, {0}",
   "Shell_Fact_Masked": "••••",
   "Shell_Fact_Membership_Name": "Assinatura, {0}",
   "Shell_Fact_NeverUpdatedFailed": "Ainda não atualizado · a última tentativa falhou ({0})",

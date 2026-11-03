@@ -172,7 +172,7 @@ public class MainWindowOneAccountFitsTests
                 for (var i = 0; i < expanders.Count; i++)
                 {
                     var expander = expanders[i];
-                    var nameLine = (StackPanel)System.Windows.Media.VisualTreeHelper.GetParent(expander);
+                    var nameLine = (Panel)System.Windows.Media.VisualTreeHelper.GetParent(expander);
                     var nameText = nameLine.Children.OfType<TextBlock>().First();
                     var rowBorder = (FrameworkElement)ThemedWindowRender.Find(content,
                         fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0 && Inside(expander, fe), "the expander's AccountRowBorder");
@@ -212,7 +212,7 @@ public class MainWindowOneAccountFitsTests
                 + $"name line {r.LineWith:F2} with the expander, {r.LineWithout:F2} without; row {r.RowWith:F2} with, {r.RowWithout:F2} without");
             // What the move costs the name column, measured and printed (not asserted: the column's width is the row's, and the
             // row is wider than the declared 900 px window gives it, see the overshoot line above). The name line is a
-            // StackPanel, so a name plus its MAIN pill wider than the column is clipped by the column, not trimmed.
+            // Grid since 2026-11-03 (item 13): the name takes the star column and trims, so the MAIN pill keeps its width.
             _output.WriteLine(
                 $"{r.Which}: name line wants {r.DesiredWith:F1} DIP with the expander, {r.DesiredWithout:F1} without; the name column's inner width is {r.ColumnInner:F1} "
                 + $"(over by {Math.Max(0, r.DesiredWith - r.ColumnInner):F1} with it, {Math.Max(0, r.DesiredWithout - r.ColumnInner):F1} without)");
@@ -246,7 +246,7 @@ public class MainWindowOneAccountFitsTests
                 () => PanelWindowFixtures.Build(1, expanded: false, savedGames: games),
                 content =>
                 {
-                    var nameLine = (StackPanel)System.Windows.Media.VisualTreeHelper.GetParent(PanelWindowFixtures.Expanders(content)[0]);
+                    var nameLine = (Panel)System.Windows.Media.VisualTreeHelper.GetParent(PanelWindowFixtures.Expanders(content)[0]);
                     var column = (FrameworkElement)System.Windows.Media.VisualTreeHelper.GetParent(nameLine);
                     var natural = nameLine.Children.Cast<UIElement>().Where(c => c.Visibility == Visibility.Visible).Sum(c => c.DesiredSize.Width);
                     return (natural, column.ActualWidth);

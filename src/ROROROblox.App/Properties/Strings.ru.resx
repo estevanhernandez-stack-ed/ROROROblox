@@ -1473,7 +1473,7 @@
     <value>Вернуть исходное</value>
   </data>
   <data name="MainWindow_Reauthenticate" xml:space="preserve">
-    <value>Пройти аутентификацию заново</value>
+    <value>Войти заново</value>
   </data>
   <data name="SettingsPage_Language" xml:space="preserve">
     <value>Язык</value>

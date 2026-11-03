@@ -354,7 +354,7 @@
   "MainWindow_OpenTheFolderHoldingRororo": "Abre la carpeta que contiene los archivos de registro de RoRoRo.",
   "MainWindow_PickARobloxWindowTitle": "Elige un color de barra de título de la ventana de Roblox para esta cuenta.",
   "MainWindow_Plugins": "Complementos",
-  "MainWindow_Reauthenticate": "Volver a autenticar",
+  "MainWindow_Reauthenticate": "Reautenticar",
   "MainWindow_RecentSessionsPerAccountWhat": "Sesiones recientes por cuenta: qué juego/servidor, cuándo, cuánto tiempo.",
   "MainWindow_Recycle": "Recycle",
   "MainWindow_RecycleCloseAndRelaunchThis": "Recycle — cierra y vuelve a iniciar este cliente de vuelta al servidor en el que está ahora, y recupera la memoria filtrada.",

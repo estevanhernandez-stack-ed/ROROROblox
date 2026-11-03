@@ -6,9 +6,12 @@ using ROROROblox.Core.Theming;
 namespace ROROROblox.Tests.Rendering;
 
 /// <summary>
-/// v1.36 item 2: the health badge and the Follow-marked badge sit on existing lines of the row and
-/// add no height. <see cref="AccountRowCollapsedRenderTests"/> pins the v1.35 header for a clean
-/// row; this renders the rows that SHOW a badge and holds them to the same constant.
+/// v1.36 item 2, re-ruled at item 13 (Este, 2026-11-03): the health badge and the Follow-marked badge LEAD the facts
+/// line. On the name line, where item 2 put them, they pushed the account name to zero width at 900 px. A badge row
+/// therefore shows the facts line and is exactly the populated height
+/// (<see cref="AccountRowCollapsedRenderTests.PopulatedRowHeight96"/>): one facts line more than a clean v1.35 row, and
+/// no more, whether or not the account has facts. Each test also proves the badge sits in the facts line's WrapPanel,
+/// not on the name line.
 /// <para>
 /// Expired is not here: an expired row has always drawn a 1px border (a v1.35 behaviour), so its
 /// height is not the clean-row constant by design.
@@ -53,30 +56,33 @@ public class HealthBadgeRenderTests
             () => BuildWindow(shape),
             content =>
             {
-                ThemedWindowRender.Find(
+                var badge = ThemedWindowRender.Find(
                     content,
                     fe => fe is System.Windows.Controls.Button
                           && fe.Visibility == System.Windows.Visibility.Visible && fe.ActualHeight > 0
                           && System.Windows.Automation.AutomationProperties.GetName(fe).StartsWith(badgeNameStart, StringComparison.Ordinal),
                     "badge " + badgeNameStart);
+                Assert.True(System.Windows.Media.VisualTreeHelper.GetParent(badge) is System.Windows.Controls.WrapPanel { } line
+                            && System.Windows.Controls.Grid.GetRow(line) == 1,
+                    $"the {badgeNameStart} badge is not in the facts line (the row grid's row 1 WrapPanel)");
                 return ThemedWindowRender.Find(
                     content, fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0, "AccountRowBorder");
             },
             96).Height;
 
     [WindowRenderFact]
-    public void AFollowMarkedRow_AddsNoHeight() =>
-        Assert.Equal(AccountRowCollapsedRenderTests.V135RowHeight96, HeaderHeight(r => r.JoinViaFriend = true, "Joins by following"));
+    public void AFollowMarkedRow_OpensTheFactsLine_AtThePopulatedHeight() =>
+        Assert.Equal(AccountRowCollapsedRenderTests.PopulatedRowHeight96, HeaderHeight(r => r.JoinViaFriend = true, "Joins by following"));
 
     [WindowRenderFact]
-    public void ALimitedAndMarkedRow_AddsNoHeight() =>
-        Assert.Equal(AccountRowCollapsedRenderTests.V135RowHeight96, HeaderHeight(r =>
+    public void ALimitedAndMarkedRow_OpensTheFactsLine_AtThePopulatedHeight() =>
+        Assert.Equal(AccountRowCollapsedRenderTests.PopulatedRowHeight96, HeaderHeight(r =>
         {
             r.JoinViaFriend = true;
             r.SessionLimited = true;
         }, "Limited by Roblox"));
 
     [WindowRenderFact]
-    public void ANeedsVerificationRow_AddsNoHeight() =>
-        Assert.Equal(AccountRowCollapsedRenderTests.V135RowHeight96, HeaderHeight(r => r.SessionNeedsVerification = true, "Needs verification"));
+    public void ANeedsVerificationRow_OpensTheFactsLine_AtThePopulatedHeight() =>
+        Assert.Equal(AccountRowCollapsedRenderTests.PopulatedRowHeight96, HeaderHeight(r => r.SessionNeedsVerification = true, "Needs verification"));
 }

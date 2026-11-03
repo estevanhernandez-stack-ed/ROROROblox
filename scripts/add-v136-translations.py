@@ -207,7 +207,7 @@ T: dict[str, dict[str, str]] = {
         "es": "Última partida, {0}",
         "fr": "Dernière partie, {0}",
         "pl": "Ostatnio grane, {0}",
-        "pt-BR": "Jogado por último, {0}",
+        "pt-BR": "Última partida, {0}",
         "ru": "Последний запуск, {0}",
     },
     "Shell_Fact_Note_Name": {
@@ -908,6 +908,17 @@ T: dict[str, dict[str, str]] = {
     "Diag_Channel_Dev": {
         "de": "Entwickler-Build", "es": "Compilación de desarrollo", "fr": "Build de développement",
         "pl": "Kompilacja deweloperska", "pt-BR": "Build de desenvolvimento", "ru": "Сборка разработчика",
+    },
+    # ---- item 13: a SHIPPED label shortened so an expired row's actions fit 900 px (LabelWrapMeasurementTests) ----
+    # Re-authenticate took Launch As's slot on an expired row; in these four languages it was still wider than the
+    # slot it took, and Remove clipped by 9 (es) to 119 (ru) DIP. fr and pt-BR fit and keep their values.
+    "MainWindow_Reauthenticate": {
+        "de": "Anmelden",
+        "es": "Reautenticar",
+        "fr": "Se réauthentifier",
+        "pl": "Zaloguj ponownie",
+        "pt-BR": "Reautenticar",
+        "ru": "Войти заново",
     },
 }
 

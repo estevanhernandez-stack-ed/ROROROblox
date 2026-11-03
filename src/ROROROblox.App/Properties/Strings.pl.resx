@@ -1473,7 +1473,7 @@
     <value>Przywróć oryginalną</value>
   </data>
   <data name="MainWindow_Reauthenticate" xml:space="preserve">
-    <value>Uwierzytelnij ponownie</value>
+    <value>Zaloguj ponownie</value>
   </data>
   <data name="SettingsPage_Language" xml:space="preserve">
     <value>Język</value>

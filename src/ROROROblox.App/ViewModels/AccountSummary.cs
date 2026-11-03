@@ -232,11 +232,13 @@ public sealed class AccountSummary : INotifyPropertyChanged
 
     /// <summary>
     /// The facts line shows when any of Robux, membership, friends online, last played or the note's
-    /// first line has something to say. The age hint alone never makes it visible (the A1 ruling,
+    /// first line has something to say, or a health or Follow-marked badge shows (they lead the line since the
+    /// item-13 ruling, 2026-11-03). The age hint alone never makes it visible (the A1 ruling,
     /// 2026-11-02): an account with no facts, no history and no note renders exactly as v1.35.
     /// </summary>
     public bool HasFactsLine =>
-        ShowRobuxBadge || ShowMembershipBadge || ShowFriendsOnlineBadge || ShowLastPlayedBadge || ShowNoteBadge;
+        ShowHealthBadge || ShowFollowMarkBadge
+        || ShowRobuxBadge || ShowMembershipBadge || ShowFriendsOnlineBadge || ShowLastPlayedBadge || ShowNoteBadge;
 
     private string MaskedOrUnknownName(string key, bool known, string value) =>
         Loc.Format(key, FactsMasked ? Loc.Get("Shell_Fact_Hidden")
@@ -570,6 +572,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
         OnPropertyChanged(nameof(HealthBadgeText));
         OnPropertyChanged(nameof(HealthBadgeName));
         OnPropertyChanged(nameof(ShowHealthBadge));
+        OnPropertyChanged(nameof(HasFactsLine));
     }
 
     public bool IsLaunching
@@ -927,6 +930,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
                 OnPropertyChanged(nameof(SecondaryStatusText));
                 OnPropertyChanged(nameof(StatusDot));
                 OnPropertyChanged(nameof(ShowFollowMarkBadge));
+                OnPropertyChanged(nameof(HasFactsLine));
                 RaiseHealthChanged();
             }
         }

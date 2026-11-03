@@ -564,7 +564,17 @@
 
                     <!-- Name + status -->
                     <StackPanel Grid.Column="3" Margin="14,0,14,0" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
+                        <!-- v1.36 item 13: the name line is a Grid, not a horizontal StackPanel. A StackPanel measures
+                             the name at infinite width, so its CharacterEllipsis never engaged and the pills after it
+                             were clipped at the column edge instead: the MAIN pill read HAUP in German at 900 px, and
+                             clipped in all six translated languages (LabelWrapMeasurementTests). Now the name takes the
+                             star column and trims (its tooltip carries the full name); the pills keep their width. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
                             <!-- v1.36 panel expander (spec 3.6; moved here by the C2 ruling E1, 2026-11-02): first on the
                                  name line, before the name, the disclosure-triangle convention (the toggle leads the
                                  thing it opens). It left the actions column because its 32 px there is what pushed Remove
@@ -589,14 +599,14 @@
                                           Cursor="Hand" />
                             <!-- v1.3.x — RenderName = LocalName ?? DisplayName. Regular row primary
                                  label + tooltip both flip; tooltip shows the un-truncated rename. -->
-                            <TextBlock Text="{Binding RenderName}"
+                            <TextBlock Grid.Column="1" Text="{Binding RenderName}"
                                        FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}"
                                        TextTrimming="CharacterEllipsis"
                                        ToolTip="{Binding RenderName}" />
                             <!-- MAIN pill — magenta, only when this account IsMain. Tells the user
                                  at a glance which row is their default for compact mode + tray double-click. -->
-                            <Border Background="{DynamicResource MagentaBrush}" CornerRadius="3"
+                            <Border Grid.Column="2" Background="{DynamicResource MagentaBrush}" CornerRadius="3"
                                     Margin="10,2,0,0" Padding="6,2"
                                     VerticalAlignment="Center"
                                     Visibility="{Binding IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -604,60 +614,16 @@
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
-                            <!-- v1.36 health badge: one Button for the three states that stop a launch (expired,
-                                 needs verification, limited). Word, glyph and action differ per state, so flatline
-                                 can tell them apart with colour removed; colour is only the third carrier. It sits on
-                                 the name line, which is the tallest line of the row, so it adds no height. The face
-                                 colour is the child TextBlock's (a Button may not paint itself). One command, HealthActionCommand,
-                                 dispatches on the row's Health. -->
-                            <Button AutomationProperties.Name="{Binding HealthBadgeName}"
-                                    Command="{Binding DataContext.HealthActionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    Padding="6,0" Margin="8,2,0,0" MinHeight="0"
-                                    VerticalAlignment="Center">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ShowHealthBadge}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                                <TextBlock Text="{Binding HealthBadgeText}"
-                                           FontSize="{DynamicResource MetaFontSize}" FontWeight="SemiBold">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding HealthKind}" Value="verify">
-                                                    <Setter Property="Foreground" Value="{DynamicResource HealthVerifyBrush}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding HealthKind}" Value="limited">
-                                                    <Setter Property="Foreground" Value="{DynamicResource HealthLimitedBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </Button>
-                            <!-- v1.36 Follow-marked badge: the per-account Join via friend flag, named as a health
-                                 state. Permanent while the mark is set (it coexists with the three states above);
-                                 clicking it toggles the mark, the same command the context menu carries. -->
-                            <Button Command="{Binding DataContext.ToggleJoinViaFriendCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    AutomationProperties.Name="{Binding FollowMarkBadgeName}"
-                                    Style="{StaticResource GhostButtonStyle}"
-                                    Padding="6,0" Margin="8,2,0,0" MinHeight="0"
-                                    VerticalAlignment="Center"
-                                    Visibility="{Binding ShowFollowMarkBadge, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <TextBlock Text="{Binding FollowMarkBadgeText}"
-                                           FontSize="{DynamicResource MetaFontSize}" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource CyanBrush}" />
-                            </Button>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        </Grid>
+                        <!-- Item 13 (2026-11-03): a Grid, not a horizontal StackPanel, so the status sentence trims (full
+                             text in its tooltip) instead of being cut mid-word at the column edge. The chips and the
+                             selection dot after it sit in the Auto column and keep their width. -->
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
                             <!-- Live status dot. Every state resolves from a theme slot, so the dot
                                  repaints with the theme instead of holding a brand hue the theme
                                  cannot reach (spec §5.3). Active takes WhiteBrush rather than the
@@ -687,8 +653,10 @@
                                     </Style>
                                 </Ellipse.Style>
                             </Ellipse>
-                            <TextBlock Text="{Binding SecondaryStatusText}"
+                            <TextBlock Grid.Column="1" Text="{Binding SecondaryStatusText}"
                                        FontSize="{DynamicResource BodyFontSize}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding SecondaryStatusText}"
                                        VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -705,6 +673,7 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
                             <!-- Idle chip — shows "idle {duration}" once a running account has been
                                  quiet for at least a minute. RowExpiredAccentBrush when IdleWarn
                                  (crossed the warn threshold), MutedTextBrush otherwise. Task 7;
@@ -779,7 +748,8 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-                        </StackPanel>
+                            </StackPanel>
+                        </Grid>
 
         <!-- Follow strip — "Follow:" label + chips of OTHER accounts. Click a chip to
                              launch THIS row's account into that account's current Roblox server
@@ -1050,7 +1020,7 @@
                         <Button Content="{loc:Loc MainWindow_Reauthenticate}"
                                 Command="{Binding DataContext.ReauthenticateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
-                                Padding="12,6" Margin="0,0,8,0">
+                                Padding="10,6" Margin="0,0,8,0">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource WarningButtonStyle}">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -1083,8 +1053,14 @@
                              the expander moved into the name column, and at the declared 900 px the main row's
                              name line (expander, name, MAIN pill) wanted 142 DIP of a 132 DIP column, so the pill
                              clipped. Remove did not (an earlier "clips by 14" over-counted the roster's padding).
-                             (MainWindowOneAccountFitsTests.AtTheDeclared900px_RemoveAndTheMainPillBothFit). -->
-                        <Grid Margin="0,0,8,0" MinWidth="132" VerticalAlignment="Center">
+                             (MainWindowOneAccountFitsTests.AtTheDeclared900px_RemoveAndTheMainPillBothFit).
+                             132 to 120 on 2026-11-03 (item 13), the FPS cap's width: the name line now trims, so the
+                             pill no longer sets this, but Remove was cut by up to 10 DIP on badge rows and on French
+                             rows (Launch As reads "Lancer en tant que"). The room came from here rather than from the
+                             name column because the actions column is shared across rows, so a narrower name column
+                             would trim every main account's name in French. Game names trim inside the picker.
+                             (LabelWrapMeasurementTests.OnEveryBadgeRow_RemoveStaysInsideTheRow_InEverySupportedLanguage) -->
+                        <Grid Margin="0,0,8,0" MinWidth="120" VerticalAlignment="Center">
                             <ComboBox AutomationProperties.Name="{loc:Loc MainWindow_GameOrPrivateServerTo}"
                                       ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
@@ -1184,12 +1160,19 @@
                                         <DataTrigger Binding="{Binding IsRunning}" Value="True">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
+                                        <!-- Item 13 (2026-11-03): on an expired row Re-authenticate takes this slot. Side by side
+                                             they pushed Remove past the declared 900 px (shipped that way through v1.35). -->
+                                        <DataTrigger Binding="{Binding SessionExpired}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
                                         <DataTrigger Binding="{Binding IsLaunching}" Value="True">
                                             <Setter Property="IsEnabled" Value="False" />
                                         </DataTrigger>
+                                        <!-- Item 13: collapsed, not just disabled, on a limited row too. Disabled it still took
+                                             its width and pushed Remove past 900 px beside Re-authenticate; the facts-line badge
+                                             and the status line say why it cannot launch. -->
                                         <DataTrigger Binding="{Binding SessionLimited}" Value="True">
-                                            <Setter Property="IsEnabled" Value="False" />
-                                            <Setter Property="ToolTip" Value="{loc:Loc MainWindow_RobloxFlaggedThisAccountRe}" />
+                                            <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -1270,6 +1253,60 @@
                     <WrapPanel Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2"
                                Orientation="Horizontal" Margin="14,2,0,0"
                                Visibility="{Binding HasFactsLine, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <!-- v1.36 health badge: one Button for the three states that stop a launch (expired,
+                             needs verification, limited). Word, glyph and action differ per state, so flatline
+                             can tell them apart with colour removed; colour is only the third carrier. It leads the
+                             facts line (Este's item-13 ruling, 2026-11-03): on the name line it pushed the account name
+                             to zero width at 900 px, even in English. A badge row always shows the facts line. The face
+                             colour is the child TextBlock's (a Button may not paint itself). One command, HealthActionCommand,
+                             dispatches on the row's Health. -->
+                        <Button AutomationProperties.Name="{Binding HealthBadgeName}"
+                                ToolTip="{Binding HealthBadgeName}"
+                                Command="{Binding DataContext.HealthActionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Padding="6,1" Margin="0,0,6,3" MinHeight="0"
+                                VerticalAlignment="Center">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ShowHealthBadge}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <TextBlock Text="{Binding HealthBadgeText}"
+                                       FontSize="{DynamicResource MetaFontSize}" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HealthKind}" Value="verify">
+                                                <Setter Property="Foreground" Value="{DynamicResource HealthVerifyBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HealthKind}" Value="limited">
+                                                <Setter Property="Foreground" Value="{DynamicResource HealthLimitedBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button>
+                        <!-- v1.36 Follow-marked badge: the per-account Join via friend flag, named as a health
+                             state. Permanent while the mark is set (it coexists with the three states above);
+                             clicking it toggles the mark, the same command the context menu carries. -->
+                        <Button Command="{Binding DataContext.ToggleJoinViaFriendCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                AutomationProperties.Name="{Binding FollowMarkBadgeName}"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Padding="6,1" Margin="0,0,6,3" MinHeight="0"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding ShowFollowMarkBadge, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding FollowMarkBadgeText}"
+                                       FontSize="{DynamicResource MetaFontSize}" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource CyanBrush}" />
+                        </Button>
                         <!-- C2 colour (F2, 2026-11-02), all from ControlStyles.xaml: Robux is a Cyan chip with Cyan text, Plus a
                              Magenta outline with the lightened-magenta text in bold, friends online a Cyan outline with a
                              small Cyan dot before white text. The dot is decoration inside a badge that names itself. -->

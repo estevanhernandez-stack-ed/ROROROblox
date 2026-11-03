@@ -1917,7 +1917,7 @@
     <value>Amigos online, {0}</value>
   </data>
   <data name="Shell_Fact_LastPlayed_Name" xml:space="preserve">
-    <value>Jogado por último, {0}</value>
+    <value>Última partida, {0}</value>
   </data>
   <data name="Shell_Fact_Note_Name" xml:space="preserve">
     <value>Nota, {0}</value>

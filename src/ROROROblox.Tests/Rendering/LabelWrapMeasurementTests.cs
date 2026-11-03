@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
@@ -35,6 +36,7 @@ namespace ROROROblox.Tests.Rendering;
 /// forbids it on the shared render thread).
 /// </para>
 /// </summary>
+[Collection("MutatesUiCulture")]
 public class LabelWrapMeasurementTests
 {
     private static readonly string[] Cultures = ["en", "de", "es", "fr", "pl", "pt-BR", "ru"];
@@ -126,8 +128,8 @@ public class LabelWrapMeasurementTests
     /// </summary>
     private static readonly Dictionary<string, string> KnownOpen = new()
     {
-        ["Badge_Main"] = "the MAIN pill overflows the name column in every language but English (E1 moved the expander into the name "
-            + "line, so English fits with about 2 DIP to spare); shortening the word cannot fix German (HAUPT is 5 letters). Needs a layout ruling.",
+        // Empty since 2026-11-03: Badge_Main (the MAIN pill clipped in all six translations) was fixed by making the
+        // name line a Grid, so the name trims and the pill keeps its width.
     };
 
     /// <summary>
@@ -140,6 +142,11 @@ public class LabelWrapMeasurementTests
         "DisplayName" => "game / account name is user data and trims by design",
         "RenderName" => "account name is user data and trims by design",
         "MetaText" => "game name plus an age: the line's length is set by the game name, which is user data",
+        "NoteFirstLine" => "the account note is user data and trims by design",
+        // Item 13 ruling (2026-11-03): the status line is "In <game> · <time>" on a running row, so its length is set by
+        // user data there; on a health row the facts-line badge now carries the state and its action, so a trimmed tail
+        // loses nothing. The full sentence is the TextBlock's tooltip.
+        "SecondaryStatusText" => "status sentence: game-name length on running rows; the badge carries the health action",
         _ => null,
     };
 
@@ -409,6 +416,53 @@ public class LabelWrapMeasurementTests
         }
     }
 
+    /// <summary>
+    /// Item 13 ruling (2026-11-03): on a health-badge row Re-authenticate takes Launch As's slot, and Remove stays inside
+    /// the row at the declared 900 px in every language. The label walk checks text only, so a Remove whose label fits
+    /// while its own border is cut off at the row edge passed it; this checks the button's box.
+    /// </summary>
+    [WindowRenderFact]
+    public void OnEveryBadgeRow_RemoveStaysInsideTheRow_InEverySupportedLanguage()
+    {
+        var brand = Brand();
+        var over = new List<string>();
+        var checkedRows = 0;
+        foreach (var surface in Surfaces.Where(s => s.Name is "row-needs-verification" or "row-expired" or "row-limited-follow"))
+        {
+            foreach (var culture in Cultures)
+            {
+                var previous = TranslationSource.Instance.CurrentCulture;
+                TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
+                try
+                {
+                    var (right, inner) = ThemedWindowRender.Inspect(brand, $"remove edge [{surface.Name}/{culture}]", surface.Build, content =>
+                    {
+                        var row = (Border)ThemedWindowRender.Find(content, fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0, "AccountRowBorder");
+                        var remove = ThemedWindowRender.Find(content,
+                            fe => fe is Button && AutomationProperties.GetAutomationId(fe) == "DangerRemove" && fe.Visibility == Visibility.Visible && fe.ActualWidth > 0,
+                            "the row's Remove button");
+                        // Not the button's laid-out box: the actions Grid arranges it at its desired size and CLIPS it to the
+                        // column, so the box can sit inside the row while its right side is cut (the first version of this test
+                        // read the box and passed a visibly cut Remove). VisibleRight is the tightest clip on the way up.
+                        var edge = RectInRoot(remove, row).Right;
+                        var visible = Math.Min(VisibleRight(remove, row, out _), row.ActualWidth - row.BorderThickness.Right);
+                        return (edge, visible);
+                    });
+                    checkedRows++;
+                    _output.WriteLine($"[{surface.Name}/{culture}] Remove ends at {right:F1}, visible to {inner:F1}");
+                    if (right > inner + 0.5) over.Add($"[{surface.Name}/{culture}] Remove ends at {right:F1} DIP but is cut at {inner:F1}");
+                }
+                finally
+                {
+                    TranslationSource.Instance.CurrentCulture = previous;
+                }
+            }
+        }
+
+        Assert.Equal(3 * Cultures.Length, checkedRows);
+        Assert.True(over.Count == 0, "Remove is cut off at the row edge:\n" + string.Join("\n", over));
+    }
+
     [WindowRenderFact]
     public void EveryLabel_MaxesAtTwoLines_AndNothingIsClipped_InEverySupportedLanguage()
     {
@@ -542,15 +596,20 @@ public class LabelWrapMeasurementTests
     }
 
     [OptInFact]
-    public void WriteTheGermanCaptures()
+    public void WriteTheItem13Captures()
     {
+        // German for the longest strings; English for the three health-badge rows, whose clipping is layout, not language.
         var brand = Brand();
         var previous = TranslationSource.Instance.CurrentCulture;
-        TranslationSource.Instance.CurrentCulture = new CultureInfo("de");
         try
         {
-            foreach (var (file, surface) in new[] { ("row", Surfaces[0]), ("panel", Surfaces[4]), ("library", Surfaces[6]) })
+            foreach (var (culture, file, surface) in new[]
             {
+                ("de", "row", Surfaces[0]), ("de", "panel", Surfaces[4]), ("de", "library", Surfaces[6]),
+                ("en", "row-verify", Surfaces[1]), ("en", "row-expired", Surfaces[2]), ("en", "row-limited-follow", Surfaces[3]),
+            })
+            {
+                TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
                 var png = ThemedWindowRender.Inspect(brand, $"item13 capture [{file}]", surface.Build, content =>
                 {
                     var target = surface.WalkRoot(content);
@@ -575,7 +634,7 @@ public class LabelWrapMeasurementTests
                     encoder.Save(stream);
                     return stream.ToArray();
                 });
-                var name = $"item13-de-{file}-brand-96dpi.png";
+                var name = $"item13-{culture}-{file}-brand-96dpi.png";
                 File.WriteAllBytes(Path.Combine(CompareDir(), name), png);
                 _output.WriteLine($"{name} ({png.Length} bytes)");
             }
