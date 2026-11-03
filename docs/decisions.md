@@ -900,3 +900,31 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** English fits 760 with no scroll; German and Russian scroll a little inside the tour's ScrollViewer, with Got it always visible. The worker's entry above, which records 810, is superseded by this one.
 
 **Evidence:** `src/ROROROblox.App/About/WelcomeWindow.xaml`; `docs/cycles/2026-11-01-account-library/mocks/compare/item10-tour-*.png`.
+
+### 2026-11-03 — Item 11's riders: input credit at the input's tick, the install channel, two fences
+
+**Context:** Four riders from spec §7.1, §7.2, §7.4 and §7.5.
+
+**Decision:** #221. `ActivityMonitor` samples the foreground every 100 ms into a 32-entry `(tick, pid)` ring and credits the ring entry with the greatest tick at or before `LASTINPUTINFO.dwTime`. It uses no hook, because `WH_KEYBOARD_LL` or Raw Input would be keylogger-shaped on a Store binary. The 2026-09-29 replay credited C on the old code and B on the new; the red is recorded in the commit message. #52. Diagnostics reports `AppVersion.Display` (the About page's string) and an `InstallChannel` (Store, Sideload, Direct download, Dev). `IHostBuildIdentity` is registered by factory, because the type has two public ctors. A composition-root test fails when the identity is not handed to the collector. Two text-scan fences. `CursorFenceTests` found 22 sites against the spec's 18 and has a floor of 15. `ListingSheetParityFenceTests` checks 14 bullets, 20 features and a 200-character short description in all seven sheets. Both fences were mutation-checked.
+
+**Consequences:** `Sample()` runs ten times a second; its Trace line stays Trace. snapshot.txt gains an English, invariant `Channel` line under `App version`.
+
+**Evidence:** `af28ec2`, `b1bef61`'s cherry-pick, `e79b86f`, `b9a1ebe`.
+
+### 2026-11-03 — #222 builds the sweeper rather than closing on numbers
+
+**Context:** The spec's rule was to close #222 if one ten-launch day held windowless strays at or below one. That day never ran. The smoke table holds two point counts, both 0. C2 also saw a windowless client alive 40 minutes after an Open Roblox home launch.
+
+**Decision:** Build spec §7.3's sweeper branch. `Tray/IdleTrayClientSweeper` runs on its own 30 s `PeriodicTimer` and calls `StopIdleTrayClients(isTracked, minAge: 2 min)`. Its tracked set is `IRobloxProcessTracker.Attached`, the same source the pre-launch clear uses; the spec said `AccountsSnapshot`, but the clear never read it. The pre-launch clear passes `minAge: null`, so its rule is unchanged. An unknown start time is never swept.
+
+**Consequences:** The sweeper only touches `--launch-to-tray` clients. If the C2 stray was an ordinary windowless client, the sweeper does not catch it, and the dashboard task for it stays open.
+
+**Evidence:** the sweeper commit; `docs/store/smoke-2026-11-01-account-library.md` (#222 table).
+
+### 2026-11-03 — #230 takes the hint path; the hint already shipped
+
+**Context:** #230 rides only if task `y6u70eghn`'s host fix had merged. It is still in progress.
+
+**Decision:** Use the fallback. The Settings hint `SettingsPage_AlertSoundPluginsHint` ("Silent silences RoRoRo's own alerts only…") already exists (c7564f2), so the remaining work is naming it in the 1.36 release notes (item 15).
+
+**Evidence:** `src/ROROROblox.App/Properties/Strings.resx`.
