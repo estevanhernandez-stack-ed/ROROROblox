@@ -4912,7 +4912,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             () => _libraryCatalog is null ? Task.FromResult<IReadOnlyList<LibraryEntry>>([]) : _libraryCatalog.ListAsync(),
             target => LaunchAccountAsync(summary, target),
             () => { _factsService?.Enqueue(summary.Id); return Task.CompletedTask; },
-            _gameIcons, _favorites, _ui);
+            _gameIcons, _favorites, _ui,
+            // The Favourites / Private servers headers' "See all" link opens the Library page, the same call
+            // as the header's Library button.
+            openLibrary: OpenGames);
         panel.UserToggled += (_, open) => _ = PersistPanelExpandedAsync(summary.Id, open);
         summary.AttachPanel(panel);
         summary.PropertyChanged += OnAccountSummaryPropertyChanged;

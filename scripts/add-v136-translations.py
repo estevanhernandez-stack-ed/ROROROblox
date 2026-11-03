@@ -809,6 +809,31 @@ T: dict[str, dict[str, str]] = {
         "pt-BR": "Adicionar {0} à Biblioteca",
         "ru": "Добавить {0} в Библиотеку",
     },
+    # ---- C2 rework (2026-11-02): P1, three per column with See all in the header ------------
+    "Shell_Panel_SeeAll": {
+        "de": "Alle anzeigen",
+        "es": "Ver todo",
+        "fr": "Tout voir",
+        "pl": "Zobacz wszystko",
+        "pt-BR": "Ver tudo",
+        "ru": "Показать все",
+    },
+    "Shell_Panel_SeeAll_Favourites_Name": {
+        "de": "Alle Favoriten anzeigen",
+        "es": "Ver todos los favoritos",
+        "fr": "Voir tous les favoris",
+        "pl": "Zobacz wszystkie ulubione",
+        "pt-BR": "Ver todos os favoritos",
+        "ru": "Показать все избранное",
+    },
+    "Shell_Panel_SeeAll_PrivateServers_Name": {
+        "de": "Alle privaten Server anzeigen",
+        "es": "Ver todos los servidores privados",
+        "fr": "Voir tous les serveurs privés",
+        "pl": "Zobacz wszystkie prywatne serwery",
+        "pt-BR": "Ver todos os servidores privados",
+        "ru": "Показать все приватные серверы",
+    },
 }
 
 

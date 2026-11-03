@@ -103,6 +103,11 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
             // and it kept the OS hover. Its rank sets its own fill, label and edge, so it measures
             // exactly like the others.
             "SecondaryToggleButtonStyle",
+            // v1.36 C2 (E1): the panel expander's own toggle rank. Same Navy fill, derived edge and white
+            // glyph as SecondaryToggleButtonStyle at rest, so it measures exactly like it; its one difference
+            // (open = Cyan outline and glyph, no fill) is the checked state, which this resting render does not
+            // draw and ButtonStateGateTests.ThePanelExpanderOpenState_ClearsBothFloors_UnderEveryTheme measures.
+            "PanelExpanderToggleButtonStyle",
         ];
 
     /// <summary>
@@ -168,6 +173,15 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
             // decorative type), and the label is WhiteBrush or MutedTextBrush on the row, already
             // measured by the text pairs. It is not interactive and has no fill to sample.
             "FactBadgeStyle",
+            // The three C2 colour variants (F2) are BasedOn that same pill and change only its outline brush
+            // (Cyan, Cyan, Magenta) and its text brush (white, Cyan, HealthLimited, bold): still a Border with an
+            // outline and a label and no fill, so the same role and the same measured reason. What is NEW is the text
+            // colour, and that is not left to this exclusion: Cyan and HealthLimited are measured against RowBg in
+            // every built-in theme by ContrastPairGateTests.NamedPairs, and on an expired row (RowExpiredBg), where they
+            // measured under AA, the two text-colouring styles fall back to White, which is a named pair of its own and
+            // is pinned by AccountPanelXamlTests.OnAnExpiredRow_TheColouredFactsFallBackToWhiteText. The Magenta outline is
+            // decoration, like the hairline it replaces.
+            "FactBadgeAccentStyle", "FactBadgeAccentTextStyle", "FactBadgePlusStyle",
         ];
 
     /// <summary>The two fills the input styles' own comment names, in the order it names them.</summary>
@@ -681,6 +695,9 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
                     break;
 
                 case "FactBadgeStyle":
+                case "FactBadgeAccentStyle":
+                case "FactBadgeAccentTextStyle":
+                case "FactBadgePlusStyle":
                     // A decorative pill: an outline and a label, no fill of its own. The host showing
                     // through in bulk IS that statement, measured. A badge that started painting a
                     // background would stop leaking and would need measuring like any filled surface.

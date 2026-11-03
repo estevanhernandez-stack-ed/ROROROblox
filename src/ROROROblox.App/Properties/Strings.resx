@@ -2409,6 +2409,9 @@
   <data name="Shell_Panel_Heading_Recent" xml:space="preserve"><value>RECENT</value><comment>Panel column heading, upper case on purpose (v1.36)</comment></data>
   <data name="Shell_Panel_Heading_Favourites" xml:space="preserve"><value>FAVOURITES</value><comment>Panel column heading, upper case on purpose (v1.36)</comment></data>
   <data name="Shell_Panel_Heading_PrivateServers" xml:space="preserve"><value>PRIVATE SERVERS</value><comment>Panel column heading, upper case on purpose (v1.36)</comment></data>
+  <data name="Shell_Panel_SeeAll" xml:space="preserve"><value>See all</value><comment>Link in the Favourites and Private servers panel headers when the column hides entries; opens the Library (v1.36 C2)</comment></data>
+  <data name="Shell_Panel_SeeAll_Favourites_Name" xml:space="preserve"><value>See all favourites</value><comment>Accessible name of the Favourites header's See all link; opens the Library (v1.36 C2)</comment></data>
+  <data name="Shell_Panel_SeeAll_PrivateServers_Name" xml:space="preserve"><value>See all private servers</value><comment>Accessible name of the Private servers header's See all link; opens the Library (v1.36 C2)</comment></data>
   <data name="Shell_Panel_Empty_Recent" xml:space="preserve"><value>Nothing played yet. Launch a game and it shows up here.</value><comment>Panel empty state, Recent column (v1.36)</comment></data>
   <data name="Shell_Panel_Empty_Favourites" xml:space="preserve"><value>No favourites yet. Save one from Recent, or add games in the Library.</value><comment>Panel empty state, Favourites column; 'Library' is the renamed Games window (v1.36)</comment></data>
   <data name="Shell_Panel_Empty_PrivateServers" xml:space="preserve"><value>No private servers saved. Paste a server link in the Library to add one.</value><comment>Panel empty state, Private servers column; 'Library' is the renamed Games window (v1.36)</comment></data>

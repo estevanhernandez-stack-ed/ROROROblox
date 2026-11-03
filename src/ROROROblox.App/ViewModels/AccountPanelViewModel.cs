@@ -134,8 +134,19 @@ public sealed record PanelLastPlayed(string? Name, DateTimeOffset AtUtc);
 /// </summary>
 public sealed class AccountPanelViewModel : INotifyPropertyChanged
 {
-    /// <summary>Recent shows this many distinct games or servers (spec §3.2, default).</summary>
-    public const int RecentCap = 8;
+    /// <summary>
+    /// Recent shows this many distinct games or servers. Spec §3.2 said eight (a default to confirm on the
+    /// first interactive run); the C2 walk (2026-11-02) cut it to three: one open panel is then never taller
+    /// than three entries, and one account fits the declared 900x600 with it open (measured: three entries fit,
+    /// four scroll).
+    /// </summary>
+    public const int RecentCap = 3;
+
+    /// <summary>Favourites shows this many entries; the group header carries the total and a "See all" link past it (C2 ruling P1).</summary>
+    public const int FavouritesCap = 3;
+
+    /// <summary>Private servers shows this many entries; the group header carries the total and a "See all" link past it (C2 ruling P1).</summary>
+    public const int PrivateServersCap = 3;
 
     private readonly AccountSummary _owner;
     private readonly Func<Task<IReadOnlyList<LaunchSession>>> _history;
@@ -145,11 +156,14 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
     private readonly IGameIconCache? _icons;
     private readonly IFavoriteGameStore? _favorites;
     private readonly IUiDispatcher? _ui;
+    private readonly Action? _openLibrary;
     private readonly HashSet<long> _savedHere = new();
     private bool _isExpanded;
     private bool _iconsAttached;
     private int _refreshSeq;
     private PanelLastPlayed? _lastPlayed;
+    private int _favouritesTotal;
+    private int _privateServersTotal;
 
     public AccountPanelViewModel(
         AccountSummary owner,
@@ -159,7 +173,8 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         Func<Task> requestFacts,
         IGameIconCache? icons = null,
         IFavoriteGameStore? favorites = null,
-        IUiDispatcher? ui = null)
+        IUiDispatcher? ui = null,
+        Action? openLibrary = null)
     {
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         _history = history ?? throw new ArgumentNullException(nameof(history));
@@ -169,9 +184,11 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         _icons = icons;
         _favorites = favorites;
         _ui = ui;
+        _openLibrary = openLibrary;
         LaunchCommand = new RelayCommand(p => p is PanelEntry e ? LaunchAsync(e) : Task.CompletedTask, p => p is PanelEntry { CanLaunch: true });
         OpenHomeCommand = new RelayCommand(() => _launch(HomeTarget));
         SaveCommand = new RelayCommand(p => p is PanelEntry e ? SaveAsync(e) : Task.CompletedTask, p => p is PanelEntry { IsSaved: false, CanLaunch: true });
+        OpenLibraryCommand = new RelayCommand(() => _openLibrary?.Invoke());
     }
 
     public ObservableCollection<PanelEntry> Recent { get; } = new();
@@ -184,6 +201,58 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
     public ICommand LaunchCommand { get; }
     public ICommand OpenHomeCommand { get; }
     public ICommand SaveCommand { get; }
+
+    /// <summary>The "See all" link in the Favourites and Private servers headers: opens the Library page (the header's Library button does the same).</summary>
+    public ICommand OpenLibraryCommand { get; }
+
+    /// <summary>How many favourites the Library holds, however many of them the column shows (<see cref="FavouritesCap"/>).</summary>
+    public int FavouritesTotal
+    {
+        get => _favouritesTotal;
+        private set
+        {
+            if (_favouritesTotal == value) return;
+            _favouritesTotal = value;
+            OnPropertyChanged(nameof(FavouritesTotal));
+            OnPropertyChanged(nameof(FavouritesCountText));
+            OnPropertyChanged(nameof(ShowFavouritesCount));
+            OnPropertyChanged(nameof(ShowFavouritesSeeAll));
+        }
+    }
+
+    /// <summary>How many saved private servers the Library holds, however many of them the column shows (<see cref="PrivateServersCap"/>).</summary>
+    public int PrivateServersTotal
+    {
+        get => _privateServersTotal;
+        private set
+        {
+            if (_privateServersTotal == value) return;
+            _privateServersTotal = value;
+            OnPropertyChanged(nameof(PrivateServersTotal));
+            OnPropertyChanged(nameof(PrivateServersCountText));
+            OnPropertyChanged(nameof(ShowPrivateServersCount));
+            OnPropertyChanged(nameof(ShowPrivateServersSeeAll));
+        }
+    }
+
+    /// <summary>The count after the Favourites header word: "· 5". Empty when there are none (the empty state already reads).</summary>
+    public string FavouritesCountText => CountText(FavouritesTotal);
+
+    /// <summary>The count after the Private servers header word: "· 1". Empty when there are none.</summary>
+    public string PrivateServersCountText => CountText(PrivateServersTotal);
+
+    public bool ShowFavouritesCount => FavouritesTotal > 0;
+
+    public bool ShowPrivateServersCount => PrivateServersTotal > 0;
+
+    /// <summary>The "See all" link shows only when the column hides entries AND there is a Library page to open.</summary>
+    public bool ShowFavouritesSeeAll => FavouritesTotal > FavouritesCap && _openLibrary is not null;
+
+    /// <summary>The "See all" link shows only when the column hides entries AND there is a Library page to open.</summary>
+    public bool ShowPrivateServersSeeAll => PrivateServersTotal > PrivateServersCap && _openLibrary is not null;
+
+    private static string CountText(int total) =>
+        total > 0 ? "· " + total.ToString("N0", CultureInfo.CurrentCulture) : string.Empty;
 
     /// <summary>This account's most recent session with a place, or null. The row's <c>LastPlayedText</c> reads this same object.</summary>
     public PanelLastPlayed? LastPlayed
@@ -350,7 +419,8 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
     }
 
     private sealed record Model(
-        List<PanelEntry> Recent, List<PanelEntry> Favourites, List<PanelEntry> Servers, PanelLastPlayed? LastPlayed);
+        List<PanelEntry> Recent, List<PanelEntry> Favourites, List<PanelEntry> Servers, PanelLastPlayed? LastPlayed,
+        int FavouritesTotal, int ServersTotal);
 
     private Model Query(IReadOnlyList<LaunchSession> history, IReadOnlyList<LibraryEntry> library)
     {
@@ -385,13 +455,15 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
                 PlaceName: saved?.Kind == LibraryEntryKind.PrivateServer ? GameNameOf(g, saved) : null));
         }
 
-        var favourites = favs.Select(f =>
+        // Favourites and private servers keep the Library's own order (newest played by anyone first) and show
+        // the first three; the totals travel with the model so the headers can say how many there are.
+        var favourites = favs.Take(FavouritesCap).Select(f =>
         {
             var rows = mine.Where(r => r.PlaceId == f.PlaceId && r.PrivateServerId is null).ToList();
             return new PanelEntry(f, rows.Count > 0 ? rows[0].LaunchedAtUtc : null, TotalOf(rows), IsSaved: true);
         }).ToList();
 
-        var serverEntries = servers.Select(s =>
+        var serverEntries = servers.Take(PrivateServersCap).Select(s =>
         {
             var rows = mine.Where(r => r.PrivateServerId == s.PrivateServerId).ToList();
             return new PanelEntry(s, rows.Count > 0 ? rows[0].LaunchedAtUtc : null, TotalOf(rows), IsSaved: true,
@@ -408,7 +480,7 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
             last = new PanelLastPlayed(string.IsNullOrWhiteSpace(name) ? null : name, lastRow.LaunchedAtUtc);
         }
 
-        return new Model(recent, favourites, serverEntries, last);
+        return new Model(recent, favourites, serverEntries, last, favs.Count, servers.Count);
     }
 
     /// <summary>The game a private server lives in, from this account's own history rows for it; null when the row only carries the server's own name.</summary>
@@ -442,6 +514,8 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         Replace(Recent, m.Recent);
         Replace(Favourites, m.Favourites);
         Replace(PrivateServers, m.Servers);
+        FavouritesTotal = m.FavouritesTotal;
+        PrivateServersTotal = m.ServersTotal;
         LastPlayed = m.LastPlayed;
     }
 

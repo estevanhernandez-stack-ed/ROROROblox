@@ -23,10 +23,11 @@ public class AccountPanelViewModelTests
         public List<LibraryEntry> Library = new();
         public List<LaunchTarget> Launched = new();
         public int FactsRequests;
+        public int LibraryOpened;
         public FakeIcons Icons = new();
         public FakeFavorites Favorites = new();
 
-        public AccountPanelViewModel Panel(AccountSummary owner, bool withIcons = true) => new(
+        public AccountPanelViewModel Panel(AccountSummary owner, bool withIcons = true, bool withOpenLibrary = true) => new(
             owner,
             () => Task.FromResult<IReadOnlyList<LaunchSession>>(History.ToList()),
             () => Task.FromResult<IReadOnlyList<LibraryEntry>>(Library.ToList()),
@@ -34,7 +35,8 @@ public class AccountPanelViewModelTests
             () => { FactsRequests++; return Task.CompletedTask; },
             withIcons ? Icons : null,
             Favorites,
-            new InlineUi());
+            new InlineUi(),
+            withOpenLibrary ? () => LibraryOpened++ : null);
     }
 
     private static LibraryEntry Fav(long place, string name, DateTimeOffset? last = null) =>
@@ -66,8 +68,12 @@ public class AccountPanelViewModelTests
     }
 
     [Fact]
-    public async Task NineDistinctGames_YieldEight_NewestFirst()
+    public async Task NineDistinctGames_YieldThree_NewestFirst()
     {
+        // The cap is stated as the number it is, not only as the constant: the C2 ruling (P1, 2026-11-02) cut Recent from
+        // eight to three, and a test that compared the list to RecentCap would stay green through any later change of it.
+        Assert.Equal(3, AccountPanelViewModel.RecentCap);
+
         var h = new Harness();
         var o = Owner();
         for (var i = 1; i <= 9; i++) h.History.Add(Row(o.Id, 1000 + i, $"G{i}", Now.AddHours(-i)));
@@ -75,9 +81,92 @@ public class AccountPanelViewModelTests
 
         await p.RefreshAsync();
 
-        Assert.Equal(AccountPanelViewModel.RecentCap, p.Recent.Count);
-        Assert.Equal(1001, p.Recent[0].Entry.PlaceId);
-        Assert.DoesNotContain(p.Recent, e => e.Entry.PlaceId == 1009);
+        Assert.Equal(3, p.Recent.Count);
+        Assert.Equal(new long[] { 1001, 1002, 1003 }, p.Recent.Select(e => e.Entry.PlaceId).ToArray());
+        Assert.DoesNotContain(p.Recent, e => e.Entry.PlaceId == 1004);
+    }
+
+    [Fact]
+    public async Task SixFavouritesAndFourServers_ShowThreeEach_AndTheHeadersCountTheTotals()
+    {
+        var h = new Harness();
+        var o = Owner();
+        for (var i = 1; i <= 6; i++) h.Library.Add(Fav(i, $"Fav {i}"));
+        for (var i = 1; i <= 4; i++) h.Library.Add(Server(Guid.NewGuid(), 50 + i, $"Server {i}"));
+        var p = h.Panel(o);
+
+        await p.RefreshAsync();
+
+        Assert.Equal(3, p.Favourites.Count);
+        Assert.Equal(new long[] { 1, 2, 3 }, p.Favourites.Select(e => e.Entry.PlaceId).ToArray());   // the Library's own order, first three
+        Assert.Equal(3, p.PrivateServers.Count);
+        Assert.Equal(6, p.FavouritesTotal);
+        Assert.Equal(4, p.PrivateServersTotal);
+        Assert.Equal("\u00B7 6", p.FavouritesCountText);
+        Assert.Equal("\u00B7 4", p.PrivateServersCountText);
+        Assert.True(p.ShowFavouritesCount && p.ShowPrivateServersCount);
+        Assert.True(p.ShowFavouritesSeeAll && p.ShowPrivateServersSeeAll);
+    }
+
+    [Fact]
+    public async Task AtOrUnderThree_NoSeeAllLink_AndAnEmptyGroupShowsNoCount()
+    {
+        var h = new Harness();
+        var o = Owner();
+        for (var i = 1; i <= 3; i++) h.Library.Add(Fav(i, $"Fav {i}"));      // exactly the cap: all three show, nothing is hidden
+        var p = h.Panel(o);
+
+        await p.RefreshAsync();
+
+        Assert.Equal(3, p.Favourites.Count);
+        Assert.Equal("\u00B7 3", p.FavouritesCountText);
+        Assert.True(p.ShowFavouritesCount);
+        Assert.False(p.ShowFavouritesSeeAll);
+
+        Assert.Empty(p.PrivateServers);                                      // none: the empty state reads, so no count and no link
+        Assert.Equal(string.Empty, p.PrivateServersCountText);
+        Assert.False(p.ShowPrivateServersCount);
+        Assert.False(p.ShowPrivateServersSeeAll);
+    }
+
+    [Fact]
+    public async Task SeeAll_OpensTheLibrary_AndIsNotOfferedWhenThereIsNowhereToGo()
+    {
+        var h = new Harness();
+        var o = Owner();
+        for (var i = 1; i <= 5; i++) h.Library.Add(Fav(i, $"Fav {i}"));
+        var wired = h.Panel(o);
+        var unwired = h.Panel(Owner(), withOpenLibrary: false);
+        await wired.RefreshAsync();
+        await unwired.RefreshAsync();
+
+        Assert.True(wired.OpenLibraryCommand.CanExecute(null));
+        wired.OpenLibraryCommand.Execute(null);
+        Assert.Equal(1, h.LibraryOpened);
+
+        Assert.Equal(5, unwired.FavouritesTotal);
+        Assert.False(unwired.ShowFavouritesSeeAll);                           // more than three, but no delegate: no dead link
+        unwired.OpenLibraryCommand.Execute(null);                             // and the command is a quiet no-op
+        Assert.Equal(1, h.LibraryOpened);
+    }
+
+    [Fact]
+    public async Task TheTotalsAndTheLinkRaiseTheirNotifications_WhenTheLibraryChanges()
+    {
+        var h = new Harness();
+        var o = Owner();
+        var p = h.Panel(o);
+        var raised = new List<string>();
+        p.PropertyChanged += (_, e) => raised.Add(e.PropertyName!);
+
+        for (var i = 1; i <= 4; i++) h.Library.Add(Fav(i, $"Fav {i}"));
+        await p.RefreshAsync();
+
+        Assert.Contains(nameof(AccountPanelViewModel.FavouritesTotal), raised);
+        Assert.Contains(nameof(AccountPanelViewModel.FavouritesCountText), raised);
+        Assert.Contains(nameof(AccountPanelViewModel.ShowFavouritesCount), raised);
+        Assert.Contains(nameof(AccountPanelViewModel.ShowFavouritesSeeAll), raised);
+        Assert.DoesNotContain(nameof(AccountPanelViewModel.PrivateServersTotal), raised);   // unchanged at zero, so silent
     }
 
     [Fact]
@@ -364,7 +453,7 @@ public class AccountPanelViewModelTests
         var o = Owner(facts: new AccountFacts(1, null, null, Now, null));
         for (var i = 1; i <= 5; i++) h.History.Add(Row(o.Id, 100 + i, $"G{i}", Now.AddHours(-i)));
         h.Icons.Known[101] = new GameIconInfo("G1", 1, "https://example.invalid/1.png", Now); // one cached
-        h.Library.Add(Fav(105, "G5")); // one saved (carries its own thumbnail)
+        h.Library.Add(Fav(103, "G3")); // one saved (carries its own thumbnail)
         var p = h.Panel(o);
 
         await p.RefreshAsync();
@@ -373,7 +462,9 @@ public class AccountPanelViewModelTests
         p.Expand();
         await Task.Delay(50);
 
-        Assert.Equal(new long[] { 102, 103, 104 }, h.Icons.Requested.OrderBy(x => x).ToArray());
+        // Recent shows three (G1, G2, G3): G1 is cached and G3 is saved, so only G2 is asked for. G4 and G5 are held
+        // back by the cap and are never asked for: an entry nobody can see costs no request (C2, P1).
+        Assert.Equal(new long[] { 102 }, h.Icons.Requested.OrderBy(x => x).ToArray());
     }
 
     [Fact]

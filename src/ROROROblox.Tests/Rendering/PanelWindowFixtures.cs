@@ -9,8 +9,15 @@ namespace ROROROblox.Tests.Rendering;
 /// <summary>What an account's panel holds in a render fixture.</summary>
 internal enum PanelContent
 {
-    /// <summary>Three Recent entries (a saved game, a saved private server, an unsaved game), two Favourites (one default) and one private server. Three is what fits one account at 900x600.</summary>
+    /// <summary>Three Recent entries (a saved game, a saved private server, an unsaved game), two Favourites (one default) and one private server: a light panel, every column under its cap of three.</summary>
     Full,
+
+    /// <summary>
+    /// The heaviest panel the caps allow for: eight Recent sessions (eight distinct places, one of them a private server
+    /// group), six Favourites and four saved private servers. The panel shows three of each (the C2 ruling P1), counts the
+    /// totals in the Favourites and Private servers headers and offers See all on both.
+    /// </summary>
+    Heavy,
 
     /// <summary>Nothing anywhere: all three one-line empty states read.</summary>
     Empty,
@@ -36,7 +43,9 @@ internal static class PanelWindowFixtures
         string? note = "Farm alt, keep at 20 FPS. Clan bank on Fridays.",
         string firstName = "NovaFake",
         bool savedGames = false,
-        Func<AccountSummary, AccountPanelViewModel, Task>? beforeOpen = null)
+        Func<AccountSummary, AccountPanelViewModel, Task>? beforeOpen = null,
+        bool plus = false,
+        Action? openLibrary = null)
     {
         var built = MainViewModelTests.Build();
         var now = DateTimeOffset.UtcNow;
@@ -53,7 +62,7 @@ internal static class PanelWindowFixtures
         {
             var row = new AccountSummary(new Account(
                 Id: Guid.NewGuid(), DisplayName: names[i % names.Length], AvatarUrl: "", CreatedAt: now, LastLaunchedAt: null,
-                IsMain: i == 0, Facts: i == 0 ? new AccountFacts(1240, null, 3, now.AddMinutes(-3), null) : null,
+                IsMain: i == 0, Facts: i == 0 ? new AccountFacts(1240, plus ? "plus" : null, 3, now.AddMinutes(-3), null) : null,
                 Note: i == 0 ? note : null));
             var id = row.Id;
             var panel = new AccountPanelViewModel(
@@ -61,7 +70,8 @@ internal static class PanelWindowFixtures
                 () => Task.FromResult<IReadOnlyList<LaunchSession>>(i == 0 ? History(id, now, content) : []),
                 () => Task.FromResult<IReadOnlyList<LibraryEntry>>(i == 0 ? Library(content) : []),
                 _ => Task.CompletedTask,
-                () => Task.CompletedTask);
+                () => Task.CompletedTask,
+                openLibrary: openLibrary ?? (() => { }));
             row.AttachPanel(panel);
             if (i == 0)
             {
@@ -93,6 +103,17 @@ internal static class PanelWindowFixtures
                 Row("Pet Simulator 99", 8737899170, TimeSpan.FromHours(5), 25, ClanBaseId),
                 Row("Grow a Garden", 126884695634066, TimeSpan.FromDays(1), 180),
             ],
+            PanelContent.Heavy =>
+            [
+                Row("Pet Simulator 99", 8737899170, TimeSpan.FromHours(2), 14 * 60),
+                Row("Pet Simulator 99", 8737899170, TimeSpan.FromHours(5), 25, ClanBaseId),
+                Row("Grow a Garden", 126884695634066, TimeSpan.FromDays(1), 180),
+                Row("Blox Fruits", 2753915549, TimeSpan.FromDays(2), 40),
+                Row("Adopt Me!", 920587237, TimeSpan.FromDays(3), 55),
+                Row("Brookhaven", 4924922222, TimeSpan.FromDays(4), 30),
+                Row("Tower of Hell", 1962086868, TimeSpan.FromDays(5), 20),
+                Row("Murder Mystery 2", 142823291, TimeSpan.FromDays(6), 15),
+            ],
             PanelContent.LongNames =>
             [
                 Row("Pet Simulator 99 Hardcore Mega Edition (Beta Test Realm)", 8737899170, TimeSpan.FromHours(2), 14 * 60),
@@ -119,6 +140,33 @@ internal static class PanelWindowFixtures
                 new(LibraryEntryKind.PrivateServer, 8737899170, ClanBaseId, "Clan base of the Northern Fox Alliance, weekly farm", null, null, false, null, null,
                     new LaunchTarget.PrivateServer(8737899170, "FAKE-CODE", PrivateServerCodeKind.AccessCode)),
             ];
+        }
+
+        if (content == PanelContent.Heavy)
+        {
+            var places = new (long Id, string Name)[]
+            {
+                (8737899170, "Pet Simulator 99"), (920587237, "Adopt Me!"), (126884695634066, "Grow a Garden"),
+                (2753915549, "Blox Fruits"), (4924922222, "Brookhaven"), (1962086868, "Tower of Hell"),
+            };
+            var heavy = new List<LibraryEntry>();
+            foreach (var (id, name) in places)
+            {
+                heavy.Add(new(LibraryEntryKind.Favourite, id, null, name, null, null, id == 8737899170, null, null, new LaunchTarget.Place(id)));
+            }
+
+            var servers = new (Guid Id, string Name)[]
+            {
+                (ClanBaseId, "Clan base"), (Guid.Parse("00000000-0000-0000-0000-0000000000c2"), "Trade room"),
+                (Guid.Parse("00000000-0000-0000-0000-0000000000c3"), "Farm lobby"), (Guid.Parse("00000000-0000-0000-0000-0000000000c4"), "Test realm"),
+            };
+            foreach (var (sid, name) in servers)
+            {
+                heavy.Add(new(LibraryEntryKind.PrivateServer, 8737899170, sid, name, null, null, false, null, null,
+                    new LaunchTarget.PrivateServer(8737899170, "FAKE-CODE", PrivateServerCodeKind.AccessCode)));
+            }
+
+            return heavy;
         }
 
         if (content != PanelContent.Full) return [];
@@ -161,6 +209,39 @@ internal static class PanelWindowFixtures
 
         return true;
     }
+
+    /// <summary>
+    /// A row's panel expander: the ToggleButton whose accessible name is bound to <c>PanelExpanderName</c>. Found by
+    /// that binding, not by a size or a position, so it survives a resize and a move (the finder used to be
+    /// <c>tb.Width == 24</c>, which broke the day the expander changed size).
+    /// </summary>
+    public static System.Windows.Controls.Primitives.ToggleButton Expander(FrameworkElement content) =>
+        (System.Windows.Controls.Primitives.ToggleButton)ThemedWindowRender.Find(
+            content,
+            fe => fe is System.Windows.Controls.Primitives.ToggleButton tb && IsExpanderBinding(tb),
+            "the panel expander (a ToggleButton whose accessible name binds PanelExpanderName)");
+
+    /// <summary>Every row's panel expander, in visual-tree order (one per account row).</summary>
+    public static IReadOnlyList<System.Windows.Controls.Primitives.ToggleButton> Expanders(FrameworkElement content)
+    {
+        var found = new List<System.Windows.Controls.Primitives.ToggleButton>();
+        void Walk(DependencyObject node)
+        {
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+            {
+                var child = VisualTreeHelper.GetChild(node, i);
+                if (child is System.Windows.Controls.Primitives.ToggleButton tb && IsExpanderBinding(tb)) found.Add(tb);
+                Walk(child);
+            }
+        }
+
+        Walk(content);
+        return found;
+    }
+
+    /// <summary>True when <paramref name="tb"/> is the expander: its accessible name is bound to <c>PanelExpanderName</c>.</summary>
+    public static bool IsExpanderBinding(System.Windows.Controls.Primitives.ToggleButton tb) =>
+        tb.GetBindingExpression(System.Windows.Automation.AutomationProperties.NameProperty)?.ParentBinding.Path.Path == "PanelExpanderName";
 
     public static FrameworkElement ByAutomationId(FrameworkElement content, string id) =>
         ThemedWindowRender.Find(content, fe => System.Windows.Automation.AutomationProperties.GetAutomationId(fe) == id, id);

@@ -3,7 +3,9 @@ using System.Text.RegularExpressions;
 namespace ROROROblox.Tests;
 
 /// <summary>
-/// v1.36 item 6 (spec 2.1, 11). Every element that carries <c>FactBadgeStyle</c> must name itself
+/// v1.36 item 6 (spec 2.1, 11). Every element that carries <c>FactBadgeStyle</c>, or one of its C2 variants
+/// (<c>FactBadgeAccentStyle</c>, <c>FactBadgeAccentTextStyle</c>, <c>FactBadgePlusStyle</c>; the scan matches
+/// <c>FactBadge*Style</c>, so a variant added later is fenced on arrival), must name itself
 /// with its value (<c>AutomationProperties.Name</c>), because a facts-line badge is a Border around
 /// a TextBlock and <see cref="AccessibleNamingFenceTests"/> scans neither: it looks at interactive
 /// controls only. Without this fence a sixth badge could ship announcing nothing, or announcing its
@@ -19,7 +21,7 @@ public class FactBadgeNamingFenceTests
     private const int BadgeFloor = 5;
 
     private static readonly Regex Element = new(
-        @"<(?<tag>[A-Za-z:]+)(?=[\s/>])(?<attrs>[^>]*?FactBadgeStyle[^>]*?)/?>",
+        @"<(?<tag>[A-Za-z:]+)(?=[\s/>])(?<attrs>[^>]*?FactBadge\w*Style[^>]*?)/?>",
         RegexOptions.Singleline);
 
     private static (int Badges, List<string> Unnamed) Scan()
@@ -33,8 +35,8 @@ public class FactBadgeNamingFenceTests
             {
                 var attrs = m.Groups["attrs"].Value;
 
-                // The style's own definition (x:Key="FactBadgeStyle") is not a use of it.
-                if (attrs.Contains("x:Key=\"FactBadgeStyle\"", StringComparison.Ordinal)) continue;
+                // A style's own definition (x:Key="FactBadge...Style") is not a use of it.
+                if (Regex.IsMatch(attrs, @"x:Key\s*=\s*""FactBadge\w*Style""")) continue;
 
                 badges++;
                 var named = Regex.IsMatch(attrs, @"AutomationProperties\.Name\s*=\s*""[^""]+""");
@@ -65,7 +67,7 @@ public class FactBadgeNamingFenceTests
         var (badges, _) = Scan();
 
         Assert.True(badges >= BadgeFloor,
-            $"Found {badges} FactBadgeStyle elements; the facts line has {BadgeFloor}. "
+            $"Found {badges} FactBadge*Style elements; the facts line has {BadgeFloor}. "
             + "Either a badge lost its style or the scan stopped matching.");
     }
 

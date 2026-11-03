@@ -15,7 +15,9 @@ namespace ROROROblox.Tests.Rendering;
 /// the account row with its panel open and all three groups populated, the three empty states, and the whole
 /// <c>MainWindow</c> at the declared 900x600 with one account, in brand, midnight, magenta-heat and flatline,
 /// at 96 and 120 DPI, plus German at 120 DPI (the language B1's narrow columns cost the most in). Writes
-/// <c>item7-*.png</c> under <c>docs/cycles/2026-11-01-account-library/mocks/compare/</c>.
+/// <c>item7-*.png</c> under <c>docs/cycles/2026-11-01-account-library/mocks/compare/</c>. The C2 rework
+/// (2026-11-02: coloured facts, the expander before the name, three per column with See all) writes
+/// <c>c2-*.png</c> to the same folder, in brand and flatline.
 /// <para>
 /// OFF BY DEFAULT: the normal suite must not write files into the repo. Set <c>RORORO_CAPTURE_ROWS=1</c>:
 /// <c>$env:RORORO_CAPTURE_ROWS=1; dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter FullyQualifiedName~AccountPanelCaptureTests</c>.
@@ -65,7 +67,9 @@ public class AccountPanelCaptureTests
     }
 
     /// <summary>Renders either the whole roster-plus-chrome content (<paramref name="wholeWindow"/>) or just the roster.</summary>
-    private static byte[] Render(Theme theme, double dpi, PanelContent content, bool wholeWindow, string? culture, string accountName = "NovaFake")
+    private static byte[] Render(
+        Theme theme, double dpi, PanelContent content, bool wholeWindow, string? culture, string accountName = "NovaFake",
+        int accounts = 1, bool plus = false)
     {
         var previous = TranslationSource.Instance.CurrentCulture;
         if (culture is not null) TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
@@ -75,8 +79,8 @@ public class AccountPanelCaptureTests
                 theme,
                 $"account panel [{theme.Id}] @{dpi}dpi",
                 () => PanelWindowFixtures.Build(
-                    accounts: 1, expanded: true, content: content, savedGames: true, firstName: accountName,
-                    note: content == PanelContent.Empty ? null : "Farm alt, keep at 20 FPS. Clan bank on Fridays."),
+                    accounts: accounts, expanded: true, content: content, savedGames: true, firstName: accountName,
+                    note: content == PanelContent.Empty ? null : "Farm alt, keep at 20 FPS. Clan bank on Fridays.", plus: plus),
                 root =>
                 {
                     FrameworkElement target = root;
@@ -135,6 +139,24 @@ public class AccountPanelCaptureTests
                 Write($"item7-panel-empty-{tag}.png", Render(theme, dpi, PanelContent.Empty, wholeWindow: false, culture: null));
                 Write($"item7-window-one-account-{tag}.png", Render(theme, dpi, PanelContent.Full, wholeWindow: true, culture: null));
             }
+        }
+    }
+
+    /// <summary>
+    /// The C2 rework, for the comparison against <c>mocks/c2-brand.png</c> (sections F2, E1 and P1): the account row with
+    /// its facts line (Robux, Plus, friends online, last played, the note) and an open panel holding a HEAVY library (so the
+    /// headers carry their totals and See all), and a second closed row under it (E1's closed expander); then the whole
+    /// 900x600 window. Brand and flatline, 96 DPI.
+    /// </summary>
+    [OptInFact]
+    public void WriteTheC2Captures_BrandAndFlatline()
+    {
+        foreach (var theme in Themes().Where(t => t.Id is "brand" or "flatline"))
+        {
+            Write($"c2-row-and-panel-{theme.Id}-96dpi.png",
+                Render(theme, 96, PanelContent.Heavy, wholeWindow: false, culture: null, accounts: 2, plus: true));
+            Write($"c2-window-{theme.Id}-96dpi.png",
+                Render(theme, 96, PanelContent.Heavy, wholeWindow: true, culture: null, accounts: 2, plus: true));
         }
     }
 

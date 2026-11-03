@@ -16,7 +16,9 @@ namespace ROROROblox.Tests.Rendering;
 /// below the header and not inside it, closed means out of layout and out of the tab order, the expander is a
 /// named, focusable, styled ToggleButton that Space (the toggle pattern) drives, and every control the panel
 /// adds names itself at runtime. The pixel bars live in <see cref="MainWindowOneAccountFitsTests"/> and
-/// <see cref="AccountRowCollapsedRenderTests"/>.
+/// <see cref="AccountRowCollapsedRenderTests"/>. The expander is found by its accessible-name binding
+/// (<see cref="PanelWindowFixtures.Expander"/>), never by its size: it moved into the name column and changed size at
+/// C2 (2026-11-02).
 /// </summary>
 public class AccountPanelXamlTests
 {
@@ -61,7 +63,7 @@ public class AccountPanelXamlTests
                 }
 
                 var expander = (ToggleButton)ThemedWindowRender.Find(
-                    content, fe => fe is ToggleButton tb && Inside(tb, header) && tb.Width == 24, "the expander");
+                    content, fe => fe is ToggleButton tb && Inside(tb, header) && PanelWindowFixtures.IsExpanderBinding(tb), "the expander");
 
                 var controls = new List<(string, string, bool, bool)>();
                 void Collect(DependencyObject node)
@@ -97,8 +99,9 @@ public class AccountPanelXamlTests
                     ExpanderName: AutomationProperties.GetName(expander),
                     // Styled from a ToggleButton style that carries the app's template, either directly or through BasedOn
                     // (the theme dictionary may hand back its own copy of the style, so identity with the resource is the
-                    // wrong test). The expander takes SecondaryToggleButtonStyle directly: its glyph is bound, so it needs no
-                    // derived style, and a derived button style may carry Visibility/IsEnabled setters only. The style must be
+                    // wrong test). The expander takes PanelExpanderToggleButtonStyle directly: its glyph is bound and its open
+                    // state is drawn by that template, so it needs no derived style, and a derived button style may carry
+                    // Visibility/IsEnabled setters only. The style must be
                     // set EXPLICITLY (by the row template or locally): with none, WPF falls back to an implicit ToggleButton
                     // style that also carries a template, and a chain-only check passed with the Style attribute deleted (found
                     // by breaking it, 2026-11-02). ReadLocalValue is the wrong probe inside a DataTemplate: a template-set
@@ -131,9 +134,15 @@ public class AccountPanelXamlTests
 
         var open = Inspect(expanded: true);
         Assert.True(open.PanelShown);
-        // Save shows only on an unsaved Recent entry (one in the fixture); every other control is in the tab order.
-        Assert.All(open.PanelControls.Where(c => c.Kind != "TextBox" && !c.Name.StartsWith("Save ", StringComparison.Ordinal)),
+        // Save shows only on an unsaved Recent entry (one in the fixture); every other control is in the tab order. The
+        // two See all links are the exception that proves the rule: they show only when a column hides entries (C2, P1),
+        // and this light panel hides none, so both are out of layout and out of the tab order even while it is open (the
+        // heavy-panel fit test, where they show, asserts they are focusable).
+        Assert.All(open.PanelControls.Where(c => c.Kind != "TextBox" && !c.Name.StartsWith("Save ", StringComparison.Ordinal) && !c.Name.StartsWith("See all", StringComparison.Ordinal)),
             c => Assert.True(c.Shown && c.Focusable, $"{c.Kind} '{c.Name}' is not in the tab order while the panel is open"));
+        Assert.Equal(2, open.PanelControls.Count(c => c.Name.StartsWith("See all", StringComparison.Ordinal)));   // built, so the closed-panel scan above is not vacuous for them
+        Assert.All(open.PanelControls.Where(c => c.Name.StartsWith("See all", StringComparison.Ordinal)),
+            c => Assert.False(c.Shown, $"'{c.Name}' shows although no column hides an entry"));
         Assert.Single(open.PanelControls, c => c.Name.StartsWith("Save ", StringComparison.Ordinal) && c.Shown);
     }
 
@@ -143,10 +152,114 @@ public class AccountPanelXamlTests
         var open = Inspect(expanded: true);
         Assert.True(open.ExpanderChecked);
         Assert.True(open.ExpanderFocusable);
-        Assert.True(open.ExpanderStyledFromSecondaryToggle, "the expander must be styled from SecondaryToggleButtonStyle (directly or BasedOn)");
+        Assert.True(open.ExpanderStyledFromSecondaryToggle, "the expander must take an app toggle rank explicitly (PanelExpanderToggleButtonStyle, directly or BasedOn)");
         Assert.Equal("Show recent games for NovaFake", open.ExpanderName);
 
         Assert.False(Inspect(expanded: false).ExpanderChecked);
+    }
+
+    /// <summary>
+    /// The C2 open state (Este's call, the mock's cyan outline): an open expander draws a Cyan outline and a Cyan
+    /// glyph and NO fill, a closed one draws the ordinary derived edge and a white glyph, and the press sheen is not
+    /// the open state (the shared toggle template's checked state is a grey press sheen, which is exactly what this
+    /// rank replaces). Read from the applied template of the real row, resolved against the theme.
+    /// </summary>
+    [WindowRenderFact]
+    public void TheOpenExpander_IsACyanOutlineAndGlyph_NotAFill_AndAClosedOneIsTheOrdinaryEdge()
+    {
+        string Hex(Brush? b) => b is SolidColorBrush s ? $"#{s.Color.R:X2}{s.Color.G:X2}{s.Color.B:X2}" : "<not a solid brush>";
+
+        var seen = ThemedWindowRender.Inspect(
+            MainWindowOneAccountFitsTests.BuiltIn("brand"), "expander open state",
+            () => PanelWindowFixtures.Build(1, expanded: true, savedGames: true),
+            content =>
+            {
+                var expander = PanelWindowFixtures.Expander(content);
+                string Slot(string key) => Hex(content.TryFindResource(key) as Brush);
+
+                (string Border, string Glyph, string Fill, Visibility PressSheen) Read()
+                {
+                    var chrome = (Border)expander.Template.FindName("Chrome", expander);
+                    var press = (Border)expander.Template.FindName("PressSheen", expander);
+                    return (Hex(chrome.BorderBrush), Hex(expander.Foreground), Hex(chrome.Background), press.Visibility);
+                }
+
+                var open = Read();
+                expander.IsChecked = false;
+                content.UpdateLayout();
+                var closed = Read();
+                return (open, closed, cyan: Slot("CyanBrush"), edge: Slot("InteractiveEdgeBrush"), white: Slot("WhiteBrush"), navy: Slot("NavyBrush"));
+            });
+
+        Assert.Equal(seen.cyan, seen.open.Border);
+        Assert.Equal(seen.cyan, seen.open.Glyph);
+        Assert.Equal(seen.navy, seen.open.Fill);                       // the fill is the rank's own, never repainted
+        Assert.Equal(Visibility.Collapsed, seen.open.PressSheen);      // open is NOT the grey press sheen
+        Assert.Equal(seen.edge, seen.closed.Border);
+        Assert.Equal(seen.white, seen.closed.Glyph);
+        Assert.NotEqual(seen.cyan, seen.edge);                         // vacuity: the two states are different colours
+    }
+
+    /// <summary>
+    /// The C2 facts colour (F2) and its one exception. On an ordinary row Robux reads Cyan, Plus reads the lightened
+    /// magenta in bold inside a Magenta outline, and friends online reads white beside a Cyan dot. On an EXPIRED row the
+    /// two coloured texts fall back to white: measured against RowExpiredBg they failed AA (see
+    /// <c>ContrastPairGateTests.NamedPairs</c>), and the styles carry a trigger on SessionExpired for exactly that. The outlines
+    /// and the bold stay in both states. Read from the real row's text blocks, resolved against the theme.
+    /// </summary>
+    [WindowRenderFact]
+    public void OnAnExpiredRow_TheColouredFactsFallBackToWhiteText_AndAnOrdinaryRowIsColoured()
+    {
+        string Hex(Brush? b) => b is SolidColorBrush s ? $"#{s.Color.R:X2}{s.Color.G:X2}{s.Color.B:X2}" : "<not a solid brush>";
+
+        var seen = new Dictionary<bool, (string Robux, string Plus, string Friends, string PlusOutline, string RobuxOutline, string FriendsOutline, bool PlusBold, bool DotShown)>();
+        string cyan = "", limited = "", white = "", magenta = "";
+        foreach (var expired in new[] { false, true })
+        {
+            seen[expired] = ThemedWindowRender.Inspect(
+                MainWindowOneAccountFitsTests.BuiltIn("brand"), $"facts colour, expired={expired}",
+                () => PanelWindowFixtures.Build(1, expanded: false, savedGames: true, plus: true,
+                    beforeOpen: (row, _) => { row.SessionExpired = expired; return Task.CompletedTask; }),
+                content =>
+                {
+                    cyan = Hex(content.TryFindResource("CyanBrush") as Brush);
+                    limited = Hex(content.TryFindResource("HealthLimitedBrush") as Brush);
+                    white = Hex(content.TryFindResource("WhiteBrush") as Brush);
+                    magenta = Hex(content.TryFindResource("MagentaBrush") as Brush);
+
+                    var robux = (TextBlock)ThemedWindowRender.Find(content, fe => fe is TextBlock { Text: "R$ 1,240" }, "the Robux text");
+                    var plus = (TextBlock)ThemedWindowRender.Find(content, fe => fe is TextBlock { Text: "Plus" }, "the Plus text");
+                    var friends = (TextBlock)ThemedWindowRender.Find(content, fe => fe is TextBlock { Text: "3 friends online" }, "the friends-online text");
+                    Border Badge(DependencyObject node)
+                    {
+                        while (node is not null and not Border) node = VisualTreeHelper.GetParent(node);
+                        return (Border)node!;
+                    }
+
+                    var dot = ThemedWindowRender.Find(content, fe => fe is System.Windows.Shapes.Ellipse e && e.Width == 7, "the friends-online dot");
+                    return (Hex(robux.Foreground), Hex(plus.Foreground), Hex(friends.Foreground),
+                        Hex(Badge(plus).BorderBrush), Hex(Badge(robux).BorderBrush), Hex(Badge(friends).BorderBrush),
+                        plus.FontWeight == FontWeights.Bold, PanelWindowFixtures.EffectivelyVisible(dot));
+                });
+        }
+
+        var ordinary = seen[false];
+        Assert.Equal(cyan, ordinary.Robux);
+        Assert.Equal(limited, ordinary.Plus);
+        Assert.Equal(white, ordinary.Friends);                  // friends online keeps white text; its colour is the outline and the dot
+        Assert.Equal(magenta, ordinary.PlusOutline);
+        Assert.Equal(cyan, ordinary.RobuxOutline);
+        Assert.Equal(cyan, ordinary.FriendsOutline);
+        Assert.True(ordinary.PlusBold && ordinary.DotShown);
+
+        var expiredRow = seen[true];
+        Assert.Equal(white, expiredRow.Robux);                  // the two coloured texts stand down on RowExpiredBg
+        Assert.Equal(white, expiredRow.Plus);
+        Assert.Equal(white, expiredRow.Friends);
+        Assert.Equal(magenta, expiredRow.PlusOutline);          // the outlines and the bold stay
+        Assert.Equal(cyan, expiredRow.RobuxOutline);
+        Assert.True(expiredRow.PlusBold);
+        Assert.NotEqual(cyan, white);                           // vacuity: the two states are different colours
     }
 
     [WindowRenderFact]
@@ -161,8 +274,7 @@ public class AccountPanelXamlTests
             {
                 var header = ThemedWindowRender.Find(content, fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0, "AccountRowBorder");
                 var row = (AccountSummary)header.DataContext;
-                var expander = (ToggleButton)ThemedWindowRender.Find(
-                    content, fe => fe is ToggleButton tb && tb.Width == 24, "the expander");
+                var expander = PanelWindowFixtures.Expander(content);
                 var peer = UIElementAutomationPeer.CreatePeerForElement(expander);
                 var toggle = (IToggleProvider)peer.GetPattern(PatternInterface.Toggle);
 
@@ -191,7 +303,7 @@ public class AccountPanelXamlTests
             {
                 var vm = (MainViewModel)content.DataContext;
                 var panel = ThemedWindowRender.Find(content, fe => fe.Name == "AccountPanelBorder", "AccountPanelBorder");
-                var expander = ThemedWindowRender.Find(content, fe => fe is ToggleButton tb && tb.Width == 24, "the expander");
+                var expander = PanelWindowFixtures.Expander(content);
                 var row = (AccountSummary)panel.DataContext;
 
                 var full = (PanelWindowFixtures.EffectivelyVisible(panel), PanelWindowFixtures.EffectivelyVisible(expander));

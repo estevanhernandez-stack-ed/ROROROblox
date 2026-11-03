@@ -60,8 +60,12 @@ public class AccessibleNamingFenceTests
     /// chips, two Play, two Play as, two more, the search result's Add, Remove and Cancel on the confirm bar). The two
     /// layout RadioButtons and the flyout's MenuItems are not Kinds here, so they do not move the count;
     /// LibraryPageXamlTests names them.</para>
+    /// <para>217 to 219 with the v1.36 C2 rework (2026-11-02), re-measured by raising the floor until it failed: the two
+    /// "See all" links in the Favourites and Private servers panel headers, both named ("See all favourites", "See all
+    /// private servers"). The expander moved from the actions column to the name column and is still one control, so it
+    /// does not move the count; the unnamed ceiling stays 1.</para>
     /// </summary>
-    private const int ScannedFloor = 217;
+    private const int ScannedFloor = 219;
 
     /// <summary>
     /// A Content/Text value names its control when it is a literal with letters OR an

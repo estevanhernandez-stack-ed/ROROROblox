@@ -62,11 +62,11 @@ public class MainWindowOneAccountFitsTests
             });
 
     /// <summary>
-    /// THE LIGHT-PANEL CASE, not the cap. One account, panel open, three Recent entries, two Favourites, one
-    /// private server: it fits (extent 320.8 against a 327.2 viewport at the declared 900x600). Four or more
-    /// Recent entries do NOT fit: with four the extent measured 363.2, so the roster scrolls, and Recent is
-    /// capped at eight, not three. Read the 3/2/1 fixture as "a light panel fits", never as the capacity. The
-    /// promise spec 3.8 makes is the fresh install, below.
+    /// THE LIGHT-PANEL CASE. One account, panel open, three Recent entries, two Favourites, one private server: it fits
+    /// (extent 320.8 against a 327.2 viewport at the declared 900x600). Before the C2 ruling P1 this was NOT the capacity:
+    /// Recent capped at eight and four entries already scrolled (extent 363.2). Every column now caps at three, so the
+    /// capacity case is <see cref="AHeavyPanel_EightRecent_SixFavourites_FourServers_ShowsThreePerColumn_AndStillFitsWithoutARosterScrollbar"/>
+    /// and this one is the quiet end of the same promise. The promise spec 3.8 makes is the fresh install, below.
     /// </summary>
     [WindowRenderTheory]
     [InlineData(96)]
@@ -123,12 +123,16 @@ public class MainWindowOneAccountFitsTests
     }
 
     /// <summary>
-    /// The actions column at the declared 900 px, with the expander in it. Not a gate: it prints what the
-    /// report needs (name and actions widths, how far the column overshoots the viewport) so the numbers are
-    /// reproducible. The only assertion is the one item 7 owes: the expander adds no more than its own 32 px.
+    /// The C2 layout (ruling E1, 2026-11-02): the expander is the FIRST thing on the name line, inside the name column, and
+    /// the actions column no longer carries it. Also prints what the report needs, reproducibly: the name and actions widths
+    /// at the declared 900 px, with and without saved games, and how far the actions column's right edge overshoots the
+    /// roster viewport (the old test measured the 32 px the expander used to add to that column; it moved, so the question
+    /// now is whether Remove still clips). The assertions are the placement, and that the expander does not grow the name
+    /// line: the collapsed row's height is pinned by <see cref="AccountRowCollapsedRenderTests"/>, and a 20 px button beside
+    /// a 14 px heading would have moved it.
     /// </summary>
     [WindowRenderFact]
-    public void TheExpanderAddsItsOwnWidthToTheActionsColumn_AndNothingElse()
+    public void TheExpander_IsInTheNameColumn_NotTheActionsColumn_AndDoesNotGrowTheNameLine()
     {
         foreach (var games in new[] { false, true })
         {
@@ -139,25 +143,151 @@ public class MainWindowOneAccountFitsTests
                 + $"(overshoot {Math.Max(0, fit.ActionsRightEdge - fit.ViewportWidth):F1})");
         }
 
-        // The expander is 24 wide with an 8 margin; 32 is the whole delta, measured by collapsing it.
-        double Actions(bool expanderShown) => ThemedWindowRender.Inspect(
-            BuiltIn("brand"), "actions column with and without the expander",
-            () => PanelWindowFixtures.Build(1, expanded: true, savedGames: true),
+        // TWO rows: the first account is main (its MAIN pill makes the name line 21 DIP), the second is an ordinary row (the
+        // name line is the heading's own 19 DIP, which is the row AccountRowCollapsedRenderTests pins at 92). The expander has
+        // to leave both lines exactly as tall as they were without it.
+        var seen = ThemedWindowRender.Inspect(
+            BuiltIn("brand"), "where the expander sits",
+            () => PanelWindowFixtures.Build(2, expanded: true, savedGames: true),
             content =>
             {
-                var actions = ThemedWindowRender.Find(content,
-                    fe => fe is StackPanel && Grid.GetColumn(fe) == 4 && fe.Parent is Grid g && g.RowDefinitions.Count == 2,
-                    "the row's actions column");
-                var expander = (FrameworkElement)ThemedWindowRender.Find(
-                    content, fe => fe is System.Windows.Controls.Primitives.ToggleButton tb && tb.Width == 24, "the expander");
-                expander.Visibility = expanderShown ? Visibility.Visible : Visibility.Collapsed;
-                content.UpdateLayout();
-                return actions.ActualWidth;
+                bool Inside(DependencyObject? node, DependencyObject ancestor)
+                {
+                    while (node is not null)
+                    {
+                        if (ReferenceEquals(node, ancestor)) return true;
+                        node = System.Windows.Media.VisualTreeHelper.GetParent(node);
+                    }
+
+                    return false;
+                }
+
+                var rows = new List<(string Which, bool InName, bool InActions, bool First, bool BeforeName, double Width, double Height, double LayoutHeight,
+                    double LineWith, double LineWithout, double RowWith, double RowWithout, double TextHeight, double DesiredWith, double DesiredWithout, double ColumnInner)>();
+                var expanders = PanelWindowFixtures.Expanders(content);
+                for (var i = 0; i < expanders.Count; i++)
+                {
+                    var expander = expanders[i];
+                    var nameLine = (StackPanel)System.Windows.Media.VisualTreeHelper.GetParent(expander);
+                    var nameText = nameLine.Children.OfType<TextBlock>().First();
+                    var rowBorder = (FrameworkElement)ThemedWindowRender.Find(content,
+                        fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0 && Inside(expander, fe), "the expander's AccountRowBorder");
+                    // The row grid's direct child that holds the expander says which column it is in.
+                    FrameworkElement? slot = null;
+                    for (DependencyObject? n = expander; n is not null && slot is null; n = System.Windows.Media.VisualTreeHelper.GetParent(n))
+                    {
+                        if (System.Windows.Media.VisualTreeHelper.GetParent(n) is Grid g && g.RowDefinitions.Count == 2 && n is FrameworkElement fe) slot = fe;
+                    }
+
+                    var nameColumn = slot ?? throw new InvalidOperationException("the expander has no row-grid ancestor");
+                    var column = Grid.GetColumn(nameColumn);
+                    var (w, h) = (expander.ActualWidth, expander.ActualHeight);
+                    var layoutHeight = h + expander.Margin.Top + expander.Margin.Bottom;
+                    // The panel's own DesiredSize is clamped to the width it was offered (132), so it cannot show an overflow; the
+                    // sum of its visible children's desired widths can.
+                    double Natural() => nameLine.Children.Cast<UIElement>().Where(c => c.Visibility == Visibility.Visible).Sum(c => c.DesiredSize.Width);
+                    var (lineWith, desiredWith, rowWith) = (nameLine.ActualHeight, Natural(), rowBorder.ActualHeight);
+                    expander.Visibility = Visibility.Collapsed;
+                    content.UpdateLayout();
+                    var (lineWithout, desiredWithout, rowWithout) = (nameLine.ActualHeight, Natural(), rowBorder.ActualHeight);
+                    expander.Visibility = Visibility.Visible;
+                    content.UpdateLayout();
+                    rows.Add((i == 0 ? "main row" : "ordinary row", column == 3, column == 4,
+                        nameLine.Children.IndexOf(expander) == 0, nameLine.Children.IndexOf(expander) < nameLine.Children.IndexOf(nameText),
+                        w, h, layoutHeight, lineWith, lineWithout, rowWith, rowWithout, nameText.ActualHeight, desiredWith, desiredWithout, nameColumn.ActualWidth));
+                }
+
+                return rows;
             });
 
-        var withIt = Actions(true);
-        var without = Actions(false);
-        _output.WriteLine($"actions column: {without:F1} without the expander, {withIt:F1} with it, delta {withIt - without:F1}");
-        Assert.Equal(32, withIt - without, precision: 0);
+        Assert.Equal(2, seen.Count);
+        foreach (var r in seen)
+        {
+            _output.WriteLine(
+                $"{r.Which}: expander {r.Width:F1}x{r.Height:F1} (layout height {r.LayoutHeight:F1}); name text {r.TextHeight:F1} tall; "
+                + $"name line {r.LineWith:F2} with the expander, {r.LineWithout:F2} without; row {r.RowWith:F2} with, {r.RowWithout:F2} without");
+            // What the move costs the name column, measured and printed (not asserted: the column's width is the row's, and the
+            // row is wider than the declared 900 px window gives it, see the overshoot line above). The name line is a
+            // StackPanel, so a name plus its MAIN pill wider than the column is clipped by the column, not trimmed.
+            _output.WriteLine(
+                $"{r.Which}: name line wants {r.DesiredWith:F1} DIP with the expander, {r.DesiredWithout:F1} without; the name column's inner width is {r.ColumnInner:F1} "
+                + $"(over by {Math.Max(0, r.DesiredWith - r.ColumnInner):F1} with it, {Math.Max(0, r.DesiredWithout - r.ColumnInner):F1} without)");
+            Assert.True(r.InName, $"{r.Which}: the expander is not inside the name column (grid column 3)");
+            Assert.False(r.InActions, $"{r.Which}: the expander is still inside the actions column (grid column 4)");
+            Assert.True(r.First && r.BeforeName, $"{r.Which}: the expander is not the first child of the name line, before the name");
+            Assert.Equal(r.LineWithout, r.LineWith, precision: 2);
+            Assert.Equal(r.RowWithout, r.RowWith, precision: 2);
+        }
+    }
+
+    /// <summary>
+    /// The C2 cap (ruling P1): the HEAVIEST panel the caps allow, eight Recent sessions, six Favourites and four saved
+    /// private servers, still fits the declared 900x600 with one account and no roster scrollbar, because every column
+    /// shows at most three entries and the totals live in the group headers beside a See all link (no extra height). Before
+    /// the cap, four Recent entries already scrolled (extent 363.2 against a 327.2 viewport). The panel's own claims are
+    /// asserted too, so a green run cannot be a fixture that never filled: nine entries show (three per column), the two
+    /// totals read, and both See all links are there.
+    /// </summary>
+    [WindowRenderTheory]
+    [InlineData(96)]
+    public void AHeavyPanel_EightRecent_SixFavourites_FourServers_ShowsThreePerColumn_AndStillFitsWithoutARosterScrollbar(double dpi)
+    {
+        var seen = ThemedWindowRender.Inspect(
+            BuiltIn("brand"),
+            $"MainWindow heavy panel @{dpi}dpi",
+            () => PanelWindowFixtures.Build(1, expanded: true, PanelContent.Heavy, savedGames: true, plus: true),
+            content =>
+            {
+                var scroller = PanelWindowFixtures.RosterScroller(content);
+                var panel = ThemedWindowRender.Find(content, fe => fe.Name == "AccountPanelBorder", "AccountPanelBorder");
+
+                var launches = new List<string>();
+                var seeAll = new List<string>();
+                var seeAllInTabOrder = new List<bool>();
+                var texts = new List<string>();
+                void Walk(DependencyObject node)
+                {
+                    for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(node); i++)
+                    {
+                        var child = System.Windows.Media.VisualTreeHelper.GetChild(node, i);
+                        if (child is Button b && PanelWindowFixtures.EffectivelyVisible(b))
+                        {
+                            var automationName = System.Windows.Automation.AutomationProperties.GetName(b);
+                            if (System.Windows.Automation.AutomationProperties.GetAutomationId(b) == "DangerPanelLaunch") launches.Add(automationName);
+                            if (automationName.StartsWith("See all", StringComparison.Ordinal))
+                            {
+                                seeAll.Add(automationName);
+                                seeAllInTabOrder.Add(b.Focusable && b.IsTabStop);
+                            }
+                        }
+
+                        if (child is TextBlock tb && PanelWindowFixtures.EffectivelyVisible(tb) && tb.Text.Length > 0) texts.Add(tb.Text);
+                        Walk(child);
+                    }
+                }
+
+                Walk(panel);
+                var row = ThemedWindowRender.Find(content, fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0, "AccountRowBorder");
+                var heading = ThemedWindowRender.Find(content, fe => fe is TextBlock { Text: "FAVOURITES" }, "the Favourites heading");
+                var recentHeading = ThemedWindowRender.Find(content, fe => fe is TextBlock { Text: "RECENT" }, "the Recent heading");
+                var headerHeights = ((FrameworkElement)System.Windows.Media.VisualTreeHelper.GetParent(heading), recentHeading);
+                _output.WriteLine(
+                    $"row {row.ActualHeight:F1}, panel {panel.ActualHeight:F1}, Favourites header line {headerHeights.Item1.ActualHeight:F1}, Recent header {headerHeights.recentHeading.ActualHeight:F1}");
+                return (scroller.ComputedVerticalScrollBarVisibility, scroller.ViewportHeight, scroller.ExtentHeight, launches, seeAll, seeAllInTabOrder, texts);
+            });
+
+        _output.WriteLine($"@{dpi}dpi heavy panel: scrollbar {seen.ComputedVerticalScrollBarVisibility}, viewport {seen.ViewportHeight:F1}, extent {seen.ExtentHeight:F1}");
+
+        Assert.Equal(9, seen.launches.Count);                                  // three entries in each of the three columns
+        Assert.DoesNotContain(seen.launches, n => n.StartsWith("Launch Blox Fruits", StringComparison.Ordinal));   // the fourth Recent entry is held back by the cap
+        Assert.Contains("· 6", seen.texts);                                    // Favourites total
+        Assert.Contains("· 4", seen.texts);                                    // Private servers total
+        Assert.DoesNotContain(seen.texts, t => t.StartsWith("· ", StringComparison.Ordinal) && t is not ("· 6" or "· 4"));   // Recent carries no count
+        Assert.Equal(new[] { "See all favourites", "See all private servers" }, seen.seeAll);
+        Assert.All(seen.seeAllInTabOrder, inTabOrder => Assert.True(inTabOrder, "a See all link is not keyboard reachable"));
+        Assert.True(seen.ExtentHeight <= seen.ViewportHeight + 0.5,
+            $"@{dpi}dpi: a heavy panel (8 Recent, 6 Favourites, 4 private servers, capped to three per column) needs "
+            + $"{seen.ExtentHeight:F1} DIP of roster but the viewport is {seen.ViewportHeight:F1}. The caps no longer hold the panel to the declared 900x600.");
+        Assert.Equal(Visibility.Collapsed, seen.ComputedVerticalScrollBarVisibility);
     }
 }

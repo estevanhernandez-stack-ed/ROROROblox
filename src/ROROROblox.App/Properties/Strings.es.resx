@@ -1971,6 +1971,15 @@
   <data name="Shell_Panel_Heading_PrivateServers" xml:space="preserve">
     <value>SERVIDORES PRIVADOS</value>
   </data>
+  <data name="Shell_Panel_SeeAll" xml:space="preserve">
+    <value>Ver todo</value>
+  </data>
+  <data name="Shell_Panel_SeeAll_Favourites_Name" xml:space="preserve">
+    <value>Ver todos los favoritos</value>
+  </data>
+  <data name="Shell_Panel_SeeAll_PrivateServers_Name" xml:space="preserve">
+    <value>Ver todos los servidores privados</value>
+  </data>
   <data name="Shell_Panel_Empty_Recent" xml:space="preserve">
     <value>Todavía no se ha jugado nada. Lanza un juego y aparecerá aquí.</value>
   </data>
