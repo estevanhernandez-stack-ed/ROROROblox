@@ -33,7 +33,7 @@ stays as digits in any OVERLAY.
 - VO: `A kiedy konto cię potrzebuje, mówi o tym. Sesja wygasła, wymaga weryfikacji, ograniczone przez Roblox. Jedno kliknięcie, by to naprawić.`
 
 ### library (slide 5)
-- OVERLAY: `jedna biblioteka. wybierz konto.`
+- OVERLAY: `jedna biblioteka. graj kim chcesz.`
 - VO: `Każda zagrana gra trafia do Biblioteki. Przeszukuj, filtruj i wybierz, które konto gra.`
 
 ### squad (slide 6)
