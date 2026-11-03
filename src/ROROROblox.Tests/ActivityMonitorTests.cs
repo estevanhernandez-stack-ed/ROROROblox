@@ -27,7 +27,9 @@ public class ActivityMonitorTests
     private sealed class FakeInput : ISystemInputClock
     {
         public uint Tick;
+        public uint Now;
         public uint LastInputTick => Tick;
+        public uint NowTick => Now;
     }
 
     private sealed class FakeResolver : IForegroundAccountResolver
@@ -257,6 +259,128 @@ public class ActivityMonitorTests
         var (m, clock, _, _, _) = Build();
         m.MarkActive(Guid.NewGuid(), clock.UtcNow); // must not throw
         Assert.Empty(m.GetSnapshot());
+    }
+
+    // ---- #221: input credit goes to the account that received it ----
+    // Replays sample at the instants the production timer would; the foreground and input ticks are
+    // set to what the OS would report at that instant. Ticks are GetTickCount-domain milliseconds.
+    private static void SampleAt(FakeInput input, FakeForeground fg, ActivityMonitor m, uint now, int? pid)
+    {
+        input.Now = now;
+        fg.Pid = pid;
+        m.Sample();
+    }
+
+    [Fact]
+    public void Sample_InputGivenToB_ThenSwitchBackToC_CreditsB_NotTheForegroundAtSampleTime()
+    {
+        // 2026-09-29 timeline: fg C at 0, fg B at 300, input at 450, fg C at 800, sample at 1000.
+        var (m, clock, fg, input, res) = Build();
+        var b = Guid.NewGuid();
+        var c = Guid.NewGuid();
+        res.Map[100] = b;
+        res.Map[200] = c;
+        m.OnAccountLaunched(b);
+        m.OnAccountLaunched(c);
+        var seeded = clock.UtcNow;
+
+        SampleAt(input, fg, m, 0, 200);       // C foreground
+        SampleAt(input, fg, m, 300, 100);     // B comes forward
+        clock.UtcNow = seeded.AddSeconds(5);
+        input.Tick = 450;                      // the keypress lands while B is foreground
+        SampleAt(input, fg, m, 1000, 200);    // C is back by the time we look
+
+        var snap = m.GetSnapshot().ToDictionary(x => x.AccountId);
+        Assert.Equal(clock.UtcNow, snap[b].LastActivityAt);
+        Assert.Equal(seeded, snap[c].LastActivityAt);
+    }
+
+    [Fact]
+    public void Sample_SwitchBackInsideSameSamplePeriod_RingCreditsB()
+    {
+        // B is foreground at 400, the keypress is at 450, C is back at 480: inside one 100 ms window,
+        // so the sample at 500 sees C. Only the history ring (tick <= inputTick) still knows B.
+        var (m, clock, fg, input, res) = Build();
+        var b = Guid.NewGuid();
+        var c = Guid.NewGuid();
+        res.Map[100] = b;
+        res.Map[200] = c;
+        m.OnAccountLaunched(b);
+        m.OnAccountLaunched(c);
+        var seeded = clock.UtcNow;
+
+        SampleAt(input, fg, m, 300, 200);
+        SampleAt(input, fg, m, 400, 100);
+        clock.UtcNow = seeded.AddSeconds(1);
+        input.Tick = 450;
+        SampleAt(input, fg, m, 500, 200);
+
+        var snap = m.GetSnapshot().ToDictionary(x => x.AccountId);
+        Assert.Equal(clock.UtcNow, snap[b].LastActivityAt);
+        Assert.Equal(seeded, snap[c].LastActivityAt);
+    }
+
+    [Fact]
+    public void Sample_AccountThatNeverReceivedInput_KeepsClimbingIdleAge()
+    {
+        var (m, clock, fg, input, res) = Build();
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        res.Map[100] = a;
+        res.Map[200] = b;
+        m.OnAccountLaunched(a);
+        m.OnAccountLaunched(b);
+
+        uint t = 0;
+        for (var i = 1; i <= 10; i++)
+        {
+            t += 100;
+            clock.UtcNow = clock.UtcNow.AddMinutes(1);
+            input.Tick = t;                    // input keeps advancing, always while B is foreground
+            SampleAt(input, fg, m, t, 200);
+        }
+
+        var snap = m.GetSnapshot().ToDictionary(x => x.AccountId);
+        Assert.Equal(TimeSpan.FromMinutes(10), snap[a].SinceActivity);
+        Assert.Equal(TimeSpan.Zero, snap[b].SinceActivity);
+    }
+
+    [Fact]
+    public void Sample_NoRingEntryAtOrBeforeInputTick_FallsBackToCurrentForeground()
+    {
+        var (m, clock, fg, input, res) = Build();
+        var a = Guid.NewGuid();
+        res.Map[100] = a;
+        m.OnAccountLaunched(a);
+        clock.UtcNow = clock.UtcNow.AddMinutes(5);
+
+        input.Tick = 50;                       // input predates every ring entry
+        SampleAt(input, fg, m, 900, 100);
+
+        Assert.Equal(TimeSpan.Zero, m.GetSnapshot().Single().SinceActivity);
+    }
+
+    [Fact]
+    public void Sample_TickCounterWrapsBetweenInputAndSample_StillCreditsRingEntryBeforeInput()
+    {
+        var (m, clock, fg, input, res) = Build();
+        var b = Guid.NewGuid();
+        var c = Guid.NewGuid();
+        res.Map[100] = b;
+        res.Map[200] = c;
+        m.OnAccountLaunched(b);
+        m.OnAccountLaunched(c);
+        var seeded = clock.UtcNow;
+
+        SampleAt(input, fg, m, uint.MaxValue - 199, 200);   // C, just before the wrap
+        SampleAt(input, fg, m, uint.MaxValue - 99, 100);    // B
+        clock.UtcNow = seeded.AddSeconds(1);
+        input.Tick = uint.MaxValue - 50;                    // input while B foreground
+        SampleAt(input, fg, m, 100, 200);                   // counter has wrapped; C is back
+
+        var snap = m.GetSnapshot().ToDictionary(x => x.AccountId);
+        Assert.Equal(clock.UtcNow, snap[b].LastActivityAt);
+        Assert.Equal(seeded, snap[c].LastActivityAt);
     }
 
     [Fact]
