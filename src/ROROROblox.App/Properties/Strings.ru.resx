@@ -1995,7 +1995,7 @@
     <value>Запустить {0}, {1}</value>
   </data>
   <data name="Shell_Panel_Tag_Default" xml:space="preserve">
-    <value>ПО УМОЛЧАНИЮ</value>
+    <value>ПО УМОЛЧ.</value>
   </data>
   <data name="Shell_Panel_Tag_Private" xml:space="preserve">
     <value>ПРИВАТНЫЙ</value>
@@ -3642,7 +3642,7 @@ RoRoRo спрашивает про обводку кнопок только дл
     <value>Избранное</value>
   </data>
   <data name="Library_Kind_PrivateServer" xml:space="preserve">
-    <value>Приватный сервер</value>
+    <value>Приватный</value>
   </data>
   <data name="Library_Kind_Recent" xml:space="preserve">
     <value>Недавняя</value>

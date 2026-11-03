@@ -3642,7 +3642,7 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
     <value>Ulubiona</value>
   </data>
   <data name="Library_Kind_PrivateServer" xml:space="preserve">
-    <value>Prywatny serwer</value>
+    <value>Prywatny</value>
   </data>
   <data name="Library_Kind_Recent" xml:space="preserve">
     <value>Ostatnia</value>

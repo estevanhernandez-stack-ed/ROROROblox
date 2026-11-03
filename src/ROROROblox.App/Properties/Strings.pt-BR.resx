@@ -3642,7 +3642,7 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
     <value>Favorito</value>
   </data>
   <data name="Library_Kind_PrivateServer" xml:space="preserve">
-    <value>Servidor privado</value>
+    <value>Privado</value>
   </data>
   <data name="Library_Kind_Recent" xml:space="preserve">
     <value>Recente</value>
@@ -3654,7 +3654,7 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
     <value>Tipo</value>
   </data>
   <data name="Library_Col_LastPlayed" xml:space="preserve">
-    <value>Jogado por último</value>
+    <value>Última partida</value>
   </data>
   <data name="Library_Col_Total" xml:space="preserve">
     <value>Total</value>

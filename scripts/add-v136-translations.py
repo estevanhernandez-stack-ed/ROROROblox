@@ -389,11 +389,11 @@ T: dict[str, dict[str, str]] = {
     },
     "Shell_Panel_Tag_Default": {
         "de": "STANDARD",
-        "es": "PREDETERMINADO",
+        "es": "PREDET.",
         "fr": "PAR DÉFAUT",
         "pl": "DOMYŚLNE",
         "pt-BR": "PADRÃO",
-        "ru": "ПО УМОЛЧАНИЮ",
+        "ru": "ПО УМОЛЧ.",
     },
     "Shell_Panel_Tag_Private": {
         "de": "PRIVAT",
@@ -651,11 +651,11 @@ T: dict[str, dict[str, str]] = {
     },
     "Library_Kind_PrivateServer": {
         "de": "Privater Server",
-        "es": "Servidor privado",
+        "es": "Privado",
         "fr": "Serveur privé",
-        "pl": "Prywatny serwer",
-        "pt-BR": "Servidor privado",
-        "ru": "Приватный сервер",
+        "pl": "Prywatny",
+        "pt-BR": "Privado",
+        "ru": "Приватный",
     },
     "Library_Kind_Recent": {
         "de": "Zuletzt",
@@ -686,7 +686,7 @@ T: dict[str, dict[str, str]] = {
         "es": "Última partida",
         "fr": "Dernière partie",
         "pl": "Ostatnio grane",
-        "pt-BR": "Jogado por último",
+        "pt-BR": "Última partida",
         "ru": "Последний запуск",
     },
     "Library_Col_Total": {

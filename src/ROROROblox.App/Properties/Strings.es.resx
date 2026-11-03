@@ -1995,7 +1995,7 @@
     <value>Lanzar {0}, {1}</value>
   </data>
   <data name="Shell_Panel_Tag_Default" xml:space="preserve">
-    <value>PREDETERMINADO</value>
+    <value>PREDET.</value>
   </data>
   <data name="Shell_Panel_Tag_Private" xml:space="preserve">
     <value>PRIVADO</value>
@@ -3642,7 +3642,7 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
     <value>Favorito</value>
   </data>
   <data name="Library_Kind_PrivateServer" xml:space="preserve">
-    <value>Servidor privado</value>
+    <value>Privado</value>
   </data>
   <data name="Library_Kind_Recent" xml:space="preserve">
     <value>Reciente</value>
