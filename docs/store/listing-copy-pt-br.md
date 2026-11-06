@@ -52,7 +52,7 @@ Privacidade e segurança:
 Sua senha do Roblox nunca é vista pelo RoRoRo. O login acontece inteiramente na página do próprio Roblox, embutida num quadro Microsoft Edge WebView2 — mesmo HTML, mesma conexão HTTPS do seu navegador. O RoRoRo captura apenas o cookie de sessão que o Roblox define após o login, e o criptografa antes de gravar em disco. Os dados da conta (Robux, Plus, amigos online) são lidos do Roblox com a própria sessão daquela conta e guardados só no mesmo cofre criptografado. Sem telemetria. Sem analytics. Nada sobre você sai da sua máquina além das chamadas ao Roblox durante o lançamento — as mesmas que o Roblox.com faz do seu navegador — e, somente se você mesmo configurar, alertas para o seu webhook do Discord ou o serviço de push escolhido (Pushover ou ntfy). O RoRoRo também baixa os próprios arquivos assinados das suas versões publicadas no GitHub — atualizações, as configurações de compatibilidade com o Roblox e a lista de problemas conhecidos do Roblox — e não envia nada sobre você para obtê-los.
 
 Importante: aviso de marcas e afiliação.
-"Roblox" e o logotipo Roblox são marcas da Roblox Corporation. O RoRoRo é uma ferramenta independente de terceiros, não afiliada, endossada ou patrocinada pela Roblox Corporation. O termo é usado apenas para descrever compatibilidade com a plataforma Roblox. O RoRoRo inicia o cliente oficial do Roblox sem modificá-lo — sem injeção, sem hooks, sem alterar o processo do Roblox; ele apenas segura um mutex nomeado do Windows antes do lançamento, para que as instâncias seguintes do cliente vejam a checagem de singleton como já ocupada.
+"Roblox" e o logotipo Roblox são marcas da Roblox Corporation. O RoRoRo é uma ferramenta independente de terceiros, não afiliada, endossada ou patrocinada pela Roblox Corporation. O termo registrado é usado apenas para descrever compatibilidade com a plataforma Roblox. O RoRoRo inicia o cliente oficial do Roblox sem modificá-lo — sem injeção, sem hooks, sem alterar o processo do Roblox; ele apenas segura um mutex nomeado do Windows antes do lançamento, para que as instâncias seguintes do cliente vejam a checagem de singleton como já ocupada.
 
 Um produto 626 Labs.
 ```
@@ -126,7 +126,7 @@ outras configurações continuam como estavam.
 ## Trademark info
 
 ```
-"Roblox" e o logotipo Roblox são marcas da Roblox Corporation. O RORORO é uma ferramenta independente de terceiros, não afiliada, endossada ou patrocinada pela Roblox Corporation. O termo é usado apenas para descrever compatibilidade com a plataforma Roblox. O RORORO inicia o cliente oficial do Roblox sem modificações.
+"Roblox" e o logotipo Roblox são marcas da Roblox Corporation. O RORORO é uma ferramenta independente de terceiros, não afiliada, endossada ou patrocinada pela Roblox Corporation. O termo registrado é usado apenas para descrever compatibilidade com a plataforma Roblox. O RORORO inicia o cliente oficial do Roblox sem modificações.
 ```
 
 ## Screenshot captions (one per image, in file-number order)
