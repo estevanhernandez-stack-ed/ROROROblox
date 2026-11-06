@@ -131,8 +131,13 @@ variable.)
 — expect the signer subject to equal the packed manifest's Publisher. `Status: UnknownError` is
 normal on a box that hasn't imported the cert; a missing signature is not.
 
-**Output:** `dist/RORORO-Sideload-<arch>-<version>.msix` (~91 MB, signed). The `dev-cert.cer` at
-repo root is the public half — distributed to clan testers so they can trust the sig.
+**Output:** `dist/RORORO-Sideload-<arch>-<version>.msix` (~91 MB, signed). Testers need the public
+half, `dev-cert.cer`, to trust the sig. **Check the `.cer` against the pfx before attaching it**
+(corrected 2026-11-05): on Dunder the repo-root `dev-cert.cer` is a stray from 2026-08-12 with a
+different key (`4D745C22…`). The `.cer` that matches `dev-cert.pfx` (`8232F92D…`) is the one
+attached to every release since; v1.36 re-downloaded v1.35's copy with
+`gh release download v1.35.0.0 -p dev-cert.cer`. Compare the `Thumbprint` of
+`X509Certificate2(pfx, password)` and `X509Certificate2(cer)`.
 
 **If the dev cert is ever regenerated with a different subject**, the manifest Publisher and cert
 subject must agree at signing time — that's what `0x8007000b` means. With the current generator
