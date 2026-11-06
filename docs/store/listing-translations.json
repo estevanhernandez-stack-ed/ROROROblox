@@ -10,8 +10,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "ab48e6b",
-  "generatedUtc": "2026-11-06T03:49:18+00:00",
+  "sourceCommit": "f50b3f1",
+  "generatedUtc": "2026-11-06T03:50:43+00:00",
   "sourceOfTruth": "docs/store/listing-copy*.md — corrections are edits there, then re-run this script",
   "fields": [
     {
