@@ -40,7 +40,7 @@ Co dostajesz:
 • Dołącz ponownie, jeśli wypadnie. Włączasz to osobno dla każdego konta, a alt, którego okno Roblox jest wciąż otwarte, ale który wypadł z gry (wyrzucenie za bezczynność, nieudane dołączenie), jest zamykany i sam dołącza ponownie. Najwyżej trzy razy na godzinę, nigdy twoje główne konto, a twoje własne „Zatrzymaj” zawsze ma pierwszeństwo.
 • Jedno okno narzędzi. Biblioteka, ustawienia, historia, diagnostyka, pluginy, Znane problemy Roblox i O programie to strony jednego okna obok listy kont — ze skrótami klawiszowymi wszędzie; F1 pokazuje listę.
 • Motywy. Cztery wbudowane, w tym jeden, który nigdy nie przekazuje znaczenia samym kolorem, plus edytor własnych motywów z dziesięciu kolorów, z udostępnianiem w pliku.
-• Alerty opcjonalne — pulpit, Discord albo telefon. Skieruj każdy alert w dowolną kombinację: powiadomienia na pulpicie, utworzony przez ciebie webhook Discorda albo telefon przez Pushover lub ntfy. Wylogowania altów, ostrzeżenia o pamięci, bezczynne konta, zakończenia Recycle i sygnał „wszystko gra" co dwie godziny, dopóki twoje konta działają. Wybierz, jak często najwyżej każdy alert może się powtarzać i jak brzmi. Świeża instalacja nie wykonuje żadnych wywołań alertów — nic nie wychodzi, dopóki sam czegoś nie skonfigurujesz.
+• Alerty opcjonalne — pulpit, Discord albo telefon. Skieruj każdy alert w dowolną kombinację: powiadomienia na pulpicie, utworzony przez ciebie webhook Discorda albo telefon przez Pushover lub ntfy. Wypadnięcia z gry, ostrzeżenia o pamięci, bezczynne konta, zakończenia Recycle i sygnał „wszystko gra" co dwie godziny, dopóki twoje konta działają. Wybierz, jak często najwyżej każdy alert może się powtarzać i jak brzmi. Świeża instalacja nie wykonuje żadnych wywołań alertów — nic nie wychodzi, dopóki sam czegoś nie skonfigurujesz.
 • Zasobnik systemowy. Ikona w kolorze stanu rzutem oka pokazuje stan multi-instancji; dwuklik uruchamia główne konto.
 • System pluginów. Opcjonalne pluginy działają jako osobne procesy i nie mają żadnych uprawnień, dopóki nie nadasz każdemu z osobna.
 • Automatyczne aktualizacje przez Velopack. Zdalna konfiguracja śledzi znaną wersję Roblox i nazwę mutexa, żeby zmiana po stronie Roblox nie blokowała cię na długo.
@@ -79,7 +79,7 @@ Automatyczne aktualizacje odporne na zmiany po stronie Roblox
 Start z Windows, jeśli chcesz — jeden przełącznik, a lista Autostartu Windows ma ostatnie słowo
 Discord Join uruchamia RoRoRo nawet zamknięte — i zawsze pyta, zanim cokolwiek wystartuje
 Alerty na telefon przez Pushover lub ntfy oraz na pulpit i kanały Discord w dowolnej kombinacji, na każdy alert — alt wypada i telefon wibruje
-Sygnał „wszystko gra" co dwie godziny, póki konta działają — cisza znaczy, że coś jest nie tak
+Znaczniki uptime — sygnał „wszystko gra" co dwie godziny, póki konta działają — cisza znaczy, że coś jest nie tak
 Sześć języków — cała aplikacja, ekrany i komunikaty: francuski, niemiecki, rosyjski, portugalski (brazylijski), polski, hiszpański. Natychmiastowa zmiana, wg Windows lub twojego wyboru
 Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja RoRoRo pomaga, aktualne bez aktualizacji aplikacji
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
