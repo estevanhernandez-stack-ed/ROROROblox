@@ -239,3 +239,24 @@ The verifier is not deterministic: each pass raises a few minor findings on stri
 - **The Library list:** the Kind column went 84 to 116 DIP, and the default tag is abbreviated in es and ru ("PREDET.", "ПО УМОЛЧ.", because the alternatives mean "main", which collides with MAIN).
 - **German captures:** `mocks/compare/item13-de-{row,panel,library}-brand-96dpi.png` show no truncation. The tour's German capture is `item10-tour-de-*`. The English badge rows are `item13-en-row-{verify,expired,limited-follow}-brand-96dpi.png`.
 - **Test isolation:** four render classes set the UI culture outside the `MutatesUiCulture` collection, and a fit test measured German as a result. `MutatesUiCultureFenceTests` now guards this.
+
+## Item 16: release smoke on the candidate (2026-11-05, Dunder)
+
+Build: `release/v1.36.0.0` at `a1b6d70`, Release, dev channel (the version reads 1.35.0.0 until
+`finalize-store-build` stamps it). Driven through the ur-mcp connector; `host_info` confirmed the binary
+by path and informational version before anything ran.
+
+| Check | Result |
+|---|---|
+| Startup with a windowless Roblox tray client present | Seamless takeover closed it; mutex `Local\ROBLOX_singletonEvent` from RemoteConfig, acquired; plugin pipe bound; one autostart plugin started; one leftover plugin process from a previous session swept |
+| Launch one alt (not the main) into its saved game | landed in-game in 14 s (`wait_for_ingame`); its own RobloxPlayerBeta pid attached; presence reported InGame; memory watchdog picked the client up |
+| Multi-instance | on throughout (`host_info`) |
+| Stop | the client exited cleanly; Roblox spawned its own tray client afterwards, as documented |
+| Account facts | no failure lines (the facts lane logs failures only). Watched rendering on the real accounts during the C2 walk, 2026-11-03 (Robux, the Plus badge on the main) |
+
+**Not exercised live, and why:** the expired, needs-verification and limited states (no account in any of
+them exists to test with; render-tested in seven languages, item 13), a follow launch filling Recent,
+and streamer mode toggled live (the store-screenshot sweeps ran this build in streamer mode on 2026-11-03).
+The release notes' known issues say the three health badges have not been seen on a real account.
+**Startup:** judged at C2 (+1.1% against v1.35, within the 10% bar; this build adds no startup work since).
+**#222:** closed by building the sweeper; see `docs/decisions.md` 2026-11-03.
