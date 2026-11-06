@@ -9,7 +9,7 @@ permalink: /privacy/
 **Effective date:** *(set on the day of public Store listing)*
 **Version:** *(matches release version when published)*
 **Publisher:** 626 Labs LLC
-**Contact:** estevan.hernandez@gmail.com
+**Contact:** support@626labs.dev
 
 ---
 
@@ -17,6 +17,7 @@ permalink: /privacy/
 
 - **Your Roblox password is never seen by RORORO.** Login happens inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame.
 - **Roblox session cookies are stored locally only**, encrypted with the Windows Data Protection API (DPAPI), tied to your Windows user account. Copying the file to another PC won't work — *unless you deliberately export your accounts* (Account export, v1.6), which re-encrypts them under a passphrase you choose into a file you save where you want. No cloud, no upload.
+- **Account facts *(v1.36+)*: shown, not kept in any plain file.** The Robux balance, Plus membership and friends-online count under each account are read from Roblox with that account's own session cookie, and cached only inside the same DPAPI-encrypted `accounts.dat`, along with the note you write for the account.
 - **No telemetry. No analytics. No third-party tracking.** RORORO makes network calls to Roblox-owned endpoints while it runs, not just at launch, including a presence heartbeat about every 25 seconds per saved account, and to GitHub Releases (for the daily update check, the compatibility feed, the known Roblox issues list (v1.31+), and, in direct-download builds only, the plugin catalog when you open the Plugins page).
 - **No data leaves your PC** except the Roblox-side calls described below — the same calls Roblox.com would make from your browser — and, if you choose to use it, a passphrase-encrypted account-export file that you save yourself (never auto-uploaded).
 - **You can delete everything, but uninstalling may not do it for you.** Your data sits in one of two places, and which one depends on how your copy got installed — Windows decides that, not RORORO. To find out which case you are in: press `Win+R`, paste `%LOCALAPPDATA%\ROROROblox`, and press Enter. If that folder opens, that is your data, and **uninstalling always leaves it behind** — delete the folder yourself for a full clean. If Windows says it does not exist, your copy keeps its data inside its own app package folder under `%LOCALAPPDATA%\Packages\`, and **uninstalling removes it with the app**. Checking that one path is all it takes. (Until 2026-08-30 this bullet claimed a Store uninstall always auto-removed the vault; until 2026-10-11 it claimed the opposite for every install type. Both were drawn from one PC. The paragraph under "What RORORO stores on your PC" explains the actual rule and says plainly which half is still unconfirmed.)
@@ -27,7 +28,7 @@ permalink: /privacy/
 
 | Location | Contents | Encryption |
 |---|---|---|
-| `accounts.dat` (in the app's local data folder) | Your saved Roblox session cookies and minimal account metadata (display name, account ID, avatar URL) | **DPAPI-encrypted** per Windows user |
+| `accounts.dat` (in the app's local data folder) | Your saved Roblox session cookies and minimal account metadata (display name, account ID, avatar URL); cached Robux, membership and friends-online count, and your note *(v1.36+)* | **DPAPI-encrypted** per Windows user |
 | `settings.json` (in the app's local data folder) | UI preferences: theme, window placement, compact-mode state, memory thresholds, toggles | Plain text — no secrets |
 | `webview2-data\` (in the app's local data folder) | Embedded-browser profiles used during Add Account. Every Add Account gets a fresh folder and older ones are swept afterwards, so a login never inherits the previous account's cookie. | Plain — swept, never reused across accounts |
 | `last-update-check.txt` (in the app's local data folder) | Timestamp of the most recent update check | Plain text — no secrets |
@@ -75,7 +76,9 @@ RORORO initiates HTTPS connections **only** to:
 | `auth.roblox.com` | During *Launch As* | Roblox's documented authentication-ticket endpoint — exchanges the saved cookie for a one-time launch ticket. The same endpoint Bloxstrap and other launchers use. |
 | `users.roblox.com` | When listing accounts | Public account metadata (display name, ID). Used to confirm the saved cookie still maps to a real account. |
 | `thumbnails.roblox.com` | When listing accounts | Public avatar imagery. |
-| `presence.roblox.com` and related Roblox endpoints (games, friends, universes, `apis.roblox.com` for pasted share links, `clientsettingscdn.roblox.com` for the current client version before a batch launch) | Continuously while RORORO is running, including a presence heartbeat about every 25 seconds per saved account | Keeps each saved account's online status, game details, and friends list current. The same kind of ongoing call the Roblox website makes while you're signed in there. |
+| `presence.roblox.com` and related Roblox endpoints (games, friends, universes, `apis.roblox.com` for pasted share links, `clientsettingscdn.roblox.com` for the current client version before a batch launch) | Continuously while RORORO is running, including a presence heartbeat about every 25 seconds per saved account | Keeps each saved account's online status, game details, and friends list current, and *(v1.36+)* the friends-online count shown under each account (`friends.roblox.com`). The same kind of ongoing call the Roblox website makes while you're signed in there. |
+| `economy.roblox.com` *(v1.36+)* | When an account's facts refresh: never at startup; while RoRoRo runs, about every ten minutes per account, or sooner (at most once a minute) when you open the account's panel or a launch ends | Reads that account's own Robux balance, with that account's own session cookie, to show it under the account. Cached only in the encrypted `accounts.dat`. |
+| `premiumfeatures.roblox.com` *(v1.36+)* | When an account's facts refresh | Reads whether that account has Roblox Plus (membership), with that account's own session cookie, to show the Plus badge. Cached only in the encrypted `accounts.dat`. |
 | `api.github.com` | At app startup, at most once a day | The update check against the public RORORO GitHub Releases. On a direct-download install, a newer version is downloaded from GitHub Releases and applied when you next quit RoRoRo; it never restarts RoRoRo under you (since v1.26). Versions before that only checked, so they need one new `Setup.exe` run by hand. Store installs never take this path; they update through the Store. |
 | `objects.githubusercontent.com` | When installing a plugin (v1.4+) | Plugin installs download `manifest.json`, `manifest.sha256`, and `plugin.zip` from the GitHub release URL you paste into Plugins → Install (or pick from the in-app marketplace in direct-download builds). |
 | `github.com` (Releases) | At app startup; the known-issues list also every four hours while RoRoRo runs *(v1.31+)* | Fetches `roblox-compat.json` (current known-good Roblox version + mutex name) from `releases/latest/download/`. Used so we can ship config updates within hours when Roblox renames the singleton mutex. Signed (ECDSA P-256/SHA-256) since v1.14.1.0 (2026-08-03): the app verifies the raw bytes against a pinned public key before trusting anything the feed returns; a missing or invalid signature is treated as no update available, never a crash and never a fallback to unverified content. Since v1.31 it also fetches `known-issues.json` and its signature from the same location, the list shown on the Known Roblox issues page: a plain download of a text file, verified against the same pinned key before it is read, with nothing about you or your PC sent. In direct-download builds (v1.9+), opening the Plugins page also fetches `plugins-catalog.json` from the same location for the in-app marketplace; the Store edition never does. |
@@ -128,13 +131,18 @@ If you have not installed any plugins, this section does not apply to you — no
 
 ## Diagnostics bundle
 
-The Diagnostics window (Help → Diagnostics) lets you save a bundle for filing bug reports. The bundle contains:
+The Diagnostics page (in the tools window) lets you save a bundle for filing bug reports. The bundle is a `.zip` with two parts:
 
-- The current operational log file (cookie values redacted).
-- Roblox client version + WebView2 version (as detected from your system).
-- RORORO version + Windows version.
-- A list of saved account display names + IDs (no cookies, no avatars).
-- *(v1.12+)* Your PC's total and currently-available RAM, and the memory each running Roblox client is using. See [Memory monitoring](#memory-monitoring-v112-and-later) below.
+- **`snapshot.txt`**, in English so whoever reads your report can read it:
+  - The RoRoRo version, and *(v1.36+)* the channel it was installed from (Store, Sideload, Direct download, or Dev).
+  - The .NET runtime and Windows versions.
+  - Whether multi-instance is on.
+  - **How many** accounts are saved, as a number only, and how many Roblox clients are running.
+  - Whether Roblox and WebView2 are installed, and their versions.
+  - *(v1.12+)* Your PC's total and available RAM, and the memory each running Roblox client is using, listed against an 8-character short id, never a name. See [Memory monitoring](#memory-monitoring-v112-and-later) below.
+- **Up to three of the most recent log files**, each passed through cookie redaction again as it is copied in.
+
+No account names, no account IDs, no avatars, and no cookie values are in the bundle. (Until v1.36 this section said the bundle carried a list of saved account display names and IDs, and the single current log file. It never did in this form: it carries a count, short ids, and up to three redacted logs. Corrected 2026-11-05.)
 
 **No cookie values are ever in the bundle.** You can inspect the bundle before sharing it with anyone — the bundle is a `.zip` file you save to a location of your choice; RORORO does not auto-upload it.
 
@@ -228,6 +236,6 @@ If we update this policy, we'll change the **Effective date** at the top and bum
 
 ## Contact
 
-Questions, concerns, or rights requests: [estevan.hernandez@gmail.com](mailto:estevan.hernandez@gmail.com)
+Questions, concerns, or rights requests: [support@626labs.dev](mailto:support@626labs.dev)
 
 Source code is open: [github.com/estevanhernandez-stack-ed/ROROROblox](https://github.com/estevanhernandez-stack-ed/ROROROblox)
