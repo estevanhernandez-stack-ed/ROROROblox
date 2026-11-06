@@ -37,7 +37,12 @@ internal static class Sta
         {
             try
             {
-                result = work();
+                // Under the process-wide parse gate: WPF's shared BAML schema context is not safe
+                // for two threads parsing at once (XamlParseGate says why, and what it cost).
+                lock (XamlParseGate.Sync)
+                {
+                    result = work();
+                }
             }
             catch (Exception ex)
             {
