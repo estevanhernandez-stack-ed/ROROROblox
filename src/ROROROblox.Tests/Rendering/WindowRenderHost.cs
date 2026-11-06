@@ -128,7 +128,12 @@ internal static class WindowRenderHost
                 }
             };
 
-            app.InitializeComponent();
+            // The parse that crashed the v1.36.0.0 release run's test host, racing a Sta render
+            // on another thread. See XamlParseGate.
+            lock (XamlParseGate.Sync)
+            {
+                app.InitializeComponent();
+            }
 
             ready.SetResult(Dispatcher.CurrentDispatcher);
             Dispatcher.Run();
@@ -166,8 +171,11 @@ internal static class WindowRenderHost
 
         var op = Host.Value.InvokeAsync(() =>
         {
-            startedAfter = queued.Elapsed;
-            return work();
+            lock (XamlParseGate.Sync)
+            {
+                startedAfter = queued.Elapsed;
+                return work();
+            }
         });
 
         if (!op.Task.Wait(budget))
