@@ -27,6 +27,11 @@
 
 ## Short description (200 characters max, inclusive — Store snippet)
 
+> **Rewritten 2026-11-05 (v1.36.0.0): launcher first.** The account manager and the Library make a
+> one-account install a complete product, so the snippet leads with what one account gets (your games,
+> FPS caps, phone alerts, themes) and offers alts second, per the v1.36 spec §7.7. "7 languages" counts
+> English; the old "6 languages" counted only the translations. 184/200 chars.
+
 > **Audited 2026-09-20 for v1.30.0.0 — unchanged.** Nothing in 1.30 makes this snippet
 > incomplete: the crossing rule and recovery alerts refine alerting, which the snippet already
 > claims, and the plugin-install fix is a repair to a claimed feature rather than a new one.
@@ -44,10 +49,16 @@
 > watchdog, presence status, themes, and the tools window.
 
 ```
-Multi-launcher for Windows, now in 6 languages. Run several Roblox clients side by side as different saved accounts. Encrypted vault, Squad Launch, memory watchdog, phone alerts, live status, themes.
+One place to launch Roblox on Windows: your games, FPS caps, alerts to your phone, themes, in 7 languages. Alts when you want them: several saved accounts side by side, one click each.
 ```
 
 ## Long description
+
+> **Rewritten 2026-11-05 (v1.36.0.0).** The first paragraph is the one-account story; the multi-account
+> paragraph that used to open the listing follows it with every claim intact. Three bullets added
+> (accounts at a glance, health badges, the Library); the tools-window bullet says Library, not Games;
+> the privacy paragraph says where the new facts come from and where they are kept. Same edits in all
+> six sheets.
 
 > **Audited 2026-09-20 for v1.30.0.0 — unchanged. Two questions raised, both RULED ON by the
 > owner the same day: no change needed.** Recorded in full because they will look like drift again
@@ -92,18 +103,23 @@ Multi-launcher for Windows, now in 6 languages. Run several Roblox clients side 
 > Center *Product Name field* is a separate question — see the note under Identity.
 
 ```
-Multi-launcher for Windows.
+One place to launch Roblox on Windows.
 
-RoRoRo is a Windows launcher that lets you run several Roblox clients on one PC at the same time, each signed in as a different saved account you own. Add accounts once through Roblox's own login page, then launch any of them with one click — into their default game, a saved private server, or any game link you paste.
+Add your Roblox account once, through Roblox's own login page, and RoRoRo becomes your launcher: every game you play in one Library, one click into a game or a saved private server, a frame-rate cap that sticks, and an alert on your phone if the game drops. Your account shows its Robux, Plus and friends online at a glance, and tells you when it needs attention.
+
+When you want alts, RoRoRo runs several Roblox clients on one PC at the same time, each signed in as a different saved account you own. Launch any of them with one click: into their default game, a saved private server, or any game link you paste.
 
 What you get:
 • Multi-instance with one click. Holds the Roblox singleton mutex so additional clients open instead of focusing the first one.
 • DPAPI-encrypted account vault. Saved cookies are encrypted with Windows' Data Protection API, tied to your Windows user account — a copy of the vault file moved to another PC will not decrypt. Moving accounts between your own PCs is a deliberate, passphrase-protected export.
 • Live status for every account. See which account is in which game, who is idle and for how long, and per-account frame-rate caps that stick.
+• Every account at a glance. Robux, Plus and friends online sit under each account, with a note of your own. Open an account to see its recent games, favourites and private servers, and play any of them in one click.
+• Knows when an account needs you. Session expired, needs verification, limited by Roblox: each has its own badge, and one click starts the fix.
+• One Library for every game. Everything you have played, favourited or saved as a private server, in a grid or a list. Search it, filter it, paste a game link, and choose which account plays.
 • Squad Launch + Friend Follow. Send every selected account into the same private server, follow a friend into theirs, or land your accounts together in one public server.
 • Memory watchdog + Recycle. RoRoRo learns what a Roblox client actually costs in RAM on your machine and warns before you run out. One click closes a heavy client and puts it back in the same server it was in.
 • Rejoin if it drops out. Turn it on per account, and an alt whose Roblox window is still open but has fallen out of the game (an idle kick, a failed join) is closed and joined again on its own. At most three times an hour, never your main, and your own Stop always wins.
-• One tools window. Games, Settings, History, Diagnostics, Plugins, Known Roblox issues and About are pages of one window that sits beside your accounts. Keyboard shortcuts throughout — F1 shows the list.
+• One tools window. Library, Settings, History, Diagnostics, Plugins, Known Roblox issues and About are pages of one window that sits beside your accounts. Keyboard shortcuts throughout — F1 shows the list.
 • Themes. Four built-in, including one that carries no meaning in colour alone, plus a builder to make your own from ten colours and share it as a file.
 • Optional alerts — desktop, Discord, or your phone. Route each alert to any mix of desktop notifications, a Discord webhook you create, and your phone through Pushover or ntfy. Drops, memory warnings, idle accounts, recycle completions, and an every-two-hours all-good mark while your accounts run. Choose how often each may repeat and what it sounds like. A fresh install makes no alert calls at all — nothing fires until you set a destination up.
 • System tray UX. A state-coloured tray icon shows the multi-instance state at a glance; double-click launches your main account.
@@ -113,7 +129,7 @@ What you get:
 • Speaks your language. The whole interface — every menu, setting, tooltip and window, and the messages RoRoRo writes as you use it — is translated into French, German, Russian, Portuguese (Brazil), Polish, and Spanish, following your Windows language or your pick in Settings. Switching takes effect instantly, and the picker only offers a language that's fully translated, so you never land on a half-English screen.
 
 Privacy & security:
-Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. Nothing about you leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy). RoRoRo also downloads its own signed files from its GitHub releases — updates, the Roblox compatibility settings, and the known Roblox issues list — and sends nothing about you to get them.
+Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. Account facts (Robux, Plus, friends online) are read from Roblox with that account's own session and kept only in the same encrypted vault. No telemetry. No analytics. Nothing about you leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy). RoRoRo also downloads its own signed files from its GitHub releases — updates, the Roblox compatibility settings, and the known Roblox issues list — and sends nothing about you to get them.
 
 Important: trademark and affiliation notice.
 "Roblox" and the Roblox logo are trademarks of Roblox Corporation. RoRoRo is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform. RoRoRo launches the official Roblox client unmodified — it does not inject into, hook into, or alter the Roblox process in any way; it only holds a Windows named-mutex before launch so that subsequent client instances see the singleton check as already-claimed.
@@ -122,6 +138,10 @@ A 626 Labs product.
 ```
 
 ## Product features (paste each as one feature; Partner Center accepts up to 20, ≤200 chars each)
+
+> **2026-11-05 (v1.36.0.0):** still 20/20. The two frame-rate entries merge into Live status, freeing a
+> slot for accounts at a glance (facts, note, health badge); join-by-link folds into the new Library
+> entry; the tools-window entry says Library. Same edits in all six sheets.
 
 > **2026-09-29 (v1.32.0.0), owner's ruling:** the phone-alert and alert fan-out entries are merged
 > into one, freeing the slot for "Rejoin if it drops out". Still 20/20. The long description gains a
@@ -170,12 +190,12 @@ A 626 Labs product.
 ```
 One-click multi-instance launcher for Roblox on Windows
 DPAPI-encrypted account vault with passphrase-protected export
-Live status for every account — which game it's in, idle time, and per-account frame-rate caps
-Per-account frame-rate caps, raised, lowered or lifted entirely per client
+Live status for every account — which game it's in, idle time, and frame-rate caps that stick, raised, lowered or lifted per client
+Every account at a glance — Robux, Plus, friends online and your note, with a one-click fix badge when a session expires or needs verification
 Memory watchdog that learns each client's real RAM cost, plus one-click Recycle back into the same server
 Squad Launch and Friend Follow — same private server, or one public server together
-Join-by-link from any roblox.com URL, with saved private servers per account
-One tools window for Games, Settings, History and more, with keyboard shortcuts throughout
+One Library for every game you play — grid or list, search and filters, paste any roblox.com link, and choose which account plays
+One tools window for Library, Settings, History and more, with keyboard shortcuts throughout
 Four built-in themes plus a build-your-own theme editor
 Optional Discord alerts to a webhook you create
 System tray with state-coloured icon and double-click main launch
@@ -237,8 +257,8 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 > **This section moved.** Since v1.21 the paste-ready What's-new block lives in a per-version
 > file, `docs/store/whats-new-<version>.md`, written next to that release's reviewer letter so
 > the two are drafted against the same facts. Current:
-> [`whats-new-1.35.0.0.md`](whats-new-1.35.0.0.md). Previous:
-> [`whats-new-1.34.0.0.md`](whats-new-1.34.0.0.md). (This pointer had gone six versions stale,
+> [`whats-new-1.36.0.0.md`](whats-new-1.36.0.0.md). Previous:
+> [`whats-new-1.35.0.0.md`](whats-new-1.35.0.0.md). (This pointer had gone six versions stale,
 > still naming v1.22 as current at the v1.28 cut, and four more by the v1.32.1.0 cut — worth
 > knowing that it is hand-maintained and nothing fails when it rots.) The v1.14 and v1.12 blocks that used to sit
 > here are preserved in git history and in their `release-notes-*.md` files.
@@ -250,19 +270,19 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 ## Screenshot captions (one per image, in file-number order)
 
 Partner Center takes one caption per screenshot. These are in the order the files sort:
-`01-accounts-running.png`, `02-themes.png`, `03-about.png`, `04-games.png`, `05-diagnostics.png`, `06-history.png`, `07-plugins.png`, `08-theme-builder.png`, `09-compact.png`, `10-multi-instance.png`.
+`01-accounts.png`, `02-account-panel.png`, `03-account-health.png`, `04-library.png`, `05-multi-instance.png`, `06-history.png`, `07-themes.png`, `08-theme-builder.png`, `09-plugins.png`, `10-compact.png` (v1.36 order, 2026-11-05; see `screenshots/README.md`).
 
 ```
-Three accounts running at once, each with its own memory use and its own stop button. Cookies are encrypted per user with Windows DPAPI and never leave the machine.
-Four built-in themes. Flatline carries no meaning in colour at all, so nothing is lost to colour blindness, a bad panel, or direct sun.
-Multi-launcher for Windows. Holds the Roblox singleton mutex so the next client opens instead of fighting the first. A clean reimplementation, not a fork.
-Save the games and private servers you actually play, then pick a different one per account before you launch.
-Diagnostics shows what RoRoRo can see right now: versions, health, and where the logs are, for when you need to file something.
-Every launch is recorded, so you can see which account played what and for how long.
-Plugins run as separate processes and ask first. You grant each capability by name, and you can revoke it later.
-Build a theme from ten colours and it shows up in the picker. It is a JSON file, so you can hand it to someone else.
-Compact mode shows only what is running. Pin it to a corner of the screen and get back to the game.
+Every account at a glance: Robux, Plus, friends online, your note, and the game each one is in right now.
+Open an account and its games are right there: recent, favourites and private servers, one click to play.
+When an account needs you it says so. Session expired, needs verification, limited by Roblox, each with a one-click fix.
+Every game you have played, favourited or saved, in one Library. Search, filter, and choose which account plays.
 Eight Roblox clients, eight accounts, one PC. Each window title carries the account signed into it, so you always know which is which.
+Every launch is recorded, so you can see which account played what and for how long.
+Four built-in themes. Flatline carries no meaning in colour at all, so nothing is lost to colour blindness, a bad panel, or direct sun.
+Build a theme from ten colours and it shows up in the picker. It is a JSON file, so you can hand it to someone else.
+Plugins run as separate processes and ask first. You grant each capability by name, and you can revoke it later.
+Compact mode shows only what is running. Pin it to a corner of the screen and get back to the game.
 ```
 
 ## Multi-feature value justification (10.1.4.4.b — DO NOT SKIP)

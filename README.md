@@ -64,6 +64,8 @@ Version-by-version history lives on the [Releases page](https://github.com/estev
 
 Signed by Microsoft, bypasses SmartScreen entirely, auto-updates through the Store. Best path for most clan members — one click and you're in.
 
+**Quit RoRoRo before updating from the Store.** Right-click the tray icon and choose Quit, then let the Store update. An update that lands while RoRoRo is running can fail to install.
+
 ### GitHub Releases *(clan-direct fallback)*
 
 If you'd rather skip the Store account flow, or want to install on a PC without Store access:
