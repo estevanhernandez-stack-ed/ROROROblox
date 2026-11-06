@@ -9,7 +9,7 @@ permalink: /privacy/
 **Effective date:** *(set on the day of public Store listing)*
 **Version:** *(matches release version when published)*
 **Publisher:** 626 Labs LLC
-**Contact:** estevan.hernandez@gmail.com
+**Contact:** support@626labs.dev
 
 ---
 
@@ -236,6 +236,6 @@ If we update this policy, we'll change the **Effective date** at the top and bum
 
 ## Contact
 
-Questions, concerns, or rights requests: [estevan.hernandez@gmail.com](mailto:estevan.hernandez@gmail.com)
+Questions, concerns, or rights requests: [support@626labs.dev](mailto:support@626labs.dev)
 
 Source code is open: [github.com/estevanhernandez-stack-ed/ROROROblox](https://github.com/estevanhernandez-stack-ed/ROROROblox)

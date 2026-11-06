@@ -83,9 +83,7 @@ which page the console shows):
 
 After publish, re-read the public catalog entry to confirm the email (tasks `bxranna8z`, `0h7s65ljx`).
 
-**One for the owner, not changed here:** `docs/PRIVACY.md`'s header lists a personal Gmail address as the
-contact. The house rule is the 626labs.dev address for anything public. Decide which address and it is
-a one-line edit.
+**PRIVACY.md contact:** moved from a personal Gmail to `support@626labs.dev` (owner's call, 2026-11-05), matching the Store support contact.
 
 ## 3. What's new in this version
 
