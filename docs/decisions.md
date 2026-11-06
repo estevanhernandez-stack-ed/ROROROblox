@@ -942,3 +942,33 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** One expired account no longer widens every row's actions past 900 px. `HealthBadgeRenderTests` now pin badge rows at the populated height, with the badge in the facts line. A mid-row badge was a mock that did not survive real widths, so at the next C-checkpoint the mocks carry the real actions column.
 
 **Evidence:** `9830000`, `b44ce76`, `1986347`; `mocks/compare/item13-*`.
+
+### 2026-11-05 — The v1.36 carousel is harness frames for the account screens, and About and Diagnostics leave it
+
+**Context:** Store frames from the live app have to be captured in streamer mode, and streamer mode masks the new account facts (Robux, Plus, friends online, the note), so a live frame of the headline feature shows a row of masked words. Separately, the live Diagnostics frame read "Channel: Dev build" because the capture ran on a dev build, and the About page added nothing the carousel needed.
+
+**Decision:** Frames 01 to 04 (accounts, account panel, account health, Library) are renders of the real `MainWindow` and Library page over fake accounts, games and numbers, from the opt-in `MarketingFrameTests` (`RORORO_MARKETING_FRAMES=1`), in all seven languages. Frames 06 to 09 stay live captures in streamer mode; 05 and 10 carry over from English. About and Diagnostics are dropped from the carousel. The ten-file set per language is unchanged.
+
+**Consequences:** The harness frames are only as true as the fake data, so nothing in them is fetched and no real name or id appears. A change to the row or panel layout re-renders them by running the test, not by recapturing. The carousel no longer shows Diagnostics, so the #52 channel line is not visible in the listing.
+
+**Evidence:** `fa8d8fe`, `7c69116`, `30c4160`; `docs/store/screenshots/README.md`; `src/ROROROblox.Tests/Rendering/MarketingFrameTests.cs`.
+
+### 2026-11-05 — The v1.36 listing is rewritten launcher first, and the verifier's full re-read found seven defects already shipped
+
+**Context:** The listing had to carry accounts at a glance, health badges and the Library, and the old order no longer fit. Rewriting all seven sheets meant the translation verifier re-read every block, and a full re-read of text that had shipped before is a different test from a delta review.
+
+**Decision:** The English listing is rewritten launcher first: the short description leads with the launcher ("alts when you want them", 184/200), the long description opens with the one-account story and keeps the multi-account paragraph intact, three bullets are new (accounts at a glance, health badges, the Library), features stay 20/20, and captions follow the new carousel order. The six translations follow. The verifier ran three rounds over all six sheets (short, long, features, What's new, copyright, trademark; 36 pairs). Fixed, all defects in sheets that shipped in v1.35 or earlier: pt-BR trademark disclaimer dropped "trademarked" in the long description and the trademark field; ru repeat-frequency sentence ungrammatical; ru memory watchdog feature said "real price" for "real RAM cost"; ru and pl uptime feature lost its "Uptime marks" title; pl "Drops" read as "logouts"; es plugin grants lost "by name". That is seven defects across the six sheets (the pt-BR disclaimer is one defect in two fields; the uptime title is one per sheet). Overruled with reasons: rule 3 on the app's own labels (Play as, Quit, Library), and the verifier's reading of "double-click main launch".
+
+**Consequences:** The pt-BR trademark text is the zero-tolerance one; it now reads "O termo registrado é usado apenas". `ListingSheetParityFenceTests` (#232) now ties the six sheets to the English one so a dropped bullet cannot reach Partner Center unnoticed. The three-surface audit (short, long, features) against the fresh release notes is still the release's gate.
+
+**Evidence:** `docs/store/submission-packet-1.36.0.0.md` section 3; `ab48e6b`, `f50b3f1`, `6c5bf40`, `545a776`.
+
+### 2026-11-05 — PRIVACY.md's contact is support@626labs.dev
+
+**Context:** The policy's contact line was a personal Gmail address, while the Store support contact field carries a 626 Labs address.
+
+**Decision (the owner's):** The policy's contact is `support@626labs.dev`, matching the Store support contact. The same pass made PRIVACY cover the facts lane (new rows for `economy.roblox.com` and `premiumfeatures.roblox.com`, friends-online in the presence row, the Diagnostics-bundle section rewritten to match `BuildSupportBundle`); the three rows measured on 2026-10-11 are untouched.
+
+**Consequences:** Anything leaving the building uses the 626 Labs address, never the personal one. The old address may still sit in older published copies of the policy.
+
+**Evidence:** `2b09768`, `ab48e6b`; `docs/PRIVACY.md`.

@@ -794,8 +794,14 @@ The PRD's ten and the spec's ten stand. This checklist adds:
 21. The facts line collapses when every fact is null and the note is empty, so a v1.35 row survives the
     upgrade to the pixel until the first refresh; the populated row's height delta is whatever the C1
     mock sets.
+    *Overturned 2026-11-05 (Este's item-13 ruling, 2026-11-03):* a row that carries a health or
+    Follow-marked badge now opens the facts line at the populated height (114 at 96 DPI) even when every
+    fact is null, because the badges moved onto that line. A row with no badge and no facts still
+    collapses to the v1.35 pixel height.
 22. The branch is `cycle/v1.36-account-library`; one PR to `main` after item 13; the release lane runs
     from `main` and `release/v1.36.0.0`.
+    *Partly overturned 2026-11-05:* the cycle PR (#261) landed as planned, but the media refresh (#262)
+    and the listing (#263) merged as their own PRs on the release lane afterwards, not inside it.
 23. Items 2, 4 and 11 may run in parallel with their neighbours; the three halts are the only ordering a
     person feels.
 24. A C1 probe that cannot be run the night the build reaches it does not hold the build: the code is
@@ -803,6 +809,11 @@ The PRD's ten and the spec's ten stand. This checklist adds:
 25. The probe is a Core-referencing console tool under `tools/`, not a script with a cookie in a shell.
 26. The catalog sweep is one planned item (13) after the string-adding items, not per-item regeneration,
     because the generator refuses orphan rows and one sweep is one refusal to handle.
+    *Overturned 2026-11-01, recorded 2026-11-05 (dashboard `dZevmkvgsfVYYF9asVwO`; see item 13's revision
+    note):* `CultureKeyParityFenceTests` fails the suite as soon as a neutral key is missing from any
+    culture resx, so each key-adding item wrote its keys as it landed through the cumulative
+    `scripts/add-v136-translations.py` and `gen-culture-resx.py`. Item 13 shrank to the verifier run, the
+    wrap measurement and the German build.
 27. vibe-iterate runs on `main` after the cycle PR merges, so a competitive PR never collides with the
     cycle branch.
 28. The build runs from an Opus session with Sonnet workers; this plan was written on Fable 5.1 and

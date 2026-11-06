@@ -6,10 +6,10 @@ One page: where things live, what talks to what, and how the two core ideas flow
 
 | Project | Role | Worth knowing |
 |---|---|---|
-| `src/ROROROblox.App` | The WPF process: composition root, `MainWindow` + `MainViewModel`, tray, modals, Shell pages, plugin host, Discord. | Entry is a hand-written `Program.Main` (`<StartupObject>`), not the XAML-generated one. `MainViewModel` is ~4,300 lines and owns all mutable UI state. |
+| `src/ROROROblox.App` | The WPF process: composition root, `MainWindow` + `MainViewModel`, tray, modals, Shell pages, plugin host, Discord. | Entry is a hand-written `Program.Main` (`<StartupObject>`), not the XAML-generated one. `MainViewModel` is 5,687 lines (was 5,497 at v1.35; this file said "~4,300", which was already wrong) and owns all mutable UI state; `MainWindow.xaml` is 2,585 (was 2,129 at v1.35). New view-model logic goes in its own class (`AccountPanelViewModel`, `LibraryViewModel`), not here. |
 | `src/ROROROblox.Core` | Everything testable without WPF: interfaces, records, Win32 primitives, JSON/DPAPI stores, `Diagnostics/`. | Targets `net10.0-windows` too (CsWin32 `CreateMutex`, DPAPI). No UI types. Specs that said "App/…" for pure logic were built here on purpose so they stay testable without WPF (the unit suite references App too, but Core has no UI dependencies). |
 | `src/ROROROblox.PluginContract` | The gRPC `.proto` and generated C#, shipped to nuget.org as `ROROROblox.PluginContract`. | `netstandard2.1`; versioned independently (0.9.0 at HEAD). The wire `contract_version` stays `"1.0"`; additive RPCs only. |
-| `src/ROROROblox.Tests` | xUnit unit suite plus three instrument families (see below). | 1,899 tests at HEAD. Reads the repo checkout from disk; finds it by walking up to `ROROROblox.slnx`. |
+| `src/ROROROblox.Tests` | xUnit unit suite plus three instrument families (see below). | 3,440 tests discovered at HEAD (`--list-tests`, 2026-11-05; this file said 1,899). Reads the repo checkout from disk; finds it by walking up to `ROROROblox.slnx`. |
 | `src/ROROROblox.PluginTestHarness` | Real Kestrel + named-pipe gRPC integration tests. | 25 tests, one permanently `[Skip]`ped. References the App project directly. |
 | `tools/CompatSigner` | Signs `roblox-compat.json` in CI. | References Core so signer and verifier share one signature format. |
 
@@ -21,7 +21,7 @@ flowchart LR
     P["Program.Main<br/>Velopack hook, portable AUMID"] --> S["App.OnStartup<br/>ordered, async void"]
     S --> DI["App.ConfigureServices<br/>single composition root"]
     S --> MW["MainWindow / MainViewModel"]
-    MW --> Shell["ShellWindow<br/>Games · Settings · History · Diagnostics · Plugins · About"]
+    MW --> Shell["ShellWindow<br/>Library · Settings · History · Diagnostics · Plugins · About"]
     MW --> Modals["Modals/ (interruptions)"]
     S --> Tray["Tray/ TrayService · RobloxWindowDecorator · OrphanedClientSweeper"]
     S --> PH["Plugins/ PluginHostStartupService<br/>Kestrel gRPC on \\\\.\\pipe\\rororo-plugin-host"]
@@ -32,6 +32,8 @@ flowchart LR
     RL["RobloxLauncher + RobloxApi"]
     AS["AccountStore (DPAPI)"]
     Diag["Diagnostics/: RobloxProcessTracker · PresenceService · MemoryWatchdog · ActivityMonitor · StartupGate · ClientStopSequence"]
+    Facts["AccountFactsService + AccountFactsApi<br/>(one paced worker)"]
+    Lib["Library/: LibraryCatalog · GameIconCache"]
     CC["RobloxCompatChecker + signature verify"]
     Stores["JSON stores: settings · favorites · private-servers · session-history · session-stats · themes"]
   end
@@ -39,6 +41,9 @@ flowchart LR
   PH -- "x-plugin-id header + RpcMethodCapabilityMap" --> Plugin[("plugin EXE<br/>separate process, job object")]
   MW --> RL --> Roblox[("roblox-player: URI<br/>auth.roblox.com")]
   MW --> Diag
+  MW --> Facts
+  MW --> Lib
+  Facts --> AS
   MW --> AS
   S --> MH
   CC -- "releases/latest/download" --> GH[("GitHub Releases<br/>roblox-compat.json + .sig<br/>plugins-catalog.json")]
@@ -60,9 +65,9 @@ The order is load-bearing. `OnStartup` is `async void` by design so continuation
 9. `IMutexHolder.TryAcquire` → `StartupGate.Evaluate` → Clean, SharedLock, Blocked, or Leftover.
 10. The plugin-host pipe binds here, before any gate modal can block, so an agent can reach the host while a dialog waits.
 11. Gate branch: Blocked → `SeamlessTakeover` of windowless tray clients, else `RobloxAlreadyRunningWindow` (with Start anyway); Leftover → windowless strays cleared silently (`LeftoverStartupDecision`), a windowed one asks (`LeftoverProcessesWindow`); SharedLock → proceed without the handle, the contested watcher banners it.
-12. The `Wire*` / `Initialize*` run: tray table (`Tray/TrayWiring`), window decorator + orphan sweeper, plugin event bus, activity monitor, memory watchdog, contested watcher, plugin autostart (only now, after the gate), idle settings, streamer mode, Discord presence, alerts. The passenger steps (decorator, event bus, activity monitor, watchdog, idle, streamer, Discord, alerts) are each try/catch-and-continue so a passenger feature never blocks a launch; the tray table, VM events, and mutex-lost hooks are not wrapped.
+12. The `Wire*` / `Initialize*` run: tray table (`Tray/TrayWiring`), window decorator + orphan sweeper, `IdleTrayClientSweeper` (#222; its own 30 s `PeriodicTimer`, so it starts here, after the startup gate, and never before it), plugin event bus, activity monitor, memory watchdog, contested watcher, plugin autostart (only now, after the gate), idle settings, streamer mode, Discord presence, alerts. The passenger steps (decorator, event bus, activity monitor, watchdog, idle, streamer, Discord, alerts) are each try/catch-and-continue so a passenger feature never blocks a launch; the tray table, VM events, and mutex-lost hooks are not wrapped.
 13. `tray.Show()`, pipe listener start, `mainWindow.Show()`.
-14. Fire-and-forget: session-stats backfill, cold-start Discord join, the theme edge-remediation question, then `RunStartupChecksAsync` (WebView2 profile sweep, Velopack update probe, compat-drift banner, re-attach scan of running Roblox windows by title, 5 s-delayed RobloxUserId backfill, guarded launch-main-on-startup).
+14. Fire-and-forget: session-stats backfill, cold-start Discord join, the theme edge-remediation question, then `RunStartupChecksAsync` (WebView2 profile sweep, Velopack update probe, compat-drift banner, re-attach scan of running Roblox windows by title, 5 s-delayed RobloxUserId backfill, then `AccountFactsService.StartTimer()` (v1.36; armed only after the backfill returns, first tick a full minute later), guarded launch-main-on-startup).
 
 `OnExit` reverses it: plugin processes → plugin host (2 s bound on the thread pool) → pollers and sweepers → Discord presence → single-instance guard → container `DisposeAsync` (2 s bound) → log flush.
 
@@ -74,13 +79,28 @@ The order is load-bearing. `OnStartup` is `async void` by design so continuation
 
 Row state is "presence-as-truth": `PresenceService` polls each account's own presence every 25 s; a row is Closed only when presence and process tracking agree.
 
+## Account facts, the account panel and the Library (v1.36)
+
+**The facts lane** (`Core/AccountFactsApi.cs`, `Core/AccountFactsService.cs`, `Core/AccountFacts.cs`). Robux (`economy.roblox.com`), friends online (`friends.roblox.com`) and the Plus badge (`premiumfeatures.roblox.com`) for one account at a time. `AccountFactsApi` is its own typed client with one ctor and `UseCookies=false`, a 15 s request timeout, and logs endpoint name and status only. `AccountFactsService` has a single worker on a bounded queue, paced by `BackfillPacing` (2.5 s ± 0.5 s between requests). The plaintext cookie lives in a local for one refresh and appears in no log, exception or event. Three triggers and no others: a panel expand and a launch end (both skip facts younger than `MinRefreshAge`, 60 s), and a slow timer (`TimerTick` 60 s, one account per tick, only facts older than `TimerRefreshAge`, 10 minutes). **Nothing runs at startup**: constructing the service and loading eight accounts make zero requests, because v1.1.2.0's startup validation of every account tripped Roblox's anti-fraud; the timer is armed in `RunStartupChecksAsync` after the user-id backfill finishes (`RequestCount` exists so a test can assert zero). A 401/403 on Robux or friends lands in `AccountFacts.LastError` and nothing else; the lane has no reference to presence or the view model, so presence stays the only authority on health. A membership failure only ever costs the badge. The same worker also resolves place lookups for `GameIconCache`, under the same pacing.
+
+**The Library join** (`Core/Library/LibraryCatalog.cs`, `Core/Library/GameIconCache.cs`, `App/Games/LibraryViewModel.cs`, `App/Games/LibraryPaste.cs`). `LibraryCatalog.ListAsync` joins favourites, saved private servers and Recent (places in the stats rollup that are not saved). It is a read: it never triggers a network lookup. A caller that puts an entry on screen asks `IGameIconCache.Request`, the only thing that fetches, and the miss rides the facts worker. Icons persist in `game-icons.json`. `LibraryViewModel` backs the Library page (`GamesPage`, shell page enum `Games`, labelled Library in the UI) and every account panel; it filters locally as you type, and its one box takes a search term, a game URL or place id, or a private-server link. `LibraryPaste` classifies the box's text (search, place, private server, or a link it refuses to act on) before anything is added or launched.
+
+**The account panel** (`App/ViewModels/AccountPanelViewModel.cs`, hosted by the row in `MainWindow.xaml`). Expands under a row; shows the account's facts, a note box, and the account's entries from the shared Library (each a `PanelEntry` with this account's last played and total time) with a Launch button per entry; Play as itself is on the Library page (`Games/AccountPickerFlyout`). It is a separate class tested without WPF so `MainViewModel` does not grow. `AccountHealth` (`App/ViewModels/AccountHealth.cs`) is the row's ladder: Expired, NeedsVerification, Limited, FollowMarked, Ok, first match wins. Under streamer mode Robux, membership, friends online and the note are masked; the facts age and last played are not.
+
+**Diagnostics identity** (`Core/Diagnostics/IInstallIdentity.cs`, `App/Distribution/InstallIdentity.cs`). Core consumes `IInstallIdentity` (version as About shows it, plus `InstallChannel`: Store, Sideload, DirectDownload, Dev); the App implements it from the package signature and Velopack, so `DiagnosticsCollector` reports the running binary instead of the assembly (#52).
+
+**Idle tray clients** (`App/Tray/IdleTrayClientSweeper.cs`, #222). Every 30 s it calls `StopIdleTrayClients` with the tracker's attached set and a 2 minute age floor; the pre-launch clear is unchanged and passes no floor. An unknown start time is never swept.
+
+**Activity credit** (`Core/Diagnostics/ActivityMonitor.cs`, #221). `Sample()` pushes the foreground pid into a 32-slot ring every 100 ms (3.2 s of history) and credits an input to the window that was foreground at the input's own tick, not at sample time.
+
 ## Data on disk (`%LOCALAPPDATA%\ROROROblox\`)
 
 One folder for every install type — verified live 2026-08-30: the Store build writes here too (Windows does not virtualize the app's file writes), so an uninstall leaves the folder, and vault, behind.
 
 | File | Owner | Protection |
 |---|---|---|
-| `accounts.dat` | `Core/AccountStore` | DPAPI CurrentUser, whole blob; holds the cookies |
+| `accounts.dat` | `Core/AccountStore` | DPAPI CurrentUser, whole blob; holds the cookies, and from v1.36 the cached account facts (`Facts`), the account note (200 chars) and the panel's open state. Account export carries the note; the facts cache and the open state never leave the machine |
+| `game-icons.json` *(v1.36)* | `Core/Library/GameIconCache` | plaintext, non-secret, safe to delete: place id to name, universe id, icon URL and fetched-at; tmp+Move write, a missing or corrupt file reads as empty |
 | `consent.dat` | `App/Plugins/ConsentStore` | DPAPI |
 | `discord.dat` | `Core/Discord/DiscordConfigStore` | DPAPI (webhook URLs are bearer credentials) |
 | `notify.dat` *(v1.25)* | `Core/Notify/PhoneNotifyConfigStore` | DPAPI (Pushover keys and the ntfy topic are bearer credentials) |
@@ -100,8 +120,8 @@ Plugins are separate EXEs because Store policy 10.2.2 forbids downloadable code 
 
 ## Test instruments
 
-- **Fences** scan `src/ROROROblox.App/**` XAML and C# as text: `ButtonRankFenceTests` (a button may not paint itself), `ThemedStatusColourTests`, `AccessibleNamingFenceTests`, `TypeLadderFenceTests`, `WindowChromeFenceTests`, `WindowSizingFenceTests`, `KeyboardVocabularyTests`, `BrandNameFenceTests`, `InteractiveEdgeBindingTests`, `XamlStyleIntegrityTests`. They carry vacuity floors and ratchet ceilings.
-- **Gates** measure: `ContrastPairGateTests` (token arithmetic through the real `ThemeService.ApplyTo`, and it parses the findings register markdown for its exemptions) and `Rendering/*` (real WPF rendered offscreen; `Sta.cs` gives a fresh STA thread per control render, `WindowRenderHost` owns the assembly's one real `App` for whole windows).
+- **Fences** scan `src/ROROROblox.App/**` XAML and C# as text: `ButtonRankFenceTests` (a button may not paint itself), `ThemedStatusColourTests`, `AccessibleNamingFenceTests`, `TypeLadderFenceTests`, `WindowChromeFenceTests`, `WindowSizingFenceTests`, `KeyboardVocabularyTests`, `BrandNameFenceTests`, `InteractiveEdgeBindingTests`, `XamlStyleIntegrityTests`, and from v1.36 `CursorFenceTests` (#260), `ListingSheetParityFenceTests` (the seven Store sheets agree, #232) and `MutatesUiCultureFenceTests` (a class that sets the UI culture must join the `MutatesUiCulture` collection). They carry vacuity floors and ratchet ceilings.
+- **Gates** measure: `ContrastPairGateTests` (token arithmetic through the real `ThemeService.ApplyTo`, and it parses the findings register markdown for its exemptions) and `Rendering/*` (real WPF rendered offscreen, including v1.36's `LabelWrapMeasurementTests` and `ShellRailLabelTests`, which measure label wrap and clipping in all seven languages, and `MarketingFrameTests`, which renders the Store carousel frames from fake accounts; `Sta.cs` gives a fresh STA thread per control render, `WindowRenderHost` owns the assembly's one real `App` for whole windows).
 - **Wiring** tests call the real `App.ConfigureServices`: `ThemeFeedWiringTests`, `SavedAccountsWiringTests`, `SessionStatsWiringTests`, and one in `RobloxLauncherTests`. `TypedHttpClientRegistrationTests` mirrors the `AddHttpClient<I,T>` registrations by hand to guard the single-ctor rule.
 - No mocking library. Doubles are private nested fakes that throw on unused members.
 

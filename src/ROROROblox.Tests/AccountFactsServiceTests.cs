@@ -152,11 +152,24 @@ public class AccountFactsServiceTests
         for (var i = 1; i < starts.Count; i++)
         {
             var gap = starts[i] - starts[i - 1];
-            // The floor is the guarantee (never requested in the same second, never early). The
-            // ceiling is 3.0 s of jitter plus one pump step of observation slack.
+            // Only the FLOOR is asserted here, because it is the guarantee (never two accounts in the
+            // same second) and scheduler lateness can only lengthen a gap, never shorten it. An upper
+            // bound measured this way cannot be trusted: the pump advances the fake clock 50 ms per 3 ms
+            // of real time whether or not the worker has woken, so a stalled worker reads as a long gap.
+            // The arm64 runner read 3.350 s, then 4.400 s, on the v1.36 release PR with no product
+            // change. The 2-3 s window itself is pinned deterministically in
+            // ThePacingWindow_IsTwoToThreeSeconds below.
             Assert.True(gap >= TimeSpan.FromSeconds(2.0), $"account {i} started {gap.TotalSeconds:F3} s after the previous one");
-            Assert.True(gap <= TimeSpan.FromSeconds(3.05) + TimeSpan.FromMilliseconds(50), $"account {i} started {gap.TotalSeconds:F3} s after the previous one");
         }
+    }
+
+    [Fact]
+    public void ThePacingWindow_IsTwoToThreeSeconds()
+    {
+        // WaitBetweenAccountsAsync waits InterAccountDelayMs + Random.Shared.Next(-JitterMs, JitterMs):
+        // Next's upper bound is exclusive, so the wait is in [2000, 3000) ms.
+        Assert.Equal(2000, BackfillPacing.InterAccountDelayMs - BackfillPacing.JitterMs);
+        Assert.Equal(3000, BackfillPacing.InterAccountDelayMs + BackfillPacing.JitterMs);
     }
 
     // ---- triggers ----
