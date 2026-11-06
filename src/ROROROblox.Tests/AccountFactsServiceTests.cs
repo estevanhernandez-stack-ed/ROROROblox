@@ -153,9 +153,13 @@ public class AccountFactsServiceTests
         {
             var gap = starts[i] - starts[i - 1];
             // The floor is the guarantee (never requested in the same second, never early). The
-            // ceiling is 3.0 s of jitter plus one pump step of observation slack.
+            // ceiling is 3.0 s of jitter plus OBSERVATION slack, and it is only a sanity bound (a pacing
+            // bug would read as many seconds, not a fraction of one). The slack is 0.5 s, not one pump
+            // step: the fake clock advances in 50 ms steps while the worker is woken by the real
+            // scheduler, and on a loaded CI runner the worker can wake several steps late. That read
+            // 3.350 s on the arm64 runner for the v1.36 release PR, with no product change.
             Assert.True(gap >= TimeSpan.FromSeconds(2.0), $"account {i} started {gap.TotalSeconds:F3} s after the previous one");
-            Assert.True(gap <= TimeSpan.FromSeconds(3.05) + TimeSpan.FromMilliseconds(50), $"account {i} started {gap.TotalSeconds:F3} s after the previous one");
+            Assert.True(gap <= TimeSpan.FromSeconds(3.05) + TimeSpan.FromMilliseconds(500), $"account {i} started {gap.TotalSeconds:F3} s after the previous one");
         }
     }
 
