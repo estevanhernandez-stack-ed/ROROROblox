@@ -88,7 +88,34 @@ After publish, re-read the public catalog entry to confirm the email (tasks `bxr
 ## 3. What's new in this version
 
 English block: [`whats-new-1.36.0.0.md`](whats-new-1.36.0.0.md), 1,033/1,500. The six translations are
-in the same file and in each sheet. **Verifier verdicts:** pending (recorded here when run).
+in the same file and in each sheet.
+
+**Listing verifier, 2026-11-05, three rounds over all six sheets** (short, long, features, What's new,
+copyright, trademark; 36 pairs). Last state at `545a776` for ru, pt-BR, pl and `6c5bf40` for fr, de, es
+(unchanged since).
+
+Fixed, all of them defects that **shipped in v1.35 or earlier**, which the full re-read of rewritten
+sheets surfaced:
+
+| Sheet | Defect | Fix |
+|---|---|---|
+| pt-BR | **trademark disclaimer** dropped "trademarked" ("O termo é usado apenas"), in the long description and the trademark field (zero-tolerance) | "O termo registrado é usado apenas" |
+| ru | repeat-frequency sentence ungrammatical ("как часто не более каждое") | "как часто может повторяться каждое" |
+| ru | memory watchdog feature said "real price" for "real RAM cost" | "реальный расход ОЗУ" |
+| ru, pl | the uptime feature lost its "Uptime marks" title | title restored |
+| pl | "Drops" read as "Wylogowania altów" (logouts) | "Wypadnięcia z gry" |
+| es | plugin grants lost "by name" ("uno a uno") | "cada uno por su nombre" |
+
+Overruled, with the reason:
+
+- **Rule 3 on the app's own labels** (Play as, Quit, Library and the tools-window page names in every
+  translated sheet): the interface is localized, and every quoted label is the app's own catalog string
+  (`Library_PlayAs`, `Tray_Quit`, `ShellWindow_Games` and so on), the standing ruling since v1.26.
+- **"double-click main launch" (fr, pt-BR, es features):** the verifier read it as opening the main
+  window. The English long description says "double-click launches your main account", which is what the
+  translations say and what the tray does.
+
+The new v1.36 text itself drew no finding beyond those two overrules.
 
 ## 4. Notes for certification
 

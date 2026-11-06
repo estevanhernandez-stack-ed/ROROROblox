@@ -695,14 +695,14 @@ audit (short, long, features against `whats-new-1.36.0.0.md`) and the reviewer l
 `docs/store/submission-packet-1.36.0.0.md` per the playbook's phase 2.
 
 **Acceptance:**
-- [ ] `ListingSheetParityFenceTests` green on the rewritten seven sheets.
-- [ ] The listing verifier has reviewed the six translated sheets against the English; verdicts in the
+- [x] `ListingSheetParityFenceTests` green on the rewritten seven sheets.
+- [x] The listing verifier has reviewed the six translated sheets against the English; verdicts in the
       packet.
-- [ ] Every claim on the three surfaces is true of the build on `main`: the audit's table in the packet
+- [x] Every claim on the three surfaces is true of the build on `main`: the audit's table in the packet
       maps claim → where it is in the tree, verified against the tree and never against a changelog.
-- [ ] PRIVACY.md's three measured rows from 2026-10-11 are untouched; every new row names its endpoint and
+- [x] PRIVACY.md's three measured rows from 2026-10-11 are untouched; every new row names its endpoint and
       purpose; "shown, not kept in any plain file" appears once.
-- [ ] The packet carries the exact Partner Center field values for support contact and the reviewer
+- [x] The packet carries the exact Partner Center field values for support contact and the reviewer
       letter; nothing was written to Partner Center.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~ListingSheetParityFenceTests|FullyQualifiedName~ContrastPairGateTests"`
