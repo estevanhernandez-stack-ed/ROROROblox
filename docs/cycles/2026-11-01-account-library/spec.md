@@ -39,7 +39,7 @@ The PRD was written from the scope and the features map. Reading the code change
 | Recent counts games an account joined by follow | `RecordSessionStartAsync` (`MainViewModel.cs:3258`) writes `GameName = "Following a friend"`, `PlaceId = null` for `LaunchTarget.FollowFriend`; `ISessionHistoryStore` has no way to update a row's game. A follow-marked account, the user the panel exists for, would have an empty Recent. | History gains one patch method; presence fills the row (§3.7). |
 | (implicit) rows know their `RobloxUserId` | `AccountUserIdBackfillService` writes the store only; nothing pushes the id into the live `AccountSummary`. The comment at `MainViewModel.cs:1296-1300` saying backfilled accounts "enter the poll snapshot automatically" is wrong. | Backfill raises an event the VM applies (§2.6). |
 | Diagnostics "shows the version the About page shows" | `Core/Diagnostics/DiagnosticsCollector.cs` reads the assembly; the helper About uses (`App/Distribution/AppVersion.cs`) is App-internal and Core cannot reference it. | Inject an identity (§8.4). |
-| `MainViewModel` is "~4,300 lines" (architecture.md) | 5,497 lines. `MainWindow.xaml` is 2,129. `AccountSummary.cs` is 896. | Numbers corrected in architecture.md in the docs commit; the "new class, not MainViewModel" rule gets more load-bearing, not less. |
+| `MainViewModel` is "~4,300 lines" (architecture.md) | 5,497 lines. `MainWindow.xaml` is 2,129. `AccountSummary.cs` is 896. | Numbers corrected in architecture.md in the docs commit; the "new class, not MainViewModel" rule gets more load-bearing, not less. *(2026-11-05: at v1.36 they are 5,687 and 2,585; architecture.md is corrected.)* |
 | Play as "obeys every launch rule the row's Launch obeys: the idle tray-client clear, the install deferral gate, the flagged-launch ask" | The install-deferral gate is batch-only: `PreWarmGate.Decide` is reached only from `DispatchBatchAsync` (`MainViewModel.cs:2543-2555`); the row's own `LaunchAccountCommand` (`:300`) never runs it. | Play as shares the row's path and so obeys the two rules the row has; the gate is named as not one of them (§3.4) and stays batch-only. |
 | "Health beats presence in the row's secondary line, as Expired does today" for every state | Nothing in the tree; this is a design call. A marked account in a game is the thing the clan user is watching. | Overridden for **Follow-marked only** (§1.1): permanent badge on the name line, secondary line only at rest. Default, assumption 12, Este's to reverse. |
 
@@ -1079,6 +1079,9 @@ verification on a signal, the vibe-iterate run executes). This spec adds, each o
 11. Release target is v1.36.0.0.
 12. Follow-marked shows in the secondary line only when the account is not running; the badge is
     permanent.
+    *Note 2026-11-05:* the badge's place moved. Item 13 (Este's ruling, 2026-11-03) put the health and
+    Follow-marked badges at the head of the facts line, not on the name line, because the real row at
+    900 px pushed the name to zero width. See `docs/decisions.md`, "Health badges lead the facts line".
 13. Facts for an account with no `RobloxUserId` are Robux only until the backfill resolves it.
 14. The membership badge reads Plus for any `true` from validate-membership; the endpoint cannot tell
     Plus from legacy Premium, and Premium is closed to new members.
