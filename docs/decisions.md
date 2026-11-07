@@ -972,3 +972,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** Anything leaving the building uses the 626 Labs address, never the personal one. The old address may still sit in older published copies of the policy.
 
 **Evidence:** `2b09768`, `ab48e6b`; `docs/PRIVACY.md`.
+
+### 2026-11-05 — Every test-side XAML parse runs under one process-wide lock, and v1.36.0.0 was re-tagged
+
+**Context:** The first push of `v1.36.0.0` (on `8d2f711`) fired `release.yml`, whose single full-solution test run crashed the test host 131 tests in: `XamlParseException`, "Collection was modified; enumeration operation may not execute", from `App.InitializeComponent` on the render host thread. WPF's BAML reader shares one static schema context (`WpfSharedBamlSchemaContext`) across threads, and its known-type lookup enumerates a list that a first-time lookup on another thread grows. A `Sta` render was parsing at the same moment. `ci.yml` had passed the same commit twice on x64 and arm64, so this was a race, not a defect in a test. The throw landed outside any test's stack, so the whole host died and no release draft was created.
+
+**Decision:** `Rendering/XamlParseGate` holds one lock that `Sta.Run`, `WindowRenderHost`'s `App.InitializeComponent` and `WindowRenderHost.Run` all take (#265). A lock rather than a warm-up, because a warm-up only covers the types it happens to touch. The tag was deleted and re-pushed on `6cfb0ea` once `ci.yml` was green on main; nothing had been built from the first one.
+
+**Consequences:** Renders no longer overlap across xUnit collections; the suite still runs in about 61 s. No render starts a render on another thread, which is the one shape that would deadlock; both helpers' 60 s budgets would name it. Separately, the `dev-cert.cer` at the repo root (2026-08-12, thumbprint `4D745C22…`) does **not** match `dev-cert.pfx`; the pfx matches the `.cer` published with v1.35 (`8232F92D…`), and that published copy is what v1.36 attached. The Phase 4 line in `release-playbook.md` that calls the repo-root `.cer` "the public half" is wrong on this machine.
+
+**Evidence:** release run 42163598808 (failed), 42165854005 (green); `93ccded`; `src/ROROROblox.Tests/Rendering/XamlParseGate.cs`.
