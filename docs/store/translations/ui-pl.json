@@ -507,6 +507,7 @@
   "RobloxNotInstalledWindow_RobloxDoesnTAppearTo": "Roblox wydaje się niezainstalowany",
   "RobloxNotInstalledWindow_RobloxNeeded": "Wymagany Roblox",
   "RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe": "RoRoRo uruchamia Roblox przez standardowy program obsługi roblox-player:. Nie możemy znaleźć tego programu obsługi na tym komputerze, co zwykle oznacza, że Roblox nie jest jeszcze zainstalowany.",
+  "RobloxNotInstalledWindow_StoreEditionFound": "Masz Roblox w wersji z Microsoft Store. RoRoRo potrzebuje wersji z roblox.com, a obie mogą pozostać zainstalowane.",
   "SessionHistoryPage_ClearHistory": "Wyczyść historię",
   "SessionHistoryPage_DayStreak": "SERIA DNI",
   "SessionHistoryPage_History": "Historia",

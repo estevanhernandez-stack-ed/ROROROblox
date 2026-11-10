@@ -28,7 +28,20 @@
                    FontSize="18" FontWeight="Bold"
                    Foreground="{DynamicResource MagentaBrush}" />
 
-        <TextBlock Grid.Row="1"
+        <!-- 2026-11-10: the Microsoft Store edition of Roblox registers roblox: and never
+             roblox-player:, so its owner reads "Roblox isn't installed" while looking at Roblox.
+             Shown only when that edition's package folder is found; it leads the body because it
+             is the one sentence that explains what the person is seeing. -->
+        <TextBlock x:Name="StoreEditionLine"
+                   Grid.Row="1"
+                   Visibility="Collapsed"
+                   Text="{loc:Loc RobloxNotInstalledWindow_StoreEditionFound}"
+                   TextWrapping="Wrap"
+                   FontSize="{DynamicResource BodyFontSize}"
+                   Foreground="{DynamicResource WhiteBrush}"
+                   Margin="0,12,0,0" />
+
+        <TextBlock Grid.Row="2"
                    Text="{loc:Loc RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe}"
                    TextWrapping="Wrap"
                    FontSize="{DynamicResource BodyFontSize}"
@@ -36,7 +49,7 @@
                    Opacity="0.85"
                    Margin="0,12,0,0" />
 
-        <TextBlock Grid.Row="2"
+        <TextBlock Grid.Row="3"
                    Text="{loc:Loc RobloxNotInstalledWindow_IfYouUseBloxstrapMake}"
                    TextWrapping="Wrap"
                    FontSize="{DynamicResource BodyFontSize}"

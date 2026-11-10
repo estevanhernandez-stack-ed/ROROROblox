@@ -1192,7 +1192,11 @@ public partial class App : Application
             clientAppSettings: sp.GetService<IClientAppSettingsWriter>(),
             globalBasicSettings: sp.GetService<IGlobalBasicSettingsWriter>(),
             settingsProbe: sp.GetRequiredService<IGlobalBasicSettingsProbe>(),
-            logger: sp.GetRequiredService<ILogger<RobloxLauncher>>()));
+            logger: sp.GetRequiredService<ILogger<RobloxLauncher>>(),
+            // 2026-11-10: with no roblox-player handler (the Microsoft Store edition of Roblox
+            // registers only roblox:), the shell-execute neither throws nor launches. The probe
+            // turns that into the Roblox-needed modal instead of Windows' dead-end dialog.
+            handlerProbe: new RobloxLaunchHandlerProbe()));
 
         // Per-capture WebView2 user-data dir manager. Each Add Account gets a fresh GUID dir
         // under %LOCALAPPDATA%\ROROROblox\webview2-data\<guid>\; siblings are best-effort swept

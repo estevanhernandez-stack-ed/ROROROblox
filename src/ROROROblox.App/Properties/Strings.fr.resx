@@ -813,6 +813,9 @@
   <data name="RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe" xml:space="preserve">
     <value>RoRoRo lance Roblox via le gestionnaire standard roblox-player:. Nous ne trouvons pas ce gestionnaire sur ce PC, ce qui signifie généralement que Roblox n'est pas encore installé.</value>
   </data>
+  <data name="RobloxNotInstalledWindow_StoreEditionFound" xml:space="preserve">
+    <value>Vous avez l'édition Microsoft Store de Roblox. RoRoRo a besoin de celle de roblox.com, et les deux peuvent rester installées.</value>
+  </data>
   <data name="SessionHistoryPage_ClearHistory" xml:space="preserve">
     <value>Effacer l'historique</value>
   </data>

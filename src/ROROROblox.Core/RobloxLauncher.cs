@@ -24,6 +24,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly IClientAppSettingsWriter? _clientAppSettings;
     private readonly IGlobalBasicSettingsWriter? _globalBasicSettings;
     private readonly IGlobalBasicSettingsProbe? _settingsProbe;
+    private readonly IRobloxLaunchHandlerProbe? _handlerProbe;
     private readonly ILogger _log;
     private readonly SemaphoreSlim _launchGate = new(initialCount: 1, maxCount: 1);
 
@@ -47,10 +48,11 @@ public sealed class RobloxLauncher : IRobloxLauncher
         IClientAppSettingsWriter? clientAppSettings = null,
         IGlobalBasicSettingsWriter? globalBasicSettings = null,
         IGlobalBasicSettingsProbe? settingsProbe = null,
-        ILogger<RobloxLauncher>? logger = null)
+        ILogger<RobloxLauncher>? logger = null,
+        IRobloxLaunchHandlerProbe? handlerProbe = null)
         : this(api, settings, processStarter, TimeProvider.System,
               () => Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999),
-              favorites, clientAppSettings, globalBasicSettings, settingsProbe, logger)
+              favorites, clientAppSettings, globalBasicSettings, settingsProbe, logger, handlerProbe)
     {
     }
 
@@ -65,7 +67,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
         IClientAppSettingsWriter? clientAppSettings = null,
         IGlobalBasicSettingsWriter? globalBasicSettings = null,
         IGlobalBasicSettingsProbe? settingsProbe = null,
-        ILogger<RobloxLauncher>? logger = null)
+        ILogger<RobloxLauncher>? logger = null,
+        IRobloxLaunchHandlerProbe? handlerProbe = null)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -76,6 +79,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         _clientAppSettings = clientAppSettings;
         _globalBasicSettings = globalBasicSettings;
         _settingsProbe = settingsProbe;
+        _handlerProbe = handlerProbe;
         _log = logger ?? (ILogger)NullLogger.Instance;
     }
 
@@ -90,6 +94,16 @@ public sealed class RobloxLauncher : IRobloxLauncher
         await _launchGate.WaitAsync().ConfigureAwait(false);
         try
         {
+            if (!LaunchHandlerIsRegistered())
+            {
+                // Before the FPS write and before the auth ticket: nothing is spent on a launch
+                // that cannot start, and Windows' own dead-end dialog never opens.
+                _log.LogWarning(
+                    "No handler is registered for the {Scheme} scheme, so the launch was not attempted.",
+                    RobloxLaunchHandlerProbe.Scheme);
+                return new LaunchResult.Failed(LaunchFailureKind.RobloxNotInstalled);
+            }
+
             if (fpsCap.HasValue)
             {
                 if (_clientAppSettings is not null)
@@ -183,6 +197,31 @@ public sealed class RobloxLauncher : IRobloxLauncher
     /// no-probe degrade in this class.
     /// </summary>
     private void RecordLaunchBaseline() => _lastLaunchMtimeUtc = _settingsProbe?.GetLastWriteTimeUtc();
+
+    /// <summary>
+    /// The launch pre-flight (2026-11-10). <c>Process.Start</c> does not throw for a scheme nothing
+    /// handles: it returns no process and Windows opens its "You'll need a new app" dialog, so the
+    /// <c>Win32Exception</c> catch in <see cref="ExecuteLaunchAsync"/> never saw the case it was
+    /// written for. True when no probe is wired, and true when the probe throws: a wrong "missing"
+    /// would stop a working install from launching. See <see cref="IRobloxLaunchHandlerProbe"/>.
+    /// </summary>
+    private bool LaunchHandlerIsRegistered()
+    {
+        if (_handlerProbe is null)
+        {
+            return true;
+        }
+
+        try
+        {
+            return _handlerProbe.IsRegistered();
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "The launch-handler probe threw; launching as if a handler is registered.");
+            return true;
+        }
+    }
 
     private async Task<LaunchResult> ExecuteLaunchAsync(string cookie, LaunchTarget target, long? stableBrowserTrackerId)
     {

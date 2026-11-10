@@ -507,6 +507,7 @@
   "RobloxNotInstalledWindow_RobloxDoesnTAppearTo": "Похоже, Roblox не установлен",
   "RobloxNotInstalledWindow_RobloxNeeded": "Требуется Roblox",
   "RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe": "RoRoRo запускает Roblox через стандартный обработчик roblox-player:. Мы не нашли этот обработчик на этом ПК — обычно это значит, что Roblox ещё не установлен.",
+  "RobloxNotInstalledWindow_StoreEditionFound": "У вас установлен Roblox из Microsoft Store. RoRoRo нужна версия с roblox.com, и обе могут оставаться установленными.",
   "SessionHistoryPage_ClearHistory": "Очистить историю",
   "SessionHistoryPage_DayStreak": "СЕРИЯ ДНЕЙ",
   "SessionHistoryPage_History": "История",

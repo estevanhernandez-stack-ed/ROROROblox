@@ -302,6 +302,29 @@ public class AccountHealthTests
     }
 
     [Fact]
+    public async Task ALaunchThatFindsNoRoblox_ShowsTheRobloxNeededModal_AndSaysSoOnTheRow()
+    {
+        // 2026-11-10: the launcher now returns RobloxNotInstalled when no roblox-player handler is
+        // registered (the Microsoft Store edition of Roblox). This is the other half of that fix:
+        // the result has to reach the modal, and nothing asserted that it did.
+        var launcher = new ScriptedLauncher(_ => new LaunchResult.Failed(LaunchFailureKind.RobloxNotInstalled));
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var prompts = 0;
+            vm.RobloxNotInstalledPrompt = () => prompts++;
+            var row = new AccountSummary(await store.AddAsync("TestAlt", "", "cookie"));
+
+            vm.OpenRobloxHomeCommand.Execute(row);
+            for (var i = 0; i < 200 && prompts == 0; i++) await Task.Delay(25);
+
+            Assert.Equal(1, prompts);
+            Assert.Equal(ROROROblox.App.Localization.Loc.Get("Shell_Status_RobloxNotInstalled"), row.StatusText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
     public void HealthAction_DispatchesByState()
     {
         Assert.Equal(MainViewModel.HealthAction.Reauthenticate, MainViewModel.HealthActionFor(AccountHealth.Expired));

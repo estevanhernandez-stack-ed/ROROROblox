@@ -895,7 +895,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>The Roblox-missing interruption.</summary>
     internal Action RobloxNotInstalledPrompt { get; set; } = static () =>
     {
-        var window = new RobloxNotInstalledWindow();
+        var window = new RobloxNotInstalledWindow(ROROROblox.Core.RobloxInstallLocator.HasStoreEdition());
         Parented(window);
         window.ShowDialog();
     };

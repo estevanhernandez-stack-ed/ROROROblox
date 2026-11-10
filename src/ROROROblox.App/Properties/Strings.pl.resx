@@ -813,6 +813,9 @@
   <data name="RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe" xml:space="preserve">
     <value>RoRoRo uruchamia Roblox przez standardowy program obsługi roblox-player:. Nie możemy znaleźć tego programu obsługi na tym komputerze, co zwykle oznacza, że Roblox nie jest jeszcze zainstalowany.</value>
   </data>
+  <data name="RobloxNotInstalledWindow_StoreEditionFound" xml:space="preserve">
+    <value>Masz Roblox w wersji z Microsoft Store. RoRoRo potrzebuje wersji z roblox.com, a obie mogą pozostać zainstalowane.</value>
+  </data>
   <data name="SessionHistoryPage_ClearHistory" xml:space="preserve">
     <value>Wyczyść historię</value>
   </data>

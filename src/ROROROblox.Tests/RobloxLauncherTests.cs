@@ -686,9 +686,15 @@ public class RobloxLauncherTests
         IGlobalBasicSettingsWriter? globalBasicSettings = null,
         IGlobalBasicSettingsProbe? settingsProbe = null,
         IProcessStarter? processStarter = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IRobloxLaunchHandlerProbe? handlerProbe = null,
+        Action? onTicketRequested = null)
     {
-        var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket(ticket, DateTimeOffset.UtcNow)));
+        var api = new StubRobloxApi(_ =>
+        {
+            onTicketRequested?.Invoke();
+            return Task.FromResult(new AuthTicket(ticket, DateTimeOffset.UtcNow));
+        });
         var settings = new InMemoryAppSettings { };
         var recordingStarter = new RecordingProcessStarter(_ =>
         {
@@ -708,11 +714,13 @@ public class RobloxLauncherTests
             ? new RobloxLauncher(
                 api, settings, starterToUse,
                 favorites: null, clientAppSettings: clientAppSettings,
-                globalBasicSettings: globalBasicSettings, settingsProbe: settingsProbe)
+                globalBasicSettings: globalBasicSettings, settingsProbe: settingsProbe,
+                handlerProbe: handlerProbe)
             : new RobloxLauncher(
                 api, settings, starterToUse, timeProvider, () => 1_000_000_000_000,
                 favorites: null, clientAppSettings: clientAppSettings,
-                globalBasicSettings: globalBasicSettings, settingsProbe: settingsProbe);
+                globalBasicSettings: globalBasicSettings, settingsProbe: settingsProbe,
+                handlerProbe: handlerProbe);
         return (launcher, settings, recordingStarter);
     }
 
@@ -894,6 +902,71 @@ public class RobloxLauncherTests
 
         var failed = Assert.IsType<LaunchResult.Failed>(result);
         Assert.Equal(LaunchFailureKind.RobloxNotInstalled, failed.Kind);
+    }
+
+    // === Launch pre-flight (2026-11-10): no roblox-player handler means no launch attempt ===
+    //
+    // Process.Start does not throw for an unregistered scheme (measured: it returns no process and
+    // Windows opens its "You'll need a new app" dialog), so the Win32Exception test above covers a
+    // path Windows 11 no longer takes. See RobloxLaunchHandlerPreflightTests for the probe itself.
+
+    [Fact]
+    public async Task LaunchAsync_NoHandlerRegistered_FailsAsRobloxNotInstalled_WithoutATicketOrAStart()
+    {
+        var ticketRequests = 0;
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "T", startResult: 1,
+            handlerProbe: new FixedHandlerProbe(registered: false),
+            onTicketRequested: () => ticketRequests++);
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237));
+
+        var failed = Assert.IsType<LaunchResult.Failed>(result);
+        Assert.Equal(LaunchFailureKind.RobloxNotInstalled, failed.Kind);
+        // An auth ticket is single-use and Roblox counts the request. Nothing may be spent on a
+        // launch that cannot start, and Windows' dead-end dialog must never be opened.
+        Assert.Equal(0, ticketRequests);
+        Assert.Equal(string.Empty, processStarter.LastUri);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_HandlerRegistered_LaunchesExactlyAsBefore()
+    {
+        var ticketRequests = 0;
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "T", startResult: 1,
+            handlerProbe: new FixedHandlerProbe(registered: true),
+            onTicketRequested: () => ticketRequests++);
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237));
+
+        Assert.IsType<LaunchResult.Started>(result);
+        Assert.Equal(1, ticketRequests);
+        Assert.StartsWith("roblox-player:", processStarter.LastUri);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_AHandlerProbeThatThrows_NeverBlocksALaunch()
+    {
+        // The pre-flight is a courtesy. Being wrong in the "missing" direction breaks launching for
+        // someone whose Roblox works, which is far worse than the dead end it exists to prevent.
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "T", startResult: 1, handlerProbe: new ThrowingHandlerProbe());
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237));
+
+        Assert.IsType<LaunchResult.Started>(result);
+        Assert.StartsWith("roblox-player:", processStarter.LastUri);
+    }
+
+    private sealed class FixedHandlerProbe(bool registered) : IRobloxLaunchHandlerProbe
+    {
+        public bool IsRegistered() => registered;
+    }
+
+    private sealed class ThrowingHandlerProbe : IRobloxLaunchHandlerProbe
+    {
+        public bool IsRegistered() => throw new InvalidOperationException("probe blew up");
     }
 
     [Fact]

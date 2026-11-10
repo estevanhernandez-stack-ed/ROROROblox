@@ -22,6 +22,20 @@ public static class RobloxInstallLocator
     private static string DefaultPackagesRoot() => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages");
 
+    /// <summary>
+    /// True when this PC has (or had) the Microsoft Store edition of Roblox: a
+    /// <c>ROBLOXCORPORATION.ROBLOX*</c> folder under <c>%LOCALAPPDATA%\Packages</c>. That edition
+    /// registers the <c>roblox</c> protocol and never <c>roblox-player</c>, so RoRoRo cannot launch
+    /// it; the Roblox-needed modal uses this to say so instead of "Roblox isn't installed".
+    /// A package folder can outlive an uninstall, which costs one sentence of wrong emphasis and
+    /// nothing else: the remedy on the modal is the same either way.
+    /// </summary>
+    public static bool HasStoreEdition() => HasStoreEdition(DefaultPackagesRoot());
+
+    /// <summary>Testable overload — the packages root is injected.</summary>
+    public static bool HasStoreEdition(string packagesRoot)
+        => Directory.Exists(packagesRoot) && SafeEnumerate(packagesRoot, "ROBLOXCORPORATION.ROBLOX*").Any();
+
     /// <summary>Newest <c>RobloxPlayerBeta.exe</c> full path, or null when no install is found.</summary>
     public static string? FindNewestPlayerBeta()
         => FindNewestPlayerBeta(DefaultStandaloneRoot(), DefaultPackagesRoot());
