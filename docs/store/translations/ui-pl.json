@@ -928,6 +928,7 @@
   "Shell_Mem_SummaryKnown": "Twój komputer zgłasza {0} pamięci RAM. Zostaw pole poniżej puste, a RoRoRo wybierze za ciebie: {1} MB pozostanie wolne, a ostrzeżenie pojawi się, gdy jedno konto przekroczy {2} MB. Ostrzeganie z wyprzedzeniem zaczyna się od {3} minut.",
   "Shell_Mem_SummaryUnknown": "RoRoRo nie może odczytać, ile pamięci RAM ma twój komputer. Zostaw pole poniżej puste, a przyjmie {0} MB pozostawione wolne oraz ostrzeżenie, gdy jedno konto przekroczy {1} MB. Ostrzeganie z wyprzedzeniem zaczyna się od {2} minut. Wpisz własne wartości, jeśli te nie pasują do twojego komputera.",
   "Shell_Msg_Added": "Dodano {0}.",
+  "Shell_Msg_AlreadySaved": "{0} jest już zapisane, więc odświeżono jego logowanie. Aby uruchomić dwa naraz, dodaj inne konto Roblox.",
   "Shell_Msg_AddedMain": "Dodano {0}. Oznaczono jako główne — możesz to zmienić w każdej chwili.",
   "Shell_Msg_CantFollow": "Nie można dołączyć do {0} — obecnie nie jest w grze, do której można dołączyć (lub ma wyłączoną prywatność dołączania).",
   "Shell_Msg_CouldntFollowNoUserId": "Nie udało się dołączyć do {0} — userId Roblox nie jest jeszcze znane. Spróbuj ponownie uwierzytelnić to konto lub poczekaj chwilę po zalogowaniu.",

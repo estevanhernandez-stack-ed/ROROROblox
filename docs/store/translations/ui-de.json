@@ -928,6 +928,7 @@
   "Shell_Mem_SummaryKnown": "Dein PC meldet {0} RAM. Lass ein Feld unten leer, und RoRoRo wählt für dich: {1} MB bleiben frei, und eine Warnung, wenn ein Konto {2} MB überschreitet. „So weit im Voraus warnen“ beginnt bei {3} Minuten.",
   "Shell_Mem_SummaryUnknown": "RoRoRo kann nicht auslesen, wie viel RAM dein PC hat. Lass ein Feld unten leer, dann greift der Rückfall auf {0} MB frei gehalten und eine Warnung, wenn ein Konto {1} MB überschreitet. „So weit im Voraus warnen“ beginnt bei {2} Minuten. Trag deine eigenen Werte ein, falls die nicht zu deinem PC passen.",
   "Shell_Msg_Added": "{0} hinzugefügt.",
+  "Shell_Msg_AlreadySaved": "{0} ist schon gespeichert, daher wurde die Anmeldung aufgefrischt. Um zwei gleichzeitig zu starten, füge ein anderes Roblox-Konto hinzu.",
   "Shell_Msg_AddedMain": "{0} hinzugefügt. Als Hauptkonto markiert — jederzeit änderbar.",
   "Shell_Msg_CantFollow": "Kann {0} nicht folgen — sie sind gerade in keinem Spiel, dem man beitreten kann (oder ihre Beitritts-Privatsphäre ist aus).",
   "Shell_Msg_CouldntFollowNoUserId": "Konnte {0} nicht folgen — die Roblox-userId ist noch nicht bekannt. Versuche, das Konto erneut zu authentifizieren, oder warte nach der Anmeldung einen Moment.",

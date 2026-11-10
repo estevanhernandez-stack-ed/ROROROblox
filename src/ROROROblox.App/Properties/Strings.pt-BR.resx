@@ -2109,6 +2109,9 @@
   <data name="Shell_Msg_Added" xml:space="preserve">
     <value>{0} adicionada.</value>
   </data>
+  <data name="Shell_Msg_AlreadySaved" xml:space="preserve">
+    <value>{0} já está salva, então o login dela foi renovado. Para rodar duas ao mesmo tempo, adicione uma conta do Roblox diferente.</value>
+  </data>
   <data name="Shell_Msg_NothingToJoin" xml:space="preserve">
     <value>Nada para entrar — adicione uma conta primeiro.</value>
   </data>

@@ -2109,6 +2109,9 @@
   <data name="Shell_Msg_Added" xml:space="preserve">
     <value>Añadido {0}.</value>
   </data>
+  <data name="Shell_Msg_AlreadySaved" xml:space="preserve">
+    <value>{0} ya está guardada, así que se renovó su inicio de sesión. Para usar dos a la vez, añade una cuenta de Roblox diferente.</value>
+  </data>
   <data name="Shell_Msg_NothingToJoin" xml:space="preserve">
     <value>No hay con qué unirse: añade una cuenta primero.</value>
   </data>

@@ -1663,7 +1663,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task AddAccountAsync()
+    // Internal for MainViewModelTests, the same way ReauthenticateAsync is: the RelayCommand
+    // wrapper discards the Task.
+    internal async Task AddAccountAsync()
     {
         IsBusy = true;
         try
@@ -1692,6 +1694,25 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task CompleteAddAsync(CookieCaptureResult.Success captured)
     {
+        // 2026-11-10: the same Roblox account, added again. A second row would sign the first one
+        // out on launch, and a one-account user would read that as multi-instance not working. The
+        // person did just sign in as that account, so the login refreshes the row they already
+        // have (exactly what Re-authenticate does) and the banner says how to get a second client.
+        // Only a known user id can match: a row saved before ids were recorded is never guessed at
+        // by name, because a wrong match hands one account's session to another row.
+        var alreadySaved = Accounts.FirstOrDefault(a => a.RobloxUserId == captured.UserId);
+        if (alreadySaved is not null)
+        {
+            await _accountStore.UpdateCookieAsync(alreadySaved.Id, captured.Cookie);
+            alreadySaved.SessionExpired = false;
+            alreadySaved.StatusText = Loc.Get("Shell_Status_Reauthenticated");
+            _log.LogInformation(
+                "Add account captured {AccountId}, which is already saved; refreshed its sign-in instead of adding a second row.",
+                alreadySaved.Id);
+            StatusBanner = Loc.Format("Shell_Msg_AlreadySaved", alreadySaved.RenderName);
+            return;
+        }
+
         string avatarUrl = string.Empty;
         try
         {

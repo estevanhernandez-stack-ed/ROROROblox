@@ -2109,6 +2109,9 @@
   <data name="Shell_Msg_Added" xml:space="preserve">
     <value>Добавлено: {0}.</value>
   </data>
+  <data name="Shell_Msg_AlreadySaved" xml:space="preserve">
+    <value>{0} уже сохранён, поэтому вход обновлён. Чтобы запустить два сразу, добавьте другой аккаунт Roblox.</value>
+  </data>
   <data name="Shell_Msg_NothingToJoin" xml:space="preserve">
     <value>Нечем подключаться — сначала добавьте аккаунт.</value>
   </data>

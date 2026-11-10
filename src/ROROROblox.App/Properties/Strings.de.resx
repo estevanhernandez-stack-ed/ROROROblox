@@ -2109,6 +2109,9 @@
   <data name="Shell_Msg_Added" xml:space="preserve">
     <value>{0} hinzugefügt.</value>
   </data>
+  <data name="Shell_Msg_AlreadySaved" xml:space="preserve">
+    <value>{0} ist schon gespeichert, daher wurde die Anmeldung aufgefrischt. Um zwei gleichzeitig zu starten, füge ein anderes Roblox-Konto hinzu.</value>
+  </data>
   <data name="Shell_Msg_NothingToJoin" xml:space="preserve">
     <value>Nichts, womit man beitreten könnte — füge zuerst ein Konto hinzu.</value>
   </data>
