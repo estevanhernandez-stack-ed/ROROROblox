@@ -507,6 +507,7 @@
   "RobloxNotInstalledWindow_RobloxDoesnTAppearTo": "Roblox no parece estar instalado",
   "RobloxNotInstalledWindow_RobloxNeeded": "Se necesita Roblox",
   "RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe": "RoRoRo inicia Roblox mediante el controlador estándar roblox-player:. No encontramos ese controlador en este PC, lo que normalmente significa que Roblox aún no está instalado.",
+  "RobloxNotInstalledWindow_StoreEditionFound": "Tienes la edición de Roblox de Microsoft Store. RoRoRo necesita la de roblox.com, y las dos pueden quedarse instaladas.",
   "SessionHistoryPage_ClearHistory": "Borrar historial",
   "SessionHistoryPage_DayStreak": "RACHA DE DÍAS",
   "SessionHistoryPage_History": "Historial",

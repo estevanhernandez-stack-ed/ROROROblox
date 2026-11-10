@@ -41,6 +41,8 @@ public class WindowContentFitsTests
     {
         { "DpapiCorruptWindow", () => new App.Modals.DpapiCorruptWindow() },
         { "RobloxNotInstalledWindow", () => new App.Modals.RobloxNotInstalledWindow() },
+        // 2026-11-10: the taller state, with the Microsoft Store edition sentence showing.
+        { "RobloxNotInstalledWindow (Store edition found)", () => new App.Modals.RobloxNotInstalledWindow(storeEditionFound: true) },
         { "WebView2NotInstalledWindow", () => new App.Modals.WebView2NotInstalledWindow() },
         { "StopAllConfirmWindow", () => new App.Modals.StopAllConfirmWindow(3) },
         { "LeftoverProcessesWindow", () => new App.Modals.LeftoverProcessesWindow(2, 1) },

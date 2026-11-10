@@ -813,6 +813,9 @@
   <data name="RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe" xml:space="preserve">
     <value>RoRoRo запускает Roblox через стандартный обработчик roblox-player:. Мы не нашли этот обработчик на этом ПК — обычно это значит, что Roblox ещё не установлен.</value>
   </data>
+  <data name="RobloxNotInstalledWindow_StoreEditionFound" xml:space="preserve">
+    <value>У вас установлен Roblox из Microsoft Store. RoRoRo нужна версия с roblox.com, и обе могут оставаться установленными.</value>
+  </data>
   <data name="SessionHistoryPage_ClearHistory" xml:space="preserve">
     <value>Очистить историю</value>
   </data>

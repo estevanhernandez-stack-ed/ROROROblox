@@ -1080,6 +1080,10 @@
     <value>RoRoRo launches Roblox via the standard roblox-player: handler. We can't find that handler on this PC, which usually means Roblox isn't installed yet.</value>
     <comment>src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:30 xaml-text</comment>
   </data>
+  <data name="RobloxNotInstalledWindow_StoreEditionFound" xml:space="preserve">
+    <value>You have the Microsoft Store edition of Roblox. RoRoRo needs the one from roblox.com, and both can stay installed.</value>
+    <comment>src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml xaml-text. Shown only when the Store edition's package is found. "Microsoft Store" and "roblox.com" stay verbatim.</comment>
+  </data>
   <data name="SessionHistoryPage_ClearHistory" xml:space="preserve">
     <value>Clear history</value>
     <comment>src/ROROROblox.App/History/SessionHistoryPage.xaml:158 xaml-text</comment>

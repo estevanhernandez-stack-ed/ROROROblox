@@ -813,6 +813,9 @@
   <data name="RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe" xml:space="preserve">
     <value>RoRoRo inicia Roblox mediante el controlador estándar roblox-player:. No encontramos ese controlador en este PC, lo que normalmente significa que Roblox aún no está instalado.</value>
   </data>
+  <data name="RobloxNotInstalledWindow_StoreEditionFound" xml:space="preserve">
+    <value>Tienes la edición de Roblox de Microsoft Store. RoRoRo necesita la de roblox.com, y las dos pueden quedarse instaladas.</value>
+  </data>
   <data name="SessionHistoryPage_ClearHistory" xml:space="preserve">
     <value>Borrar historial</value>
   </data>
