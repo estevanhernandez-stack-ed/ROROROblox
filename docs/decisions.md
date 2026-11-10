@@ -1012,3 +1012,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** Someone who leaves RoRoRo running for weeks sees the ask at their next start, not on the third day. "Rated" is recorded when the button is pressed; whether a rating was left cannot be known. A corrupt state file starts the count over, so the worst case is one repeated ask. The status strip's collapse condition lists its rows by hand; `EveryRowOfTheStatusStrip_IsNamedInTheConditionThatCollapsesIt` now holds the two lists together, because a row missing from that list is hidden exactly when it is the only one with text. Not built: a permanent Rate link on About.
 
 **Evidence:** `src/ROROROblox.Core/RatingAsk.cs`; `RatingAskTests`, `RatingAskViewModelTests` (both mutation-checked); captures in `docs/cycles/2026-11-10-growth-and-quality/captures/`; board item 2.
+
+### 2026-11-10 — The FPS cap list gains 75, 100 and 180, as presets and not as a typed value
+
+**Context:** The 5-star Store review of 2026-10-31 asked for caps that fit a 75 Hz and a 180 Hz monitor; the dropdown offered neither. `FpsPresets.Values` is the canonical list and the dropdown's items are written by hand in `MainWindow.xaml`, with nothing holding the two together. `FpsPresets` documents a "Custom…" text entry that was never built.
+
+**Decision:** 75, 100 and 180 join the presets. 100 was not asked for; it is the other common refresh rate the list skipped and costs one more item. A typed custom value is not built: it needs an input surface and a way to show a value that is not in the list, and three presets answer the request that was actually made. `FpsCapChoicesTests` now holds the dropdown to `FpsPresets.Values`, in order, and checks each item's label names its own number.
+
+**Consequences:** The dropdown has thirteen caps. Every language writes "N FPS" verbatim, so the six catalogs carry the same three strings. Not checked: the new caps on a live client. They use the same settings-file write as 45, 90 and 165, which are also not values Roblox's own menu offers.
+
+**Evidence:** `src/ROROROblox.Core/FpsPresets.cs`; `FpsCapChoicesTests`; board item 6.

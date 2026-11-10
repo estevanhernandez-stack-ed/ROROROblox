@@ -33,8 +33,8 @@ Thank you, and the doubt is fair, so here is what you can check yourself. RoRoRo
 the code is on GitHub under 626 Labs. You sign in on Roblox's own page, so your password never
 reaches the app. The saved session is encrypted on your PC with Windows' own protection and is sent
 only to Roblox. Nothing is injected into the Roblox client, and there is no telemetry. On FPS caps:
-you're right, 75 and 180 are missing from the list. [Both are in the next update, along with a
-custom value.] Thanks for taking the time to write this.
+you're right, 75 and 180 are missing from the list. [Both are in the next update, and 100 with
+them.] Thanks for taking the time to write this.
 ```
 
 ### 2026-11-04, 5 stars, BR, v1.35: "E MUITO UTIL"

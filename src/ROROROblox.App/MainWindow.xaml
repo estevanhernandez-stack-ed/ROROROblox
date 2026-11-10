@@ -1145,10 +1145,13 @@
                             <ComboBoxItem Content="{loc:Loc MainWindow_30Fps}"        Tag="30" />
                             <ComboBoxItem Content="{loc:Loc MainWindow_45Fps}"        Tag="45" />
                             <ComboBoxItem Content="{loc:Loc MainWindow_60Fps}"        Tag="60" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_75Fps}"        Tag="75" />
                             <ComboBoxItem Content="{loc:Loc MainWindow_90Fps}"        Tag="90" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_100Fps}"       Tag="100" />
                             <ComboBoxItem Content="{loc:Loc MainWindow_120Fps}"       Tag="120" />
                             <ComboBoxItem Content="{loc:Loc MainWindow_144Fps}"       Tag="144" />
                             <ComboBoxItem Content="{loc:Loc MainWindow_165Fps}"       Tag="165" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_180Fps}"       Tag="180" />
                             <ComboBoxItem Content="{loc:Loc MainWindow_240Fps}"       Tag="240" />
                             <ComboBoxItem Content="{loc:Loc MainWindow_UnlimitedFps}" Tag="9999" />
                         </ComboBox>

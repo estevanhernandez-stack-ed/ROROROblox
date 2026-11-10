@@ -369,6 +369,15 @@
   <data name="MainWindow_165Fps" xml:space="preserve">
     <value>165 FPS</value>
   </data>
+  <data name="MainWindow_75Fps" xml:space="preserve">
+    <value>75 FPS</value>
+  </data>
+  <data name="MainWindow_100Fps" xml:space="preserve">
+    <value>100 FPS</value>
+  </data>
+  <data name="MainWindow_180Fps" xml:space="preserve">
+    <value>180 FPS</value>
+  </data>
   <data name="MainWindow_20Fps" xml:space="preserve">
     <value>20 FPS</value>
   </data>
