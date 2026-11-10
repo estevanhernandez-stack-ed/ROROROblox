@@ -22,13 +22,15 @@ _Multi-launcher for Windows — run multiple Roblox clients on Windows, signed i
 
 ## The plugin family
 
-RoRoRo is a launcher with an ecosystem. Plugins are separately distributed Windows apps on a gRPC contract — each one declares its capabilities up front, shows you a consent sheet before it gets any of them, and installs SHA-256-verified. Three are live:
+RoRoRo is a launcher with an ecosystem. Plugins are separately distributed Windows apps on a gRPC contract — each one declares its capabilities up front, shows you a consent sheet before it gets any of them, and installs SHA-256-verified. Five are live:
 
 | Plugin | What it does | Version |
 |---|---|---|
 | [**RoRoRo Ur Task**](https://github.com/estevanhernandez-stack-ed/rororo-ur-task) | Per-window-aware macro recording. Record once, play on any alt — round-robin assignments, keep-alive, window-relative mouse macros, an action bridge for sibling plugins. | ![latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/rororo-ur-task?color=17d4fa&label=&style=flat-square) |
 | [**RoRoRo Ur OCR**](https://github.com/estevanhernandez-stack-ed/Ur-OCR) | Watches screen regions for text or color triggers and fires keybinds when they match. Pairs with Ur Task for perception-to-action. | ![latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/Ur-OCR?color=17d4fa&label=&style=flat-square) |
 | [**RoRoRo Ur AFK**](https://github.com/estevanhernandez-stack-ed/rororo-ur-afk) | Keeps idle accounts alive — focuses each and taps space before the ~20-minute idle timeout. One toggle, one key ever sent. | ![latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/rororo-ur-afk?color=17d4fa&label=&style=flat-square) |
+| [**RoRoRo Ur Score**](https://github.com/estevanhernandez-stack-ed/Ur-Score) | A scoreboard for your accounts. Reads Pet Sim 99 clan battles and your own profiles, keeps every reading in a score book on your PC, and hands the stats you pick to RoRoRo's alerts. | ![latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/Ur-Score?color=17d4fa&label=&style=flat-square) |
+| [**RoRoRo Ur MCP**](https://github.com/estevanhernandez-stack-ed/rororo-ur-mcp) | Drive RoRoRo from Claude. An MCP server that lists and launches accounts, follows the main, watches presence, stops clients, and runs Ur Task macros, behind the same consent sheet as any plugin. | ![latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/rororo-ur-mcp?color=17d4fa&label=&style=flat-square) |
 
 **Browse and install from the [plugin marketplace →](https://626labs.dev/rororo-plugins.html)** — live versions, install links, and what each plugin does, refreshed automatically whenever one ships. Direct-download builds (v1.9+) also carry the marketplace inside the app: **Plugins → Available**.
 
@@ -36,23 +38,23 @@ Building your own? Start at [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR
 
 ---
 
-## What's new in v1.21
+## What's new in v1.36
 
-When v1.21 reached the Store it covered **six releases** (the Store edition had been on v1.15). The Store edition is on **v1.23.0.0** as of 2026-08-23; the [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version since.
+The Store edition and the direct download are both on **v1.36.0.0** (2026-11-06). The [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version.
 
-**Launching your alts while Roblox is updating.** RoRoRo used to release the whole batch, and then every client would separately discover it was out of date and start updating at once. It now checks the version that is actually about to run, holds the batch, updates once, then releases the rest.
+**Every account at a glance.** Each account shows its Robux, a Plus badge, how many friends are online, when it last played, and a note you write yourself. RoRoRo reads these from Roblox with that account's own login and keeps them in the same encrypted file as your accounts. Streamer mode hides them.
 
-**Settings is a real place.** Memory warnings, how much RAM to keep free, how big one client can get before you hear about it, alert timing, careful mode for Squad Launch — all of it had needed a text editor. Leave a box empty and the page tells you what RoRoRo picks for your PC, with the actual numbers.
+**Open an account.** The small triangle before its name opens a panel with its recent games, your favourites and your saved private servers. Click any of them to play it as that account.
 
-**A fourth theme, and buttons that behave.** Flatline carries no meaning in colour at all, so nothing is lost to colour blindness, a bad monitor, or direct sun. Buttons stopped flashing pale Windows blue on hover — they had done that in every theme since v1.1. Build your own theme from ten colours and it saves as a file you can hand to someone else.
+**Badges that tell you what's wrong.** When an account can't launch, a badge says why (Session expired, Needs verification, Limited by Roblox) and one click starts the fix.
 
-**Readability.** Text that was too faint to read against its own background is fixed in two places, one of which had been that way since the theme it belongs to was written. Disabled buttons are legible now.
+**Games is now the Library.** Every game you've played, favourited or saved, as tiles or a list. Search it, filter it, paste any Roblox game or private server link, and pick who plays with **Play as**.
 
-**Smaller things.** Compact mode survives a restart. Plugins shut down with RoRoRo instead of being left running. A theme that fails to save says so, and still applies for the session.
+**One account is a complete product.** The welcome tour starts with what one account gets. The tips for several accounts come after.
+
+**Smaller things.** Idle time counts for the account you actually played on. A background Roblox process that never opened a window closes on its own after two minutes. Long menu names in other languages wrap instead of being cut off.
 
 Plugins stay unpackaged-only: the Store edition can't ship downloadable-code surfaces (Store policy 10.2.2), so Store users get the same catalog through the [web marketplace](https://626labs.dev/rororo-plugins.html) instead.
-
-Version-by-version history lives on the [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
 
 ---
 
@@ -60,9 +62,9 @@ Version-by-version history lives on the [Releases page](https://github.com/estev
 
 ### Microsoft Store *(recommended)*
 
-[**Install RoRoRo on the Microsoft Store →**](https://apps.microsoft.com/detail/9NMJCS390KWB)
+[**Install RoRoRo on the Microsoft Store →**](https://apps.microsoft.com/detail/9NMJCS390KWB?cid=github-readme)
 
-Signed by Microsoft, bypasses SmartScreen entirely, auto-updates through the Store. Best path for most clan members — one click and you're in.
+Signed by Microsoft, bypasses SmartScreen entirely, auto-updates through the Store. Best path for most people: one click and you're in. From a terminal, `winget install 9NMJCS390KWB` installs the same Store build.
 
 **Quit RoRoRo before updating from the Store.** Right-click the tray icon and choose Quit, then let the Store update. An update that lands while RoRoRo is running can fail to install.
 
@@ -84,13 +86,21 @@ Run Windows Update first either way: a Windows 10 that's behind can't start mode
 
 ## What it does
 
-- **One-click multi-instance.** Tray toggle holds the Roblox singleton mutex so multiple clients can run side by side. Same trick MultiBloxy and other tools use, just packaged for the rest of us.
-- **Saved Roblox accounts.** Add your alts once via an embedded login window. Click *Launch As* to spawn each one.
-- **DPAPI-encrypted account vault.** Saved cookies are tied to your Windows user. A copy of `accounts.dat` moved to another PC won't decrypt.
-- **Per-game launch routing.** Pick a default game or private server in the Games library and *Launch As* lands every alt there; with none set, it opens Roblox home.
-- **System tray UX.** State-coloured ring shows mutex status at a glance (cyan = on, slate = off, magenta = error).
-- **Remote compat config.** A signed `roblox-compat.json` on the latest release tells the app the known-good Roblox version range and the current singleton name, so a Roblox-side rename is a config push, not a rebuild.
-- **No DevTools, no registry edits.** Common-Windows-user UX from install through launch.
+- **Several Roblox clients on one PC, one click each.** RoRoRo holds the name Roblox uses to stay single-instance, then launches each saved account into its own client. The official client, unmodified: nothing is injected and nothing is patched.
+- **An account manager, even for one account.** Robux, Plus, friends online and your own note on every row, with a badge and a one-click fix when a session expires or Roblox wants a check.
+- **One Library for every game you play.** Grid or list, search and filters, paste any roblox.com link, and choose which account plays.
+- **Squad Launch and Friend Follow.** Put every account in the same private server, or follow one into a public server.
+- **Frame-rate caps per account** that stick, and a memory watchdog that learns what each client really costs, with one-click Recycle back into the same server.
+- **Rejoin if it drops out.** An alt that's kicked or stuck outside the game is closed and joined again on its own. Never your main.
+- **Alerts where you'll see them.** Desktop, a Discord webhook you create, or your phone through Pushover or ntfy, in any mix per alert.
+- **Known Roblox issues**, kept current without an app update: what is broken on Roblox's side, what to do, and the RoRoRo feature that helps.
+- **Session history and stats**, local only.
+- **Four built-in themes** plus a build-your-own editor, and streamer mode that disguises names and avatars.
+- **Seven languages**: English, French, German, Russian, Portuguese (Brazil), Polish and Spanish. The whole app, switching instantly.
+- **A DPAPI-encrypted account vault** tied to your Windows user, with passphrase-protected export when you want to move it.
+- **A plugin system** with per-capability consent and out-of-process isolation.
+- **A signed compat feed.** A signed `roblox-compat.json` on the latest release carries the current singleton name, so a Roblox-side rename is a config push, not a rebuild.
+- **No telemetry, and nothing to set up by hand.** No DevTools, no registry edits. RoRoRo talks to Roblox, to GitHub for updates and its signed feeds, and to the alert services you connect yourself.
 
 ## How to use
 
@@ -192,7 +202,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 - [x] Sideload MSIX with self-signed cert
 - [x] Squad Launch + Friend Follow surfaces
 - [x] Join-by-link entry per saved account (with optional **Save to my library** toggle, v1.3.x — saves the pasted game or private server to your library for next time)
-- [x] Microsoft Store listing ([live](https://apps.microsoft.com/detail/9NMJCS390KWB))
+- [x] Microsoft Store listing ([live](https://apps.microsoft.com/detail/9NMJCS390KWB?cid=github-readme)), also reachable as `winget install 9NMJCS390KWB`
 - [x] Plugin host — named-pipe gRPC, consent sheets, SHA-verified installs (v1.4)
 - [x] Plugin marketplace — in-app (direct builds, v1.9) + [on the web](https://626labs.dev/rororo-plugins.html)
 
@@ -206,7 +216,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 - [ ] Per-cookie encryption envelope (today: whole-blob; v1.2: per-account)
 - [ ] Per-account WebView2 profile isolation (today: a fresh per-capture profile folder, swept afterwards)
 - [ ] Crash report opt-in (today: local logs only)
-- [ ] Winget manifest (`winget install RORORO`)
+- [ ] Winget community manifest for the direct-download build (the Store build already installs through winget's `msstore` source)
 - [ ] Auto-detect when Roblox renames the singleton mutex; warn with current `roblox-compat.json` version
 
 ## Why "RORORO"?
