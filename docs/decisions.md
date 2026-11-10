@@ -1002,3 +1002,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** A legacy row with no recorded id can still be duplicated until its id is backfilled (Re-authenticate does that, and its comment names other opportunistic sites that were not traced here), after which the guard covers it. `AddAccountAsync` is internal so the tests can await it, the same way `ReauthenticateAsync` is.
 
 **Evidence:** `MainViewModelTests` (the "Add account: the same Roblox account twice" region); `src/ROROROblox.App/ViewModels/MainViewModel.cs`; board item 3.
+
+### 2026-11-10 — RoRoRo asks for a Store rating once, and only at startup
+
+**Context:** 6,501 Store installs and 20 ratings, two of them 1-star theft allegations. A 5-star reviewer wrote that those reviews made them wonder whether the app was a Trojan. About 360 people use RoRoRo every day and nothing in it had ever invited a rating. The owner approved a rating ask on 2026-11-10.
+
+**Decision:** `Core.RatingAsk` holds the rule: a Microsoft Store install only, after a launch has attached on three separate local days, asked once, never again after either answer. State is `rating-ask.json` in the data folder (up to three dates and the answer); nothing is sent anywhere, and a sideload or direct download never writes the file. The ask is a fifth row in the main window's status strip, the same shape as the known-issues notice: one sentence, **Rate RoRoRo**, **Not now**. Rate opens `ms-windows-store://review/?ProductId=9NMJCS390KWB`. **The view model reads the rule only when the ask is handed over at startup.** A launch that makes the third day records it and shows nothing, so the row is never on screen in the middle of a launch. A separate file rather than a setting, because it is state and not a preference, which also keeps `IAppSettings` and its four test fakes out of it.
+
+**Consequences:** Someone who leaves RoRoRo running for weeks sees the ask at their next start, not on the third day. "Rated" is recorded when the button is pressed; whether a rating was left cannot be known. A corrupt state file starts the count over, so the worst case is one repeated ask. The status strip's collapse condition lists its rows by hand; `EveryRowOfTheStatusStrip_IsNamedInTheConditionThatCollapsesIt` now holds the two lists together, because a row missing from that list is hidden exactly when it is the only one with text. Not built: a permanent Rate link on About.
+
+**Evidence:** `src/ROROROblox.Core/RatingAsk.cs`; `RatingAskTests`, `RatingAskViewModelTests` (both mutation-checked); captures in `docs/cycles/2026-11-10-growth-and-quality/captures/`; board item 2.

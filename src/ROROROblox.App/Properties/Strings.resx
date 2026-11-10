@@ -2940,6 +2940,22 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
     <value>Dismiss the known Roblox issue notice</value>
   </data>
+  <data name="MainWindow_RatingAsk" xml:space="preserve">
+    <value>If RoRoRo is working for you, a rating on the Microsoft Store helps other players find it.</value>
+    <comment>The one-time rating ask in the main window's status strip (2026-11-10). "Microsoft Store" stays verbatim.</comment>
+  </data>
+  <data name="MainWindow_RateRoRoRo" xml:space="preserve">
+    <value>Rate RoRoRo</value>
+    <comment>Button on the rating ask; opens the Store's review page.</comment>
+  </data>
+  <data name="MainWindow_NotNow" xml:space="preserve">
+    <value>Not now</value>
+    <comment>Button on the rating ask; dismisses it for good.</comment>
+  </data>
+  <data name="MainWindow_DismissRatingAsk" xml:space="preserve">
+    <value>Dismiss the rating request</value>
+    <comment>Accessible name of the Not now button on the rating ask.</comment>
+  </data>
   <data name="MainWindow_KnownRobloxIssues" xml:space="preserve">
     <value>Known Roblox issues</value>
   </data>

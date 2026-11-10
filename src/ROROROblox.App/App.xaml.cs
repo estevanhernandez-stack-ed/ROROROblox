@@ -760,6 +760,10 @@ public partial class App : Application
         _services.GetRequiredService<MainViewModel>().ShellPageOpener = OpenShellPage;
         _services.GetRequiredService<MainViewModel>().KnownIssuesNotice =
             _services.GetRequiredService<KnownIssues.KnownIssuesNoticeModel>();
+        // The one-time rating ask. Handed over here, at startup, which is the only moment the
+        // view model reads it: the ask never appears mid-session.
+        _services.GetRequiredService<MainViewModel>().RatingAsk =
+            _services.GetRequiredService<ROROROblox.Core.RatingAsk>();
 
         await WireDiscordPresenceAsync(mainWindow, discordApplicationId);
 
@@ -1339,6 +1343,12 @@ public partial class App : Application
         // #246: last-exit.json. Registered here, begun in OnStartup right after the container builds.
         services.AddSingleton(sp => new ROROROblox.Core.Diagnostics.LastExitRecorder(
             dataDir, TimeProvider.System, sp.GetRequiredService<ILogger<ROROROblox.Core.Diagnostics.LastExitRecorder>>()));
+
+        // 2026-11-10: rating-ask.json. The one-time Store rating ask; inert on every channel but
+        // the Store (a sideload or a direct download never writes the file).
+        services.AddSingleton(sp => new ROROROblox.Core.RatingAsk(
+            dataDir, sp.GetRequiredService<IInstallIdentity>().Channel, TimeProvider.System,
+            sp.GetRequiredService<ILogger<ROROROblox.Core.RatingAsk>>()));
 
         // Discord presence + Join config (Task 9) — DPAPI-encrypted, alongside accounts.dat and
         // consent.dat under the same data dir. Registered unconditionally, independent of whether

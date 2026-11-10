@@ -340,6 +340,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
         OpenKnownIssuesCommand = new RelayCommand(() => OpenShellPage(Shell.ShellPage.KnownRobloxIssues));
         DismissKnownIssueNoticeCommand = new RelayCommand(() => _knownIssuesNotice?.Dismiss());
+        RateOnStoreCommand = new RelayCommand(() => AnswerRatingAsk(Core.RatingAnswer.Rated));
+        DismissRatingAskCommand = new RelayCommand(() => AnswerRatingAsk(Core.RatingAnswer.NotNow));
         DismissBloxstrapWarningCommand = new RelayCommand(_ => _ = DismissBloxstrapWarningAsync());
         DismissFpsCapWarningCommand = new RelayCommand(_ => _ = DismissFpsCapWarningAsync());
 
@@ -846,6 +848,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenKnownIssuesCommand { get; }
 
     public ICommand DismissKnownIssueNoticeCommand { get; }
+
+    /// <summary>Opens the Store's review page and ends the rating ask. See <see cref="RatingAsk"/>.</summary>
+    public ICommand RateOnStoreCommand { get; }
+
+    /// <summary>"Not now" on the rating ask. It never shows again.</summary>
+    public ICommand DismissRatingAskCommand { get; }
     public ICommand DismissBloxstrapWarningCommand { get; }
     public ICommand DismissFpsCapWarningCommand { get; }
 
@@ -3522,6 +3530,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
         defender?.NotifyConsumed();
 
+        // A launch attached: one good day toward the rating ask. Recorded and nothing more, so
+        // the ask can never appear in the middle of a launch (it shows at the next startup).
+        _ratingAsk?.RecordSuccessfulLaunch();
+
         _ui.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
@@ -5520,6 +5532,51 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(KnownIssueNoticeText));
         OnPropertyChanged(nameof(KnownIssuesMenuHeader));
+    }
+
+    // === The one-time rating ask (2026-11-10) ===
+    //
+    // 6,501 installs and 20 ratings, and nothing in the app had ever invited one. The rule is in
+    // Core.RatingAsk (a Store install, three separate days with an attached launch, asked once).
+    // The part that lives here is WHEN it may appear: only when the ask is handed over at startup,
+    // never when a launch attaches. A launch that makes the third day records it and says
+    // nothing; the line is there the next time RoRoRo starts.
+
+    private Core.RatingAsk? _ratingAsk;
+    private string _ratingAskText = string.Empty;
+
+    /// <summary>Set once by the App at startup, the same way <see cref="KnownIssuesNotice"/> is.</summary>
+    public Core.RatingAsk? RatingAsk
+    {
+        get => _ratingAsk;
+        set
+        {
+            _ratingAsk = value;
+            RatingAskText = value?.ShouldAsk == true ? Loc.Get("MainWindow_RatingAsk") : string.Empty;
+        }
+    }
+
+    /// <summary>The rating row's text; empty collapses the row, like the other rows of the strip.</summary>
+    public string RatingAskText
+    {
+        get => _ratingAskText;
+        private set
+        {
+            if (_ratingAskText == value) return;
+            _ratingAskText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private void AnswerRatingAsk(Core.RatingAnswer answer)
+    {
+        if (answer == Core.RatingAnswer.Rated)
+        {
+            _shellOpener.Open(Core.RatingAsk.StoreReviewUri);
+        }
+
+        _ratingAsk?.MarkAnswered(answer);
+        RatingAskText = string.Empty;
     }
 
     private MultiInstanceState _multiInstanceState = MultiInstanceState.Off;

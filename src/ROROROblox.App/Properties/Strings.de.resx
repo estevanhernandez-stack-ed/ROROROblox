@@ -3384,6 +3384,18 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
     <value>Hinweis zum bekannten Roblox-Problem ausblenden</value>
   </data>
+  <data name="MainWindow_RatingAsk" xml:space="preserve">
+    <value>Wenn RoRoRo für dich funktioniert, hilft eine Bewertung im Microsoft Store anderen Spielern, es zu finden.</value>
+  </data>
+  <data name="MainWindow_RateRoRoRo" xml:space="preserve">
+    <value>RoRoRo bewerten</value>
+  </data>
+  <data name="MainWindow_NotNow" xml:space="preserve">
+    <value>Nicht jetzt</value>
+  </data>
+  <data name="MainWindow_DismissRatingAsk" xml:space="preserve">
+    <value>Bewertungsanfrage schließen</value>
+  </data>
   <data name="MainWindow_KnownRobloxIssues" xml:space="preserve">
     <value>Bekannte Roblox-Probleme</value>
   </data>
