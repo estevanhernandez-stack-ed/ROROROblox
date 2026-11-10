@@ -992,3 +992,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** A Store-edition user now gets RoRoRo's own modal with a Download Roblox button instead of a Windows dialog that offers the Store. A stale package folder left by an uninstall shows that sentence when it is not quite true; the remedy on the modal is the same either way. Not tested: whether the Store edition can multi-instance once something does launch it, and the fix itself on a PC with no handler (the probe's lookups were checked against real registered and unregistered schemes; the launcher and the modal are covered by tests). The six new translations have not been through the translation verifier, which the release checklist requires before a tag.
 
 **Evidence:** `src/ROROROblox.Core/RobloxLaunchHandlerProbe.cs`; `RobloxLaunchHandlerPreflightTests`, `RobloxLauncherTests` (the "Launch pre-flight" region), `RobloxNeededStoreEditionLineTests`, `RobloxStoreEditionDetectionTests`; `docs/cycles/2026-11-10-growth-and-quality/board.md` item 1.
+
+### 2026-11-10 — Adding an account that is already saved refreshes its sign-in and adds no second row
+
+**Context:** `CompleteAddAsync` never compared the captured Roblox user id with the saved rows. Re-authenticate has refused a different account since v1.6; Add had no mirror of it. A one-account user who added their account a second time got two rows for one account. Launching the second signs the first one out, which reads as multi-instance not working, on the path where a new user is most likely to be.
+
+**Decision:** When the captured user id matches a saved row, the fresh login replaces that row's cookie, clears its expired flag, and the banner reads "{name} is already saved, so its sign-in was refreshed. To run two at once, add a different Roblox account." Refresh rather than refuse, because the person did just sign in as that account and re-adding is what people try when a session has gone bad (#112). Only a known user id can match. A row saved before ids were recorded is never matched by name, because a wrong match would hand one account's session to another row, the corruption the Re-authenticate guard exists to prevent.
+
+**Consequences:** A legacy row with no recorded id can still be duplicated until its id is backfilled (Re-authenticate does that, and its comment names other opportunistic sites that were not traced here), after which the guard covers it. `AddAccountAsync` is internal so the tests can await it, the same way `ReauthenticateAsync` is.
+
+**Evidence:** `MainViewModelTests` (the "Add account: the same Roblox account twice" region); `src/ROROROblox.App/ViewModels/MainViewModel.cs`; board item 3.

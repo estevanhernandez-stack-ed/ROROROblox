@@ -688,6 +688,77 @@ public class MainViewModelTests
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    // === Add account: the same Roblox account twice (2026-11-10) ===
+    //
+    // Add never compared the captured user id with the saved rows, so a one-account user who
+    // added their account again got two rows that sign each other out, and concluded that
+    // multi-instance does not work. Re-authenticate has had the mirror-image guard since v1.6.
+
+    [Fact]
+    public async Task AddAccountAsync_AnAccountAlreadySaved_AddsNoSecondRow_AndRefreshesItsSignIn()
+    {
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
+            new CookieCaptureResult.Success("fresh-cookie", 111, "TestAlt")));
+        try
+        {
+            var row = await SeedExpiredAccountAsync(store, 111);
+            vm.Accounts.Add(row);
+
+            await vm.AddAccountAsync();
+
+            Assert.Same(row, Assert.Single(vm.Accounts));
+            Assert.Single(await store.ListAsync());
+            // The person did sign in as that account, so the login is not thrown away.
+            Assert.Equal("fresh-cookie", await store.RetrieveCookieAsync(row.Id));
+            Assert.False(row.SessionExpired);
+            Assert.Equal(
+                "TestAlt is already saved, so its sign-in was refreshed. To run two at once, add a different Roblox account.",
+                vm.StatusBanner);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task AddAccountAsync_ADifferentAccount_StillAddsARow_AndLeavesTheFirstAlone()
+    {
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
+            new CookieCaptureResult.Success("second-cookie", 222, "SecondAlt")));
+        try
+        {
+            var row = await SeedExpiredAccountAsync(store, 111);
+            vm.Accounts.Add(row);
+
+            await vm.AddAccountAsync();
+
+            Assert.Equal(2, vm.Accounts.Count);
+            Assert.Equal(2, (await store.ListAsync()).Count);
+            Assert.Equal("original-cookie", await store.RetrieveCookieAsync(row.Id));
+            Assert.True(row.SessionExpired);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task AddAccountAsync_ARowWhoseUserIdIsUnknown_IsNeverTreatedAsTheSameAccount()
+    {
+        // A row saved before user ids were recorded has no identity to compare. Guessing from the
+        // name could hand one account's session to another row, which is the corruption the
+        // re-authenticate guard exists to prevent. So an unknown row never matches.
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
+            new CookieCaptureResult.Success("fresh-cookie", 111, "TestAlt")));
+        try
+        {
+            var row = await SeedExpiredAccountAsync(store, robloxUserId: null);
+            vm.Accounts.Add(row);
+
+            await vm.AddAccountAsync();
+
+            Assert.Equal(2, vm.Accounts.Count);
+            Assert.Equal("original-cookie", await store.RetrieveCookieAsync(row.Id));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     [Fact]
     public async Task ReauthenticateAsync_BackfillPersistFails_ReauthStillSucceeds()
     {

@@ -928,6 +928,7 @@
   "Shell_Mem_SummaryKnown": "Tu PC informa de {0} de RAM. Deja una casilla de abajo en blanco y RoRoRo elige por ti: {1} MB reservados libres y un aviso cuando una cuenta supere {2} MB. El aviso anticipado empieza en {3} minutos.",
   "Shell_Mem_SummaryUnknown": "RoRoRo no puede leer cuánta RAM tiene tu PC. Deja una casilla de abajo en blanco y usará {0} MB reservados libres y un aviso cuando una cuenta supere {1} MB. El aviso anticipado empieza en {2} minutos. Pon tus propios números si esos no van bien con tu PC.",
   "Shell_Msg_Added": "Añadido {0}.",
+  "Shell_Msg_AlreadySaved": "{0} ya está guardada, así que se renovó su inicio de sesión. Para usar dos a la vez, añade una cuenta de Roblox diferente.",
   "Shell_Msg_AddedMain": "Añadido {0}. Marcado como principal: cámbialo cuando quieras.",
   "Shell_Msg_CantFollow": "No se puede seguir a {0}: ahora mismo no está en un juego al que se pueda unir (o su privacidad de unión está desactivada).",
   "Shell_Msg_CouldntFollowNoUserId": "No se pudo seguir a {0}: aún no se conoce el userId de Roblox. Prueba a volver a autenticar esa cuenta, o espera un momento tras iniciar sesión.",

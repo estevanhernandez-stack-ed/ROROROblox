@@ -928,6 +928,7 @@
   "Shell_Mem_SummaryKnown": "Seu PC informa {0} de RAM. Deixe uma caixa abaixo em branco e o RoRoRo escolhe por você: {1} MB mantidos livres, e um aviso quando uma conta passar de {2} MB. Avisar com esta antecedência começa em {3} minutos.",
   "Shell_Mem_SummaryUnknown": "O RoRoRo não consegue ler quanta RAM seu PC tem. Deixe uma caixa abaixo em branco e ele recorre a {0} MB mantidos livres, e um aviso quando uma conta passar de {1} MB. Avisar com esta antecedência começa em {2} minutos. Coloque seus próprios números se esses não servirem para o seu PC.",
   "Shell_Msg_Added": "{0} adicionada.",
+  "Shell_Msg_AlreadySaved": "{0} já está salva, então o login dela foi renovado. Para rodar duas ao mesmo tempo, adicione uma conta do Roblox diferente.",
   "Shell_Msg_AddedMain": "{0} adicionada. Marcada como principal — mude quando quiser.",
   "Shell_Msg_CantFollow": "Não é possível seguir {0} — ele não está em um jogo em que dá para entrar agora (ou a privacidade de entrada dele está desligada).",
   "Shell_Msg_CouldntFollowNoUserId": "Não foi possível seguir {0} — o userId do Roblox ainda não é conhecido. Tente reautenticar essa conta, ou espere um momento após o login.",

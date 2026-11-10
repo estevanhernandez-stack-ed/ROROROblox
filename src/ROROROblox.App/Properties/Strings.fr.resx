@@ -2109,6 +2109,9 @@
   <data name="Shell_Msg_Added" xml:space="preserve">
     <value>{0} ajouté.</value>
   </data>
+  <data name="Shell_Msg_AlreadySaved" xml:space="preserve">
+    <value>{0} est déjà enregistré, sa connexion a donc été renouvelée. Pour en lancer deux à la fois, ajoutez un autre compte Roblox.</value>
+  </data>
   <data name="Shell_Msg_NothingToJoin" xml:space="preserve">
     <value>Aucun compte pour se connecter — ajoutez d'abord un compte.</value>
   </data>

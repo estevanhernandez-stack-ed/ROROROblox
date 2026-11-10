@@ -2109,6 +2109,9 @@
   <data name="Shell_Msg_Added" xml:space="preserve">
     <value>Dodano {0}.</value>
   </data>
+  <data name="Shell_Msg_AlreadySaved" xml:space="preserve">
+    <value>{0} jest już zapisane, więc odświeżono jego logowanie. Aby uruchomić dwa naraz, dodaj inne konto Roblox.</value>
+  </data>
   <data name="Shell_Msg_NothingToJoin" xml:space="preserve">
     <value>Brak konta do dołączenia — najpierw dodaj konto.</value>
   </data>
