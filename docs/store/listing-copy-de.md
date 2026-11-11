@@ -86,32 +86,27 @@ Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welch
 Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
-## What's new in this version (v1.36.0.0, ≤1500 chars)
+## What's new in this version (v1.37.0.0, ≤1500 chars)
 
 ```
-v1.36.0.0
+v1.37.0.0
 
-Deine Konten auf einen Blick
+Weniger Sackgassen beim Einstieg
 
-• Jedes Konto zeigt seine Robux, Plus und Freunde online, dazu
-  eine Notiz, die du selbst schreibst.
-• Öffne ein Konto, um seine zuletzt gespielten Spiele, Favoriten
-  und privaten Server zu sehen, und spiele jedes davon mit einem
-  Klick.
-• Braucht ein Konto dich, sagt ein Badge, warum: „Sitzung
-  abgelaufen“, „Verifizierung nötig“ oder „Von Roblox
-  eingeschränkt“. Ein Klick startet die Lösung.
-• „Spiele“ ist jetzt die „Bibliothek“: jedes Spiel, das du
-  gespielt, favorisiert oder gespeichert hast, als Raster oder
-  Liste. Durchsuche sie, filtere sie, füge einen Spiellink ein
-  und wähle mit „Spielen als“, wer spielt.
-• Die Willkommenstour beginnt mit einem Konto; die Tipps für
-  mehrere Konten kommen danach.
-• Die Inaktivitätszeit zählt jetzt für das Konto, auf dem du
-  wirklich gespielt hast, auch wenn du schnell die Fenster
-  wechselst.
-• Roblox-Prozesse im Hintergrund, die nie ein Fenster geöffnet
-  haben, schließen sich nach zwei Minuten von selbst.
+• Hat dieser PC kein Roblox, das RoRoRo starten kann, sagt
+  RoRoRo es jetzt selbst und zeigt dir den Download, statt einer
+  Windows-Meldung. Das passiert, wenn Roblox aus dem Microsoft
+  Store stammt: Hol es von roblox.com, beide können installiert
+  bleiben.
+• Fügst du ein Konto hinzu, das schon gespeichert ist, entsteht
+  keine zweite Kopie mehr. RoRoRo frischt die Anmeldung auf und
+  sagt dir: Für zwei gleichzeitig brauchst du ein anderes
+  Roblox-Konto.
+• Neue FPS-Limits: 75, 100 und 180, für Monitore mit diesen
+  Bildwiederholraten.
+• Nach ein paar guten Tagen fragt RoRoRo vielleicht einmal nach
+  einer Bewertung im Microsoft Store. Jede Antwort beendet die
+  Frage für immer.
 
 Beende RoRoRo, bevor du aus dem Store aktualisierst: Rechtsklick
 auf das Symbol im Infobereich, dann „Beenden“.

@@ -86,31 +86,26 @@ Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonc
 Rejoindre à nouveau s'il décroche — un alt expulsé ou coincé hors du jeu est fermé et rejoint à nouveau tout seul, jamais votre compte principal
 ```
 
-## What's new in this version (v1.36.0.0, ≤1500 chars)
+## What's new in this version (v1.37.0.0, ≤1500 chars)
 
 ```
-v1.36.0.0
+v1.37.0.0
 
-Vos comptes, d'un coup d'œil
+Moins d'impasses au démarrage
 
-• Chaque compte affiche ses Robux, Plus et amis en ligne, avec
-  une note que vous écrivez vous-même.
-• Ouvrez un compte pour voir ses jeux récents, ses favoris et
-  ses serveurs privés, et jouez à n'importe lequel d'un clic.
-• Quand un compte a besoin de vous, un badge dit pourquoi :
-  « Session expirée », « Vérification requise » ou « Limité par
-  Roblox ». Un clic lance la correction.
-• « Jeux » devient la « Bibliothèque » : tous les jeux auxquels
-  vous avez joué, mis en favori ou enregistrés, en grille ou en
-  liste. Cherchez, filtrez, collez un lien de jeu, et choisissez
-  qui joue grâce à « Jouer avec ».
-• La visite guidée commence avec un seul compte ; les conseils
-  pour plusieurs comptes viennent ensuite.
-• Le temps d'inactivité compte désormais pour le compte sur
-  lequel vous avez vraiment joué, même si vous changez vite de
-  fenêtre.
-• Les processus Roblox en arrière-plan qui n'ont jamais ouvert
-  de fenêtre se ferment tout seuls au bout de deux minutes.
+• Si ce PC n'a aucun Roblox que RoRoRo puisse lancer, RoRoRo
+  vous le dit désormais et vous montre le téléchargement, au lieu
+  d'un message Windows. Cela arrive quand Roblox vient du
+  Microsoft Store : prenez-le sur roblox.com, les deux peuvent
+  rester installés.
+• Ajouter un compte déjà enregistré ne crée plus de doublon.
+  RoRoRo renouvelle sa connexion et vous indique d'ajouter un
+  autre compte Roblox pour en lancer deux à la fois.
+• Nouvelles limites de FPS : 75, 100 et 180, pour les écrans qui
+  tournent à ces fréquences.
+• Après quelques bons jours, RoRoRo peut vous demander une fois
+  une note sur le Microsoft Store. L'une ou l'autre réponse y met
+  fin pour de bon.
 
 Quittez RoRoRo avant de mettre à jour depuis le Store : clic
 droit sur l'icône de la zone de notification, puis « Quitter ».
