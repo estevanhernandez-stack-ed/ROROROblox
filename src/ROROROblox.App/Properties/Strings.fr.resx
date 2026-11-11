@@ -1489,16 +1489,28 @@
     <value>Choisissez la langue de l'interface de RoRoRo. Les nouvelles langues apparaissent ici au fur et à mesure de leur traduction, et le changement est immédiat.</value>
   </data>
   <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">
-    <value>Aucun jeu Roblox par défaut configuré. Ajoutez-en un dans Jeux (bouton d'en-tête), ou indiquez une cible explicite.</value>
+    <value>Aucun jeu à ouvrir. Choisissez-en un dans la Bibliothèque, puis relancez.</value>
   </data>
   <data name="CoreMsg_Launch_AuthTicketFailed" xml:space="preserve">
-    <value>Échec de l'obtention du ticket d'authentification : {0}</value>
+    <value>Impossible de connecter ce compte à Roblox : {0}</value>
   </data>
   <data name="CoreMsg_Launch_RobloxNotInstalled" xml:space="preserve">
     <value>Roblox ne semble pas être installé.</value>
   </data>
   <data name="CoreMsg_Launch_ProcessStartFailed" xml:space="preserve">
-    <value>Échec de Process.Start : {0}</value>
+    <value>Windows n'a pas pu démarrer Roblox : {0}</value>
+  </data>
+  <data name="CoreMsg_Launch_NoConnection" xml:space="preserve">
+    <value>Impossible de joindre Roblox. Vérifiez votre connexion Internet, puis réessayez.</value>
+  </data>
+  <data name="CoreMsg_Launch_TimedOut" xml:space="preserve">
+    <value>Roblox a mis trop de temps à répondre. Réessayez dans un instant.</value>
+  </data>
+  <data name="CoreMsg_Launch_RateLimited" xml:space="preserve">
+    <value>Roblox demande à RoRoRo de ralentir. Patientez une minute, puis réessayez.</value>
+  </data>
+  <data name="CoreMsg_Launch_RobloxUnavailable" xml:space="preserve">
+    <value>Roblox rencontre des problèmes en ce moment. Réessayez dans quelques minutes.</value>
   </data>
   <data name="CoreMsg_Cookie_WebView2RuntimeMissing" xml:space="preserve">
     <value>Runtime WebView2 manquant</value>
@@ -2077,7 +2089,7 @@
     <value>Roblox se met à jour — patientez.</value>
   </data>
   <data name="Shell_PreWarm_NeverConnected" xml:space="preserve">
-    <value>Le lancement ne s'est jamais connecté. Vérifiez que Roblox est à jour + que l'antivirus ne bloque pas.</value>
+    <value>Roblox n'a pas démarré. Vérifiez que Roblox est à jour et que votre antivirus ne le bloque pas.</value>
   </data>
   <data name="Shell_ServerLanding_RecycleNotYet" xml:space="preserve">
     <value>{0} n'est pas encore dans ce serveur — vérifiez sa fenêtre Roblox. Un serveur plein vous met en file d'attente.</value>

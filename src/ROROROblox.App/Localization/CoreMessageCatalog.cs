@@ -30,6 +30,13 @@ internal static class CoreMessageCatalog
         LaunchFailureKind.AuthTicketFailed => Loc.Format("CoreMsg_Launch_AuthTicketFailed", failed.Detail),
         LaunchFailureKind.RobloxNotInstalled => Loc.Get("CoreMsg_Launch_RobloxNotInstalled"),
         LaunchFailureKind.ProcessStartFailed => Loc.Format("CoreMsg_Launch_ProcessStartFailed", failed.Detail),
+
+        // Named failures (2026-11-10): a sentence a person can act on, and no Detail. The raw
+        // error is in the log beside the kind; on the row it was English noise in six languages.
+        LaunchFailureKind.NoConnection => Loc.Get("CoreMsg_Launch_NoConnection"),
+        LaunchFailureKind.TimedOut => Loc.Get("CoreMsg_Launch_TimedOut"),
+        LaunchFailureKind.RateLimited => Loc.Get("CoreMsg_Launch_RateLimited"),
+        LaunchFailureKind.RobloxUnavailable => Loc.Get("CoreMsg_Launch_RobloxUnavailable"),
         _ => throw new ArgumentOutOfRangeException(nameof(failed), failed.Kind, null),
     };
 

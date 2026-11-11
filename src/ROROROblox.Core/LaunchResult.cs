@@ -19,6 +19,22 @@ public enum LaunchFailureKind
 
     /// <summary><c>Process.Start</c> threw; <c>Detail</c> carries the exception text.</summary>
     ProcessStartFailed,
+
+    // The four below were all AuthTicketFailed until 2026-11-10, which put a raw exception message
+    // on the account's row. Each is a thing a person can act on, so each has its own sentence.
+    // Detail still carries the exception text, for the log only: the App never shows it for these.
+
+    /// <summary>The request never reached Roblox (DNS, no route, connection refused or reset).</summary>
+    NoConnection,
+
+    /// <summary>The request was sent and no answer came back in time.</summary>
+    TimedOut,
+
+    /// <summary>Roblox answered 429: too many requests from this machine or account.</summary>
+    RateLimited,
+
+    /// <summary>Roblox answered 5xx: the trouble is on their side.</summary>
+    RobloxUnavailable,
 }
 
 /// <summary>

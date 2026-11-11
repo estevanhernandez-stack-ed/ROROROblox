@@ -257,7 +257,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed(LaunchFailureKind.AuthTicketFailed, ex.Message);
+            return new LaunchResult.Failed(ClassifyTicketFailure(ex), ex.Message);
         }
 
         // Stable per-account btid when the caller has one persisted (v1.8.1 trust hygiene);
@@ -286,6 +286,26 @@ public sealed class RobloxLauncher : IRobloxLauncher
             return new LaunchResult.Failed(LaunchFailureKind.ProcessStartFailed, ex.Message);
         }
     }
+
+    /// <summary>
+    /// Which thing went wrong while fetching the auth ticket, when it was none of the outcomes that
+    /// already have their own result (expired cookie, limited session, verification needed).
+    /// </summary>
+    /// <remarks>
+    /// 2026-11-10. Matched on exception TYPE and status code, never on message text. Anything not
+    /// recognised stays <see cref="LaunchFailureKind.AuthTicketFailed"/>, whose sentence keeps the
+    /// detail: an unknown failure is exactly the one a bug report needs the raw text for.
+    /// HttpClient reports its own timeout as a <see cref="TaskCanceledException"/>, and nothing on
+    /// this path passes a caller's cancellation token, so a cancellation here can only be that timeout.
+    /// </remarks>
+    internal static LaunchFailureKind ClassifyTicketFailure(Exception ex) => ex switch
+    {
+        RobloxApiStatusException { StatusCode: 429 } => LaunchFailureKind.RateLimited,
+        RobloxApiStatusException { StatusCode: >= 500 } => LaunchFailureKind.RobloxUnavailable,
+        OperationCanceledException or TimeoutException => LaunchFailureKind.TimedOut,
+        HttpRequestException => LaunchFailureKind.NoConnection,
+        _ => LaunchFailureKind.AuthTicketFailed,
+    };
 
     // F-093: LaunchAsync(string cookie, string? placeUrl, ...) and ExecuteLegacyLaunchAsync
     // were deleted here. The overload resolved a place URL through three tiers and the last was

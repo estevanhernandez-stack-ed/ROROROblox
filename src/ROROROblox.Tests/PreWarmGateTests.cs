@@ -131,9 +131,10 @@ public class PreWarmGateTests
     [Fact]
     public void AttachFailedMessage_NoInstaller_FailureCopy()
     {
-        // No installer → a real never-connected failure; keep the existing antivirus/version hint.
+        // No installer → a real never-connected failure; keep the antivirus/version hint. Reworded
+        // 2026-11-10: it says what the person saw (Roblox didn't start), not what the tracker saw.
         Assert.Equal(
-            "Launch never connected. Check Roblox is current + antivirus isn't blocking.",
+            "Roblox didn't start. Check that Roblox is up to date and that your antivirus isn't blocking it.",
             PreWarmGate.AttachFailedMessage(installerRunning: false));
     }
 }
