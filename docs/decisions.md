@@ -1074,3 +1074,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **What would revisit it:** a support bundle showing a common `AuthTicketFailed` detail. That is a kind waiting for its own sentence.
 
 **Evidence:** `PlainLaunchErrorTests` (20 cases) and two end-to-end tests in `RobloxLauncherTests`; mutation-checked (dropping the network case, either status throw, or putting the detail back on a named sentence fails six of them); `src/ROROROblox.Core/RobloxApiStatusException.cs`.
+
+### 2026-11-10 — The empty-state hint is shortened to fit, per language, and a test holds it there
+
+**Context:** After the picker learned to give way, a new user's row kept Remove whole, but the hint inside the empty picker trimmed in five of six translations ("Ajoutez via la…", "In der Bibliothe…"), losing the one word that says where to go. The room is set by each language's own buttons: 107 DIP in Spanish down to 80 in French.
+
+**Decision:** Shorten the copy rather than touch the layout again. The verb goes and the place stays: German "In der Bibliothek", Spanish "En la Biblioteca", Portuguese "Na Biblioteca", Russian "В Библиотеке". French gets the word alone, "Bibliothèque", because nothing longer fits its 80 DIP. English and Polish already fit and are unchanged. `AtTheDefaultWidth_TheHintIsShownInFull_InEverySupportedLanguage` replaces the English-only test, so a longer hint in any language now fails the suite.
+
+**Consequences:** The hint no longer says "add" outside English and Polish. The French hint is a bare noun, the weakest of the five; it matches the header button of the same name. An arrow ("→ Bibliothèque") would have fit and was not used: `LibraryViewModelTests` forbids an arrow in this hint from an earlier ruling. That test also pinned the Russian case form, which moved from "Библиотеку" to "Библиотеке". Below the default width a hint can still trim (German at 860); that is the giving-way rule working. Alternatives that were measured are in the investigation note, with widths, for whoever swaps a wording.
+
+**Evidence:** `docs/investigations/2026-11-10-new-user-walk-other-languages.md` (the table); the re-rendered French capture in `docs/cycles/2026-11-10-growth-and-quality/captures/`.

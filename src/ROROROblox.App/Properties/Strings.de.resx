@@ -412,7 +412,7 @@
     <value>Diesem Konto einen Tag hinzufügen</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>In der Bibliothek hinzufügen</value>
+    <value>In der Bibliothek</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>Tag hinzufügen</value>

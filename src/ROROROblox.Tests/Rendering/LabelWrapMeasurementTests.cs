@@ -473,28 +473,49 @@ public class LabelWrapMeasurementTests
     }
 
     /// <summary>
-    /// Giving way must not mean giving up. At the default size the ENGLISH hint is the one instruction on a new user's
-    /// row, and it has to show in full: the hint trims only when there is no room, never as a matter of course.
+    /// Giving way must not mean giving up. At the default size the hint is the one instruction on a new user's row,
+    /// and it has to show in full, in every language: the hint trims only when a window is made narrower, never as a
+    /// matter of course. Until 2026-11-10 this held for English alone, and five translations read like "Ajoutez via
+    /// la…", which loses the one word that matters. The fix was copy, not layout: each hint was shortened to fit the
+    /// room its own language's row leaves (French has the least, 80 DIP, because its buttons are the widest).
     /// </summary>
     [WindowRenderFact]
-    public void AtTheDefaultWidth_TheEnglishHintIsShownInFull()
+    public void AtTheDefaultWidth_TheHintIsShownInFull_InEverySupportedLanguage()
     {
-        var (shown, natural) = ThemedWindowRender.Inspect(Brand(), "empty-state hint, English, default width",
-            () => PanelWindowFixtures.Build(1, expanded: false, savedGames: false), content =>
+        var trimmed = new List<string>();
+        foreach (var culture in Cultures)
+        {
+            var previous = TranslationSource.Instance.CurrentCulture;
+            TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
+            try
             {
-                var text = Loc.Get("MainWindow_AddGamesFromToolsGames");
-                var hint = (TextBlock)ThemedWindowRender.Find(content,
-                    fe => fe is TextBlock tb && tb.Text == text && tb.Visibility == Visibility.Visible && tb.ActualWidth > 0, "the picker's hint");
-                var probe = new TextBlock
+                var (text, shown, natural) = ThemedWindowRender.Inspect(Brand(), $"empty-state hint, default width [{culture}]",
+                    () => PanelWindowFixtures.Build(1, expanded: false, savedGames: false), content =>
+                    {
+                        var hintText = Loc.Get("MainWindow_AddGamesFromToolsGames");
+                        var hint = (TextBlock)ThemedWindowRender.Find(content,
+                            fe => fe is TextBlock tb && tb.Text == hintText && tb.Visibility == Visibility.Visible && tb.ActualWidth > 0, "the picker's hint");
+                        var probe = new TextBlock
+                        {
+                            Text = hint.Text, FontSize = hint.FontSize, FontStyle = hint.FontStyle, FontFamily = hint.FontFamily,
+                            FontWeight = hint.FontWeight, FontStretch = hint.FontStretch,
+                        };
+                        probe.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                        return (hintText, hint.ActualWidth, probe.DesiredSize.Width);
+                    });
+                _output.WriteLine($"[{culture}] \"{text}\" shows {shown:F1} of a natural {natural:F1} DIP");
+                if (shown < natural - 0.5)
                 {
-                    Text = hint.Text, FontSize = hint.FontSize, FontStyle = hint.FontStyle, FontFamily = hint.FontFamily,
-                    FontWeight = hint.FontWeight, FontStretch = hint.FontStretch,
-                };
-                probe.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                return (hint.ActualWidth, probe.DesiredSize.Width);
-            });
-        _output.WriteLine($"English hint shows {shown:F1} of a natural {natural:F1} DIP");
-        Assert.True(shown >= natural - 0.5, $"the English hint is trimmed at the default width: {shown:F1} of {natural:F1} DIP shows");
+                    trimmed.Add($"[{culture}] \"{text}\": {shown:F1} of {natural:F1} DIP shows");
+                }
+            }
+            finally
+            {
+                TranslationSource.Instance.CurrentCulture = previous;
+            }
+        }
+
+        Assert.True(trimmed.Count == 0, "The empty-state hint is trimmed at the default width: " + string.Join("; ", trimmed));
     }
 
     /// <summary>
