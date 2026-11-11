@@ -92,7 +92,18 @@ only; `submit_write.py` never sends it.
 
 ## 6. Packages
 
-Pending.
+Built 2026-11-10 on Dunder from the release branch, code identical to `main` at 47b1054, with
+`scripts/finalize-store-build.ps1` (arm64, then x64) and `scripts/build-msix.ps1 -Sideload`.
+
+| File | Size | For |
+|---|---|---|
+| `dist/RORORO-Store-x64-1.37.0.0.msix` | 112,374,316 bytes | Partner Center, unsigned |
+| `dist/RORORO-Store-arm64-1.37.0.0.msix` | 105,885,227 bytes | Partner Center, unsigned |
+| `dist/RORORO-Sideload-x64-1.37.0.0.msix` | 112,396,973 bytes | GitHub release, signed |
+
+The sideload package is signed by the unrotated dev certificate, SHA-1 `8232F92D70CE24B9EF2CCEB4B458F8C26D94AB87`,
+the same one v1.35 and v1.36 shipped with. Attach the matching `dev-cert.cer` from the v1.36 release, never
+the stray one at the repo root.
 
 ## 7. Verification
 
@@ -103,8 +114,17 @@ Pending.
 - **Mutation checks.** The Roblox-needed dialog tests, the rating-ask rule tests and the rating-ask
   view-model tests were each broken on purpose and seen to fail. One test, "the sentence leads the
   body", passed with its rows swapped on the first attempt and was rewritten.
-- **Listing verifier on What's new:** pending.
-- **Security agents and the release smoke:** pending.
+- **Listing verifier on What's new, 2026-11-10.** Six languages at commit `1df12df`. One finding per
+  language, the same one: Rule 3 wants the tray menu's Quit left in English. Overruled, as at v1.36: the
+  app's interface is localized, and each block quotes its own language's label for that menu item. That
+  sentence is v1.36's text, unchanged. The new headline and the four new bullets drew no finding in any
+  language.
+- **Pre-release agents, 2026-11-10.** Cookie exposure audit over `git diff v1.36.0.0..HEAD`: clean, no
+  path by which a cookie reaches a log, a banner, an exception or a file. Auth-ticket flow: the code is
+  unchanged and the pre-flight runs before the ticket request (`RobloxLauncher.cs:97`); the live
+  contract was NOT probed, because that needs a test cookie that is not set. MSIX assets: pass, manifest
+  and logos identical to v1.36.0.0.
+- **Plugin catalog drift:** clean, five entries match their live releases.
 
 **Not verified, and said so in the release notes:** the launch check on a PC whose only Roblox is the
 Store edition; the rating line on a real Store install; the new FPS caps on a live client.
