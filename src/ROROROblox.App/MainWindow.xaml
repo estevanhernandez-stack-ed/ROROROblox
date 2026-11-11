@@ -464,7 +464,7 @@
                     </ContextMenu>
                 </Border.ContextMenu>
 
-                <Grid>
+                <controls:RowGrid>
                     <!-- Row 0 is everything the row was in v1.35 and is Star, not Auto: it replaces the
                          implicit single star row, and an Auto row 0 measured the collapsed row 8 px taller
                          than v1.35 (AccountRowCollapsedRenderTests). Row 1 is the v1.36 facts line and is
@@ -958,7 +958,7 @@
                     </StackPanel>
 
                     <!-- Actions -->
-                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                    <controls:ActionsRunPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- Title-bar color swatch. Click opens a popup with the 8-palette + Auto +
                              custom hex. The swatch shows whatever color the Roblox window's title
                              bar currently uses (manual override OR auto-derived from Id hash). -->
@@ -1066,7 +1066,7 @@
                              name column because the actions column is shared across rows, so a narrower name column
                              would trim every main account's name in French. Game names trim inside the picker.
                              (LabelWrapMeasurementTests.OnEveryBadgeRow_RemoveStaysInsideTheRow_InEverySupportedLanguage) -->
-                        <Grid Margin="0,0,8,0" MinWidth="120" VerticalAlignment="Center">
+                        <Grid Margin="0,0,8,0" MinWidth="120" VerticalAlignment="Center" controls:ActionsRunPanel.GivesWay="True">
                             <ComboBox AutomationProperties.Name="{loc:Loc MainWindow_GameOrPrivateServerTo}"
                                       ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
@@ -1118,7 +1118,13 @@
                             </ComboBox>
                             <!-- Wave 3 moved Games off the toolbar into the Tools menu. This line
                                  tells a user where to go, so it has to name where the thing now is. -->
+                            <!-- 2026-11-10: the picker gives way. It stretches to fit this hint, the translated
+                                 hints are longer, and the stretch used to push Remove off a new user's first
+                                 row in five of six languages (French by 54 DIP). The cell is marked GivesWay
+                                 above, so the actions run hands it only the width that is left, and this text
+                                 trims to fit it. See Controls/RowActionsLayout.cs. -->
                             <TextBlock Text="{loc:Loc MainWindow_AddGamesFromToolsGames}"
+                                       TextTrimming="CharacterEllipsis"
                                        FontSize="{DynamicResource BodyFontSize}"
                                        FontStyle="Italic"
                                        Foreground="{DynamicResource MutedTextBrush}"
@@ -1247,7 +1253,7 @@
                                 CommandParameter="{Binding}"
                                 Padding="10,6"
                                 Style="{StaticResource DestructiveButtonStyle}" />
-                    </StackPanel>
+                    </controls:ActionsRunPanel>
 
                     <!-- v1.36 facts line (A1, picked 2026-11-02): its own line under the whole row, in grid row 1 and
                          spanning the name and actions columns, so it has the row's width rather than the 160 px name
@@ -1375,7 +1381,7 @@
                             </TextBlock.Style>
                         </TextBlock>
                     </WrapPanel>
-                </Grid>
+                </controls:RowGrid>
             </Border>
             <!-- v1.36 account panel (B1, three columns; spec 3.6). The THIRD child of the row's outer StackPanel,
                  below AccountRowBorder and not inside it: the drag ghost and the drop targets still capture the

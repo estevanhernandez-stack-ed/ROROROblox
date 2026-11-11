@@ -420,68 +420,162 @@ public class LabelWrapMeasurementTests
     /// The row most people see: a healthy account, no badge, at the window's DEFAULT size (900 x 600). The English
     /// version of this is <c>MainWindowOneAccountFitsTests.AtTheDeclared900px_RemoveAndTheMainPillBothFit</c>, and the
     /// badge rows are covered in every language below, but nothing measured the plain row in the six translations
-    /// until captures taken on 2026-11-10 showed Remove cut off in French and German. A first-time user in those
-    /// languages opens the app to a clipped button.
+    /// until captures taken on 2026-11-10 showed Remove cut off in French and German.
     /// <para>
-    /// THIS IS A RATCHET, NOT A PASS. With no saved game the row's game picker stretches to fit its hint ("Add in the
-    /// Library"), the translated hints are longer, and the stretch pushes Remove off the row. English fits with nothing to
-    /// spare. Once a game is saved every language fits. The numbers below are the DIP of Remove that is hidden today; the
-    /// test fails if any of them grows, and it also fails if one shrinks without the table being lowered, so the fix has
-    /// to move it. The fix itself is a layout ruling (let the hint trim, shorten the hints, or restructure the row) and
-    /// has not been made.
+    /// Measured that day, with no saved game: French hid 54 DIP of Remove, Russian 49, German 48, Portuguese 19,
+    /// Spanish 4. The game picker stretched to fit its empty-state hint and the translated hints are longer. The owner
+    /// ruled the same evening that the picker gives way (<c>Controls/RowActionsLayout.cs</c>), so this is no longer a ratchet:
+    /// nothing may be hidden, in any language, with or without a saved game.
     /// </para>
     /// </summary>
     [WindowRenderFact]
     public void OnAHealthyRow_AtTheDefaultWidth_RemoveStaysInsideTheRow_InEverySupportedLanguage()
     {
-        // Hidden DIP of Remove with no saved game, measured 2026-11-10 at 96 DPI. Lower these when the row is fixed.
-        var knownOverflowWithoutSavedGames = new Dictionary<string, double>
-        {
-            ["en"] = 0, ["de"] = 48, ["es"] = 4, ["fr"] = 54, ["pl"] = 0, ["pt-BR"] = 19, ["ru"] = 49,
-        };
-        const double Slack = 2; // font rounding between machines
-        var brand = Brand();
         var over = new List<string>();
-        var stale = new List<string>();
         var checkedRows = 0;
         foreach (var savedGames in new[] { false, true })
         {
             foreach (var culture in Cultures)
             {
-                var previous = TranslationSource.Instance.CurrentCulture;
-                TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
-                try
-                {
-                    var (right, inner) = ThemedWindowRender.Inspect(brand, $"healthy row remove edge [{culture}, savedGames={savedGames}]",
-                        () => PanelWindowFixtures.Build(1, expanded: false, savedGames: savedGames), content =>
-                        {
-                            var row = (Border)ThemedWindowRender.Find(content, fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0, "AccountRowBorder");
-                            var remove = ThemedWindowRender.Find(content,
-                                fe => fe is Button && AutomationProperties.GetAutomationId(fe) == "DangerRemove" && fe.Visibility == Visibility.Visible && fe.ActualWidth > 0,
-                                "the row's Remove button");
-                            var edge = RectInRoot(remove, row).Right;
-                            var visible = Math.Min(VisibleRight(remove, row, out _), row.ActualWidth - row.BorderThickness.Right);
-                            return (edge, visible);
-                        });
-                    checkedRows++;
-                    var hidden = Math.Max(0, right - inner);
-                    var allowed = savedGames ? 0 : knownOverflowWithoutSavedGames[culture];
-                    _output.WriteLine($"[{culture}, savedGames={savedGames}] Remove ends at {right:F1}, visible to {inner:F1}, hidden {hidden:F1} (known {allowed:F0})");
-                    if (hidden > allowed + Slack) over.Add($"[{culture}, savedGames={savedGames}] {hidden:F1} DIP of Remove is hidden, more than the known {allowed:F0}");
-                    if (hidden < allowed - Slack) stale.Add($"[{culture}, savedGames={savedGames}] only {hidden:F1} DIP is hidden now; lower the known {allowed:F0}");
-                }
-                finally
-                {
-                    TranslationSource.Instance.CurrentCulture = previous;
-                }
+                var hidden = HiddenWidthOfRemove(culture, savedGames, windowWidth: null);
+                checkedRows++;
+                _output.WriteLine($"[{culture}, savedGames={savedGames}] hidden {hidden:F1}");
+                if (hidden > 0.5) over.Add($"[{culture}, savedGames={savedGames}] {hidden:F1} DIP of Remove is hidden");
             }
         }
 
         Assert.Equal(2 * Cultures.Length, checkedRows);
-        Assert.True(over.Count == 0,
-            "Remove is cut off further than the recorded amount on a healthy row at the default window size: " + string.Join("; ", over));
-        Assert.True(stale.Count == 0,
-            "The row got better and the ratchet did not move with it: " + string.Join("; ", stale));
+        Assert.True(over.Count == 0, "Remove is cut off on a healthy row at the default window size: " + string.Join("; ", over));
+    }
+
+    /// <summary>
+    /// The promise the fix actually makes, at the window's MINIMUM width (860), where even English has no room: the
+    /// hint never costs Remove any width. Whatever is hidden with the hint showing is no more than what is hidden once
+    /// a game is saved and the hint is gone. (At 860 some languages cut Remove for a different reason: their buttons
+    /// are simply wider than the row. That is not this test's business, and it is not made worse here.)
+    /// </summary>
+    [WindowRenderFact]
+    public void AtTheMinimumWidth_TheHintNeverCostsRemoveAnyWidth_InEverySupportedLanguage()
+    {
+        var worse = new List<string>();
+        foreach (var culture in Cultures)
+        {
+            var withHint = HiddenWidthOfRemove(culture, savedGames: false, windowWidth: 860);
+            var withoutHint = HiddenWidthOfRemove(culture, savedGames: true, windowWidth: 860);
+            _output.WriteLine($"[{culture} @860] hidden with the hint {withHint:F1}, without it {withoutHint:F1}");
+            if (withHint > withoutHint + 0.5)
+            {
+                worse.Add($"[{culture}] the hint hides {withHint - withoutHint:F1} DIP more of Remove ({withHint:F1} against {withoutHint:F1})");
+            }
+        }
+
+        Assert.True(worse.Count == 0, "The empty-state hint is costing Remove width at 860 px: " + string.Join("; ", worse));
+    }
+
+    /// <summary>
+    /// Giving way must not mean giving up. At the default size the ENGLISH hint is the one instruction on a new user's
+    /// row, and it has to show in full: the hint trims only when there is no room, never as a matter of course.
+    /// </summary>
+    [WindowRenderFact]
+    public void AtTheDefaultWidth_TheEnglishHintIsShownInFull()
+    {
+        var (shown, natural) = ThemedWindowRender.Inspect(Brand(), "empty-state hint, English, default width",
+            () => PanelWindowFixtures.Build(1, expanded: false, savedGames: false), content =>
+            {
+                var text = Loc.Get("MainWindow_AddGamesFromToolsGames");
+                var hint = (TextBlock)ThemedWindowRender.Find(content,
+                    fe => fe is TextBlock tb && tb.Text == text && tb.Visibility == Visibility.Visible && tb.ActualWidth > 0, "the picker's hint");
+                var probe = new TextBlock
+                {
+                    Text = hint.Text, FontSize = hint.FontSize, FontStyle = hint.FontStyle, FontFamily = hint.FontFamily,
+                    FontWeight = hint.FontWeight, FontStretch = hint.FontStretch,
+                };
+                probe.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                return (hint.ActualWidth, probe.DesiredSize.Width);
+            });
+        _output.WriteLine($"English hint shows {shown:F1} of a natural {natural:F1} DIP");
+        Assert.True(shown >= natural - 0.5, $"the English hint is trimmed at the default width: {shown:F1} of {natural:F1} DIP shows");
+    }
+
+    /// <summary>
+    /// The same window, made narrower. The actions run is measured with unlimited width whatever the row is given, so
+    /// WPF would not re-measure it when only the row's width changed, and the picker would keep the width it had at
+    /// 900 px. <c>RowGrid</c> tells it to look again. English, because at 900 its picker has room to spare and at 860
+    /// it has to shrink: after narrowing, the same window must hide exactly what a window opened at 860 hides. (French
+    /// would prove nothing here. Its picker is already at its minimum at 900.)
+    /// </summary>
+    [WindowRenderFact]
+    public void NarrowingAWindowThatAlreadyFit_SqueezesThePickerAgain()
+    {
+        var openedNarrow = HiddenWidthOfRemove("en", savedGames: false, windowWidth: 860);
+
+        var previous = TranslationSource.Instance.CurrentCulture;
+        TranslationSource.Instance.CurrentCulture = new CultureInfo("en");
+        try
+        {
+            var (at900, narrowed) = ThemedWindowRender.Inspect(Brand(), "healthy row, narrowed from 900 to 860 [en]",
+                () => PanelWindowFixtures.Build(1, expanded: false, savedGames: false), content =>
+                {
+                    double Hidden()
+                    {
+                        var row = (Border)ThemedWindowRender.Find(content, fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0, "AccountRowBorder");
+                        var remove = ThemedWindowRender.Find(content,
+                            fe => fe is Button && AutomationProperties.GetAutomationId(fe) == "DangerRemove" && fe.Visibility == Visibility.Visible && fe.ActualWidth > 0,
+                            "the row's Remove button");
+                        var edge = RectInRoot(remove, row).Right;
+                        var visible = Math.Min(VisibleRight(remove, row, out _), row.ActualWidth - row.BorderThickness.Right);
+                        return Math.Max(0, edge - visible);
+                    }
+
+                    var before = Hidden();
+                    // Exactly the width the harness gives a window declared 860 wide.
+                    var narrower = new Size(860, content.ActualHeight);
+                    content.Measure(narrower);
+                    content.Arrange(new Rect(narrower));
+                    content.UpdateLayout();
+                    return (before, Hidden());
+                });
+            _output.WriteLine($"[en] hidden at 900: {at900:F1}; after narrowing the same window to 860: {narrowed:F1}; a window opened at 860: {openedNarrow:F1}");
+            Assert.True(at900 <= 0.5, $"the English row should fit at the default width, but {at900:F1} DIP of Remove is hidden");
+            Assert.True(Math.Abs(narrowed - openedNarrow) <= 0.5,
+                $"narrowing the window left {narrowed:F1} DIP of Remove hidden, where a window opened at that width hides {openedNarrow:F1}: the picker kept its old width");
+        }
+        finally
+        {
+            TranslationSource.Instance.CurrentCulture = previous;
+        }
+    }
+
+    /// <summary>How much of the plain row's Remove button is cut off, in DIP. Zero when it is all there.</summary>
+    private static double HiddenWidthOfRemove(string culture, bool savedGames, double? windowWidth)
+    {
+        var previous = TranslationSource.Instance.CurrentCulture;
+        TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
+        try
+        {
+            var (right, inner) = ThemedWindowRender.Inspect(Brand(), $"healthy row remove edge [{culture}, savedGames={savedGames}, width={windowWidth}]",
+                () =>
+                {
+                    var window = PanelWindowFixtures.Build(1, expanded: false, savedGames: savedGames);
+                    if (windowWidth is double w) window.Width = w;
+                    return window;
+                },
+                content =>
+                {
+                    var row = (Border)ThemedWindowRender.Find(content, fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0, "AccountRowBorder");
+                    var remove = ThemedWindowRender.Find(content,
+                        fe => fe is Button && AutomationProperties.GetAutomationId(fe) == "DangerRemove" && fe.Visibility == Visibility.Visible && fe.ActualWidth > 0,
+                        "the row's Remove button");
+                    var edge = RectInRoot(remove, row).Right;
+                    var visible = Math.Min(VisibleRight(remove, row, out _), row.ActualWidth - row.BorderThickness.Right);
+                    return (edge, visible);
+                });
+            return Math.Max(0, right - inner);
+        }
+        finally
+        {
+            TranslationSource.Instance.CurrentCulture = previous;
+        }
     }
 
     /// <summary>

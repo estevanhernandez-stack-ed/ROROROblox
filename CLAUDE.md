@@ -10,7 +10,7 @@ Maps live next door: [docs/architecture.md](docs/architecture.md) (modules, star
 
 ```powershell
 dotnet build ROROROblox.slnx -c Release                              # 0 errors; ~43 warnings are known noise
-dotnet test  ROROROblox.slnx -c Release --no-build                   # 3,498 unit + 27 harness pass (2026-11-10); 1 harness [Skip] by design, and the opt-in capture tests skip unless their env var is set
+dotnet test  ROROROblox.slnx -c Release --no-build                   # 3,506 unit + 27 harness pass (2026-11-10); 1 harness [Skip] by design, and the opt-in capture tests skip unless their env var is set
 dotnet test  src/ROROROblox.Tests/ -c Release --no-build             # unit only
 dotnet test  src/ROROROblox.PluginTestHarness/ -c Release --no-build # named-pipe gRPC integration only
 dotnet run --project src/ROROROblox.App                              # not re-verified this pass: the single-instance guard surfaces an existing window
