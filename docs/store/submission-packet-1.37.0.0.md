@@ -5,8 +5,8 @@ Everything Partner Center asks for on this submission, in the order it asks. Cer
 repository, 28 files and +1,604/−14 under `src/`. Four changes, all from the 2026-11-10 evidence sweep
 (`docs/cycles/2026-11-10-growth-and-quality/board.md`).
 
-> **DRAFTED 2026-11-10, not yet submitted.** Sections 6, 7 and 8 are filled as each step happens. The
-> Store write itself needs the owner's explicit word in the session.
+> **SUBMITTED 2026-11-10.** Submission `1152921505702372154` was committed from the console on the
+> owner's word and is in Certification. See section 8.
 
 ---
 
@@ -131,4 +131,22 @@ Store edition; the rating line on a real Store install; the new FPS caps on a li
 
 ## 8. Shipped
 
-Pending.
+| Step | When (2026-11-10, CST) | Evidence |
+|---|---|---|
+| Release PR #274 merged | evening | `main` at `c80f3cf`; `ci.yml` green on x64 and arm64 |
+| Tag `v1.37.0.0` pushed | after CI went green on main | `release.yml` run 42933722163, success |
+| GitHub release drafted | same run | 13 assets: Setup.exe, the two nupkgs, Portable.zip, the signed sideload MSIX, `dev-cert.cer` (v1.36's copy, thumbprint `8232F92D…`, matching the sideload signer), the signed feeds. Notes set from the release notes. **Still a draft.** |
+| Store submission created | `apply`, on the owner's word | `1152921505702372154`; ten `releaseNotes` fields written and read back; captions already matched |
+| Verified before the owner's visit | `verify` | every listing field and caption served |
+| Owner's two pages | Packages (x64 and arm64) and Notes for certification | done by the owner in Partner Center |
+| Verified after the visit | `verify` | status `PendingCommit`, text intact; packages still read 1.36, as expected before a commit |
+| Committed | about 19:35, on the owner's word | `CommitStarted` |
+| Packages visible | fifth 30-second poll, about two and a half minutes | status `Certification`; `RORORO-Store-x64-1.37.0.0.msix` and `RORORO-Store-arm64-1.37.0.0.msix`, both `Uploaded` |
+
+**Not yet:** certification result; publishing the GitHub draft as Latest (held for the Store, the owner's
+call); the clan post; the English product-name test, which is its own hand-made listing submission
+after this one publishes.
+
+**Console:** worktree `_scratch/console-rororo-137`, branch `copy/rororo-1.37`, pinned at `7a400cd`.
+Every command named `--payload out/rororo-live-listing.json`; that lineage still carries the older
+engine, whose default payload belongs to a different app directory.
