@@ -1,6 +1,10 @@
 # Reply drafts: four Store reviews and one issue
 
-Drafted 2026-11-10 for the owner to post. Nothing here has been sent. Store replies are public,
+Drafted 2026-11-10. **The four Store replies were posted that evening** through the Partner Center
+reviews page, with the bracketed sentences kept and unbracketed (their fixes ship in v1.37). A Store
+reply cannot be edited after sending. **The issue #112 reply was posted by the owner the same evening,**
+with one bullet added in his own words: what cleared the flag on his own account was going back to
+Roblox's support chat bot until the challenges stopped, which he cannot prove was the cause. Store replies are public,
 capped at 1,000 characters, and written in the reviewer's language. Each stays inside the standing
 lines: no "safe", no "undetectable", no promise Roblox approves.
 
@@ -71,8 +75,9 @@ what you saw.
 **What helps today.**
 
 - **Join by following.** Launch one account normally, then have the flagged account follow it into
-  the game: right-click the flagged account and turn on joining via a friend. In our own testing
-  that got a flagged account in when a direct join kept looping.
+  the game instead of joining directly. Right-click the flagged account and tick **Join via friend
+  (challenge-prone account)**, then use Squad Launch; RoRoRo routes that account in by following a
+  squad member. In our own testing that got a flagged account in when a direct join kept looping.
 - **Find out whether it is the account or the connection.** Launch a different account from the same
   PC. If that one joins cleanly, the flag is on the account. If every account is challenged, it is
   more likely the connection.
@@ -92,8 +97,8 @@ bundle from 1.36 would tell us a lot.
 - "In our own testing" in the #112 reply refers to the 2026 join-challenge investigation
   (`docs/investigations/2026-05-07-account-bot-challenge.md` and the follow path). Re-read it before
   posting if the wording feels stronger than what was seen.
-- The menu wording in the #112 reply ("joining via a friend") was written from the code's name for
-  the setting, not read off the screen. Match it to the label the app shows before posting.
+- The menu wording in the #112 reply is the app's own label, read from `Strings.resx`
+  (`MainWindow_JoinViaFriendChallengeProne`).
 - #260 (invisible cursor) already has a reply. A second reporter added detail on 2026-11-04: newest
   Windows 11, 100% scale, 1080p. The main window is the only `FluentWindow` in the app, which is
   worth testing as the cause before replying again.

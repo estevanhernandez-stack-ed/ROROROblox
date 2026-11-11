@@ -1022,3 +1022,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** The dropdown has thirteen caps. Every language writes "N FPS" verbatim, so the six catalogs carry the same three strings. Not checked: the new caps on a live client. They use the same settings-file write as 45, 90 and 165, which are also not values Roblox's own menu offers.
 
 **Evidence:** `src/ROROROblox.Core/FpsPresets.cs`; `FpsCapChoicesTests`; board item 6.
+
+### 2026-11-10 — v1.37.0.0 is submitted, and the product-name test is a separate submission
+
+**Context:** The owner asked for the release the same day the four changes merged, and had approved testing a new English product name (`RoRoRo — Multi-Instance Launcher & Account Manager`) because Store search finds the listing for "rororo" and "roblox launcher" only.
+
+**Decision:** v1.37.0.0 went to certification as submission `1152921505702372154`, with the listing text written through the console and the packages and reviewer letter added by the owner. The name change did not ride on it. A product name is picked on the Store listing page, and the measured rule in `store-listing-console/docs/release-loop.md` is one owner per section: a person editing that page on an API-written submission kills the API's record. The name test is its own hand-made listing submission after 1.37 publishes, English only, which also isolates its effect on search rank.
+
+**Consequences:** The GitHub release is a draft until the Store accepts the build, so the release feed does not announce an update Store users cannot get; the owner can publish earlier. The four Store review replies owed since September were posted the same evening through Partner Center, because the review-response API answered HTTP 500; a Store reply cannot be edited once sent. The reply to issue #112 could not be posted from the session; the owner pasted it the same evening, adding what had worked on his own flagged account (persisting with Roblox's support chat bot).
+
+**Evidence:** `docs/store/submission-packet-1.37.0.0.md` section 8; `release.yml` run 42933722163; tag `v1.37.0.0` on `c80f3cf`.
