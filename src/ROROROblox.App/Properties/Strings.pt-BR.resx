@@ -1489,16 +1489,28 @@
     <value>Escolha o idioma da interface do RoRoRo. Novos idiomas aparecem aqui conforme são traduzidos, e a troca é imediata.</value>
   </data>
   <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">
-    <value>Nenhum jogo padrão do Roblox configurado. Adicione um em Jogos (botão do cabeçalho), ou informe um destino explícito.</value>
+    <value>Nenhum jogo para abrir. Escolha um na Biblioteca e inicie de novo.</value>
   </data>
   <data name="CoreMsg_Launch_AuthTicketFailed" xml:space="preserve">
-    <value>Falha ao obter o ticket de autenticação: {0}</value>
+    <value>Não foi possível entrar no Roblox com esta conta: {0}</value>
   </data>
   <data name="CoreMsg_Launch_RobloxNotInstalled" xml:space="preserve">
     <value>O Roblox não parece estar instalado.</value>
   </data>
   <data name="CoreMsg_Launch_ProcessStartFailed" xml:space="preserve">
-    <value>Process.Start falhou: {0}</value>
+    <value>O Windows não conseguiu iniciar o Roblox: {0}</value>
+  </data>
+  <data name="CoreMsg_Launch_NoConnection" xml:space="preserve">
+    <value>Não foi possível conectar ao Roblox. Verifique sua conexão com a internet e tente de novo.</value>
+  </data>
+  <data name="CoreMsg_Launch_TimedOut" xml:space="preserve">
+    <value>O Roblox demorou demais para responder. Tente de novo em instantes.</value>
+  </data>
+  <data name="CoreMsg_Launch_RateLimited" xml:space="preserve">
+    <value>O Roblox está pedindo que o RoRoRo vá mais devagar. Espere um minuto e tente de novo.</value>
+  </data>
+  <data name="CoreMsg_Launch_RobloxUnavailable" xml:space="preserve">
+    <value>O Roblox está com problemas agora. Tente de novo em alguns minutos.</value>
   </data>
   <data name="CoreMsg_Cookie_WebView2RuntimeMissing" xml:space="preserve">
     <value>Runtime do WebView2 ausente</value>
@@ -2077,7 +2089,7 @@
     <value>O Roblox está atualizando — aguarde.</value>
   </data>
   <data name="Shell_PreWarm_NeverConnected" xml:space="preserve">
-    <value>A inicialização nunca conectou. Verifique se o Roblox está atualizado + se o antivírus não está bloqueando.</value>
+    <value>O Roblox não iniciou. Verifique se o Roblox está atualizado e se o antivírus não está bloqueando.</value>
   </data>
   <data name="Shell_ServerLanding_RecycleNotYet" xml:space="preserve">
     <value>{0} ainda não está nesse servidor — confira a janela do Roblox dela. Um servidor cheio coloca você na fila.</value>

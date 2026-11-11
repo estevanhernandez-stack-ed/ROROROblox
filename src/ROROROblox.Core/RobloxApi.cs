@@ -59,8 +59,17 @@ public sealed class RobloxApi : IRobloxApi
 
         if (!firstResponse.Headers.TryGetValues("x-csrf-token", out var csrfTokens))
         {
-            throw new InvalidOperationException(
-                $"Roblox auth-ticket endpoint did not return X-CSRF-TOKEN. Status={(int)firstResponse.StatusCode}.");
+            var firstStatus = (int)firstResponse.StatusCode;
+            var noToken = $"Roblox auth-ticket endpoint did not return X-CSRF-TOKEN. Status={firstStatus}.";
+
+            // A 429 or a 5xx here is Roblox refusing or failing, not a missing token. Say so with
+            // the code, so the launcher can name it (2026-11-10). A token-less 403 stays as it was.
+            if (firstStatus == 429 || firstStatus >= 500)
+            {
+                throw new RobloxApiStatusException(firstStatus, noToken);
+            }
+
+            throw new InvalidOperationException(noToken);
         }
 
         var csrfToken = csrfTokens.FirstOrDefault()
@@ -94,7 +103,8 @@ public sealed class RobloxApi : IRobloxApi
             }
             if (!secondResponse.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException(
+                throw new RobloxApiStatusException(
+                    (int)secondResponse.StatusCode,
                     $"Roblox auth-ticket endpoint returned {(int)secondResponse.StatusCode}.");
             }
             if (!secondResponse.Headers.TryGetValues("RBX-Authentication-Ticket", out var ticketHeaders))

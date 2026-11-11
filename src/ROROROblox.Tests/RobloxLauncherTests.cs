@@ -161,6 +161,35 @@ public class RobloxLauncherTests
         Assert.Throws<ArgumentNullException>(() => new RobloxLauncher(api, settings, null!));
     }
 
+    // === A failed ticket request is named, not dumped (2026-11-10; see PlainLaunchErrorTests) ===
+
+    [Fact]
+    public async Task LaunchAsync_WhenTheNetworkIsDown_FailsAsNoConnection_KeepsTheRawTextForTheLog_AndStartsNothing()
+    {
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "T", startResult: 1,
+            onTicketRequested: () => throw new HttpRequestException("No such host is known. (auth.roblox.com:443)"));
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237));
+
+        var failed = Assert.IsType<LaunchResult.Failed>(result);
+        Assert.Equal(LaunchFailureKind.NoConnection, failed.Kind);
+        Assert.Equal("No such host is known. (auth.roblox.com:443)", failed.Detail);
+        Assert.Equal(string.Empty, processStarter.LastUri);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_WhenRobloxSaysSlowDown_FailsAsRateLimited()
+    {
+        var (launcher, _, _) = CreateLauncher(
+            ticket: "T", startResult: 1,
+            onTicketRequested: () => throw new RobloxApiStatusException(429, "Roblox auth-ticket endpoint returned 429."));
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237));
+
+        Assert.Equal(LaunchFailureKind.RateLimited, Assert.IsType<LaunchResult.Failed>(result).Kind);
+    }
+
     // === LaunchAsync(LaunchTarget) — typed API ===
 
     [Fact]

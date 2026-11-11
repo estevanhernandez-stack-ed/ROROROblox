@@ -1489,16 +1489,28 @@
     <value>Wähle die Sprache der RoRoRo-Oberfläche. Neue Sprachen erscheinen hier, sobald sie übersetzt sind, und der Wechsel wirkt sofort.</value>
   </data>
   <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">
-    <value>Kein Standard-Roblox-Spiel festgelegt. Füge eines unter „Spiele“ hinzu (Schaltfläche in der Kopfzeile), oder gib ein konkretes Ziel an.</value>
+    <value>Kein Spiel zum Öffnen. Wähle eines in der Bibliothek aus und starte dann erneut.</value>
   </data>
   <data name="CoreMsg_Launch_AuthTicketFailed" xml:space="preserve">
-    <value>Auth-Ticket konnte nicht abgerufen werden: {0}</value>
+    <value>Dieses Konto konnte nicht bei Roblox angemeldet werden: {0}</value>
   </data>
   <data name="CoreMsg_Launch_RobloxNotInstalled" xml:space="preserve">
     <value>Roblox scheint nicht installiert zu sein.</value>
   </data>
   <data name="CoreMsg_Launch_ProcessStartFailed" xml:space="preserve">
-    <value>Process.Start fehlgeschlagen: {0}</value>
+    <value>Windows konnte Roblox nicht starten: {0}</value>
+  </data>
+  <data name="CoreMsg_Launch_NoConnection" xml:space="preserve">
+    <value>Roblox ist nicht erreichbar. Prüfe deine Internetverbindung und versuche es dann erneut.</value>
+  </data>
+  <data name="CoreMsg_Launch_TimedOut" xml:space="preserve">
+    <value>Roblox hat zu lange nicht geantwortet. Versuche es gleich noch einmal.</value>
+  </data>
+  <data name="CoreMsg_Launch_RateLimited" xml:space="preserve">
+    <value>Roblox bittet RoRoRo, langsamer zu machen. Warte eine Minute und versuche es dann erneut.</value>
+  </data>
+  <data name="CoreMsg_Launch_RobloxUnavailable" xml:space="preserve">
+    <value>Roblox hat gerade Probleme. Versuche es in ein paar Minuten erneut.</value>
   </data>
   <data name="CoreMsg_Cookie_WebView2RuntimeMissing" xml:space="preserve">
     <value>WebView2-Runtime fehlt</value>
@@ -2077,7 +2089,7 @@
     <value>Roblox aktualisiert sich — einen Moment.</value>
   </data>
   <data name="Shell_PreWarm_NeverConnected" xml:space="preserve">
-    <value>Der Start hat nie eine Verbindung hergestellt. Prüfe, ob Roblox aktuell ist und kein Antivirus blockiert.</value>
+    <value>Roblox ist nicht gestartet. Prüfe, ob Roblox aktuell ist und ob dein Virenschutz es blockiert.</value>
   </data>
   <data name="Shell_ServerLanding_RecycleNotYet" xml:space="preserve">
     <value>{0} ist noch nicht in diesem Server — prüfe sein Roblox-Fenster. Ein voller Server stellt dich in die Warteschlange.</value>

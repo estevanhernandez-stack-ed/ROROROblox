@@ -1981,11 +1981,11 @@
     <comment>Settings &gt; Appearance — UI-language picker hint</comment>
   </data>
   <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">
-    <value>No default Roblox game configured. Add one in Games (header button), or pass an explicit target.</value>
+    <value>No game to open. Pick one in the Library, then launch again.</value>
     <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
   </data>
   <data name="CoreMsg_Launch_AuthTicketFailed" xml:space="preserve">
-    <value>Failed to obtain auth ticket: {0}</value>
+    <value>Couldn't sign this account in to Roblox: {0}</value>
     <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
   </data>
   <data name="CoreMsg_Launch_RobloxNotInstalled" xml:space="preserve">
@@ -1993,8 +1993,24 @@
     <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
   </data>
   <data name="CoreMsg_Launch_ProcessStartFailed" xml:space="preserve">
-    <value>Process.Start failed: {0}</value>
+    <value>Windows couldn't start Roblox: {0}</value>
     <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Launch_NoConnection" xml:space="preserve">
+    <value>Couldn't reach Roblox. Check your internet connection, then try again.</value>
+    <comment>Core message; resolved by CoreMessageCatalog. A named launch failure; the raw error goes to the log, never the row (2026-11-10)</comment>
+  </data>
+  <data name="CoreMsg_Launch_TimedOut" xml:space="preserve">
+    <value>Roblox took too long to answer. Try again in a moment.</value>
+    <comment>Core message; resolved by CoreMessageCatalog. A named launch failure; the raw error goes to the log, never the row (2026-11-10)</comment>
+  </data>
+  <data name="CoreMsg_Launch_RateLimited" xml:space="preserve">
+    <value>Roblox is asking RoRoRo to slow down. Wait a minute, then try again.</value>
+    <comment>Core message; resolved by CoreMessageCatalog. A named launch failure; the raw error goes to the log, never the row (2026-11-10)</comment>
+  </data>
+  <data name="CoreMsg_Launch_RobloxUnavailable" xml:space="preserve">
+    <value>Roblox is having trouble right now. Try again in a few minutes.</value>
+    <comment>Core message; resolved by CoreMessageCatalog. A named launch failure; the raw error goes to the log, never the row (2026-11-10)</comment>
   </data>
   <data name="CoreMsg_Cookie_WebView2RuntimeMissing" xml:space="preserve">
     <value>WebView2 runtime missing</value>
@@ -2437,7 +2453,7 @@
   <data name="Shell_Leftover_Connector" xml:space="preserve"><value>, and </value><comment>LeftoverSummary list join; translators localize incl. spaces (localized Phase D step 3)</comment></data>
   <data name="Shell_Leftover_Found" xml:space="preserve"><value>Found {0}. Multi-instance is fine — RoRoRo has the lock.</value><comment>LeftoverSummary; product nouns stay English (localized Phase D step 3)</comment></data>
   <data name="Shell_PreWarm_Updating" xml:space="preserve"><value>Roblox is updating — hold on.</value><comment>PreWarmGate row status; "Roblox" stays English (localized Phase D step 3)</comment></data>
-  <data name="Shell_PreWarm_NeverConnected" xml:space="preserve"><value>Launch never connected. Check Roblox is current + antivirus isn't blocking.</value><comment>PreWarmGate row status (localized Phase D step 3)</comment></data>
+  <data name="Shell_PreWarm_NeverConnected" xml:space="preserve"><value>Roblox didn't start. Check that Roblox is up to date and that your antivirus isn't blocking it.</value><comment>PreWarmGate row status (localized Phase D step 3)</comment></data>
   <data name="Shell_ServerLanding_RecycleNotYet" xml:space="preserve"><value>{0} isn't in that server yet — check its Roblox window. A full server puts you in line.</value><comment>ServerLandingReport; {0}=account (localized Phase D step 3)</comment></data>
   <data name="Shell_ServerLanding_RecycleElsewhere" xml:space="preserve"><value>{0} came back in a different server — Roblox moved it. Recycle again to retry.</value><comment>ServerLandingReport; {0}=account (localized Phase D step 3)</comment></data>
   <data name="Shell_ServerLanding_SquadNotYet" xml:space="preserve"><value>{0} of {1} aren't in that server yet: {2}. Check their Roblox windows — a full server puts you in line.</value><comment>ServerLandingReport; {0}=count {1}=total {2}=names (localized Phase D step 3)</comment></data>
