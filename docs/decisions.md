@@ -1052,3 +1052,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** A new user in five of the six translated languages still opens the app to a clipped button until the ruling is made. This is not claimed as the cause of the retention gap between markets: Polish fits and retains poorly. A second instrument came out of the same walk, `FormatCultureProbe`, which runs the suite under another regional format; seven display-text assertions fail under it and nothing functional does.
 
 **Evidence:** `docs/investigations/2026-11-10-new-user-walk-other-languages.md`.
+
+### 2026-11-10 — The picker gives way before Remove is cut, inside the measure pass
+
+**Context:** The owner ruled on the first-run row the same evening it was measured: the hint gives way (option 1 of three). A new user's first row was cutting Remove off in five of six translations because the game picker stretched to fit its empty-state hint.
+
+**Decision:** The row's actions are an `ActionsRunPanel`: a horizontal StackPanel in which one marked child, the picker's cell, gets only the width left once everything else in the row has what it needs, down to its own MinWidth and no further. The row's grid is a `RowGrid`, which remembers the width it was given and tells the run to measure again when that changes. **The rule runs inside the measure pass.** A first version set the hint's width from a SizeChanged handler; it worked in one window but needed a second layout pass, and in the render tests, where every earlier window is alive on one thread, that pass had not arrived when the test measured. It was replaced rather than worked around.
+
+**Consequences:** Remove is whole in all seven languages at the default width, with or without a saved game, and the English hint still shows in full. A long game name in the picker now gives way the same way. At the 860 px minimum some languages still cut Remove because their buttons are wider than the row (French by 36 DIP); the hint no longer adds to that. Both classes subclass the WPF type they replace, so every test that finds the row by "a StackPanel in a Grid" still does. The translated hints trim to things like "Ajoutez via la…"; shortening them is now a copy improvement.
+
+**Evidence:** `src/ROROROblox.App/Controls/RowActionsLayout.cs`; `ActionsRunPanelTests`; four tests in `LabelWrapMeasurementTests` (default width in seven languages, minimum width in seven, the English hint in full, narrowing a window that already fit), mutation-checked; `docs/investigations/2026-11-10-new-user-walk-other-languages.md`.

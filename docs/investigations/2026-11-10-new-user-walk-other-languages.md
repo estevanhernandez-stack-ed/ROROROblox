@@ -60,7 +60,7 @@ saved game.
 the UK is English. It is a first-impression defect in the translated interface, measured, and
 nothing more is claimed for it.
 
-**Not fixed, on purpose.** The fix is a layout ruling, and the row's layout has been ruled on
+**Fixed later the same evening; see the last section.** What follows is how it stood when it was found. The fix is a layout ruling, and the row's layout has been ruled on
 before (the C2 rulings, 2026-11-02). The options:
 
 1. **Let the hint give way.** The hint trims with an ellipsis before Remove clips, at any width.
@@ -78,3 +78,40 @@ widths, fails if any grows, and fails if one shrinks without the table being low
 
 A clean-VM walk as a Store user in Portuguese and Polish: install, first run, add an account,
 first launch. That is the test this note stands in for.
+
+## The fix (2026-11-10, the owner's ruling: option 1)
+
+The picker gives way. The row's actions are now an `ActionsRunPanel`, a horizontal StackPanel in
+which one marked child, the picker's cell, is handed only the width that is left once everything
+else in the row has what it needs. The row's grid is a `RowGrid`, a Grid that remembers the width it
+was given, which is the one fact the actions column cannot otherwise know (a Grid measures an Auto
+column with unlimited width). Both are in `src/ROROROblox.App/Controls/RowActionsLayout.cs`.
+
+| Language | No saved game, default width, before | After |
+|---|---|---|
+| French | 54 DIP of Remove hidden | none |
+| Russian | 49 | none |
+| German | 48 | none |
+| Portuguese (Brazil) | 19 | none |
+| Spanish | 4 | none |
+| English, Polish | none | none |
+
+- The English hint still shows in full at the default width. It trims only when there is no room.
+- At the minimum width (860) the hint costs Remove nothing in any language. Some languages still cut
+  Remove there because their buttons are wider than the row: French hides 36 DIP at 860 with or
+  without the hint. That is a separate, older limit and is not changed here.
+- Narrowing a window that already fit squeezes the picker again.
+- Every pinned row measurement in the suite is unchanged.
+
+**The first attempt was thrown away, and why is worth keeping.** It set the hint's width from a
+SizeChanged handler. It worked in a single window, and a probe showed layout coming fully to rest.
+But it needed a second layout pass, and in the render tests every window an earlier test built is
+still alive on the same thread and re-lays-out on each language switch, so WPF's layout manager
+overran its time budget and the handler had not fired when the test measured. Each test passed alone
+and failed after another one. Four attempts to make the tests wait for it all failed or timed out.
+The rule now runs inside the measure pass, so there is no second pass to wait for: the same tests
+went from about 100 seconds and flaky to 10 seconds and stable.
+
+**Left as it is:** the French hint now reads "Ajoutez via la…" on a new user's row, which loses the
+word that matters. Shorter hints in the five languages would read better. That is a copy change and
+no longer a layout problem.
