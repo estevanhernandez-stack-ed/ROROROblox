@@ -86,29 +86,27 @@ Problemas conhecidos do Roblox — problemas do lado do Roblox, o que fazer e o 
 Entrar de novo se cair — um alt expulso ou preso fora do jogo é fechado e entra de novo sozinho, nunca a sua conta principal
 ```
 
-## What's new in this version (v1.36.0.0, ≤1500 chars)
+## What's new in this version (v1.37.0.0, ≤1500 chars)
 
 ```
-v1.36.0.0
+v1.37.0.0
 
-Suas contas à primeira vista
+Menos becos sem saída na entrada
 
-• Cada conta mostra seus Robux, Plus e amigos online, com uma
-  nota que você mesmo escreve.
-• Abra uma conta para ver os jogos recentes, favoritos e
-  servidores privados dela, e jogue qualquer um com um clique.
-• Quando uma conta precisa de você, um selo diz por quê:
-  “Sessão expirada”, “Requer verificação” ou “Limitado pelo
-  Roblox”. Um clique começa a correção.
-• “Jogos” agora é a “Biblioteca”: todo jogo que você jogou,
-  favoritou ou salvou, em grade ou lista. Pesquise, filtre,
-  cole um link de jogo e escolha quem joga com “Jogar como”.
-• O tour de boas-vindas começa com uma conta; as dicas para
-  várias contas vêm depois.
-• O tempo parado agora conta para a conta em que você realmente
-  jogou, mesmo quando você troca de janela rápido.
-• Processos do Roblox em segundo plano que nunca abriram uma
-  janela fecham sozinhos depois de dois minutos.
+• Se este PC não tem um Roblox que o RoRoRo consiga abrir, o
+  RoRoRo agora avisa e mostra o download, em vez de uma mensagem
+  do Windows. Isso acontece quando o Roblox veio da Microsoft
+  Store: baixe em roblox.com; os dois podem continuar
+  instalados.
+• Adicionar uma conta que você já salvou não cria mais uma
+  segunda cópia. O RoRoRo renova o login dela e avisa para
+  adicionar uma conta do Roblox diferente se quiser rodar duas
+  ao mesmo tempo.
+• Novos limites de FPS: 75, 100 e 180, para monitores nessas
+  taxas.
+• Depois de alguns dias bons, o RoRoRo pode pedir uma vez uma
+  avaliação na Microsoft Store. Qualquer resposta encerra o
+  pedido de vez.
 
 Saia do RoRoRo antes de atualizar pela Store: clique com o
 botão direito no ícone da bandeja e escolha “Sair”.

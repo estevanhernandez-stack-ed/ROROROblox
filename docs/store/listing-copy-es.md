@@ -86,30 +86,26 @@ Problemas conocidos de Roblox — problemas del lado de Roblox, qué hacer y la 
 Volver a unirse si se desconecta: un alt expulsado o atascado fuera del juego se cierra y vuelve a unirse solo, nunca tu cuenta principal
 ```
 
-## What's new in this version (v1.36.0.0, ≤1500 chars)
+## What's new in this version (v1.37.0.0, ≤1500 chars)
 
 ```
-v1.36.0.0
+v1.37.0.0
 
-Tus cuentas, de un vistazo
+Menos callejones sin salida al empezar
 
-• Cada cuenta muestra sus Robux, Plus y amigos en línea, con
-  una nota que escribes tú.
-• Abre una cuenta para ver sus juegos recientes, favoritos y
-  servidores privados, y juega a cualquiera con un clic.
-• Cuando una cuenta te necesita, una insignia dice por qué:
-  «Sesión caducada», «Requiere verificación» o «Limitado por
-  Roblox». Un clic inicia el arreglo.
-• «Juegos» ahora es la «Biblioteca»: todos los juegos que has
-  jugado, marcado como favoritos o guardado, en cuadrícula o en
-  lista. Búscalos, fíltralos, pega un enlace de juego y elige
-  quién juega con «Jugar como».
-• El recorrido de bienvenida empieza con una cuenta; los
-  consejos para varias cuentas vienen después.
-• El tiempo inactivo ahora cuenta para la cuenta con la que
-  jugaste de verdad, aunque cambies de ventana rápido.
-• Los procesos de Roblox en segundo plano que nunca abrieron
-  una ventana se cierran solos a los dos minutos.
+• Si este PC no tiene un Roblox que RoRoRo pueda iniciar, RoRoRo
+  ahora te lo dice y te muestra la descarga, en lugar de un
+  mensaje de Windows. Pasa cuando Roblox viene de Microsoft
+  Store: descárgalo de roblox.com; los dos pueden quedarse
+  instalados.
+• Añadir una cuenta que ya tenías guardada ya no crea una segunda
+  copia. RoRoRo renueva su inicio de sesión y te dice que añadas
+  una cuenta de Roblox diferente para usar dos a la vez.
+• Nuevos límites de FPS: 75, 100 y 180, para monitores que
+  funcionan a esas frecuencias.
+• Tras unos días buenos, RoRoRo puede pedirte una vez una
+  valoración en Microsoft Store. Cualquier respuesta lo cierra
+  para siempre.
 
 Sal de RoRoRo antes de actualizar desde la Store: haz clic
 derecho en el icono de la bandeja y elige «Salir».

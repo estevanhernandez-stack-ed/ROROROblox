@@ -85,30 +85,25 @@ Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
-## What's new in this version (v1.36.0.0, ≤1500 chars)
+## What's new in this version (v1.37.0.0, ≤1500 chars)
 
 ```
-v1.36.0.0
+v1.37.0.0
 
-Twoje konta rzutem oka
+Mniej ślepych zaułków na starcie
 
-• Każde konto pokazuje swoje Robux, Plus i znajomych online,
-  razem z notatką, którą piszesz samodzielnie.
-• Otwórz konto, żeby zobaczyć jego ostatnie gry, ulubione i
-  prywatne serwery, i zagraj w dowolną jednym kliknięciem.
-• Gdy konto cię potrzebuje, plakietka mówi dlaczego: „Sesja
-  wygasła”, „Wymaga weryfikacji” albo „Ograniczone przez
-  Roblox”. Jedno kliknięcie zaczyna naprawę.
-• „Gry” to teraz „Biblioteka”: wszystkie gry, w które grasz,
-  które masz w ulubionych albo zapisane, w siatce lub na liście.
-  Przeszukuj, filtruj, wklej link do gry i wybierz, kto gra,
-  przez „Graj jako”.
-• Przewodnik powitalny zaczyna się od jednego konta; wskazówki
-  dla kilku kont przychodzą potem.
-• Czas bezczynności liczy się teraz dla konta, na którym
-  naprawdę grasz, nawet gdy szybko przełączasz okna.
-• Procesy Roblox w tle, które nigdy nie otworzyły okna, same
-  się zamykają po dwóch minutach.
+• Jeśli na tym komputerze nie ma Roblox, który RoRoRo może
+  uruchomić, RoRoRo teraz to mówi i pokazuje pobieranie, zamiast
+  komunikatu Windows. Dzieje się tak, gdy Roblox pochodzi z
+  Microsoft Store: pobierz go z roblox.com, oba mogą zostać
+  zainstalowane.
+• Dodanie konta, które już masz zapisane, nie tworzy drugiej
+  kopii. RoRoRo odświeża jego logowanie i podpowiada, żeby dodać
+  inne konto Roblox, jeśli chcesz uruchomić dwa naraz.
+• Nowe limity FPS: 75, 100 i 180, dla monitorów o takim
+  odświeżaniu.
+• Po kilku dobrych dniach RoRoRo może raz poprosić o ocenę w
+  Microsoft Store. Każda odpowiedź kończy sprawę na dobre.
 
 Zakończ RoRoRo przed aktualizacją ze Store: kliknij prawym
 przyciskiem ikonę w zasobniku i wybierz „Zakończ”.

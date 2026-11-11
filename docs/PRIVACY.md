@@ -42,6 +42,8 @@ permalink: /privacy/
 | `streamer-identities.dat` *(v1.11+)* | The invented names streamer mode assigns to your friends (account identities live in `accounts.dat`) | Plain text — holds no secrets despite the extension |
 | `last-known-mutex.txt`, `.welcome-shown` | The last verified singleton name from the compatibility feed; a marker that the welcome tour has been shown | Plain text — no secrets |
 | `known-issues.cache.json` + `.sig`, `known-issues-dismissed.json` *(v1.31+)* | The last verified copy of the known Roblox issues list and its signature (re-verified every time it is loaded); the ids of the notices you closed | Plain text — no secrets, nothing about you |
+| `last-exit.json` *(v1.35+)* | How the previous session ended (a normal quit, Windows shutting down, or a crash) and when; after a crash, the error's type and message. Local only; nothing is transmitted. | Plain text — no secrets |
+| `rating-ask.json` *(v1.37+, Microsoft Store installs only)* | Up to three dates on which a launch worked, and your answer to the one-time request for a Store rating. Local only; nothing is transmitted. | Plain text — no secrets |
 
 **Where the "app's local data folder" actually is depends on your install, and Windows decides it rather than RORORO.** The rule for packaged apps — which the Microsoft Store and sideload MSIX builds both are — is that Windows writes to a real AppData folder **only if that folder already exists on the PC**, and otherwise redirects the writes into the app's own package folder:
 
