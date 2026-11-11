@@ -2,7 +2,9 @@
 
 Drafted 2026-11-10. **The four Store replies were posted that evening** through the Partner Center
 reviews page, with the bracketed sentences kept and unbracketed (their fixes ship in v1.37). A Store
-reply cannot be edited after sending. **The issue #112 reply has not been posted.** Store replies are public,
+reply cannot be edited after sending. **The issue #112 reply was posted by the owner the same evening,**
+with one bullet added in his own words: what cleared the flag on his own account was going back to
+Roblox's support chat bot until the challenges stopped, which he cannot prove was the cause. Store replies are public,
 capped at 1,000 characters, and written in the reviewer's language. Each stays inside the standing
 lines: no "safe", no "undetectable", no promise Roblox approves.
 
