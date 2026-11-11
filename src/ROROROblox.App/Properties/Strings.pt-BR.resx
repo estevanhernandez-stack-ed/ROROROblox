@@ -412,7 +412,7 @@
     <value>Adicionar uma etiqueta a esta conta</value>
   </data>
   <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
-    <value>Adicione na Biblioteca</value>
+    <value>Na Biblioteca</value>
   </data>
   <data name="MainWindow_AddTag" xml:space="preserve">
     <value>adicionar etiqueta</value>

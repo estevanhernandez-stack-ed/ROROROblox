@@ -112,6 +112,34 @@ and failed after another one. Four attempts to make the tests wait for it all fa
 The rule now runs inside the measure pass, so there is no second pass to wait for: the same tests
 went from about 100 seconds and flaky to 10 seconds and stable.
 
-**Left as it is:** the French hint now reads "Ajoutez via la…" on a new user's row, which loses the
+**Left as it was that evening (done since; see below):** the French hint now reads "Ajoutez via la…" on a new user's row, which loses the
 word that matters. Shorter hints in the five languages would read better. That is a copy change and
 no longer a layout problem.
+
+## The hints were shortened (2026-11-10)
+
+Each of the five hints that trimmed now fits the room its own language's row leaves at the default
+width. The verb goes and the place stays; French has room for the word alone.
+
+| Language | Before | Width | Room | After | Width |
+|---|---|---|---|---|---|
+| German | In der Bibliothek hinzufügen | 145.9 | 93 | In der Bibliothek | 84.6 |
+| French | Ajoutez via la Bibliothèque | 138.1 | 79 | Bibliothèque | 67.0 |
+| Russian | Добавьте в Библиотеку | 136.3 | 85 | В Библиотеке | 77.6 |
+| Portuguese (Brazil) | Adicione na Biblioteca | 115.0 | 96 | Na Biblioteca | 69.4 |
+| Spanish | Añade en la Biblioteca | 115.9 | 107 | En la Biblioteca | 79.5 |
+| English | Add in the Library | 92.7 | fits | unchanged | |
+| Polish | Dodaj w Bibliotece | 96.0 | fits | unchanged | |
+
+Widths are DIP at the hint's own font, measured in the rendered row. "Room" is what the trimmed hint
+was showing, so it is a floor on the real room, not the exact figure.
+
+Measured and not used, in case a wording gets swapped: Spanish "Usa la Biblioteca" 86.3,
+"Ve a la Biblioteca" 90.0, "Añade en Biblioteca" 103.0; Portuguese "Use a Biblioteca" 82.5,
+"Abra a Biblioteca" 88.5; German "Bibliothek öffnen" 87.6, "Zur Bibliothek" 72.5; Russian
+"Из Библиотеки" 85.9 (too tight), "См. Библиотеку" 89.3 (too wide); French "Voir Bibliothèque" 89.2,
+"Via la Bibliothèque" 97.9, "Dans la Bibliothèque" 107.3 (all too wide: French has 80 DIP at most,
+because the picker is already at its minimum width there).
+
+The French hint is a bare noun, which is the weakest of the five. It matches the header button of
+the same name on the same screen, and it beats "Ajoutez via la…".

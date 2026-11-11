@@ -472,7 +472,8 @@ public class LibraryViewModelTests : IDisposable
     [InlineData("fr", "Bibliothèque", "Bibliothèque")]
     [InlineData("pl", "Biblioteka", "Bibliotece")]
     [InlineData("pt-BR", "Biblioteca", "Biblioteca")]
-    [InlineData("ru", "Библиотека", "Библиотеку")]
+    // 2026-11-10: the hint was shortened to fit the row ("В Библиотеке"), so the case it uses changed.
+    [InlineData("ru", "Библиотека", "Библиотеке")]
     public void TheRailTitleToolbarAndHeading_ReadLibrary_AndTheHintNamesIt(string culture, string word, string hintForm)
     {
         TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
