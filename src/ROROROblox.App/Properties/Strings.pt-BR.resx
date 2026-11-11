@@ -3393,6 +3393,15 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
     <value>Dispensar o aviso de problema conhecido do Roblox</value>
   </data>
+  <data name="MainWindow_CrashNotice" xml:space="preserve">
+    <value>O RoRoRo fechou de forma inesperada da última vez. Se puder, salve um pacote de suporte em “Diagnóstico” e envie para support@626labs.dev.</value>
+  </data>
+  <data name="MainWindow_OpenDiagnostics" xml:space="preserve">
+    <value>Abrir Diagnóstico</value>
+  </data>
+  <data name="MainWindow_DismissCrashNotice" xml:space="preserve">
+    <value>Dispensar o aviso de fechamento inesperado</value>
+  </data>
   <data name="MainWindow_RatingAsk" xml:space="preserve">
     <value>Se o RoRoRo está funcionando para você, uma avaliação na Microsoft Store ajuda outros jogadores a encontrá-lo.</value>
   </data>

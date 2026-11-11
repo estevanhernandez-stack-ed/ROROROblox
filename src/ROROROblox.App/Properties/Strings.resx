@@ -2952,6 +2952,18 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
     <value>Dismiss the known Roblox issue notice</value>
   </data>
+  <data name="MainWindow_CrashNotice" xml:space="preserve">
+    <value>RoRoRo closed unexpectedly last time. If you can, save a support bundle in Diagnostics and send it to support@626labs.dev.</value>
+    <comment>Shown in the main window's status strip on the start after a recorded crash (2026-11-10). "Diagnostics" is the page's own label. The email address stays verbatim.</comment>
+  </data>
+  <data name="MainWindow_OpenDiagnostics" xml:space="preserve">
+    <value>Open Diagnostics</value>
+    <comment>Button on the crash notice; opens the Diagnostics page.</comment>
+  </data>
+  <data name="MainWindow_DismissCrashNotice" xml:space="preserve">
+    <value>Dismiss the crash notice</value>
+    <comment>Accessible name of the Dismiss button on the crash notice.</comment>
+  </data>
   <data name="MainWindow_RatingAsk" xml:space="preserve">
     <value>If RoRoRo is working for you, a rating on the Microsoft Store helps other players find it.</value>
     <comment>The one-time rating ask in the main window's status strip (2026-11-10). "Microsoft Store" stays verbatim.</comment>

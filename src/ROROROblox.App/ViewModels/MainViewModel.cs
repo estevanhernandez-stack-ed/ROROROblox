@@ -340,6 +340,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
         OpenKnownIssuesCommand = new RelayCommand(() => OpenShellPage(Shell.ShellPage.KnownRobloxIssues));
         DismissKnownIssueNoticeCommand = new RelayCommand(() => _knownIssuesNotice?.Dismiss());
+        OpenDiagnosticsFromCrashNoticeCommand = new RelayCommand(() =>
+        {
+            CrashNoticeText = string.Empty;
+            OpenShellPage(Shell.ShellPage.Diagnostics);
+        });
+        DismissCrashNoticeCommand = new RelayCommand(() => CrashNoticeText = string.Empty);
         RateOnStoreCommand = new RelayCommand(() => AnswerRatingAsk(Core.RatingAnswer.Rated));
         DismissRatingAskCommand = new RelayCommand(() => AnswerRatingAsk(Core.RatingAnswer.NotNow));
         DismissBloxstrapWarningCommand = new RelayCommand(_ => _ = DismissBloxstrapWarningAsync());
@@ -848,6 +854,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenKnownIssuesCommand { get; }
 
     public ICommand DismissKnownIssueNoticeCommand { get; }
+
+    /// <summary>The crash notice's action: opens Diagnostics, where Save support bundle lives.</summary>
+    public ICommand OpenDiagnosticsFromCrashNoticeCommand { get; }
+
+    /// <summary>Dismisses the crash notice for this session.</summary>
+    public ICommand DismissCrashNoticeCommand { get; }
 
     /// <summary>Opens the Store's review page and ends the rating ask. See <see cref="RatingAsk"/>.</summary>
     public ICommand RateOnStoreCommand { get; }
@@ -5552,8 +5564,58 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         set
         {
             _ratingAsk = value;
-            RatingAskText = value?.ShouldAsk == true ? Loc.Get("MainWindow_RatingAsk") : string.Empty;
+            RefreshStartupNotices();
         }
+    }
+
+    // === The crash notice (2026-11-10) ===
+    //
+    // last-exit.json has recorded how the previous session ended since v1.35, and the next start
+    // only logged it: a crash was a window that vanished and then nothing. With no telemetry, a
+    // support bundle the person chooses to send is the only way a crash reaches us, so a start
+    // that follows a recorded crash says so and points at Diagnostics. Only a recorded crash
+    // counts. "unknown" is a session nobody got to end (End Task, a Store update, a power cut),
+    // and calling that a crash would put this in front of everyone after every Store update.
+
+    private Core.Diagnostics.LastExit? _previousExit;
+    private bool _crashedLastTime;
+    private string _crashNoticeText = string.Empty;
+
+    /// <summary>How the previous session ended. Set once by the App at startup.</summary>
+    public Core.Diagnostics.LastExit? PreviousExit
+    {
+        get => _previousExit;
+        set
+        {
+            _previousExit = value;
+            _crashedLastTime = value?.Reason == Core.Diagnostics.LastExitRecorder.Crash;
+            CrashNoticeText = _crashedLastTime ? Loc.Get("MainWindow_CrashNotice") : string.Empty;
+            RefreshStartupNotices();
+        }
+    }
+
+    /// <summary>The crash row's text; empty collapses the row, like the other rows of the strip.</summary>
+    public string CrashNoticeText
+    {
+        get => _crashNoticeText;
+        private set
+        {
+            if (_crashNoticeText == value) return;
+            _crashNoticeText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// The two notices a start can open with. A start that reports a crash does not also ask for a
+    /// rating, whichever order the App hands them over in, and dismissing the crash notice does not
+    /// bring the ask back in the same session. The ask is not answered, so a later start shows it.
+    /// </summary>
+    private void RefreshStartupNotices()
+    {
+        RatingAskText = !_crashedLastTime && _ratingAsk?.ShouldAsk == true
+            ? Loc.Get("MainWindow_RatingAsk")
+            : string.Empty;
     }
 
     /// <summary>The rating row's text; empty collapses the row, like the other rows of the strip.</summary>

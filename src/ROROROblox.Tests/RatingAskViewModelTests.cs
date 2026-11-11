@@ -141,9 +141,10 @@ public sealed class RatingAskViewModelTests : IDisposable
             .Where(n => n.Length > 0)
             .ToList();
 
-        // Vacuity floor: the strip had five rows before the rating ask.
-        Assert.True(rows.Count >= 6, $"expected at least six rows in the status strip, found {rows.Count}: the scan is not seeing them");
+        // Vacuity floor: the strip had five rows before the rating ask and the crash notice.
+        Assert.True(rows.Count >= 7, $"expected at least seven rows in the status strip, found {rows.Count}: the scan is not seeing them");
         Assert.Contains("RatingAskText", rows);
+        Assert.Contains("CrashNoticeText", rows);
         var missing = rows.Where(r => !named.Contains(r)).ToList();
         Assert.True(missing.Count == 0,
             "these status-strip rows are not named in the strip's collapse condition, so the strip hides "

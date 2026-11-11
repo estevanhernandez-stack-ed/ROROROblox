@@ -760,6 +760,9 @@ public partial class App : Application
         _services.GetRequiredService<MainViewModel>().ShellPageOpener = OpenShellPage;
         _services.GetRequiredService<MainViewModel>().KnownIssuesNotice =
             _services.GetRequiredService<KnownIssues.KnownIssuesNoticeModel>();
+        // How the previous session ended. A recorded crash opens this start with a notice that
+        // points at Diagnostics; set before the rating ask, though either order gives the same result.
+        _services.GetRequiredService<MainViewModel>().PreviousExit = _lastExit?.Previous;
         // The one-time rating ask. Handed over here, at startup, which is the only moment the
         // view model reads it: the ask never appears mid-session.
         _services.GetRequiredService<MainViewModel>().RatingAsk =

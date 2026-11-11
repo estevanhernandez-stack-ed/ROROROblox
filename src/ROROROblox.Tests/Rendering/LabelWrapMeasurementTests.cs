@@ -417,6 +417,74 @@ public class LabelWrapMeasurementTests
     }
 
     /// <summary>
+    /// The row most people see: a healthy account, no badge, at the window's DEFAULT size (900 x 600). The English
+    /// version of this is <c>MainWindowOneAccountFitsTests.AtTheDeclared900px_RemoveAndTheMainPillBothFit</c>, and the
+    /// badge rows are covered in every language below, but nothing measured the plain row in the six translations
+    /// until captures taken on 2026-11-10 showed Remove cut off in French and German. A first-time user in those
+    /// languages opens the app to a clipped button.
+    /// <para>
+    /// THIS IS A RATCHET, NOT A PASS. With no saved game the row's game picker stretches to fit its hint ("Add in the
+    /// Library"), the translated hints are longer, and the stretch pushes Remove off the row. English fits with nothing to
+    /// spare. Once a game is saved every language fits. The numbers below are the DIP of Remove that is hidden today; the
+    /// test fails if any of them grows, and it also fails if one shrinks without the table being lowered, so the fix has
+    /// to move it. The fix itself is a layout ruling (let the hint trim, shorten the hints, or restructure the row) and
+    /// has not been made.
+    /// </para>
+    /// </summary>
+    [WindowRenderFact]
+    public void OnAHealthyRow_AtTheDefaultWidth_RemoveStaysInsideTheRow_InEverySupportedLanguage()
+    {
+        // Hidden DIP of Remove with no saved game, measured 2026-11-10 at 96 DPI. Lower these when the row is fixed.
+        var knownOverflowWithoutSavedGames = new Dictionary<string, double>
+        {
+            ["en"] = 0, ["de"] = 48, ["es"] = 4, ["fr"] = 54, ["pl"] = 0, ["pt-BR"] = 19, ["ru"] = 49,
+        };
+        const double Slack = 2; // font rounding between machines
+        var brand = Brand();
+        var over = new List<string>();
+        var stale = new List<string>();
+        var checkedRows = 0;
+        foreach (var savedGames in new[] { false, true })
+        {
+            foreach (var culture in Cultures)
+            {
+                var previous = TranslationSource.Instance.CurrentCulture;
+                TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
+                try
+                {
+                    var (right, inner) = ThemedWindowRender.Inspect(brand, $"healthy row remove edge [{culture}, savedGames={savedGames}]",
+                        () => PanelWindowFixtures.Build(1, expanded: false, savedGames: savedGames), content =>
+                        {
+                            var row = (Border)ThemedWindowRender.Find(content, fe => fe.Name == "AccountRowBorder" && fe.ActualHeight > 0, "AccountRowBorder");
+                            var remove = ThemedWindowRender.Find(content,
+                                fe => fe is Button && AutomationProperties.GetAutomationId(fe) == "DangerRemove" && fe.Visibility == Visibility.Visible && fe.ActualWidth > 0,
+                                "the row's Remove button");
+                            var edge = RectInRoot(remove, row).Right;
+                            var visible = Math.Min(VisibleRight(remove, row, out _), row.ActualWidth - row.BorderThickness.Right);
+                            return (edge, visible);
+                        });
+                    checkedRows++;
+                    var hidden = Math.Max(0, right - inner);
+                    var allowed = savedGames ? 0 : knownOverflowWithoutSavedGames[culture];
+                    _output.WriteLine($"[{culture}, savedGames={savedGames}] Remove ends at {right:F1}, visible to {inner:F1}, hidden {hidden:F1} (known {allowed:F0})");
+                    if (hidden > allowed + Slack) over.Add($"[{culture}, savedGames={savedGames}] {hidden:F1} DIP of Remove is hidden, more than the known {allowed:F0}");
+                    if (hidden < allowed - Slack) stale.Add($"[{culture}, savedGames={savedGames}] only {hidden:F1} DIP is hidden now; lower the known {allowed:F0}");
+                }
+                finally
+                {
+                    TranslationSource.Instance.CurrentCulture = previous;
+                }
+            }
+        }
+
+        Assert.Equal(2 * Cultures.Length, checkedRows);
+        Assert.True(over.Count == 0,
+            "Remove is cut off further than the recorded amount on a healthy row at the default window size: " + string.Join("; ", over));
+        Assert.True(stale.Count == 0,
+            "The row got better and the ratchet did not move with it: " + string.Join("; ", stale));
+    }
+
+    /// <summary>
     /// Item 13 ruling (2026-11-03): on a health-badge row Re-authenticate takes Launch As's slot, and Remove stays inside
     /// the row at the declared 900 px in every language. The label walk checks text only, so a Remove whose label fits
     /// while its own border is cut off at the row edge passed it; this checks the button's box.

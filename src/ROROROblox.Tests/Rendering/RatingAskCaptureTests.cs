@@ -69,7 +69,7 @@ public class RatingAskCaptureTests
         return ask;
     }
 
-    private static byte[] Render(string themeId, string? culture)
+    private static byte[] Render(string themeId, string? culture, bool crash = false)
     {
         var stateDir = Path.Combine(Path.GetTempPath(), "rororo-rating-capture-state-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(stateDir);
@@ -83,7 +83,15 @@ public class RatingAskCaptureTests
                 () =>
                 {
                     var window = PanelWindowFixtures.Build(accounts: 3, expanded: false);
-                    ((MainViewModel)window.DataContext).RatingAsk = DueAsk(stateDir);
+                    var vm = (MainViewModel)window.DataContext;
+                    if (crash)
+                    {
+                        vm.PreviousExit = new LastExit(LastExitRecorder.Crash, "System.InvalidOperationException 0x80131509 made up", DateTimeOffset.UnixEpoch);
+                    }
+                    else
+                    {
+                        vm.RatingAsk = DueAsk(stateDir);
+                    }
                     return window;
                 },
                 root =>
@@ -121,6 +129,16 @@ public class RatingAskCaptureTests
         foreach (var (theme, culture) in new[] { ("brand", (string?)null), ("flatline", null), ("brand", "de"), ("brand", "ru") })
         {
             File.WriteAllBytes(Path.Combine(CaptureDir(), $"rating-ask-{theme}-{culture ?? "en"}.png"), Render(theme, culture));
+        }
+    }
+
+    /// <summary>The crash notice in the same strip: English, and the two longest translations.</summary>
+    [OptInFact]
+    public void WriteTheCrashNoticeCaptures()
+    {
+        foreach (var (theme, culture) in new[] { ("brand", (string?)null), ("brand", "de"), ("brand", "fr") })
+        {
+            File.WriteAllBytes(Path.Combine(CaptureDir(), $"crash-notice-{theme}-{culture ?? "en"}.png"), Render(theme, culture, crash: true));
         }
     }
 }
