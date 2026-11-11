@@ -2063,6 +2063,7 @@
                                 <Condition Binding="{Binding ContestedBannerText}" Value="" />
                                 <Condition Binding="{Binding FpsCapWarningText}" Value="" />
                                 <Condition Binding="{Binding KnownIssueNoticeText}" Value="" />
+                                <Condition Binding="{Binding CrashNoticeText}" Value="" />
                                 <Condition Binding="{Binding RatingAskText}" Value="" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -2174,6 +2175,40 @@
                             Content="{loc:Loc MainWindow_Dismiss}"
                             AutomationProperties.Name="{loc:Loc MainWindow_DismissKnownIssueNotice}"
                             Command="{Binding DismissKnownIssueNoticeCommand}"
+                            Padding="10,4"
+                            Margin="4,0,0,0"
+                            FontSize="{DynamicResource BodyFontSize}" />
+                </Grid>
+                <!-- The crash notice (2026-11-10). Shown on the start after a RECORDED crash (never after
+                     a kill, a Store update or a power cut, which leave no record). With no telemetry, a
+                     support bundle the person chooses to send is the only way a crash reaches us. The
+                     same shape as the known-issues row: message first, then its two actions. A start
+                     that shows this does not also show the rating ask below. -->
+                <Grid Margin="0,4,0,0"
+                      Visibility="{Binding CrashNoticeText, Converter={StaticResource StringToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding CrashNoticeText}"
+                               FontSize="{DynamicResource BodyFontSize}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource WhiteBrush}" />
+                    <Button Grid.Column="1"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Content="{loc:Loc MainWindow_OpenDiagnostics}"
+                            Command="{Binding OpenDiagnosticsFromCrashNoticeCommand}"
+                            Padding="10,4"
+                            Margin="8,0,0,0"
+                            FontSize="{DynamicResource BodyFontSize}" />
+                    <Button Grid.Column="2"
+                            Style="{StaticResource GhostButtonStyle}"
+                            Content="{loc:Loc MainWindow_Dismiss}"
+                            AutomationProperties.Name="{loc:Loc MainWindow_DismissCrashNotice}"
+                            Command="{Binding DismissCrashNoticeCommand}"
                             Padding="10,4"
                             Margin="4,0,0,0"
                             FontSize="{DynamicResource BodyFontSize}" />

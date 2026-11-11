@@ -3393,6 +3393,15 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
     <value>Скрыть уведомление об известной проблеме Roblox</value>
   </data>
+  <data name="MainWindow_CrashNotice" xml:space="preserve">
+    <value>В прошлый раз RoRoRo закрылся неожиданно. Если можете, сохраните пакет поддержки в разделе «Диагностика» и отправьте его на support@626labs.dev.</value>
+  </data>
+  <data name="MainWindow_OpenDiagnostics" xml:space="preserve">
+    <value>Открыть диагностику</value>
+  </data>
+  <data name="MainWindow_DismissCrashNotice" xml:space="preserve">
+    <value>Скрыть уведомление о сбое</value>
+  </data>
   <data name="MainWindow_RatingAsk" xml:space="preserve">
     <value>Если RoRoRo вам подходит, оценка в Microsoft Store поможет другим игрокам его найти.</value>
   </data>

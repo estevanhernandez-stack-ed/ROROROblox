@@ -1032,3 +1032,23 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** The GitHub release is a draft until the Store accepts the build, so the release feed does not announce an update Store users cannot get; the owner can publish earlier. The four Store review replies owed since September were posted the same evening through Partner Center, because the review-response API answered HTTP 500; a Store reply cannot be edited once sent. The reply to issue #112 could not be posted from the session; the owner pasted it the same evening, adding what had worked on his own flagged account (persisting with Roblox's support chat bot).
 
 **Evidence:** `docs/store/submission-packet-1.37.0.0.md` section 8; `release.yml` run 42933722163; tag `v1.37.0.0` on `c80f3cf`.
+
+### 2026-11-10 — A start that follows a recorded crash says so, and only a recorded crash counts
+
+**Context:** `last-exit.json` has recorded how the previous session ended since v1.35 (#246), and the next start only logged it. A crash was a window that vanished and then nothing. The Store reports 219 devices crashing in 30 days and has a stack for 12 of them. With no telemetry, a support bundle someone chooses to send is the only way a crash can reach the developer.
+
+**Decision:** When the previous session's recorded reason is `crash`, the main window's status strip opens with one line asking for a support bundle, with **Open Diagnostics** and **Dismiss**. Diagnostics is where Save support bundle already lives, so nothing about saving was duplicated. **Only `crash` counts.** `unknown` means the session never got to say how it ended (End Task, a Store update, a power cut); treating that as a crash would put the notice in front of everyone after every Store update. The notice never prints the crash detail. A start that shows it does not also show the rating ask, in either hand-over order, and dismissing it does not bring the ask back that session; the ask is not answered, so a later start shows it.
+
+**Consequences:** Native crashes and kills leave `unknown` and get no notice, which is most of what the Store counts as hangs. The notice is per session: it does not persist a dismissal, because the next clean exit replaces the record. The strip now has seven rows; the test that holds its rows to its collapse condition covers the new one.
+
+**Evidence:** `CrashNoticeViewModelTests` (mutation-checked: `unknown` treated as a crash, the rating ask not suppressed, and the row missing from the collapse condition each fail a test); captures in `docs/cycles/2026-11-10-growth-and-quality/captures/`; board item 4.
+
+### 2026-11-10 — The first-run row's clipped Remove is recorded as a ratchet, not fixed
+
+**Context:** Captures made for the crash notice showed Remove cut off in French and German. Measured at the default 900 by 600 with one healthy account and no saved game: 54 DIP hidden in French, 49 in Russian, 48 in German, 19 in Portuguese, 4 in Spanish; English and Polish fit, English with nothing to spare. With a game saved, every language fits. The picker's empty-state hint stretches the picker, and the translated hints are longer.
+
+**Decision:** Not fixed in this change. The fix is a layout ruling on a row whose layout the owner has ruled on before, and the three options trade different things (let the hint trim, shorten five translations, or cap the picker and trim the English hint too). The measurement is pinned as a ratchet in `LabelWrapMeasurementTests`: it fails if any hidden width grows and fails if one shrinks without the table moving. Recommendation on record: let the hint give way before Remove clips.
+
+**Consequences:** A new user in five of the six translated languages still opens the app to a clipped button until the ruling is made. This is not claimed as the cause of the retention gap between markets: Polish fits and retains poorly. A second instrument came out of the same walk, `FormatCultureProbe`, which runs the suite under another regional format; seven display-text assertions fail under it and nothing functional does.
+
+**Evidence:** `docs/investigations/2026-11-10-new-user-walk-other-languages.md`.

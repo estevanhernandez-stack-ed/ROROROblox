@@ -3393,6 +3393,15 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
   <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
     <value>Descartar el aviso de problema conocido de Roblox</value>
   </data>
+  <data name="MainWindow_CrashNotice" xml:space="preserve">
+    <value>RoRoRo se cerró de forma inesperada la última vez. Si puedes, guarda un paquete de soporte en «Diagnóstico» y envíalo a support@626labs.dev.</value>
+  </data>
+  <data name="MainWindow_OpenDiagnostics" xml:space="preserve">
+    <value>Abrir Diagnóstico</value>
+  </data>
+  <data name="MainWindow_DismissCrashNotice" xml:space="preserve">
+    <value>Descartar el aviso de cierre inesperado</value>
+  </data>
   <data name="MainWindow_RatingAsk" xml:space="preserve">
     <value>Si RoRoRo te funciona, una valoración en Microsoft Store ayuda a que otros jugadores lo encuentren.</value>
   </data>
