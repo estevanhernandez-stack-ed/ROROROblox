@@ -125,6 +125,7 @@ With no default game set, Launch As opens the account at Roblox home. Set a defa
 | `%LOCALAPPDATA%\ROROROblox\notify.dat` | Phone-alert settings: the push service you picked, your Pushover user key and application token, your ntfy topic and server. **DPAPI-encrypted.** |
 | `%LOCALAPPDATA%\ROROROblox\favorites.json`, `private-servers.json` | Your games library and saved private servers. Plain text. |
 | `%LOCALAPPDATA%\ROROROblox\session-history.json`, `session-stats.json` | Launch history (last 100 rows) and the stats rollup. Plain text, local only, no telemetry. |
+| `%LOCALAPPDATA%\ROROROblox\rating-ask.json` | Microsoft Store installs only: up to three dates and your answer to the one-time rating request. Plain text, never sent anywhere. |
 | `%LOCALAPPDATA%\ROROROblox\themes\` | Your custom theme files. Plain text. |
 | `%LOCALAPPDATA%\ROROROblox\streamer-identities.dat` | Streamer-mode fake names for friends. Plain text; holds no secrets despite the extension. |
 | `%LOCALAPPDATA%\ROROROblox\logs\` | Daily log files. Cookies and webhook URLs are never written to them. |

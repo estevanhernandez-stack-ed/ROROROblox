@@ -3384,6 +3384,18 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
     <value>Dispensar o aviso de problema conhecido do Roblox</value>
   </data>
+  <data name="MainWindow_RatingAsk" xml:space="preserve">
+    <value>Se o RoRoRo está funcionando para você, uma avaliação na Microsoft Store ajuda outros jogadores a encontrá-lo.</value>
+  </data>
+  <data name="MainWindow_RateRoRoRo" xml:space="preserve">
+    <value>Avaliar o RoRoRo</value>
+  </data>
+  <data name="MainWindow_NotNow" xml:space="preserve">
+    <value>Agora não</value>
+  </data>
+  <data name="MainWindow_DismissRatingAsk" xml:space="preserve">
+    <value>Dispensar o pedido de avaliação</value>
+  </data>
   <data name="MainWindow_KnownRobloxIssues" xml:space="preserve">
     <value>Problemas conhecidos do Roblox</value>
   </data>

@@ -2060,6 +2060,7 @@
                                 <Condition Binding="{Binding ContestedBannerText}" Value="" />
                                 <Condition Binding="{Binding FpsCapWarningText}" Value="" />
                                 <Condition Binding="{Binding KnownIssueNoticeText}" Value="" />
+                                <Condition Binding="{Binding RatingAskText}" Value="" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
                         </MultiDataTrigger>
@@ -2170,6 +2171,40 @@
                             Content="{loc:Loc MainWindow_Dismiss}"
                             AutomationProperties.Name="{loc:Loc MainWindow_DismissKnownIssueNotice}"
                             Command="{Binding DismissKnownIssueNoticeCommand}"
+                            Padding="10,4"
+                            Margin="4,0,0,0"
+                            FontSize="{DynamicResource BodyFontSize}" />
+                </Grid>
+                <!-- The one-time rating ask (2026-11-10). A Store install only, after three separate
+                     days with an attached launch, and only ever handed over at startup, so it is
+                     never on screen in the middle of a launch. The same shape as the known-issues
+                     row above for the same reason: declaration order is reading order, so the
+                     message is read before its two actions. Either button ends it for good. -->
+                <Grid Margin="0,4,0,0"
+                      Visibility="{Binding RatingAskText, Converter={StaticResource StringToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding RatingAskText}"
+                               FontSize="{DynamicResource BodyFontSize}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource WhiteBrush}" />
+                    <Button Grid.Column="1"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Content="{loc:Loc MainWindow_RateRoRoRo}"
+                            Command="{Binding RateOnStoreCommand}"
+                            Padding="10,4"
+                            Margin="8,0,0,0"
+                            FontSize="{DynamicResource BodyFontSize}" />
+                    <Button Grid.Column="2"
+                            Style="{StaticResource GhostButtonStyle}"
+                            Content="{loc:Loc MainWindow_NotNow}"
+                            AutomationProperties.Name="{loc:Loc MainWindow_DismissRatingAsk}"
+                            Command="{Binding DismissRatingAskCommand}"
                             Padding="10,4"
                             Margin="4,0,0,0"
                             FontSize="{DynamicResource BodyFontSize}" />

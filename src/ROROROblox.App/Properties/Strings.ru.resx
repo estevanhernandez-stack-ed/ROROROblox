@@ -3384,6 +3384,18 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
     <value>Скрыть уведомление об известной проблеме Roblox</value>
   </data>
+  <data name="MainWindow_RatingAsk" xml:space="preserve">
+    <value>Если RoRoRo вам подходит, оценка в Microsoft Store поможет другим игрокам его найти.</value>
+  </data>
+  <data name="MainWindow_RateRoRoRo" xml:space="preserve">
+    <value>Оценить RoRoRo</value>
+  </data>
+  <data name="MainWindow_NotNow" xml:space="preserve">
+    <value>Не сейчас</value>
+  </data>
+  <data name="MainWindow_DismissRatingAsk" xml:space="preserve">
+    <value>Скрыть просьбу об оценке</value>
+  </data>
   <data name="MainWindow_KnownRobloxIssues" xml:space="preserve">
     <value>Известные проблемы Roblox</value>
   </data>
