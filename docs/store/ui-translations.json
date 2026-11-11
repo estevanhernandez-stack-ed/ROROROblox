@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "1986347",
-  "generatedUtc": "2026-11-03T19:06:44+00:00",
+  "sourceCommit": "47b1054",
+  "generatedUtc": "2026-11-11T00:13:29+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -29,14 +29,14 @@
     },
     {
       "field": "AboutPage_CookiesAreEncryptedWithWindows",
-      "en": "Cookies are encrypted with Windows DPAPI per user. They never leave this machine.\n                    A copy of accounts.dat moved to another PC will not decrypt.",
+      "en": "Cookies are encrypted with Windows DPAPI per user. They never leave this machine. A copy of accounts.dat moved to another PC will not decrypt.",
       "translations": {
-        "fr": "Les cookies sont chiffrés avec Windows DPAPI, par utilisateur. Ils ne quittent jamais cette machine.\n                    Une copie de accounts.dat déplacée vers un autre PC ne se déchiffrera pas.",
-        "de": "Cookies werden pro Benutzer mit Windows DPAPI verschlüsselt. Sie verlassen diesen Rechner nie.\n                    Eine auf einen anderen PC kopierte accounts.dat lässt sich nicht entschlüsseln.",
-        "ru": "Файлы cookie шифруются с помощью Windows DPAPI для каждого пользователя. Они никогда не покидают этот компьютер.\n                    Копия accounts.dat, перенесённая на другой ПК, не расшифруется.",
-        "pt-br": "Os cookies são criptografados com o Windows DPAPI por usuário. Eles nunca saem desta máquina.\n                    Uma cópia de accounts.dat movida para outro PC não será descriptografada.",
-        "pl": "Pliki cookie są szyfrowane za pomocą Windows DPAPI dla każdego użytkownika. Nigdy nie opuszczają tego komputera.\n                    Kopia accounts.dat przeniesiona na inny komputer nie zostanie odszyfrowana.",
-        "es": "Las cookies se cifran con Windows DPAPI por usuario. Nunca salen de este equipo.\n                    Una copia de accounts.dat trasladada a otro PC no se podrá descifrar."
+        "fr": "Les cookies sont chiffrés avec Windows DPAPI, par utilisateur. Ils ne quittent jamais cette machine. Une copie de accounts.dat déplacée vers un autre PC ne se déchiffrera pas.",
+        "de": "Cookies werden pro Benutzer mit Windows DPAPI verschlüsselt. Sie verlassen diesen Rechner nie. Eine auf einen anderen PC kopierte accounts.dat lässt sich nicht entschlüsseln.",
+        "ru": "Файлы cookie шифруются с помощью Windows DPAPI для каждого пользователя. Они никогда не покидают этот компьютер. Копия accounts.dat, перенесённая на другой ПК, не расшифруется.",
+        "pt-br": "Os cookies são criptografados com o Windows DPAPI por usuário. Eles nunca saem desta máquina. Uma cópia de accounts.dat movida para outro PC não será descriptografada.",
+        "pl": "Pliki cookie są szyfrowane za pomocą Windows DPAPI dla każdego użytkownika. Nigdy nie opuszczają tego komputera. Kopia accounts.dat przeniesiona na inny komputer nie zostanie odszyfrowana.",
+        "es": "Las cookies se cifran con Windows DPAPI por usuario. Nunca salen de este equipo. Una copia de accounts.dat trasladada a otro PC no se podrá descifrar."
       }
     },
     {
@@ -89,14 +89,14 @@
     },
     {
       "field": "AboutPage_RobloxIsATrademarkOf",
-      "en": "\"Roblox\" is a trademark of Roblox Corporation. RoRoRo is not affiliated with,\n                    endorsed by, or sponsored by Roblox Corporation.",
+      "en": "\"Roblox\" is a trademark of Roblox Corporation. RoRoRo is not affiliated with, endorsed by, or sponsored by Roblox Corporation.",
       "translations": {
-        "fr": "« Roblox » est une marque déposée de Roblox Corporation. RoRoRo n'est pas affilié à Roblox Corporation,\n                    ni approuvé ou parrainé par celle-ci.",
-        "de": "„Roblox“ ist eine Marke der Roblox Corporation. RoRoRo ist nicht mit der Roblox Corporation\n                    verbunden, wird von ihr nicht unterstützt oder gesponsert.",
-        "ru": "«Roblox» — товарный знак Roblox Corporation. RoRoRo не аффилирована с Roblox Corporation,\n                    не одобрена и не спонсируется ею.",
-        "pt-br": "\"Roblox\" é uma marca registrada da Roblox Corporation. RoRoRo não é afiliada,\n                    endossada nem patrocinada pela Roblox Corporation.",
-        "pl": "„Roblox” jest znakiem towarowym Roblox Corporation. RoRoRo nie jest powiązane z,\n                    wspierane ani sponsorowane przez Roblox Corporation.",
-        "es": "\"Roblox\" es una marca comercial de Roblox Corporation. RoRoRo no está afiliado a\n                    Roblox Corporation, ni cuenta con su respaldo o patrocinio."
+        "fr": "« Roblox » est une marque déposée de Roblox Corporation. RoRoRo n'est pas affilié à Roblox Corporation, ni approuvé ou parrainé par celle-ci.",
+        "de": "„Roblox“ ist eine Marke der Roblox Corporation. RoRoRo ist nicht mit der Roblox Corporation verbunden, wird von ihr nicht unterstützt oder gesponsert.",
+        "ru": "«Roblox» — товарный знак Roblox Corporation. RoRoRo не аффилирована с Roblox Corporation, не одобрена и не спонсируется ею.",
+        "pt-br": "\"Roblox\" é uma marca registrada da Roblox Corporation. RoRoRo não é afiliada, endossada nem patrocinada pela Roblox Corporation.",
+        "pl": "„Roblox” jest znakiem towarowym Roblox Corporation. RoRoRo nie jest powiązane z, wspierane ani sponsorowane przez Roblox Corporation.",
+        "es": "\"Roblox\" es una marca comercial de Roblox Corporation. RoRoRo no está afiliado a Roblox Corporation, ni cuenta con su respaldo o patrocinio."
       }
     },
     {
@@ -113,14 +113,14 @@
     },
     {
       "field": "AboutPage_RunMultipleRobloxClientsSide",
-      "en": "Run multiple Roblox clients side by side, signed in as different saved accounts.\n                    Holds the Roblox singleton mutex so subsequent clients don't fight for it; uses\n                    Roblox's documented authentication-ticket flow for per-account launches. Clean\n                    reimplementation; not a fork.",
+      "en": "Run multiple Roblox clients side by side, signed in as different saved accounts. Holds the Roblox singleton mutex so subsequent clients don't fight for it; uses Roblox's documented authentication-ticket flow for per-account launches. Clean reimplementation; not a fork.",
       "translations": {
-        "fr": "Exécutez plusieurs clients Roblox côte à côte, connectés avec différents comptes enregistrés.\n                    Retient le mutex singleton de Roblox pour que les clients suivants ne se le disputent pas ; utilise\n                    le flux de ticket d'authentification documenté de Roblox pour les lancements par compte. Réimplémentation\n                    propre ; pas un fork.",
-        "de": "Starte mehrere Roblox-Clients nebeneinander, jeweils mit einem anderen gespeicherten Konto angemeldet.\n                    Hält den Roblox-Singleton-Mutex, damit nachfolgende Clients nicht darum konkurrieren; nutzt\n                    Roblox' dokumentierten Authentifizierungs-Ticket-Ablauf für Starts pro Konto. Saubere\n                    Neuimplementierung, kein Fork.",
-        "ru": "Запускайте несколько клиентов Roblox одновременно, войдя в разные сохранённые аккаунты.\n                    Удерживает singleton-мьютекс Roblox, чтобы последующие клиенты не боролись за него; использует\n                    документированный процесс аутентификационного тикета Roblox для запуска каждого аккаунта. Чистая\n                    переработка; не форк.",
-        "pt-br": "Execute vários clientes do Roblox lado a lado, conectados como contas salvas diferentes.\n                    Mantém o mutex singleton do Roblox para que os clientes seguintes não briguem por ele; usa\n                    o fluxo documentado de ticket de autenticação do Roblox para iniciar cada conta. Reimplementação\n                    limpa; não é um fork.",
-        "pl": "Uruchamiaj wiele klientów Roblox obok siebie, zalogowanych na różne zapisane konta.\n                    Przytrzymuje muteks singletona Roblox, aby kolejne klienty nie biły się o niego; korzysta z\n                    udokumentowanego przez Roblox przepływu biletów uwierzytelniania przy uruchomieniach poszczególnych kont. Czysta\n                    reimplementacja, nie odgałęzienie.",
-        "es": "Ejecuta varios clientes de Roblox uno al lado del otro, con la sesión iniciada en distintas cuentas guardadas.\n                    Mantiene el mutex singleton de Roblox para que los clientes siguientes no compitan por él; usa\n                    el flujo documentado de tickets de autenticación de Roblox para los inicios por cuenta. Reimplementación\n                    limpia; no es un fork."
+        "fr": "Exécutez plusieurs clients Roblox côte à côte, connectés avec différents comptes enregistrés. Retient le mutex singleton de Roblox pour que les clients suivants ne se le disputent pas ; utilise le flux de ticket d'authentification documenté de Roblox pour les lancements par compte. Réimplémentation propre ; pas un fork.",
+        "de": "Starte mehrere Roblox-Clients nebeneinander, jeweils mit einem anderen gespeicherten Konto angemeldet. Hält den Roblox-Singleton-Mutex, damit nachfolgende Clients nicht darum konkurrieren; nutzt Roblox' dokumentierten Authentifizierungs-Ticket-Ablauf für Starts pro Konto. Saubere Neuimplementierung, kein Fork.",
+        "ru": "Запускайте несколько клиентов Roblox одновременно, войдя в разные сохранённые аккаунты. Удерживает singleton-мьютекс Roblox, чтобы последующие клиенты не боролись за него; использует документированный процесс аутентификационного тикета Roblox для запуска каждого аккаунта. Чистая переработка; не форк.",
+        "pt-br": "Execute vários clientes do Roblox lado a lado, conectados como contas salvas diferentes. Mantém o mutex singleton do Roblox para que os clientes seguintes não briguem por ele; usa o fluxo documentado de ticket de autenticação do Roblox para iniciar cada conta. Reimplementação limpa; não é um fork.",
+        "pl": "Uruchamiaj wiele klientów Roblox obok siebie, zalogowanych na różne zapisane konta. Przytrzymuje muteks singletona Roblox, aby kolejne klienty nie biły się o niego; korzysta z udokumentowanego przez Roblox przepływu biletów uwierzytelniania przy uruchomieniach poszczególnych kont. Czysta reimplementacja, nie odgałęzienie.",
+        "es": "Ejecuta varios clientes de Roblox uno al lado del otro, con la sesión iniciada en distintas cuentas guardadas. Mantiene el mutex singleton de Roblox para que los clientes siguientes no compitan por él; usa el flujo documentado de tickets de autenticación de Roblox para los inicios por cuenta. Reimplementación limpia; no es un fork."
       }
     },
     {
@@ -1441,6 +1441,42 @@
         "pt-br": "165 FPS",
         "pl": "165 FPS",
         "es": "165 FPS"
+      }
+    },
+    {
+      "field": "MainWindow_75Fps",
+      "en": "75 FPS",
+      "translations": {
+        "fr": "75 FPS",
+        "de": "75 FPS",
+        "ru": "75 FPS",
+        "pt-br": "75 FPS",
+        "pl": "75 FPS",
+        "es": "75 FPS"
+      }
+    },
+    {
+      "field": "MainWindow_100Fps",
+      "en": "100 FPS",
+      "translations": {
+        "fr": "100 FPS",
+        "de": "100 FPS",
+        "ru": "100 FPS",
+        "pt-br": "100 FPS",
+        "pl": "100 FPS",
+        "es": "100 FPS"
+      }
+    },
+    {
+      "field": "MainWindow_180Fps",
+      "en": "180 FPS",
+      "translations": {
+        "fr": "180 FPS",
+        "de": "180 FPS",
+        "ru": "180 FPS",
+        "pt-br": "180 FPS",
+        "pl": "180 FPS",
+        "es": "180 FPS"
       }
     },
     {
@@ -3217,6 +3253,18 @@
         "pt-br": "O RoRoRo inicia o Roblox pelo handler padrão roblox-player:. Não encontramos esse handler neste PC, o que normalmente significa que o Roblox ainda não está instalado.",
         "pl": "RoRoRo uruchamia Roblox przez standardowy program obsługi roblox-player:. Nie możemy znaleźć tego programu obsługi na tym komputerze, co zwykle oznacza, że Roblox nie jest jeszcze zainstalowany.",
         "es": "RoRoRo inicia Roblox mediante el controlador estándar roblox-player:. No encontramos ese controlador en este PC, lo que normalmente significa que Roblox aún no está instalado."
+      }
+    },
+    {
+      "field": "RobloxNotInstalledWindow_StoreEditionFound",
+      "en": "You have the Microsoft Store edition of Roblox. RoRoRo needs the one from roblox.com, and both can stay installed.",
+      "translations": {
+        "fr": "Vous avez l'édition Microsoft Store de Roblox. RoRoRo a besoin de celle de roblox.com, et les deux peuvent rester installées.",
+        "de": "Du hast die Version von Roblox aus dem Microsoft Store. RoRoRo braucht die Version von roblox.com, und beide können installiert bleiben.",
+        "ru": "У вас установлен Roblox из Microsoft Store. RoRoRo нужна версия с roblox.com, и обе могут оставаться установленными.",
+        "pt-br": "Você tem a edição do Roblox da Microsoft Store. O RoRoRo precisa da versão de roblox.com, e as duas podem continuar instaladas.",
+        "pl": "Masz Roblox w wersji z Microsoft Store. RoRoRo potrzebuje wersji z roblox.com, a obie mogą pozostać zainstalowane.",
+        "es": "Tienes la edición de Roblox de Microsoft Store. RoRoRo necesita la de roblox.com, y las dos pueden quedarse instaladas."
       }
     },
     {
@@ -8392,6 +8440,18 @@
       }
     },
     {
+      "field": "Shell_Msg_AlreadySaved",
+      "en": "{0} is already saved, so its sign-in was refreshed. To run two at once, add a different Roblox account.",
+      "translations": {
+        "fr": "{0} est déjà enregistré, sa connexion a donc été renouvelée. Pour en lancer deux à la fois, ajoutez un autre compte Roblox.",
+        "de": "{0} ist schon gespeichert, daher wurde die Anmeldung aufgefrischt. Um zwei gleichzeitig zu starten, füge ein anderes Roblox-Konto hinzu.",
+        "ru": "{0} уже сохранён, поэтому вход обновлён. Чтобы запустить два сразу, добавьте другой аккаунт Roblox.",
+        "pt-br": "{0} já está salva, então o login dela foi renovado. Para rodar duas ao mesmo tempo, adicione uma conta do Roblox diferente.",
+        "pl": "{0} jest już zapisane, więc odświeżono jego logowanie. Aby uruchomić dwa naraz, dodaj inne konto Roblox.",
+        "es": "{0} ya está guardada, así que se renovó su inicio de sesión. Para usar dos a la vez, añade una cuenta de Roblox diferente."
+      }
+    },
+    {
       "field": "Shell_Msg_NothingToJoin",
       "en": "Nothing to join with — add an account first.",
       "translations": {
@@ -13417,6 +13477,54 @@
         "pt-br": "Dispensar o aviso de problema conhecido do Roblox",
         "pl": "Odrzuć powiadomienie o znanym problemie Roblox",
         "es": "Descartar el aviso de problema conocido de Roblox"
+      }
+    },
+    {
+      "field": "MainWindow_RatingAsk",
+      "en": "If RoRoRo is working for you, a rating on the Microsoft Store helps other players find it.",
+      "translations": {
+        "fr": "Si RoRoRo fonctionne bien pour vous, une note sur le Microsoft Store aide d'autres joueurs à le trouver.",
+        "de": "Wenn RoRoRo für dich funktioniert, hilft eine Bewertung im Microsoft Store anderen Spielern, es zu finden.",
+        "ru": "Если RoRoRo вам подходит, оценка в Microsoft Store поможет другим игрокам его найти.",
+        "pt-br": "Se o RoRoRo está funcionando para você, uma avaliação na Microsoft Store ajuda outros jogadores a encontrá-lo.",
+        "pl": "Jeśli RoRoRo dobrze Ci służy, ocena w Microsoft Store pomoże innym graczom go znaleźć.",
+        "es": "Si RoRoRo te funciona, una valoración en Microsoft Store ayuda a que otros jugadores lo encuentren."
+      }
+    },
+    {
+      "field": "MainWindow_RateRoRoRo",
+      "en": "Rate RoRoRo",
+      "translations": {
+        "fr": "Noter RoRoRo",
+        "de": "RoRoRo bewerten",
+        "ru": "Оценить RoRoRo",
+        "pt-br": "Avaliar o RoRoRo",
+        "pl": "Oceń RoRoRo",
+        "es": "Valorar RoRoRo"
+      }
+    },
+    {
+      "field": "MainWindow_NotNow",
+      "en": "Not now",
+      "translations": {
+        "fr": "Pas maintenant",
+        "de": "Nicht jetzt",
+        "ru": "Не сейчас",
+        "pt-br": "Agora não",
+        "pl": "Nie teraz",
+        "es": "Ahora no"
+      }
+    },
+    {
+      "field": "MainWindow_DismissRatingAsk",
+      "en": "Dismiss the rating request",
+      "translations": {
+        "fr": "Ignorer la demande de note",
+        "de": "Bewertungsanfrage schließen",
+        "ru": "Скрыть просьбу об оценке",
+        "pt-br": "Dispensar o pedido de avaliação",
+        "pl": "Odrzuć prośbę o ocenę",
+        "es": "Descartar la solicitud de valoración"
       }
     },
     {

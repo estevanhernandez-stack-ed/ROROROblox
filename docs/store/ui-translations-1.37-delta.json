@@ -1,0 +1,127 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "dataset": "app-ui-strings",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "47b1054",
+  "generatedUtc": "2026-11-11T00:13:29+00:00",
+  "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
+  "fields": [
+    {
+      "field": "MainWindow_75Fps",
+      "en": "75 FPS",
+      "translations": {
+        "fr": "75 FPS",
+        "de": "75 FPS",
+        "ru": "75 FPS",
+        "pt-br": "75 FPS",
+        "pl": "75 FPS",
+        "es": "75 FPS"
+      }
+    },
+    {
+      "field": "MainWindow_100Fps",
+      "en": "100 FPS",
+      "translations": {
+        "fr": "100 FPS",
+        "de": "100 FPS",
+        "ru": "100 FPS",
+        "pt-br": "100 FPS",
+        "pl": "100 FPS",
+        "es": "100 FPS"
+      }
+    },
+    {
+      "field": "MainWindow_180Fps",
+      "en": "180 FPS",
+      "translations": {
+        "fr": "180 FPS",
+        "de": "180 FPS",
+        "ru": "180 FPS",
+        "pt-br": "180 FPS",
+        "pl": "180 FPS",
+        "es": "180 FPS"
+      }
+    },
+    {
+      "field": "RobloxNotInstalledWindow_StoreEditionFound",
+      "en": "You have the Microsoft Store edition of Roblox. RoRoRo needs the one from roblox.com, and both can stay installed.",
+      "translations": {
+        "fr": "Vous avez l'édition Microsoft Store de Roblox. RoRoRo a besoin de celle de roblox.com, et les deux peuvent rester installées.",
+        "de": "Du hast die Version von Roblox aus dem Microsoft Store. RoRoRo braucht die Version von roblox.com, und beide können installiert bleiben.",
+        "ru": "У вас установлен Roblox из Microsoft Store. RoRoRo нужна версия с roblox.com, и обе могут оставаться установленными.",
+        "pt-br": "Você tem a edição do Roblox da Microsoft Store. O RoRoRo precisa da versão de roblox.com, e as duas podem continuar instaladas.",
+        "pl": "Masz Roblox w wersji z Microsoft Store. RoRoRo potrzebuje wersji z roblox.com, a obie mogą pozostać zainstalowane.",
+        "es": "Tienes la edición de Roblox de Microsoft Store. RoRoRo necesita la de roblox.com, y las dos pueden quedarse instaladas."
+      }
+    },
+    {
+      "field": "Shell_Msg_AlreadySaved",
+      "en": "{0} is already saved, so its sign-in was refreshed. To run two at once, add a different Roblox account.",
+      "translations": {
+        "fr": "{0} est déjà enregistré, sa connexion a donc été renouvelée. Pour en lancer deux à la fois, ajoutez un autre compte Roblox.",
+        "de": "{0} ist schon gespeichert, daher wurde die Anmeldung aufgefrischt. Um zwei gleichzeitig zu starten, füge ein anderes Roblox-Konto hinzu.",
+        "ru": "{0} уже сохранён, поэтому вход обновлён. Чтобы запустить два сразу, добавьте другой аккаунт Roblox.",
+        "pt-br": "{0} já está salva, então o login dela foi renovado. Para rodar duas ao mesmo tempo, adicione uma conta do Roblox diferente.",
+        "pl": "{0} jest już zapisane, więc odświeżono jego logowanie. Aby uruchomić dwa naraz, dodaj inne konto Roblox.",
+        "es": "{0} ya está guardada, así que se renovó su inicio de sesión. Para usar dos a la vez, añade una cuenta de Roblox diferente."
+      }
+    },
+    {
+      "field": "MainWindow_RatingAsk",
+      "en": "If RoRoRo is working for you, a rating on the Microsoft Store helps other players find it.",
+      "translations": {
+        "fr": "Si RoRoRo fonctionne bien pour vous, une note sur le Microsoft Store aide d'autres joueurs à le trouver.",
+        "de": "Wenn RoRoRo für dich funktioniert, hilft eine Bewertung im Microsoft Store anderen Spielern, es zu finden.",
+        "ru": "Если RoRoRo вам подходит, оценка в Microsoft Store поможет другим игрокам его найти.",
+        "pt-br": "Se o RoRoRo está funcionando para você, uma avaliação na Microsoft Store ajuda outros jogadores a encontrá-lo.",
+        "pl": "Jeśli RoRoRo dobrze Ci służy, ocena w Microsoft Store pomoże innym graczom go znaleźć.",
+        "es": "Si RoRoRo te funciona, una valoración en Microsoft Store ayuda a que otros jugadores lo encuentren."
+      }
+    },
+    {
+      "field": "MainWindow_RateRoRoRo",
+      "en": "Rate RoRoRo",
+      "translations": {
+        "fr": "Noter RoRoRo",
+        "de": "RoRoRo bewerten",
+        "ru": "Оценить RoRoRo",
+        "pt-br": "Avaliar o RoRoRo",
+        "pl": "Oceń RoRoRo",
+        "es": "Valorar RoRoRo"
+      }
+    },
+    {
+      "field": "MainWindow_NotNow",
+      "en": "Not now",
+      "translations": {
+        "fr": "Pas maintenant",
+        "de": "Nicht jetzt",
+        "ru": "Не сейчас",
+        "pt-br": "Agora não",
+        "pl": "Nie teraz",
+        "es": "Ahora no"
+      }
+    },
+    {
+      "field": "MainWindow_DismissRatingAsk",
+      "en": "Dismiss the rating request",
+      "translations": {
+        "fr": "Ignorer la demande de note",
+        "de": "Bewertungsanfrage schließen",
+        "ru": "Скрыть просьбу об оценке",
+        "pt-br": "Dispensar o pedido de avaliação",
+        "pl": "Odrzuć prośbę o ocenę",
+        "es": "Descartar la solicitud de valoración"
+      }
+    }
+  ]
+}
