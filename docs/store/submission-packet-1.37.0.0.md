@@ -7,6 +7,9 @@ repository, 28 files and +1,604/−14 under `src/`. Four changes, all from the 2
 
 > **SUBMITTED 2026-11-10.** Submission `1152921505702372154` was committed from the console on the
 > owner's word and is in Certification. See section 8.
+>
+> **PUBLISHED 2026-11-11.** Certified after about 23 hours with no report, live in the public catalog
+> at 18:40 CST, and the GitHub release went Latest at 19:01 CST. See the end of section 8.
 
 ---
 
@@ -146,6 +149,25 @@ Store edition; the rating line on a real Store install; the new FPS caps on a li
 **Not yet:** certification result; publishing the GitHub draft as Latest (held for the Store, the owner's
 call); the clan post; the English product-name test, which is its own hand-made listing submission
 after this one publishes.
+
+**Added 2026-11-11, the day it published.** The "Not yet" paragraph above is the state at commit; this
+is what followed.
+
+| Step | When (2026-11-11, CST) | Evidence |
+|---|---|---|
+| Still certifying | 12:09 and 17:31 | `verify` read `Certification` both times, 16.5 and 22 hours in |
+| Certified | about 18:30 | the owner's report from Partner Center; no certification report. About 23 hours, the longest for this app. The API still read `Certification` at 18:34 |
+| Live on the Store | between 18:34:59 and 18:39:59 | the public displaycatalog served `626LabsLLC.RoRoRoBlox_1.36.0.0` and then `_1.37.0.0`, x64 and arm64; the API then read `Release` |
+| GitHub release published as Latest | 19:01 (2026-11-12 01:01:15 UTC), on the owner's word | 13 assets, not a pre-release; v1.36.0.0 lost the Latest mark |
+
+**What the wait was not.** The submission changed one listing section (What's new) against v1.36. The
+manifest differs by its version number alone, and the only new outbound target in the code is
+`ms-windows-store://review/?ProductId=9NMJCS390KWB`. The keyword set is unchanged and still carries
+bare "roblox" (and "роблокс"), the same 10.1.3 Search Terms class that failed two other 626 Labs apps
+in the three weeks before (a model name on 2026-10-21, a competitor's product title on 2026-11-09). It
+was not flagged here. Nothing in this packet explains 23 hours, and the API gives no reason.
+
+**Still not done:** the clan post; the English product-name test.
 
 **Console:** worktree `_scratch/console-rororo-137`, branch `copy/rororo-1.37`, pinned at `7a400cd`.
 Every command named `--payload out/rororo-live-listing.json`; that lineage still carries the older
