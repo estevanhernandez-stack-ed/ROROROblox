@@ -1084,3 +1084,15 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** The hint no longer says "add" outside English and Polish. The French hint is a bare noun, the weakest of the five; it matches the header button of the same name. An arrow ("→ Bibliothèque") would have fit and was not used: `LibraryViewModelTests` forbids an arrow in this hint from an earlier ruling. That test also pinned the Russian case form, which moved from "Библиотеку" to "Библиотеке". Below the default width a hint can still trim (German at 860); that is the giving-way rule working. Alternatives that were measured are in the investigation note, with widths, for whoever swaps a wording.
 
 **Evidence:** `docs/investigations/2026-11-10-new-user-walk-other-languages.md` (the table); the re-rendered French capture in `docs/cycles/2026-11-10-growth-and-quality/captures/`.
+
+### 2026-11-11 — v1.37.0.0 certified after 23 hours with an unchanged listing; the keyword set stays as it is
+
+**Context:** Submission `1152921505702372154` sat in Certification for about 23 hours, the longest for this app. In the three weeks before, two other 626 Labs apps had failed 10.1.3 Search Terms on a keyword (a model name on 2026-10-21, a competitor's product title on 2026-11-09), and RoRoRo's set carries bare "roblox" (and "роблокс" in Russian), which is another publisher's product name.
+
+**Decision:** Change nothing. The set was not pulled while certifying (nothing can be edited then) and is not pulled now that it passed.
+
+**Consequences:** Measured against v1.36: the listing changed in one section, What's new; the manifest by its version number alone; the only new outbound target in the code is the Store's own review link for this product. So the wait is unexplained, and the API gives no reason for one. A long certification is not a failing one here: 19 hours on v1.36 and 23 on v1.37 both passed. The API also lagged Partner Center, still reading `Certification` after the owner had seen Certified; the public displaycatalog is the reliable signal that a version is live, and it needs no credentials.
+
+**What would revisit it:** a certification report that names a keyword. The fix is then made in Partner Center on the failed submission (the API returns 409 on one), which keeps both packages, and the change is carried into `docs/store/listing-copy.md` and the six language sheets in the same session.
+
+**Evidence:** `docs/store/submission-packet-1.37.0.0.md` section 8; the catalog read 1.36.0.0 at 18:34:59 CST and 1.37.0.0 at 18:39:59 on 2026-11-11; GitHub release Latest at 2026-11-12 01:01:15 UTC.
