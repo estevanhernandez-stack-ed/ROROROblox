@@ -1,0 +1,163 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "dataset": "app-ui-strings",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "ee03342",
+  "generatedUtc": "2026-11-14T19:09:48+00:00",
+  "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
+  "fields": [
+    {
+      "field": "MainWindow_AddGamesFromToolsGames",
+      "en": "Add in the Library",
+      "translations": {
+        "fr": "Bibliothèque",
+        "de": "In der Bibliothek",
+        "ru": "В Библиотеке",
+        "pt-br": "Na Biblioteca",
+        "pl": "Dodaj w Bibliotece",
+        "es": "En la Biblioteca"
+      }
+    },
+    {
+      "field": "CoreMsg_Launch_NoDefaultGame",
+      "en": "No game to open. Pick one in the Library, then launch again.",
+      "translations": {
+        "fr": "Aucun jeu à ouvrir. Choisissez-en un dans la Bibliothèque, puis relancez.",
+        "de": "Kein Spiel zum Öffnen. Wähle eines in der Bibliothek aus und starte dann erneut.",
+        "ru": "Нет игры для запуска. Выберите её в Библиотеке и запустите снова.",
+        "pt-br": "Nenhum jogo para abrir. Escolha um na Biblioteca e inicie de novo.",
+        "pl": "Brak gry do otwarcia. Wybierz ją w Bibliotece i uruchom ponownie.",
+        "es": "No hay ningún juego que abrir. Elige uno en la Biblioteca y vuelve a iniciar."
+      }
+    },
+    {
+      "field": "CoreMsg_Launch_AuthTicketFailed",
+      "en": "Couldn't sign this account in to Roblox: {0}",
+      "translations": {
+        "fr": "Impossible de connecter ce compte à Roblox : {0}",
+        "de": "Dieses Konto konnte nicht bei Roblox angemeldet werden: {0}",
+        "ru": "Не удалось войти в Roblox с этим аккаунтом: {0}",
+        "pt-br": "Não foi possível entrar no Roblox com esta conta: {0}",
+        "pl": "Nie udało się zalogować tego konta do Roblox: {0}",
+        "es": "No se pudo iniciar sesión en Roblox con esta cuenta: {0}"
+      }
+    },
+    {
+      "field": "CoreMsg_Launch_ProcessStartFailed",
+      "en": "Windows couldn't start Roblox: {0}",
+      "translations": {
+        "fr": "Windows n'a pas pu démarrer Roblox : {0}",
+        "de": "Windows konnte Roblox nicht starten: {0}",
+        "ru": "Windows не удалось запустить Roblox: {0}",
+        "pt-br": "O Windows não conseguiu iniciar o Roblox: {0}",
+        "pl": "System Windows nie mógł uruchomić Roblox: {0}",
+        "es": "Windows no pudo iniciar Roblox: {0}"
+      }
+    },
+    {
+      "field": "CoreMsg_Launch_NoConnection",
+      "en": "Couldn't reach Roblox. Check your internet connection, then try again.",
+      "translations": {
+        "fr": "Impossible de joindre Roblox. Vérifiez votre connexion Internet, puis réessayez.",
+        "de": "Roblox ist nicht erreichbar. Prüfe deine Internetverbindung und versuche es dann erneut.",
+        "ru": "Не удалось связаться с Roblox. Проверьте подключение к интернету и попробуйте снова.",
+        "pt-br": "Não foi possível conectar ao Roblox. Verifique sua conexão com a internet e tente de novo.",
+        "pl": "Nie można połączyć się z Roblox. Sprawdź połączenie z internetem i spróbuj ponownie.",
+        "es": "No se pudo conectar con Roblox. Revisa tu conexión a internet y vuelve a intentarlo."
+      }
+    },
+    {
+      "field": "CoreMsg_Launch_TimedOut",
+      "en": "Roblox took too long to answer. Try again in a moment.",
+      "translations": {
+        "fr": "Roblox a mis trop de temps à répondre. Réessayez dans un instant.",
+        "de": "Roblox hat zu lange nicht geantwortet. Versuche es gleich noch einmal.",
+        "ru": "Roblox слишком долго не отвечал. Попробуйте снова чуть позже.",
+        "pt-br": "O Roblox demorou demais para responder. Tente de novo em instantes.",
+        "pl": "Roblox zbyt długo nie odpowiadał. Spróbuj ponownie za chwilę.",
+        "es": "Roblox tardó demasiado en responder. Vuelve a intentarlo en un momento."
+      }
+    },
+    {
+      "field": "CoreMsg_Launch_RateLimited",
+      "en": "Roblox is asking RoRoRo to slow down. Wait a minute, then try again.",
+      "translations": {
+        "fr": "Roblox demande à RoRoRo de ralentir. Patientez une minute, puis réessayez.",
+        "de": "Roblox bittet RoRoRo, langsamer zu machen. Warte eine Minute und versuche es dann erneut.",
+        "ru": "Roblox просит RoRoRo не торопиться. Подождите минуту и попробуйте снова.",
+        "pt-br": "O Roblox está pedindo que o RoRoRo vá mais devagar. Espere um minuto e tente de novo.",
+        "pl": "Roblox prosi RoRoRo o zwolnienie tempa. Odczekaj minutę i spróbuj ponownie.",
+        "es": "Roblox le pide a RoRoRo que vaya más despacio. Espera un minuto y vuelve a intentarlo."
+      }
+    },
+    {
+      "field": "CoreMsg_Launch_RobloxUnavailable",
+      "en": "Roblox is having trouble right now. Try again in a few minutes.",
+      "translations": {
+        "fr": "Roblox rencontre des problèmes en ce moment. Réessayez dans quelques minutes.",
+        "de": "Roblox hat gerade Probleme. Versuche es in ein paar Minuten erneut.",
+        "ru": "У Roblox сейчас неполадки. Попробуйте снова через несколько минут.",
+        "pt-br": "O Roblox está com problemas agora. Tente de novo em alguns minutos.",
+        "pl": "Roblox ma teraz problemy. Spróbuj ponownie za kilka minut.",
+        "es": "Roblox tiene problemas en este momento. Vuelve a intentarlo en unos minutos."
+      }
+    },
+    {
+      "field": "Shell_PreWarm_NeverConnected",
+      "en": "Roblox didn't start. Check that Roblox is up to date and that your antivirus isn't blocking it.",
+      "translations": {
+        "fr": "Roblox n'a pas démarré. Vérifiez que Roblox est à jour et que votre antivirus ne le bloque pas.",
+        "de": "Roblox ist nicht gestartet. Prüfe, ob Roblox aktuell ist und ob dein Virenschutz es blockiert.",
+        "ru": "Roblox не запустился. Проверьте, что Roblox обновлён и антивирус его не блокирует.",
+        "pt-br": "O Roblox não iniciou. Verifique se o Roblox está atualizado e se o antivírus não está bloqueando.",
+        "pl": "Roblox się nie uruchomił. Sprawdź, czy Roblox jest aktualny i czy antywirus go nie blokuje.",
+        "es": "Roblox no se inició. Comprueba que Roblox esté actualizado y que tu antivirus no lo bloquee."
+      }
+    },
+    {
+      "field": "MainWindow_CrashNotice",
+      "en": "RoRoRo closed unexpectedly last time. If you can, save a support bundle in Diagnostics and send it to support@626labs.dev.",
+      "translations": {
+        "fr": "RoRoRo s'est fermé de façon inattendue la dernière fois. Si vous le pouvez, enregistrez un lot de support dans « Diagnostics » et envoyez-le à support@626labs.dev.",
+        "de": "RoRoRo wurde beim letzten Mal unerwartet beendet. Wenn du kannst, speichere unter „Diagnose“ ein Support-Bündel und schick es an support@626labs.dev.",
+        "ru": "В прошлый раз RoRoRo закрылся неожиданно. Если можете, сохраните пакет поддержки в разделе «Диагностика» и отправьте его на support@626labs.dev.",
+        "pt-br": "O RoRoRo fechou de forma inesperada da última vez. Se puder, salve um pacote de suporte em “Diagnóstico” e envie para support@626labs.dev.",
+        "pl": "RoRoRo zamknął się ostatnio niespodziewanie. Jeśli możesz, zapisz pakiet pomocy w sekcji „Diagnostyka” i wyślij go na support@626labs.dev.",
+        "es": "RoRoRo se cerró de forma inesperada la última vez. Si puedes, guarda un paquete de soporte en «Diagnóstico» y envíalo a support@626labs.dev."
+      }
+    },
+    {
+      "field": "MainWindow_OpenDiagnostics",
+      "en": "Open Diagnostics",
+      "translations": {
+        "fr": "Ouvrir Diagnostics",
+        "de": "Diagnose öffnen",
+        "ru": "Открыть диагностику",
+        "pt-br": "Abrir Diagnóstico",
+        "pl": "Otwórz Diagnostykę",
+        "es": "Abrir Diagnóstico"
+      }
+    },
+    {
+      "field": "MainWindow_DismissCrashNotice",
+      "en": "Dismiss the crash notice",
+      "translations": {
+        "fr": "Ignorer l'avis de fermeture inattendue",
+        "de": "Absturzhinweis ausblenden",
+        "ru": "Скрыть уведомление о сбое",
+        "pt-br": "Dispensar o aviso de fechamento inesperado",
+        "pl": "Odrzuć powiadomienie o awarii",
+        "es": "Descartar el aviso de cierre inesperado"
+      }
+    }
+  ]
+}
