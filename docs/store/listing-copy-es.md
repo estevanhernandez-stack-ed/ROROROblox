@@ -86,26 +86,23 @@ Problemas conocidos de Roblox — problemas del lado de Roblox, qué hacer y la 
 Volver a unirse si se desconecta: un alt expulsado o atascado fuera del juego se cierra y vuelve a unirse solo, nunca tu cuenta principal
 ```
 
-## What's new in this version (v1.37.0.0, ≤1500 chars)
+## What's new in this version (v1.38.0.0, ≤1500 chars)
 
 ```
-v1.37.0.0
+v1.38.0.0
 
-Menos callejones sin salida al empezar
+Más claro cuando algo sale mal
 
-• Si este PC no tiene un Roblox que RoRoRo pueda iniciar, RoRoRo
-  ahora te lo dice y te muestra la descarga, en lugar de un
-  mensaje de Windows. Pasa cuando Roblox viene de Microsoft
-  Store: descárgalo de roblox.com; los dos pueden quedarse
-  instalados.
-• Añadir una cuenta que ya tenías guardada ya no crea una segunda
-  copia. RoRoRo renueva su inicio de sesión y te dice que añadas
-  una cuenta de Roblox diferente para usar dos a la vez.
-• Nuevos límites de FPS: 75, 100 y 180, para monitores que
-  funcionan a esas frecuencias.
-• Tras unos días buenos, RoRoRo puede pedirte una vez una
-  valoración en Microsoft Store. Cualquier respuesta lo cierra
-  para siempre.
+• Cuando un inicio falla, RoRoRo ahora te dice por qué, en tu
+  idioma: sin internet, Roblox tarda demasiado en responder,
+  Roblox le pide a RoRoRo que vaya más despacio, o Roblox tiene
+  problemas. Cada mensaje te dice qué hacer después.
+• Si RoRoRo se cerró de forma inesperada la última vez, el
+  siguiente inicio te lo dice y te lleva a «Diagnóstico», donde
+  puedes guardar un paquete de soporte y enviárnoslo. No se
+  envía nada si no lo envías tú.
+• En la fila de una cuenta nueva, «Quitar» ya no se corta en
+  francés, alemán, ruso, portugués y español.
 
 Sal de RoRoRo antes de actualizar desde la Store: haz clic
 derecho en el icono de la bandeja y elige «Salir».

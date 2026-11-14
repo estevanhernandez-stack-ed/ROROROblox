@@ -85,25 +85,23 @@ Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
-## What's new in this version (v1.37.0.0, ≤1500 chars)
+## What's new in this version (v1.38.0.0, ≤1500 chars)
 
 ```
-v1.37.0.0
+v1.38.0.0
 
-Mniej ślepych zaułków na starcie
+Jaśniej, gdy coś pójdzie nie tak
 
-• Jeśli na tym komputerze nie ma Roblox, który RoRoRo może
-  uruchomić, RoRoRo teraz to mówi i pokazuje pobieranie, zamiast
-  komunikatu Windows. Dzieje się tak, gdy Roblox pochodzi z
-  Microsoft Store: pobierz go z roblox.com, oba mogą zostać
-  zainstalowane.
-• Dodanie konta, które już masz zapisane, nie tworzy drugiej
-  kopii. RoRoRo odświeża jego logowanie i podpowiada, żeby dodać
-  inne konto Roblox, jeśli chcesz uruchomić dwa naraz.
-• Nowe limity FPS: 75, 100 i 180, dla monitorów o takim
-  odświeżaniu.
-• Po kilku dobrych dniach RoRoRo może raz poprosić o ocenę w
-  Microsoft Store. Każda odpowiedź kończy sprawę na dobre.
+• Gdy uruchomienie się nie uda, RoRoRo mówi teraz dlaczego, w
+  twoim języku: brak internetu, Roblox odpowiada zbyt wolno,
+  Roblox prosi RoRoRo, żeby zwolnił, albo Roblox ma teraz
+  problemy. Każdy komunikat podpowiada, co zrobić dalej.
+• Jeśli RoRoRo zamknął się ostatnio niespodziewanie, przy
+  następnym uruchomieniu powie o tym i wskaże sekcję
+  „Diagnostyka”, gdzie możesz zapisać pakiet pomocy i wysłać go
+  do nas. Nic nie zostanie wysłane, jeśli tego nie wyślesz.
+• W wierszu nowego konta przycisk „Usuń” nie jest już ucinany
+  po francusku, niemiecku, rosyjsku, portugalsku i hiszpańsku.
 
 Zakończ RoRoRo przed aktualizacją ze Store: kliknij prawym
 przyciskiem ikonę w zasobniku i wybierz „Zakończ”.

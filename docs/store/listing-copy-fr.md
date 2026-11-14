@@ -86,26 +86,23 @@ Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonc
 Rejoindre à nouveau s'il décroche — un alt expulsé ou coincé hors du jeu est fermé et rejoint à nouveau tout seul, jamais votre compte principal
 ```
 
-## What's new in this version (v1.37.0.0, ≤1500 chars)
+## What's new in this version (v1.38.0.0, ≤1500 chars)
 
 ```
-v1.37.0.0
+v1.38.0.0
 
-Moins d'impasses au démarrage
+Plus clair quand quelque chose se passe mal
 
-• Si ce PC n'a aucun Roblox que RoRoRo puisse lancer, RoRoRo
-  vous le dit désormais et vous montre le téléchargement, au lieu
-  d'un message Windows. Cela arrive quand Roblox vient du
-  Microsoft Store : prenez-le sur roblox.com, les deux peuvent
-  rester installés.
-• Ajouter un compte déjà enregistré ne crée plus de doublon.
-  RoRoRo renouvelle sa connexion et vous indique d'ajouter un
-  autre compte Roblox pour en lancer deux à la fois.
-• Nouvelles limites de FPS : 75, 100 et 180, pour les écrans qui
-  tournent à ces fréquences.
-• Après quelques bons jours, RoRoRo peut vous demander une fois
-  une note sur le Microsoft Store. L'une ou l'autre réponse y met
-  fin pour de bon.
+• Un lancement qui échoue vous dit désormais pourquoi, dans
+  votre langue : pas de connexion internet, Roblox trop lent à
+  répondre, Roblox qui demande à RoRoRo de ralentir, ou Roblox
+  en difficulté. Chaque message indique quoi faire ensuite.
+• Si RoRoRo s'est fermé de façon inattendue la dernière fois, le
+  démarrage suivant vous le dit et vous dirige vers
+  « Diagnostics », où vous pouvez enregistrer un lot de support
+  et nous l'envoyer. Rien n'est envoyé si vous ne l'envoyez pas.
+• Sur la ligne d'un nouveau compte, « Retirer » n'est plus coupé
+  en français, allemand, russe, portugais ou espagnol.
 
 Quittez RoRoRo avant de mettre à jour depuis le Store : clic
 droit sur l'icône de la zone de notification, puis « Quitter ».
