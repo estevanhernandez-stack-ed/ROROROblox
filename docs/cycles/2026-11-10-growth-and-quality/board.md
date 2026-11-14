@@ -159,6 +159,39 @@ presets, or a typed value. A few hours, and it is a reply worth sending to that 
     that is the pairing "roblox launcher" already shows, and "multi instance" or "account manager"
     moving up. **What would count as nothing:** the same table. Re-run the same 21 queries once the
     listing is live, and again a few days later; search may lag the listing.
+
+    **First re-run, 2026-11-14 12:49 CST**, about 52 hours after the new English title went live
+    (submitted 2026-11-11 22:52 CST as submission `1152921505702382810`; the catalog's
+    `LastModifiedDate` is 2026-11-12 14:15 UTC; the API reads `Published`). Same 21 queries, same
+    script. Nineteen are unchanged. Two moved, both down, and both read the same on three further
+    passes:
+
+    | Query | 2026-11-11 | 2026-11-14 |
+    |---|---|---|
+    | roblox launcher | 7 | 17 |
+    | multi instance | 14 | 17 |
+    | roblox account manager | absent | absent |
+    | account manager, multi-instance launcher, instance launcher | absent | absent |
+    | rororo | 1 | 1 |
+    | alt accounts | 19 | 19 |
+
+    By the rule fixed above this is worse than "nothing": the criterion query did not enter, and
+    the one generic hit fell ten places. **Not established: that the title caused the fall.** The
+    baseline was a single pass and its top-20 lists were not kept, so nobody can say whether the
+    sixteen listings now above RoRoRo were below it on 2026-11-11. Store installs had already
+    dipped from Monday 2026-11-09 (92, 109, 93, 86 against 148, 126, 155, 149 on the same weekdays a
+    week earlier), two days before v1.37 or the name went live, so the dip is not the name's doing.
+    Friday 2026-11-13, the first full day under the new name, read 131, and the last day of a pull
+    can be incomplete.
+
+    Kept this time, for the next read. "roblox launcher", 2026-11-14, positions 1 to 16: Roblox -
+    Windows, One Game Launcher, Hello Neighbor 2 Alpha 1, Epic Games Store, Minecraft Launcher,
+    Minecraft: Java & Bedrock Edition for PC, Fortnite, bloxd.io, LEGO Fortnite: Odyssey,
+    PlanetCraft: Block Craft Games, Minecraft Dungeons for Windows + Launcher, ARK: Ultimate
+    Survivor Edition, Minecraft: Sonic Add-On, Palworld, XBOX, GOG GALAXY. RoRoRo is 17.
+
+    The second read is due 2026-11-16 or later. The way back is the previous name, still reserved,
+    in another listing-only submission; if the rank returns after that, the title is the cause.
 13. **Listing languages.** Indonesia is 4.8% of acquisitions and Ukraine 1.8%, with no localized
     listing. Listing-only, per the standing rule that manifest languages need real UI
     localization.
