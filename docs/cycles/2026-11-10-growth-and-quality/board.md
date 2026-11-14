@@ -128,6 +128,70 @@ presets, or a typed value. A few hours, and it is a reply worth sending to that 
     Launcher and Account Manager"**. This is an experiment with a one-day loop: submit, wait for
     certification, re-run `store_search_rank.py`. Whether Store search weights the title this way
     is an inference from one data point.
+
+    **The test, started 2026-11-11 on the owner's word.** Name under test, English listing only:
+    `RoRoRo — Multi-Instance Launcher & Account Manager`. Baseline taken 2026-11-11 20:54 CST,
+    after v1.37.0.0 published and before any name change, with
+    `scripts/store-analytics/store_search_rank.py` (US, en-us, top 20 unless a market is named):
+
+    | Query | Position | Why it is on the list |
+    |---|---|---|
+    | rororo | 1 | brand |
+    | roblox launcher | 7 | the one generic hit; "launcher" is in the title |
+    | multi roblox, roblox multi, multiple roblox | absent | 2026-11-10 baseline, unchanged |
+    | roblox account manager | absent | both halves are keywords today, neither is in the title |
+    | roblox alts, roblox accounts | absent | 2026-11-10 baseline, unchanged |
+    | roblox (US, BR, RU, ID, PH) | absent | 2026-11-10 baseline, unchanged |
+    | multi instance | 14 | a keyword today; in the new title |
+    | alt accounts | 19 | a keyword today; not in either title |
+    | multi-instance launcher, instance launcher | absent | in the new title |
+    | account manager | absent | a keyword today; in the new title |
+    | launcher | absent | in both titles; a crowded word |
+    | multi launcher | absent | **in the current title** ("Multi-launcher") and still absent |
+    | multibox | absent | a keyword today |
+
+    Publishing v1.37 moved none of the thirteen 2026-11-10 queries. Two things the baseline says
+    before the change: keywords alone do rank (positions 14 and 19 come from keywords, not the
+    title), and a title word alone does not guarantee a hit ("multi launcher"). So the title
+    hypothesis rests on "roblox launcher" and is weaker than it looked.
+
+    **What would count as the title working:** "roblox account manager" entering the top 20, since
+    that is the pairing "roblox launcher" already shows, and "multi instance" or "account manager"
+    moving up. **What would count as nothing:** the same table. Re-run the same 21 queries once the
+    listing is live, and again a few days later; search may lag the listing.
+
+    **First re-run, 2026-11-14 12:49 CST**, about 52 hours after the new English title went live
+    (submitted 2026-11-11 22:52 CST as submission `1152921505702382810`; the catalog's
+    `LastModifiedDate` is 2026-11-12 14:15 UTC; the API reads `Published`). Same 21 queries, same
+    script. Nineteen are unchanged. Two moved, both down, and both read the same on three further
+    passes:
+
+    | Query | 2026-11-11 | 2026-11-14 |
+    |---|---|---|
+    | roblox launcher | 7 | 17 |
+    | multi instance | 14 | 17 |
+    | roblox account manager | absent | absent |
+    | account manager, multi-instance launcher, instance launcher | absent | absent |
+    | rororo | 1 | 1 |
+    | alt accounts | 19 | 19 |
+
+    By the rule fixed above this is worse than "nothing": the criterion query did not enter, and
+    the one generic hit fell ten places. **Not established: that the title caused the fall.** The
+    baseline was a single pass and its top-20 lists were not kept, so nobody can say whether the
+    sixteen listings now above RoRoRo were below it on 2026-11-11. Store installs had already
+    dipped from Monday 2026-11-09 (92, 109, 93, 86 against 148, 126, 155, 149 on the same weekdays a
+    week earlier), two days before v1.37 or the name went live, so the dip is not the name's doing.
+    Friday 2026-11-13, the first full day under the new name, read 131, and the last day of a pull
+    can be incomplete.
+
+    Kept this time, for the next read. "roblox launcher", 2026-11-14, positions 1 to 16: Roblox -
+    Windows, One Game Launcher, Hello Neighbor 2 Alpha 1, Epic Games Store, Minecraft Launcher,
+    Minecraft: Java & Bedrock Edition for PC, Fortnite, bloxd.io, LEGO Fortnite: Odyssey,
+    PlanetCraft: Block Craft Games, Minecraft Dungeons for Windows + Launcher, ARK: Ultimate
+    Survivor Edition, Minecraft: Sonic Add-On, Palworld, XBOX, GOG GALAXY. RoRoRo is 17.
+
+    The second read is due 2026-11-16 or later. The way back is the previous name, still reserved,
+    in another listing-only submission; if the rank returns after that, the title is the cause.
 13. **Listing languages.** Indonesia is 4.8% of acquisitions and Ukraine 1.8%, with no localized
     listing. Listing-only, per the standing rule that manifest languages need real UI
     localization.
