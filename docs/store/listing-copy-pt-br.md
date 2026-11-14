@@ -86,27 +86,24 @@ Problemas conhecidos do Roblox — problemas do lado do Roblox, o que fazer e o 
 Entrar de novo se cair — um alt expulso ou preso fora do jogo é fechado e entra de novo sozinho, nunca a sua conta principal
 ```
 
-## What's new in this version (v1.37.0.0, ≤1500 chars)
+## What's new in this version (v1.38.0.0, ≤1500 chars)
 
 ```
-v1.37.0.0
+v1.38.0.0
 
-Menos becos sem saída na entrada
+Mais claro quando algo dá errado
 
-• Se este PC não tem um Roblox que o RoRoRo consiga abrir, o
-  RoRoRo agora avisa e mostra o download, em vez de uma mensagem
-  do Windows. Isso acontece quando o Roblox veio da Microsoft
-  Store: baixe em roblox.com; os dois podem continuar
-  instalados.
-• Adicionar uma conta que você já salvou não cria mais uma
-  segunda cópia. O RoRoRo renova o login dela e avisa para
-  adicionar uma conta do Roblox diferente se quiser rodar duas
-  ao mesmo tempo.
-• Novos limites de FPS: 75, 100 e 180, para monitores nessas
-  taxas.
-• Depois de alguns dias bons, o RoRoRo pode pedir uma vez uma
-  avaliação na Microsoft Store. Qualquer resposta encerra o
-  pedido de vez.
+• Quando o RoRoRo não consegue iniciar uma conta, agora ele diz
+  o motivo, no seu idioma: sem internet, o Roblox demorou para
+  responder, o Roblox pediu para o RoRoRo ir mais devagar, ou o
+  Roblox está com problemas. Cada mensagem diz o que fazer em
+  seguida.
+• Se o RoRoRo fechou de forma inesperada da última vez, o
+  próximo início avisa e leva você a “Diagnóstico”, onde dá para
+  salvar um pacote de suporte e enviar para nós. Nada é enviado
+  se você não enviar.
+• Na linha de uma conta nova, “Remover” não fica mais cortado em
+  francês, alemão, russo, português e espanhol.
 
 Saia do RoRoRo antes de atualizar pela Store: clique com o
 botão direito no ícone da bandeja e escolha “Sair”.

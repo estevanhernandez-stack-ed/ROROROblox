@@ -1,0 +1,97 @@
+# Notes for certification — reviewer letter (v1.38.0.0)
+
+> Paste the block below the `---` marker — everything from `Hello reviewer,` to `support@626labs.dev` —
+> into Partner Center. The same text, paste-ready and already plain, is
+> `reviewer-letter-1.38.0.0.paste.txt`.
+> **Partner Center only.** `submit_write.py` never sends `notesForCertification`, so confirm it on
+> the Partner Center screen or not at all.
+>
+> **Where the box is now, and what is in it (found 2026-11-11).** Notes for certification moved to a
+> product-level page, **Additional Testing Information** (its address ends `/suppinfo/additionaltestinginfo`); the submission's own
+> Submission options page no longer holds it. The box currently opens with a listing-only paragraph
+> written for the product-name test, followed by the v1.37.0.0 letter. **Select everything in the box
+> and replace it with this letter.** Do not paste above or below what is there.
+>
+> Every "nothing moved" line is measured against `v1.37.0.0` on 2026-11-14, not carried forward: the
+> manifest diff (empty before the version stamp), the `.proto` diff (empty), the interop and
+> input-synthesis grep over added source under `src/ROROROblox.App` and `src/ROROROblox.Core` (zero,
+> `DllImport` included), the new-URL grep (zero; the only match is the support address inside the
+> crash notice's text), the registry grep (zero) and the file-write grep (zero). See
+> `submission-packet-1.38.0.0.md` for the measurements.
+>
+> Last release's letter led with one new `DllImport`. This one has nothing at the system boundary and
+> says so in its own section, so a reviewer is not left looking for one.
+>
+> The "how to see it" section does not quote the launch messages' exact text: they have been tested
+> but not watched against a live failure, and the release notes say so.
+
+---
+
+Hello reviewer,
+
+RoRoRo is a launcher that runs several Roblox clients side by side, each signed
+in as a different account the user saved. This is v1.38.0.0. Certification
+last saw v1.37.0.0, so this is one version's delta, and a small one: clearer
+messages when a launch fails, a notice on the start after a crash, and a
+layout fix for a new user's first row.
+
+1. WHAT CHANGED
+
+- When a launch fails because the sign-in request to Roblox did not succeed,
+  the account's row now names what happened, in the user's language: no
+  connection, a timeout, Roblox rate-limiting the request (HTTP 429), or a
+  Roblox outage (HTTP 5xx). Before, the row showed the raw error text in
+  English. The request itself is unchanged; only what its failure is called.
+- If the previous session ended in a crash the app recorded, the next start
+  shows one line in the main window saying so, with two buttons: "Open
+  Diagnostics" and "Dismiss". Diagnostics is an existing page where the user
+  can save a support bundle to a file. The line shows our support address as
+  plain text. It sends nothing and opens no link.
+- On an account row with no saved game, the game picker now gives up width
+  before any button does, so the Remove button is no longer cut off in five
+  of the six translations. The hint inside the picker was shortened in those
+  five languages.
+
+2. WHAT A CODE REVIEW WOULD FIND
+
+Nothing new at the system boundary: no new Windows API call, no new registry
+access, no new link or URL, no new file, and no new network host.
+
+The crash line reads last-exit.json, a file the app has written since v1.35
+and the privacy policy already lists. Nothing is transmitted. The app has no
+telemetry, and a support bundle leaves the PC only if the user saves it and
+sends it themselves. The privacy policy did not need a change.
+
+3. NOTHING ELSE MOVED
+
+Measured against the v1.37.0.0 tag, not assumed:
+
+  - Package.appxmanifest: only the Version attribute changes. Same identity,
+    publisher, runFullTrust, languages, protocols and startup task.
+  - plugin_contract.proto: byte for byte unchanged. No capability, consent
+    prompt or RPC was added.
+  - No new network calls. The app contacts no new host.
+  - No input synthesis and no new interop. Across every added line of
+    source, the count of SendInput, keybd_event, mouse_event,
+    SetWindowsHookEx, PostMessage, SendMessage, WriteProcessMemory,
+    OpenProcess, DllImport, LibraryImport and RegisterRawInputDevices is
+    zero.
+  - No new permission.
+
+The app still launches the official Roblox client unmodified and injects into
+nothing. It is not affiliated with, endorsed by, or sponsored by Roblox
+Corporation.
+
+4. HOW TO SEE IT
+
+Add an account with "Add account" (Roblox's own sign-in page opens inside the
+app). With one account and no saved game, its row shows every button in full
+at the default window size; choose French in Settings to see the language
+where Remove used to be cut off. The launch messages appear only when the
+request to Roblox fails, for example with the PC offline. The crash line
+appears only on a start that follows a crash, so it will not appear during a
+review session.
+
+Thank you,
+626 Labs LLC
+support@626labs.dev

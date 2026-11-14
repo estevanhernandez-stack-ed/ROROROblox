@@ -86,27 +86,24 @@ Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welch
 Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
-## What's new in this version (v1.37.0.0, ≤1500 chars)
+## What's new in this version (v1.38.0.0, ≤1500 chars)
 
 ```
-v1.37.0.0
+v1.38.0.0
 
-Weniger Sackgassen beim Einstieg
+Klarer, wenn etwas schiefgeht
 
-• Hat dieser PC kein Roblox, das RoRoRo starten kann, sagt
-  RoRoRo es jetzt selbst und zeigt dir den Download, statt einer
-  Windows-Meldung. Das passiert, wenn Roblox aus dem Microsoft
-  Store stammt: Hol es von roblox.com, beide können installiert
-  bleiben.
-• Fügst du ein Konto hinzu, das schon gespeichert ist, entsteht
-  keine zweite Kopie mehr. RoRoRo frischt die Anmeldung auf und
-  sagt dir: Für zwei gleichzeitig brauchst du ein anderes
-  Roblox-Konto.
-• Neue FPS-Limits: 75, 100 und 180, für Monitore mit diesen
-  Bildwiederholraten.
-• Nach ein paar guten Tagen fragt RoRoRo vielleicht einmal nach
-  einer Bewertung im Microsoft Store. Jede Antwort beendet die
-  Frage für immer.
+• Schlägt ein Start fehl, sagt RoRoRo jetzt in deiner Sprache,
+  warum: kein Internet, Roblox antwortet zu langsam, Roblox
+  bittet RoRoRo, langsamer zu machen, oder Roblox hat gerade
+  Probleme. Jede Meldung sagt, was du als Nächstes tun kannst.
+• Wurde RoRoRo beim letzten Mal unerwartet beendet, sagt es das
+  beim nächsten Start und zeigt dir den Weg zu „Diagnose“. Dort
+  kannst du ein Support-Bündel speichern und uns schicken.
+  Gesendet wird nichts, was du nicht selbst sendest.
+• In der Zeile eines neuen Kontos wird „Entfernen“ auf
+  Französisch, Deutsch, Russisch, Portugiesisch und Spanisch
+  nicht mehr abgeschnitten.
 
 Beende RoRoRo, bevor du aus dem Store aktualisierst: Rechtsklick
 auf das Symbol im Infobereich, dann „Beenden“.
