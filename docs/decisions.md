@@ -1096,3 +1096,27 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **What would revisit it:** a certification report that names a keyword. The fix is then made in Partner Center on the failed submission (the API returns 409 on one), which keeps both packages, and the change is carried into `docs/store/listing-copy.md` and the six language sheets in the same session.
 
 **Evidence:** `docs/store/submission-packet-1.37.0.0.md` section 8; the catalog read 1.36.0.0 at 18:34:59 CST and 1.37.0.0 at 18:39:59 on 2026-11-11; GitHub release Latest at 2026-11-12 01:01:15 UTC.
+
+### 2026-11-14 — The shortened hints stay, over the translation verifier
+
+**Context:** The v1.38 translation gate (12 changed keys, six languages, 72 pairs) flagged the empty-state hint in French, German, Russian, Portuguese and Spanish: the verb "Add" is gone ("Bibliothèque", "In der Bibliothek"). The flag is accurate. #279 cut the verb on purpose, because the full hints were trimmed mid-phrase on a new user's first row, and a render test now holds each hint to the width its own language's row leaves (French has 80 DIP).
+
+**Decision:** Keep the short hints. The owner ruled on it the day the gate ran. The verifier's suggested fixes are the pre-#279 strings in other words.
+
+**Consequences:** A hint that shows whole and names the place, in place of a fuller one that ends in an ellipsis. The same run's nine other findings were Rule 3 on Library and Diagnostics, overruled as before: the interface is localized and each word matches the app's own label. No string changed for v1.38.
+
+**What would revisit it:** the row gaining room, or the full sentence moving to a tooltip.
+
+**Evidence:** PR #282; `docs/store/submission-packet-1.38.0.0.md` section 7; `AtTheDefaultWidth_TheHintIsShownInFull_InEverySupportedLanguage`.
+
+### 2026-11-14 — The name test holds through the weekend, and v1.38 ships across it
+
+**Context:** The English product name changed on 2026-11-12 as a test. The first read, about 52 hours in, showed no gain and two drops ("roblox launcher" 7 to 17, "multi instance" 14 to 17), with the cause not established: the baseline kept positions and no top-20 lists, and installs had dipped two days before either change. The same day the owner asked for v1.38 to ship.
+
+**Decision:** Wait for the second read on 2026-11-16 before any revert, and ship v1.38 now. The v1.38 submission is cloned from the published one, so it carries the tested name as published.
+
+**Consequences:** One submission can be pending at a time, and a name is only ever picked by hand, so a revert cannot start until v1.38 leaves certification. If the second read says revert, the wait is whatever certification takes; v1.37 took 23 hours.
+
+**What would revisit it:** a second read still at 17, which means revert to the previous reserved name in a listing-only submission; a rank that returns after that would show the title was the cause.
+
+**Evidence:** `docs/cycles/2026-11-10-growth-and-quality/board.md` item 12; `docs/store/submission-packet-1.38.0.0.md` sections 2 and 8.
