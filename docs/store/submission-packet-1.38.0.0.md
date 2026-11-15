@@ -6,6 +6,9 @@ repository, 26 files and +1,193/−50 under `src/` (measured `v1.37.0.0..main` a
 release branch's own docs). Three changes, all from the 2026-11-10 evidence sweep
 (`docs/cycles/2026-11-10-growth-and-quality/board.md`).
 
+> **SUBMITTED 2026-11-14.** Submission `1152921505702405800` was committed from the console at 14:28 CST
+> on the owner's word and is in Certification. See section 8.
+
 ---
 
 ## Read this first: nothing new at the system boundary
@@ -143,4 +146,21 @@ new use the button's wording.
 
 ## 8. Shipped
 
-Filled in as each step happens.
+| Step | When (2026-11-14, CST) | Evidence |
+|---|---|---|
+| Release PR #283 merged | 13:40 | `main` at `08c4f5f`; `ci.yml` green on x64 and arm64, on the PR head and again on main |
+| Store submission created | about 13:42, `apply`, on the owner's word to ship | `1152921505702405800`, cloned from the published name-test submission; ten `releaseNotes` fields written and read back; captions already matched |
+| Verified before the owner's visit | `verify` | 180 listing fields and captions served; status `PendingCommit` |
+| Tag `v1.38.0.0` pushed | 13:45, after CI went green on main | `release.yml` run 43633796518, success at 13:51 |
+| GitHub release drafted | same run, then by hand | 13 assets: Setup.exe, the two nupkgs, Portable.zip, the signed sideload MSIX, `dev-cert.cer` (v1.37's copy, thumbprint `8232F92D…`, matching the sideload signer), the signed feeds. Notes set from the release notes, below the edit log. **Still a draft.** |
+| Owner's two pages | before 14:27 | Packages (x64 and arm64) and the reviewer letter, replacing the whole Additional Testing Information box; done by the owner in Partner Center |
+| Verified after the visit | 14:27, `verify` | status `PendingCommit`, text intact (180 lines); packages still read 1.37, as expected before a commit |
+| Committed | 14:28:02, on the owner's word | `CommitStarted` |
+| Packages visible | 14:31:56, the sixth 30-second poll, about four minutes | status `Certification`; `RORORO-Store-x64-1.38.0.0.msix` and `RORORO-Store-arm64-1.38.0.0.msix`, both `Uploaded` |
+
+**Not yet:** the certification result; the owner's **Publish now** click (the submission inherits "don't
+publish until I select Publish now"); publishing the GitHub draft as Latest, held for the Store and the
+owner's word. There is no clan post file this release.
+
+**Console:** worktree `_scratch/console-rororo-137`, branch `copy/rororo-1.38`, pinned at `41d304a`.
+Every command named `--payload out/rororo-live-listing.json`, `commit` included.
