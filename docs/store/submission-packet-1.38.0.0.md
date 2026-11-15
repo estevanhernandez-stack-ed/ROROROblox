@@ -6,8 +6,9 @@ repository, 26 files and +1,193/−50 under `src/` (measured `v1.37.0.0..main` a
 release branch's own docs). Three changes, all from the 2026-11-10 evidence sweep
 (`docs/cycles/2026-11-10-growth-and-quality/board.md`).
 
-> **SUBMITTED 2026-11-14.** Submission `1152921505702405800` was committed from the console at 14:28 CST
-> on the owner's word and is in Certification. See section 8.
+> **PUBLISHED 2026-11-15.** Submission `1152921505702405800` was committed from the console at 14:28 CST
+> on 2026-11-14 on the owner's word, certified with no report, and published by the owner on
+> 2026-11-15. The public catalog served 1.38.0.0 at 15:54:56 CST. See section 8.
 
 ---
 
@@ -157,10 +158,13 @@ new use the button's wording.
 | Verified after the visit | 14:27, `verify` | status `PendingCommit`, text intact (180 lines); packages still read 1.37, as expected before a commit |
 | Committed | 14:28:02, on the owner's word | `CommitStarted` |
 | Packages visible | 14:31:56, the sixth 30-second poll, about four minutes | status `Certification`; `RORORO-Store-x64-1.38.0.0.msix` and `RORORO-Store-arm64-1.38.0.0.msix`, both `Uploaded` |
+| Still certifying | 19:01 | `verify` read status `Certification`; the public catalog served 1.37.0.0 |
+| Certified | not observed; between 19:01 on 2026-11-14 and 15:48 on 2026-11-15 | The owner's report, in session, on 2026-11-15. No certification report. The wait was at most about 25 hours |
+| Publish now | 2026-11-15, about 15:48, the owner's click in Partner Center | `verify` read status `Release` at 15:48; the catalog served 1.37.0.0 at 15:48:54 |
+| Live on the Store | 2026-11-15, 15:54:56 | The public catalog served `626LabsLLC.RoRoRoBlox_1.38.0.0` for x64 and arm64, on the fourth two-minute poll; `verify` read status `Published` at 15:55 |
 
-**Not yet:** the certification result; the owner's **Publish now** click (the submission inherits "don't
-publish until I select Publish now"); publishing the GitHub draft as Latest, held for the Store and the
-owner's word. There is no clan post file this release.
+**Not yet:** publishing the GitHub draft as Latest. The Store is live, so the draft now waits only on
+the owner's word. There is no clan post file this release.
 
 **Console:** worktree `_scratch/console-rororo-137`, branch `copy/rororo-1.38`, pinned at `41d304a`.
 Every command named `--payload out/rororo-live-listing.json`, `commit` included.
