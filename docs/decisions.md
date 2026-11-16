@@ -1120,3 +1120,87 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **What would revisit it:** a second read still at 17, which means revert to the previous reserved name in a listing-only submission; a rank that returns after that would show the title was the cause.
 
 **Evidence:** `docs/cycles/2026-11-10-growth-and-quality/board.md` item 12; `docs/store/submission-packet-1.38.0.0.md` sections 2 and 8.
+
+### 2026-11-16 — The vault keeps a backup, and four rules decide who may overwrite it
+
+**Context:** `accounts.dat` was rewritten whole by temp file plus `File.Move`, with no flush to disk and no backup, and a zero-length file read as "no accounts" without complaint, so the next change made a torn write permanent. Since v1.36 the facts refresh rewrote it about every ten minutes per account. Found by the 2026-11-16 sweep (`docs/cycles/2026-11-16-quality-and-stability/board.md`, item 1). The torn file itself was never observed; the code path was.
+
+**Decision:** Flush the temp file before the swap and keep the previous good file as `accounts.dat.bak`. Four rules. (1) The backup is only ever overwritten by a main file that was just read successfully, so a damaged file can never replace a good backup. (2) A main file that is missing, empty or unreadable falls back to the backup, is repaired from it at once, and logs one warning. (3) An I/O failure reading the main file still throws: a lock says nothing about the contents, and falling back then saving would overwrite a good vault with an older one. (4) Removing an account rewrites the backup, so the removed cookie is in neither file.
+
+**Consequences:** A second file holds cookies, under the same DPAPI envelope; `docs/PRIVACY.md` and the README's stored-files table list it. After a re-login the old cookie stays in the backup for one write (the same account's older session). Deleting `accounts.dat` alone no longer resets anything, because the backup restores it; deleting the folder still does. If the scrub copy and the delete both fail after a removal, only a warning says so.
+
+**What would revisit it:** a report of accounts coming back after a deliberate delete of the one file; or a need to drop the one-write window for an old cookie, which means scrubbing on `UpdateCookieAsync` too.
+
+**Evidence:** `AccountStoreDurabilityTests` (13 tests; five fail with the fallback removed); commit `733be1b`.
+
+### 2026-11-16 — An unchanged facts refresh does not rewrite the vault, at the cost of a stale label
+
+**Context:** `SetFactsAsync` had a no-op check, but it compared whole `AccountFacts` records and the service stamps `FetchedAtUtc` on every successful refresh, so it never skipped.
+
+**Decision:** Compare the four values (`Robux`, `Membership`, `FriendsOnline`, `LastError`) and write the stamp alone only when the stored one is six hours behind. Moving facts into their own file was rejected for this release: it changes the stored-files table and the listing's privacy paragraph.
+
+**Consequences:** After a restart, "Updated N ago" on a row reads the persisted stamp, so it can say up to six hours when the data was fresher, until that account's first refresh lands. Accounts older than ten minutes are still refreshed one per minute, and never at startup: the timer starts after the user-id backfill and its first tick is 60 seconds later. Rotation between accounts is unchanged, because the service picks by its in-memory last-attempt map.
+
+**What would revisit it:** a complaint that the label looks stale after a restart (persist the stamps on a clean exit), or a second reason to move facts out of the vault.
+
+**Evidence:** `SetFacts_SameValuesNewerStampByMinutes_LeavesTheVaultByteIdentical`, `UnchangedFacts_StillRotateBetweenAccounts_OnTheTimer`; commit `0b6affb`.
+
+### 2026-11-16 — Dispatcher shutdown is not an error, and one subscriber cannot take the rest down
+
+**Context:** A Roblox client that exits while RoRoRo is exiting reaches `MainViewModel.OnProcessExited` from the `Process.Exited` pool thread. While `OnExit` holds the UI thread the marshalled call queues; dispatcher shutdown aborts it and `Dispatcher.Invoke` throws `TaskCanceledException` on the pool thread. Nothing caught it, the process died, and the crash record overwrote a clean exit, which v1.38's notice would then report. Two audits reached this independently; a test now reproduces the throw on a real dispatcher.
+
+**Decision:** `WpfUiDispatcher.Invoke` drops a call once shutdown has started and swallows the abort. The abort is told from the action's own cancellation by the dispatcher's state, not the exception type: WPF reports both to a cross-thread caller as `TaskCanceledException`. The process tracker raises its three events one subscriber at a time, catching and logging each.
+
+**Consequences:** The guard lives in `WpfUiDispatcher` only. About a dozen direct `Dispatcher.Invoke` call sites elsewhere (`TrayService`, `App.xaml.cs`, `SingleInstanceGuard`, `ThemeService`, `MainAvatarTrayPainter`) are unguarded and untraced; the tracker's catch now contains the ones it reaches. Quit closes no client, whatever the comment in `App.RequestShutdown` says: `ExpectCloseForAll` only marks closes as expected. So the race needs a client to exit during teardown, and a Windows logoff or shutdown with clients open is the likely trigger.
+
+**What would revisit it:** a `crash` record carrying `TaskCanceledException` from another path, which would mean one of the direct call sites.
+
+**Evidence:** `WpfUiDispatcherTests` (the two shutdown tests fail with the guard removed); commits `d1aaf5d`, `756871b`.
+
+### 2026-11-16 — A relaunched account's older client exits as Superseded
+
+**Context:** An account that is already running can be launched again. The new attach overwrote the account's slot; when the older client exited, the tracker removed the slot by account id and the row cleared `IsRunning` with no pid check, so a live client read as not running.
+
+**Decision:** The tracker removes a slot only when it holds the exiting process, and `RobloxProcessEventArgs.Superseded` marks the older client's exit. Subscribers keyed by account ignore a superseded exit (the row, the activity monitor, the plugin event bus, the orphan sweeper); subscribers keyed by pid handle it as before (the window decorator, the memory watchdog). No plugin-facing message changed shape: a superseded exit is simply not reported.
+
+**Consequences:** The older client stays watched until it exits, and its pid claim is released then. Left as they were and not traced: plugins hear `AccountLaunched` twice for a relaunch with no exit between, and a relaunch may leave the first launch's history row without an end stamp.
+
+**What would revisit it:** a plugin that mis-handles the second `AccountLaunched`, or a History row found without an end after a relaunch.
+
+**Evidence:** `OlderClientExiting_AfterARelaunch_LeavesTheNewClientTracked_AndIsMarkedSuperseded`, `ASupersededExit_LeavesTheLiveClientRunning_AndNothingClosesOrAlerts`; commit `52f5dc7`.
+
+### 2026-11-16 — An expired session clears presence; the dropped alt is still silent
+
+**Context:** A 401 on the presence poll set `SessionExpired` and nothing else. Expired accounts leave the poll, so a row that was in a game stayed frozen there, and when the client exited the in-game branch of `OnProcessExited` waited for a confirming poll that never came.
+
+**Decision:** `ApplySessionExpired` clears presence the way `ApplySessionLimited` already did. Nothing is stamped while the client still runs; the process exit stamps the close and ends the History row once.
+
+**Consequences:** The row and History are now true. The user is still not told when an expired alt drops: the dropped-out alert is raised only from the presence path, and auto-rejoin holds on an expired row because its cookie cannot relaunch. Closing that needs a new alert and was left out of this release.
+
+**What would revisit it:** the first report of an alt that expired and dropped unnoticed.
+
+**Evidence:** `AnInGameAccountWhoseSessionExpires_StopsReadingInGame_ButIsNotClosedWhileTheClientRuns_AndTheExitEndsItOnce`; commit `8db3448`.
+
+### 2026-11-16 — An outside close is the one that arrives through the message queue
+
+**Context:** `MainWindow.OnClosing` cancelled every close and hid to the tray. `taskkill` without `/F`, and by every sign Task Manager's End task, post `WM_CLOSE`: the window hid, the process stayed, and Windows could then kill it and file a hang. The one hang bucket Microsoft names for RoRoRo is `APPLICATION_HANG_ENDTASK_HungThreadIsIdle`.
+
+**Decision:** Identify the outside close positively. A tool in another process posts `WM_CLOSE`, so it comes off the queue; every in-app close ends in a `WM_CLOSE` that is sent (`Window.Close()`, which the WPF-UI title bar's X calls, and `SC_CLOSE` from Alt+F4, the taskbar and the system menu). `ExternalCloseWatcher` notes a queued `WM_CLOSE` for the window through `ComponentDispatcher.ThreadFilterMessage`, and only then does `OnClosing` ask the app to quit, through the tray's own Quit path. The first plan marked user closes by watching for `SC_CLOSE` and was dropped before it was built: any in-app close it missed would have made the X quit the app.
+
+**Consequences:** Anything unclassified hides, so the failure direction is a hidden window. A `WM_CLOSE` posted during a native modal loop (a menu, a move or size drag) is not seen and hides. Measured with a throwaway probe window: `taskkill` without `/F` posts `WM_CLOSE` to a visible and to a hidden window. End task was not measured directly; WinForms reports the same bare message as `CloseReason.TaskManagerClosing`.
+
+**What would revisit it:** End task still leaving the process behind on a real build, which would mean it sends something else; or a shell surface found to post `WM_CLOSE` for a user's own close.
+
+**Evidence:** `ExternalCloseWatcherTests` (19 tests, including a real `ui:TitleBar` and a `ShowDialog` case); commit `d9a8a56`.
+
+### 2026-11-16 — The memory warning needs a Roblox client
+
+**Context:** The watchdog's free-memory axis (F-082) did not check that any client existed. In 30 days of one PC's logs it crossed 547 times, 219 of them with zero clients, and each crossing set the tray's warning badge on an idle app. The default reserve is 8% of RAM, clamped to 1 to 4 GB.
+
+**Decision:** The axis crosses, latches and warns only while the watchdog counts at least one client, and the snapshot's `BelowReserve` carries that gated value, so the crossing, `MemoryPressureEvaluator.IsClear` and the footer marker read one field. With zero clients the latch is released. The footprint learner still receives the raw reading.
+
+**Consequences:** A client launched into an already low-memory machine crosses on its first sample, which is intended. "Client" keeps the watchdog's meaning: every record it tracks, adopted orphans included, an orphan not yet adopted excluded. A crossing with no target account can still fire when every tracked client's memory is unreadable that tick; those clients are running, so the badge is right. Zero-client crossings never reached Discord, a phone or plugins, so nothing changes there.
+
+**What would revisit it:** a user who wants the machine-wide warning with nothing running, which would be a setting, not a default.
+
+**Evidence:** `MemoryWatchdogHeadroomClientGateTests` (two fail with the gate removed); `docs/cycles/2026-11-16-quality-and-stability/board.md`, item 7; commit `d4f0e27`.

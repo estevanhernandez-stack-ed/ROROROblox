@@ -51,7 +51,7 @@ Branch `fix/v1.39-stability`, attended, one commit per item. Items run in order:
   Verify: `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~MemoryWatchdog|FullyQualifiedName~MemoryPressure"`. Remove the client gate and see the zero-client test fail.
   Stop class: go
 
-- [ ] **8. Whole suite green; decisions and the stored-files tables say what is true**
+- [x] **8. Whole suite green; decisions and the stored-files tables say what is true**
   Spec ref: repo `CLAUDE.md > Decisions`; `docs/decisions.md`; `docs/PRIVACY.md` (stored-files table); `README.md` ("What gets stored on your PC")
   What to build: Append this run's decisions to `docs/decisions.md` in its existing format (the backup and its rules, the facts write skip and its six-hour bound, an external close quits, superseded exits, presence cleared on expiry, the memory axis needs a client). Add `accounts.dat.bak` to the stored-files tables in `docs/PRIVACY.md` and `README.md`: same encryption and secrecy as `accounts.dat`, one write behind it, rewritten when an account is removed. Run the full suite. Size S.
   Acceptance: Done when `dotnet build ROROROblox.slnx -c Release` has 0 errors and `dotnet test ROROROblox.slnx -c Release --no-build` passes in full (unit and harness), and both tables name the backup file.
