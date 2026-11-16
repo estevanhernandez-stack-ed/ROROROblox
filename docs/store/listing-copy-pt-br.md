@@ -86,24 +86,27 @@ Problemas conhecidos do Roblox — problemas do lado do Roblox, o que fazer e o 
 Entrar de novo se cair — um alt expulso ou preso fora do jogo é fechado e entra de novo sozinho, nunca a sua conta principal
 ```
 
-## What's new in this version (v1.38.0.0, ≤1500 chars)
+## What's new in this version (v1.39.0.0, ≤1500 chars)
 
 ```
-v1.38.0.0
+v1.39.0.0
 
-Mais claro quando algo dá errado
+Contas mais seguras, RoRoRo mais estável
 
-• Quando o RoRoRo não consegue iniciar uma conta, agora ele diz
-  o motivo, no seu idioma: sem internet, o Roblox demorou para
-  responder, o Roblox pediu para o RoRoRo ir mais devagar, ou o
-  Roblox está com problemas. Cada mensagem diz o que fazer em
-  seguida.
-• Se o RoRoRo fechou de forma inesperada da última vez, o
-  próximo início avisa e leva você a “Diagnóstico”, onde dá para
-  salvar um pacote de suporte e enviar para nós. Nada é enviado
-  se você não enviar.
-• Na linha de uma conta nova, “Remover” não fica mais cortado em
-  francês, alemão, russo, português e espanhol.
+• O RoRoRo agora guarda uma cópia de segurança das suas contas
+  salvas. Se o arquivo de contas for danificado, por uma queda
+  de energia, por exemplo, ele se recupera a partir da cópia.
+• Sair do RoRoRo, ou desligar o PC com o Roblox aberto, não faz
+  mais o próximo início dizer que o RoRoRo fechou de forma
+  inesperada.
+• A linha de uma conta continua correta quando você inicia uma
+  conta que já está em execução, ou quando o login dela expira
+  no meio de um jogo.
+• Quando outro programa pede para o RoRoRo fechar, agora ele
+  fecha em vez de se esconder. O X continua mandando o RoRoRo
+  para a bandeja.
+• O ícone da bandeja não avisa mais sobre falta de memória
+  quando nenhum Roblox está aberto.
 
 Saia do RoRoRo antes de atualizar pela Store: clique com o
 botão direito no ícone da bandeja e escolha “Sair”.

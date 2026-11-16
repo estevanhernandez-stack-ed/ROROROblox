@@ -2,6 +2,8 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.Core.Transport;
 
 namespace ROROROblox.Core;
@@ -9,8 +11,11 @@ namespace ROROROblox.Core;
 /// <summary>
 /// DPAPI-enveloped JSON store of accounts. Whole-blob encryption for v1.1 — simpler than per-cookie;
 /// v1.2 upgrades alongside per-account WebView2 profiles (spec §5.4 decisions).
-/// Atomic write via temp-file + <see cref="File.Move(string, string, bool)"/>. Thread-safe via a
-/// <see cref="SemaphoreSlim"/> gate. Decrypt failures become <see cref="AccountStoreCorruptException"/>.
+/// Durable write: temp file flushed to disk, then <see cref="File.Replace(string, string, string)"/> (or
+/// <see cref="File.Move(string, string, bool)"/> when there is no good main file to keep), with the previous
+/// good file kept as <c>accounts.dat.bak</c>. A missing, empty or unreadable main file falls back to the backup.
+/// Thread-safe via a <see cref="SemaphoreSlim"/> gate. With no usable backup, decrypt failures become
+/// <see cref="AccountStoreCorruptException"/>.
 /// </summary>
 public sealed class AccountStore : IAccountStore, IDisposable
 {
@@ -22,6 +27,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
     };
 
     private readonly string _filePath;
+    private readonly ILogger<AccountStore> _log;
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
     // In-memory, per-account monotonic counter bumped every time an account's cookie is replaced
     // (reauth). Not persisted — it only needs to be stable within a single app run so a presence
@@ -33,13 +39,14 @@ public sealed class AccountStore : IAccountStore, IDisposable
 
     public AccountStore() : this(DefaultPath()) { }
 
-    public AccountStore(string filePath)
+    public AccountStore(string filePath, ILogger<AccountStore>? log = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException("File path must not be empty.", nameof(filePath));
         }
         _filePath = filePath;
+        _log = log ?? NullLogger<AccountStore>.Instance;
     }
 
     public static string DefaultPath()
@@ -234,6 +241,33 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    /// <summary>
+    /// How far behind the incoming stamp the stored <see cref="AccountFacts.FetchedAtUtc"/> may fall
+    /// before an otherwise unchanged refresh is written anyway. The service stamps every successful
+    /// refresh, so comparing whole records never skipped and rewrote the encrypted vault about every
+    /// ten minutes per account. The skip is bounded so the persisted stamp (what "Updated N ago" reads
+    /// after a restart) never lags the truth by more than this.
+    /// </summary>
+    internal static readonly TimeSpan FactsStampWriteInterval = TimeSpan.FromHours(6);
+
+    private static bool FactsUnchanged(AccountFacts? stored, AccountFacts incoming)
+    {
+        if (stored is null
+            || stored.Robux != incoming.Robux
+            || stored.Membership != incoming.Membership
+            || stored.FriendsOnline != incoming.FriendsOnline
+            || stored.LastError != incoming.LastError)
+        {
+            return false;
+        }
+        if (incoming.FetchedAtUtc is not { } newer)
+        {
+            return true; // nothing newer to record (a failed refresh keeps the old stamp).
+        }
+        // Stored stamp null with an incoming one: there is no gap to measure, so record it.
+        return stored.FetchedAtUtc is { } older && newer - older < FactsStampWriteInterval;
+    }
+
     public async Task SetFactsAsync(Guid id, AccountFacts facts)
     {
         ArgumentNullException.ThrowIfNull(facts);
@@ -247,7 +281,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
             {
                 return;
             }
-            if (Equals(blob.Accounts[idx].Facts, facts))
+            if (FactsUnchanged(blob.Accounts[idx].Facts, facts))
             {
                 return; // no-op write avoidance: a refresh that changed nothing costs no DPAPI roundtrip.
             }
@@ -391,7 +425,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 blob.Accounts[promoteIndex] = blob.Accounts[promoteIndex] with { IsMain = true };
             }
 
-            await SaveAsync(blob).ConfigureAwait(false);
+            // The backup holds the removed account's cookie until it is rewritten to match the new main.
+            await SaveAsync(blob, scrubBackup: true).ConfigureAwait(false);
         }
         finally
         {
@@ -778,26 +813,104 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    // The previous good vault. SaveAsync only ever overwrites it with a main file LoadAsync just read
+    // successfully, so it is at most one write behind a good main and never a copy of a damaged one.
+    private string BackupPath => _filePath + ".bak";
+
+    // True when the LoadAsync that opened the current gate hold read the main file successfully. Every
+    // mutating method is Load then Save under _gate, so this is the one hop the fact has to make; SaveAsync
+    // consumes it and resets it, which makes a Save with no preceding good Load the conservative case
+    // (the backup is left alone). Guarded by _gate like everything else here.
+    private bool _mainReadGood;
+
+    // Warning latches, so a condition that persists across loads (the presence poll re-reads the vault
+    // about every 25 s) logs once per store instance instead of on every read.
+    private bool _recoveryWarningLatched; // set only while healing main from the backup keeps failing
+    private bool _emptyWarningLogged;
+
+    private enum VaultReadStatus { Missing, Empty, Good, Damaged, IoError }
+
+    private sealed record VaultRead(VaultReadStatus Status, StoredAccountsBlob? Blob = null, AccountStoreCorruptException? Error = null);
+
     private async Task<StoredAccountsBlob> LoadAsync()
     {
-        if (!File.Exists(_filePath))
+        _mainReadGood = false;
+
+        var main = await ReadVaultFileAsync(_filePath).ConfigureAwait(false);
+        switch (main.Status)
         {
-            return new StoredAccountsBlob(Version: 1, Accounts: []);
+            case VaultReadStatus.Good:
+                _mainReadGood = true;
+                return main.Blob!;
+            case VaultReadStatus.IoError:
+                // A read that failed on I/O (a transient lock, say) says nothing about the file's contents.
+                // Falling back and then saving would overwrite a good main with an older state, so this stays a throw.
+                throw main.Error!;
+        }
+
+        // Missing, zero-length or damaged: the backup is the previous good file.
+        var backup = await ReadVaultFileAsync(BackupPath).ConfigureAwait(false);
+        if (backup.Status == VaultReadStatus.Good)
+        {
+            var recovered = backup.Blob!;
+            if (!_recoveryWarningLatched)
+            {
+                _log.LogWarning(
+                    "{VaultFile} was {Problem}; recovered {Count} account(s) from {BackupFile}.",
+                    Path.GetFileName(_filePath),
+                    main.Status switch { VaultReadStatus.Missing => "missing", VaultReadStatus.Empty => "empty", _ => "unreadable" },
+                    recovered.Accounts.Count,
+                    Path.GetFileName(BackupPath));
+            }
+            // Heal main now so the next load reads it as good (one Warning, and two good copies again).
+            // _mainReadGood stays false: a save in this same hold must not promote anything over the backup.
+            // If the heal fails, latch the warning so a damaged main does not log on every load.
+            _recoveryWarningLatched = !TryHealMainFromBackup();
+            return recovered;
+        }
+
+        // No usable backup: behave as before the backup existed.
+        switch (main.Status)
+        {
+            case VaultReadStatus.Empty:
+                if (!_emptyWarningLogged)
+                {
+                    _emptyWarningLogged = true; // once per store instance: loads run on every read
+                    _log.LogWarning(
+                        "{VaultFile} is empty and there is no usable {BackupFile}; reading it as an empty store.",
+                        Path.GetFileName(_filePath),
+                        Path.GetFileName(BackupPath));
+                }
+                return new StoredAccountsBlob(Version: 1, Accounts: []);
+            case VaultReadStatus.Damaged:
+                throw main.Error!;
+            default:
+                return new StoredAccountsBlob(Version: 1, Accounts: []);
+        }
+    }
+
+    // Reads and decrypts one vault file. Never logs or throws content: the Damaged and IoError errors carry
+    // the fixed messages LoadAsync always threw, with the underlying exception as inner.
+    private static async Task<VaultRead> ReadVaultFileAsync(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return new VaultRead(VaultReadStatus.Missing);
         }
 
         byte[] encrypted;
         try
         {
-            encrypted = await File.ReadAllBytesAsync(_filePath).ConfigureAwait(false);
+            encrypted = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
         }
         catch (IOException ex)
         {
-            throw new AccountStoreCorruptException($"Could not read {_filePath}.", ex);
+            return new VaultRead(VaultReadStatus.IoError, Error: new AccountStoreCorruptException($"Could not read {path}.", ex));
         }
 
         if (encrypted.Length == 0)
         {
-            return new StoredAccountsBlob(Version: 1, Accounts: []);
+            return new VaultRead(VaultReadStatus.Empty);
         }
 
         byte[] plaintext;
@@ -807,26 +920,29 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
         catch (CryptographicException ex)
         {
-            throw new AccountStoreCorruptException(
+            return new VaultRead(VaultReadStatus.Damaged, Error: new AccountStoreCorruptException(
                 "DPAPI decrypt failed; accounts.dat is unreadable on this PC. " +
                 "Likely cause: Windows restored from backup that didn't preserve the DPAPI master key, " +
                 "SID change, or the file was copied from another machine.",
-                ex);
+                ex));
         }
 
         try
         {
             var blob = JsonSerializer.Deserialize<StoredAccountsBlob>(plaintext, SerializerOptions);
-            return blob ?? new StoredAccountsBlob(Version: 1, Accounts: []);
+            return new VaultRead(VaultReadStatus.Good, blob ?? new StoredAccountsBlob(Version: 1, Accounts: []));
         }
         catch (JsonException ex)
         {
-            throw new AccountStoreCorruptException("accounts.dat decrypted but its JSON shape is invalid.", ex);
+            return new VaultRead(VaultReadStatus.Damaged, Error: new AccountStoreCorruptException("accounts.dat decrypted but its JSON shape is invalid.", ex));
         }
     }
 
-    private async Task SaveAsync(StoredAccountsBlob blob)
+    private async Task SaveAsync(StoredAccountsBlob blob, bool scrubBackup = false)
     {
+        var backupMayBeOverwritten = _mainReadGood;
+        _mainReadGood = false;
+
         var directory = Path.GetDirectoryName(_filePath);
         if (!string.IsNullOrEmpty(directory))
         {
@@ -836,9 +952,98 @@ public sealed class AccountStore : IAccountStore, IDisposable
         var json = JsonSerializer.SerializeToUtf8Bytes(blob, SerializerOptions);
         var encrypted = ProtectedData.Protect(json, optionalEntropy: null, DataProtectionScope.CurrentUser);
 
+        // FileMode.Create truncates a leftover .tmp from an earlier crash. The flush puts the bytes on disk
+        // before the swap, so a power cut cannot leave a renamed-in file whose contents never landed.
         var tempPath = _filePath + ".tmp";
-        await File.WriteAllBytesAsync(tempPath, encrypted).ConfigureAwait(false);
-        File.Move(tempPath, _filePath, overwrite: true);
+        await using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true))
+        {
+            await stream.WriteAsync(encrypted).ConfigureAwait(false);
+            stream.Flush(true);
+        }
+
+        if (backupMayBeOverwritten && File.Exists(_filePath))
+        {
+            // The main file was just read as good, so it is a fair backup. Replace keeps it as .bak.
+            try
+            {
+                File.Replace(tempPath, _filePath, BackupPath);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // A held file (antivirus, a locked backup). The new vault matters more than a fresher
+                // backup: refresh the backup if we can, then move the temp file in. If main is gone
+                // (Replace renamed it before failing) the move still lands it; if the move throws,
+                // the temp file keeps the new state and main or backup still holds the old one.
+                _log.LogWarning(ex, "Could not swap {VaultFile} with a backup; saving without refreshing {BackupFile}.",
+                    Path.GetFileName(_filePath), Path.GetFileName(BackupPath));
+                TryCopyMainToBackup();
+                File.Move(tempPath, _filePath, overwrite: true);
+            }
+        }
+        else
+        {
+            // No main, or a main that was not read successfully: leave the backup alone.
+            File.Move(tempPath, _filePath, overwrite: true);
+        }
+
+        if (scrubBackup)
+        {
+            ScrubBackup();
+        }
+    }
+
+    // Best effort. Byte-copies the good backup over a damaged or missing main (no re-encryption), via a temp
+    // name so a torn copy cannot replace anything. Never touches the backup.
+    private bool TryHealMainFromBackup()
+    {
+        var healTemp = _filePath + ".tmp";
+        try
+        {
+            File.Copy(BackupPath, healTemp, overwrite: true);
+            File.Move(healTemp, _filePath, overwrite: true);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            try { File.Delete(healTemp); } catch (Exception) { /* best effort */ }
+            return false;
+        }
+    }
+
+    // Best effort. Copies via a temp name so a torn copy cannot replace a good backup.
+    private bool TryCopyMainToBackup()
+    {
+        var backupTemp = BackupPath + ".tmp";
+        try
+        {
+            File.Copy(_filePath, backupTemp, overwrite: true);
+            File.Move(backupTemp, BackupPath, overwrite: true);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            try { File.Delete(backupTemp); } catch (Exception) { /* best effort */ }
+            return false;
+        }
+    }
+
+    // After a removal the backup must not hold the removed account's cookie. Rewrite it to match the main
+    // file; if that fails, delete it; if that fails too, say so (the file name only, never content).
+    private void ScrubBackup()
+    {
+        if (TryCopyMainToBackup())
+        {
+            return;
+        }
+        try
+        {
+            File.Delete(BackupPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log.LogWarning(ex, "Could not rewrite or remove {BackupFile} after an account removal; it may still hold the removed account.",
+                Path.GetFileName(BackupPath));
+        }
     }
 
     public void Dispose()

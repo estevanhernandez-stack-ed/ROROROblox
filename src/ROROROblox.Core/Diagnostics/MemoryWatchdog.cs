@@ -262,16 +262,35 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
             if (accounts[i].ReadOk) aggregateClientBytes += accounts[i].PrivateBytes;
         }
 
-        var belowReserve = systemOk && ReserveBytes > 0 && available < ReserveBytes;
+        // RAW machine reading: is free memory under the reserve, whoever caused it.
+        var rawBelowReserve = systemOk && ReserveBytes > 0 && available < ReserveBytes;
+
+        // GATED reading, the one place the warning is decided (2026-11-16 board, item 7). With zero clients a
+        // squeeze is not something RoRoRo caused or the user can relieve through it: 219 of 547
+        // crossings in 30 days of one PC's logs read "0 client(s) holding 0 MB" and pinned the tray
+        // badge on an idle app. The snapshot carries THIS value, so the crossing below, the tray
+        // clear-check (MemoryPressureEvaluator.IsClear) and the footer marker cannot disagree.
+        // `accounts` is every record the watchdog tracks, adopted orphans included (the orphan
+        // sweeper adopts through AttachExisting, which raises ProcessAttached, which launches a
+        // record in App.WireRobloxWindowDecorator), readable or not.
+        var belowReserve = rawBelowReserve && accounts.Count > 0;
 
         // F-083. Now that pressure is known, the settled readings can be learned from — or
         // discarded wholesale, which is what happens under pressure: a squeezed client's footprint
-        // describes the squeeze, not the client.
+        // describes the squeeze, not the client. Fed the RAW reading on purpose: a squeeze is a
+        // squeeze whoever caused it.
         foreach (var sample in settledSamples)
         {
-            _footprint.Observe(sample, belowReserve);
+            _footprint.Observe(sample, rawBelowReserve);
         }
-        if (belowReserve && !_headroomLatched)
+        if (accounts.Count == 0)
+        {
+            // Nothing to warn about, so nothing to latch. Releasing here is what lets the first
+            // client launched into an already-low machine cross at once instead of being swallowed
+            // by a latch left over from the previous session of clients.
+            _headroomLatched = false;
+        }
+        else if (belowReserve && !_headroomLatched)
         {
             _headroomLatched = true;
             crossedHeadroom = true;

@@ -2,7 +2,7 @@
 
 > **Persona:** inherits **The Architect** from `~/.claude/CLAUDE.md`. Nothing below re-establishes it.
 
-RoRoRo is a Windows desktop app that runs several Roblox clients side by side, each signed in as a different saved account. Free, a 626 Labs product, shipped to a Pet Sim 99 clan and the Microsoft Store (ID `9NMJCS390KWB`, on v1.38.0.0 as of 2026-11-15; `docs/feature-ledger.md` holds the current line). The user-facing name is **RoRoRo**; `ROROROblox` and `RORORO` stay in identifiers, paths, the Velopack packId, and the HTTP User-Agent.
+RoRoRo is a Windows desktop app that runs several Roblox clients side by side, each signed in as a different saved account. Free, a 626 Labs product, shipped to a Pet Sim 99 clan and the Microsoft Store (ID `9NMJCS390KWB`, on v1.39.0.0 as of 2026-11-16; `docs/feature-ledger.md` holds the current line). The user-facing name is **RoRoRo**; `ROROROblox` and `RORORO` stay in identifiers, paths, the Velopack packId, and the HTTP User-Agent.
 
 Maps live next door: [docs/architecture.md](docs/architecture.md) (modules, startup order, data flow), [docs/features.md](docs/features.md) (every feature: paths, gating, status), [docs/decisions.md](docs/decisions.md) (why; append-only), [docs/feature-ledger.md](docs/feature-ledger.md) (what shipped when).
 
@@ -10,7 +10,7 @@ Maps live next door: [docs/architecture.md](docs/architecture.md) (modules, star
 
 ```powershell
 dotnet build ROROROblox.slnx -c Release                              # 0 errors; ~43 warnings are known noise
-dotnet test  ROROROblox.slnx -c Release --no-build                   # 3,528 unit + 27 harness pass (2026-11-10); 1 harness [Skip] by design, and the opt-in capture tests skip unless their env var is set
+dotnet test  ROROROblox.slnx -c Release --no-build                   # 3,596 unit + 27 harness pass (2026-11-16); 1 harness [Skip] by design, and the opt-in capture tests skip unless their env var is set
 dotnet test  src/ROROROblox.Tests/ -c Release --no-build             # unit only
 dotnet test  src/ROROROblox.PluginTestHarness/ -c Release --no-build # named-pipe gRPC integration only
 dotnet run --project src/ROROROblox.App                              # not re-verified this pass: the single-instance guard surfaces an existing window
@@ -30,7 +30,7 @@ powershell -ExecutionPolicy Bypass -File .claude/hooks/install.ps1   # once per 
 - **The mutex name comes from `roblox-compat.json`** (remote, signed): resolution is remote → last-known-good cache (`last-known-mutex.txt`) → the hardcoded default in `MutexHolder`. Never hardcode it elsewhere.
 - **`UseCookies=false` on the `IRobloxApi` and `IAccountFactsApi` HttpClients is load-bearing.** With a cookie container every alt launches as, or fetches facts for, the first account. Both are registered in `RobloxHttpClients.cs` with their own handler, and `TypedHttpClientRegistrationTests.CookieCarryingClients_PrimaryHandler_HasUseCookiesFalse` reads each primary handler from the real `ConfigureServices` graph (since v1.36).
 - **User-Agent is `RORORO/<version>`.** No `Mozilla/`, no browser spoofing, documented public endpoints only. (The plugin installer sends `ROROROblox-PluginInstaller/<version>`.)
-- **Never commit `dev-cert.pfx`/`.cer`, `accounts.dat`, `consent.dat`, `discord.dat`, `notify.dat`, `webview2-data/`, `/plugins/`, `spike/`, or any `.ROBLOSECURITY` value.** The pre-commit hooks and the CI `guards` job fail on cookie prefixes, key files, and `c:\Users\<name>\` paths. Test fixtures use obviously fake cookies.
+- **Never commit `dev-cert.pfx`/`.cer`, `accounts.dat` (or its `.bak` and `.tmp` siblings, since v1.39), `consent.dat`, `discord.dat`, `notify.dat`, `webview2-data/`, `/plugins/`, `spike/`, or any `.ROBLOSECURITY` value.** The pre-commit hooks and the CI `guards` job fail on cookie prefixes, key files, and `c:\Users\<name>\` paths. Test fixtures use obviously fake cookies.
 - **The macro wall:** the Store binary never synthesizes input or injects into the client. Consented out-of-process plugins (Ur Task, Ur AFK, ur-mcp) may; that is what the plugin system exists for (Store policy 10.2.2). Core observes, plugins act.
 - **Typed HttpClient classes have exactly one applicable ctor and take `ILogger<T>`**, or startup crashes at resolve time with a green suite (`TypedHttpClientRegistrationTests`).
 - **Themed brushes are replaced, not mutated.** Reference them and the type-ladder tokens with `DynamicResource` only. `ControlStyles.xaml` merges after WPF-UI's dictionaries.

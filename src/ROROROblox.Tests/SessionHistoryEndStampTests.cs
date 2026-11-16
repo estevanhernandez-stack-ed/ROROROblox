@@ -191,6 +191,99 @@ public class SessionHistoryEndStampTests : IDisposable
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    // ------------------------------------------------- session expires mid-game
+
+    [Fact]
+    public async Task AnInGameAccountWhoseSessionExpires_StopsReadingInGame_ButIsNotClosedWhileTheClientRuns_AndTheExitEndsItOnce()
+    {
+        var history = new MainViewModelTests.RecordingSessionHistoryStore();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher: new MainViewModelTests.RecordingSuccessLauncher(), sessionHistory: history);
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie")) { RobloxUserId = 12345 };
+            vm.Accounts.Add(row);
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(PlaceId: 8737899170));
+            var session = Assert.Single(history.Added);
+            tracker.AttachedMap[row.Id] = new TrackedProcess(9001, DateTimeOffset.UtcNow);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(row.Id, 9001));
+            vm.ApplyPresence(new AccountPresenceEventArgs(row.Id, UserPresenceType.InGame, 8737899170, "Pet Sim 99", DateTimeOffset.UtcNow));
+            Assert.True(row.InGame);
+
+            vm.ApplySessionExpired(row.Id, store.GetCookieGeneration(row.Id));
+
+            Assert.True(row.SessionExpired);
+            Assert.False(row.InGame);
+            Assert.Null(row.CurrentGameName);
+            Assert.Null(row.InGameSinceUtc);
+            Assert.True(row.IsRunning);
+            Assert.Equal(9001, row.RunningPid);
+            Assert.Null(row.LastClosedAtUtc);
+            Assert.Empty(history.Ended);
+
+            var exitedAt = DateTimeOffset.UtcNow;
+            tracker.AttachedMap.Remove(row.Id);
+            tracker.RaiseExited(new RobloxProcessEventArgs(row.Id, 9001) { OccurredAtUtc = exitedAt });
+
+            Assert.False(row.IsRunning);
+            Assert.Equal(exitedAt, row.LastClosedAtUtc);
+            var ended = Assert.Single(history.Ended);
+            Assert.Equal(session.Id, ended.SessionId);
+            Assert.Equal(exitedAt, ended.EndedAtUtc);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task AStaleExpiryGeneration_LeavesAnInGameRowUntouched()
+    {
+        var (vm, store, _, path) = MainViewModelTests.Build();
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie")) { RobloxUserId = 12345 };
+            vm.Accounts.Add(row);
+            var startedAt = DateTimeOffset.UtcNow;
+            vm.ApplyPresence(new AccountPresenceEventArgs(row.Id, UserPresenceType.InGame, 8737899170, "Pet Sim 99", startedAt));
+            await store.UpdateCookieAsync(row.Id, "fresh-cookie"); // generation 0 -> 1
+
+            vm.ApplySessionExpired(row.Id, polledCookieGeneration: 0);
+
+            Assert.False(row.SessionExpired);
+            Assert.True(row.InGame);
+            Assert.Equal("Pet Sim 99", row.CurrentGameName);
+            Assert.Equal(startedAt, row.InGameSinceUtc);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task AnExpiryWhileNotInGame_BehavesAsBefore_AndTheExitStillEndsTheRowOnce()
+    {
+        var history = new MainViewModelTests.RecordingSessionHistoryStore();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher: new MainViewModelTests.RecordingSuccessLauncher(), sessionHistory: history);
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie")) { RobloxUserId = 12345 };
+            vm.Accounts.Add(row);
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(PlaceId: 8737899170));
+            tracker.AttachedMap[row.Id] = new TrackedProcess(9001, DateTimeOffset.UtcNow);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(row.Id, 9001));
+
+            vm.ApplySessionExpired(row.Id, store.GetCookieGeneration(row.Id));
+
+            Assert.True(row.SessionExpired);
+            Assert.False(row.InGame);
+            Assert.True(row.IsRunning);
+            Assert.Null(row.LastClosedAtUtc);
+            Assert.Empty(history.Ended);
+
+            tracker.AttachedMap.Remove(row.Id);
+            tracker.RaiseExited(new RobloxProcessEventArgs(row.Id, 9001));
+            Assert.Single(history.Ended);
+            Assert.NotNull(row.LastClosedAtUtc);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     [Fact]
     public async Task ANeverConnectedLaunch_GetsAnOutcomeAndNoEnd_AndALaterExitCannotEndIt()
     {

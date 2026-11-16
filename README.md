@@ -38,17 +38,21 @@ Building your own? Start at [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR
 
 ---
 
-## What's new in v1.38
+## What's new in v1.39
 
-The Store edition and the direct download are both on **v1.38.0.0** (2026-11-15). The [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version.
+The Store edition and the direct download are both on **v1.39.0.0** (2026-11-16). The [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version.
 
-**A failed launch tells you why.** No internet, Roblox slow to answer, Roblox asking RoRoRo to slow down, or Roblox having trouble: each one gets its own sentence, in your language, with what to do next.
+**Your saved accounts have a backup.** RoRoRo keeps the previous good copy of the accounts file beside it, encrypted the same way, and repairs itself from it if the file is ever damaged, by a power cut for example. Removing an account removes it from the backup too.
 
-**A crash is no longer silent.** If RoRoRo closed unexpectedly last time, the next start says so and points you to Diagnostics, where you can save a support bundle and send it to us. Nothing is sent unless you send it.
+**A normal quit no longer reads as a crash.** Shutting down your PC with Roblox open could bring up "RoRoRo closed unexpectedly" on the next start. It no longer does.
 
-**Remove fits on a new account's row.** It was cut off in French, German, Russian, Portuguese and Spanish.
+**Rows that stay true.** Launching an account that's already running no longer makes its row say it stopped, and a sign-in that expires in the middle of a game no longer leaves the row stuck on "In game".
 
-**Since v1.36.** v1.37 checks before every launch that this PC has a Roblox it can start, and names the fix when it doesn't (usually Roblox came from the Microsoft Store: install it from roblox.com/download as well, and both can stay). It also tells you when the account you're adding is already saved, adds frame-rate caps at 75, 100 and 180, and, on Store installs, asks once for a rating. v1.36 was the account library cycle: Robux, Plus, friends online and your own note on every account, a panel with each account's recent games and saved servers, badges that say why an account can't launch, and Games becoming the Library.
+**Closing RoRoRo from outside works.** Task Manager's End task and `taskkill` now quit it. The X, Alt+F4 and the taskbar's Close still send it to the tray.
+
+**No memory warning with nothing running.** The tray's warning needs at least one Roblox client open.
+
+**Since v1.36.** v1.38 made a failed launch say why, in your language, and added a line on the start after a crash that points you to Diagnostics. v1.37 checks before every launch that this PC has a Roblox it can start, and names the fix when it doesn't (usually Roblox came from the Microsoft Store: install it from roblox.com/download as well, and both can stay). It also tells you when the account you're adding is already saved, adds frame-rate caps at 75, 100 and 180, and, on Store installs, asks once for a rating. v1.36 was the account library cycle: Robux, Plus, friends online and your own note on every account, a panel with each account's recent games and saved servers, badges that say why an account can't launch, and Games becoming the Library.
 
 Plugins stay unpackaged-only: the Store edition can't ship downloadable-code surfaces (Store policy 10.2.2), so Store users get the same catalog through the [web marketplace](https://626labs.dev/rororo-plugins.html) instead.
 
@@ -112,6 +116,7 @@ With no default game set, Launch As opens the account at Roblox home. Set a defa
 | Where | What |
 |---|---|
 | `%LOCALAPPDATA%\ROROROblox\accounts.dat` | Your saved Roblox cookies. **DPAPI-encrypted** (Windows-issued; tied to your Windows user). The file itself cannot be moved between PCs; the passphrase-protected export is how you move accounts. |
+| `%LOCALAPPDATA%\ROROROblox\accounts.dat.bak` | The previous good copy of `accounts.dat`, one save behind it, so a write cut short by a power loss cannot lose your accounts. **DPAPI-encrypted** the same way. Removing an account rewrites it. |
 | `%LOCALAPPDATA%\ROROROblox\settings.json` | UI preferences: theme, window placement, memory thresholds, toggles. Plain text (no secrets). |
 | `%LOCALAPPDATA%\ROROROblox\webview2-data\` | Embedded-browser profiles. Every Add Account gets a fresh folder and older ones are swept, so a login never inherits the previous account's cookie. |
 | `%LOCALAPPDATA%\ROROROblox\consent.dat` | Per-plugin consent records (capabilities granted, autostart toggle). **DPAPI-encrypted**, same secrecy contract as `accounts.dat`. Empty until you install your first plugin. |

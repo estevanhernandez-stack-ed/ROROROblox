@@ -728,6 +728,14 @@ public partial class App : Application
         var mainWindow = _services.GetRequiredService<MainWindow>();
 
         WireTrayEvents(tray, mutex, mainWindow);
+        // A close request from another process (taskkill without /F, End task) ends the app the way the
+        // tray's Quit does. The window identifies the request and posts this; every other close hides.
+        mainWindow.ExternalCloseQuit = () =>
+        {
+            if (IsShuttingDown) return;
+            _log?.LogInformation("An external close request arrived; RoRoRo is quitting.");
+            RequestShutdown();
+        };
         WireMainViewModelEvents(mainWindow);
         WireMutexLost(mutex, tray);
         WireMainAvatarTrayPainter();
@@ -1065,7 +1073,7 @@ public partial class App : Application
             sp.GetService<ILogger<StatsRecordingSessionHistoryStore>>()));
         services.AddSingleton<IThemeStore>(_ => new ThemeStore());
         services.AddSingleton<ThemeService>();
-        services.AddSingleton<IAccountStore>(_ => new AccountStore());
+        services.AddSingleton<IAccountStore>(sp => new AccountStore(AccountStore.DefaultPath(), sp.GetService<ILogger<AccountStore>>()));
 
         // Streamer mode (v1.9) — fake-name/avatar substitution for on-stream safety. Pools are
         // stateless generators; the friend-identity store persists lazily-assigned friend
@@ -2019,8 +2027,15 @@ public partial class App : Application
 
             tracker.ProcessExited += (_, e) =>
             {
+                // Keyed by PID, so a superseded exit (an older client of an account that was launched
+                // again) is handled like any other: that window is gone. The watchdog's record is
+                // pid-aware too, so it keeps the newer client's record.
                 decorator.Untrack(e.Pid);
                 watchdog.OnAccountExited(e.AccountId, e.Pid);
+                // Keyed by ACCOUNT: an exit is a candidate predecessor for an unowned client that
+                // appears next. A superseded exit is not one, because the account still has a live
+                // tracked client and is not missing one.
+                if (e.Superseded) return;
                 // The successor carries nothing linking it back to an account. This record is the
                 // only reason attribution is possible at all.
                 _orphanSweeper?.OnClientExited(e.AccountId, e.Pid);
@@ -2053,7 +2068,8 @@ public partial class App : Application
             }
 
             tracker.ProcessAttached += (_, e) => monitor.OnAccountLaunched(e.AccountId);
-            tracker.ProcessExited += (_, e) => monitor.OnAccountExited(e.AccountId);
+            // Keyed by account: a superseded exit must not drop the live client's idle record.
+            tracker.ProcessExited += (_, e) => { if (!e.Superseded) monitor.OnAccountExited(e.AccountId); };
             monitor.Start();
         }
         catch (Exception ex)
@@ -3242,6 +3258,9 @@ public partial class App : Application
             {
                 try
                 {
+                    // Keyed by account: a superseded exit is an older client of an account that is
+                    // still running, so plugins are not told the account exited.
+                    if (e.Superseded) return;
                     // AccountsSnapshot: tracker events fire on threadpool continuations.
                     var summary = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == e.AccountId);
                     var snapshot = new ROROROblox.App.Plugins.RunningAccountSnapshot(
@@ -3448,8 +3467,11 @@ public partial class App : Application
     {
         IsShuttingDown = true;
 
-        // Quitting closes every client at once. Without this, the last thing RoRoRo does on its
-        // way out is page the user about a roster they deliberately shut down.
+        // Quitting RoRoRo does NOT close the Roblox clients: nothing on this path ends one, and a
+        // live quit with an account running left its client up (smoke, 2026-11-16). This comment
+        // said "Quitting closes every client at once" until that day. What the call below does is
+        // mark every close as expected, so a client that happens to exit while RoRoRo is on its
+        // way out (a Windows shutdown ends both together) does not page the user about it.
         try { _services?.GetRequiredService<MainViewModel>().ExpectCloseForAll(); }
         catch (Exception ex) { _log?.LogDebug(ex, "Couldn't mark shutdown closes as expected."); }
 

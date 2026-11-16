@@ -86,23 +86,28 @@ Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonc
 Rejoindre à nouveau s'il décroche — un alt expulsé ou coincé hors du jeu est fermé et rejoint à nouveau tout seul, jamais votre compte principal
 ```
 
-## What's new in this version (v1.38.0.0, ≤1500 chars)
+## What's new in this version (v1.39.0.0, ≤1500 chars)
 
 ```
-v1.38.0.0
+v1.39.0.0
 
-Plus clair quand quelque chose se passe mal
+Des comptes plus sûrs, un RoRoRo plus stable
 
-• Un lancement qui échoue vous dit désormais pourquoi, dans
-  votre langue : pas de connexion internet, Roblox trop lent à
-  répondre, Roblox qui demande à RoRoRo de ralentir, ou Roblox
-  en difficulté. Chaque message indique quoi faire ensuite.
-• Si RoRoRo s'est fermé de façon inattendue la dernière fois, le
-  démarrage suivant vous le dit et vous dirige vers
-  « Diagnostics », où vous pouvez enregistrer un lot de support
-  et nous l'envoyer. Rien n'est envoyé si vous ne l'envoyez pas.
-• Sur la ligne d'un nouveau compte, « Retirer » n'est plus coupé
-  en français, allemand, russe, portugais ou espagnol.
+• RoRoRo conserve désormais une copie de sauvegarde de vos
+  comptes enregistrés. Si le fichier des comptes est un jour
+  endommagé, par une coupure de courant par exemple, il se
+  répare à partir de cette copie.
+• Quitter RoRoRo, ou éteindre votre PC avec Roblox ouvert, ne
+  fait plus dire au démarrage suivant que RoRoRo s'est fermé de
+  façon inattendue.
+• La ligne d'un compte reste exacte quand vous lancez un compte
+  déjà en cours d'exécution, ou quand sa connexion expire en
+  pleine partie.
+• Quand un autre programme demande à RoRoRo de se fermer, il se
+  ferme désormais au lieu de se masquer. Le X l'envoie toujours
+  dans la zone de notification.
+• L'icône de la zone de notification ne signale plus un manque
+  de mémoire quand aucun Roblox n'est ouvert.
 
 Quittez RoRoRo avant de mettre à jour depuis le Store : clic
 droit sur l'icône de la zone de notification, puis « Quitter ».
