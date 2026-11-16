@@ -85,23 +85,27 @@ Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
-## What's new in this version (v1.38.0.0, ≤1500 chars)
+## What's new in this version (v1.39.0.0, ≤1500 chars)
 
 ```
-v1.38.0.0
+v1.39.0.0
 
-Jaśniej, gdy coś pójdzie nie tak
+Bezpieczniejsze konta, stabilniejszy RoRoRo
 
-• Gdy uruchomienie się nie uda, RoRoRo mówi teraz dlaczego, w
-  twoim języku: brak internetu, Roblox odpowiada zbyt wolno,
-  Roblox prosi RoRoRo, żeby zwolnił, albo Roblox ma teraz
-  problemy. Każdy komunikat podpowiada, co zrobić dalej.
-• Jeśli RoRoRo zamknął się ostatnio niespodziewanie, przy
-  następnym uruchomieniu powie o tym i wskaże sekcję
-  „Diagnostyka”, gdzie możesz zapisać pakiet pomocy i wysłać go
-  do nas. Nic nie zostanie wysłane, jeśli tego nie wyślesz.
-• W wierszu nowego konta przycisk „Usuń” nie jest już ucinany
-  po francusku, niemiecku, rosyjsku, portugalsku i hiszpańsku.
+• RoRoRo przechowuje teraz kopię zapasową zapisanych kont. Jeśli
+  plik kont zostanie uszkodzony, na przykład przez przerwę w
+  zasilaniu, RoRoRo naprawi go z kopii.
+• Gdy zakończysz RoRoRo albo wyłączysz komputer, a Roblox był
+  otwarty, następne uruchomienie nie mówi już, że RoRoRo
+  zamknął się niespodziewanie.
+• Wiersz konta pozostaje zgodny z prawdą, gdy uruchamiasz konto,
+  które już działa, albo gdy jego logowanie wygaśnie w trakcie
+  gry.
+• Gdy inny program poprosi RoRoRo o zamknięcie, RoRoRo teraz się
+  zamyka, zamiast się ukrywać. Przycisk X nadal wysyła go do
+  zasobnika.
+• Ikona w zasobniku nie ostrzega już o braku pamięci, gdy żaden
+  Roblox nie jest uruchomiony.
 
 Zakończ RoRoRo przed aktualizacją ze Store: kliknij prawym
 przyciskiem ikonę w zasobniku i wybierz „Zakończ”.
