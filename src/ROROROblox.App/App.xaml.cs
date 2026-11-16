@@ -1065,7 +1065,7 @@ public partial class App : Application
             sp.GetService<ILogger<StatsRecordingSessionHistoryStore>>()));
         services.AddSingleton<IThemeStore>(_ => new ThemeStore());
         services.AddSingleton<ThemeService>();
-        services.AddSingleton<IAccountStore>(_ => new AccountStore());
+        services.AddSingleton<IAccountStore>(sp => new AccountStore(AccountStore.DefaultPath(), sp.GetService<ILogger<AccountStore>>()));
 
         // Streamer mode (v1.9) — fake-name/avatar substitution for on-stream safety. Pools are
         // stateless generators; the friend-identity store persists lazily-assigned friend
