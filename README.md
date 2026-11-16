@@ -38,21 +38,17 @@ Building your own? Start at [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR
 
 ---
 
-## What's new in v1.36
+## What's new in v1.38
 
-The Store edition and the direct download are both on **v1.36.0.0** (2026-11-06). The [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version.
+The Store edition and the direct download are both on **v1.38.0.0** (2026-11-15). The [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version.
 
-**Every account at a glance.** Each account shows its Robux, a Plus badge, how many friends are online, when it last played, and a note you write yourself. RoRoRo reads these from Roblox with that account's own login and keeps them in the same encrypted file as your accounts. Streamer mode hides them.
+**A failed launch tells you why.** No internet, Roblox slow to answer, Roblox asking RoRoRo to slow down, or Roblox having trouble: each one gets its own sentence, in your language, with what to do next.
 
-**Open an account.** The small triangle before its name opens a panel with its recent games, your favourites and your saved private servers. Click any of them to play it as that account.
+**A crash is no longer silent.** If RoRoRo closed unexpectedly last time, the next start says so and points you to Diagnostics, where you can save a support bundle and send it to us. Nothing is sent unless you send it.
 
-**Badges that tell you what's wrong.** When an account can't launch, a badge says why (Session expired, Needs verification, Limited by Roblox) and one click starts the fix.
+**Remove fits on a new account's row.** It was cut off in French, German, Russian, Portuguese and Spanish.
 
-**Games is now the Library.** Every game you've played, favourited or saved, as tiles or a list. Search it, filter it, paste any Roblox game or private server link, and pick who plays with **Play as**.
-
-**One account is a complete product.** The welcome tour starts with what one account gets. The tips for several accounts come after.
-
-**Smaller things.** Idle time counts for the account you actually played on. A background Roblox process that never opened a window closes on its own after two minutes. Long menu names in other languages wrap instead of being cut off.
+**Since v1.36.** v1.37 checks before every launch that this PC has a Roblox it can start, and names the fix when it doesn't (usually Roblox came from the Microsoft Store: install it from roblox.com/download as well, and both can stay). It also tells you when the account you're adding is already saved, adds frame-rate caps at 75, 100 and 180, and, on Store installs, asks once for a rating. v1.36 was the account library cycle: Robux, Plus, friends online and your own note on every account, a panel with each account's recent games and saved servers, badges that say why an account can't launch, and Games becoming the Library.
 
 Plugins stay unpackaged-only: the Store edition can't ship downloadable-code surfaces (Store policy 10.2.2), so Store users get the same catalog through the [web marketplace](https://626labs.dev/rororo-plugins.html) instead.
 
@@ -76,8 +72,6 @@ If you'd rather skip the Store account flow, or want to install on a PC without 
 2. Double-click it. SmartScreen will warn (the installer is unsigned) — click **More info** → **Run anyway**. (One-time per machine.)
 3. RORORO installs to your user profile and lands in the Start Menu. It checks this Releases page for a newer version once a day; if you find yourself behind, download and run the latest `Setup.exe` again (no second SmartScreen prompt on later versions).
 
-A 30-second video walkthrough is linked from each Release page.
-
 **On Windows 10?** Either path works. **The Store edition supports Windows 10 22H2** — its package floor is `10.0.19045`, and the "Store needs Windows 11" line that used to sit here was wrong from v1.9 onward, when the floor dropped. `Setup.exe` runs there too.
 
 Run Windows Update first either way: a Windows 10 that's behind can't start modern .NET apps and RoRoRo won't launch — that's the #1 thing to check if it doesn't open. If Roblox login asks for Microsoft's WebView2, the app hands you the free installer; one click, then try again. Multi-instance uses the exact same code on both. Windows 10 left Microsoft's support lifecycle in October 2025, so plan the Windows 11 upgrade when you can.
@@ -93,6 +87,7 @@ Run Windows Update first either way: a Windows 10 that's behind can't start mode
 - **Frame-rate caps per account** that stick, and a memory watchdog that learns what each client really costs, with one-click Recycle back into the same server.
 - **Rejoin if it drops out.** An alt that's kicked or stuck outside the game is closed and joined again on its own. Never your main.
 - **Alerts where you'll see them.** Desktop, a Discord webhook you create, or your phone through Pushover or ntfy, in any mix per alert.
+- **Says what went wrong.** A failed launch names the cause and the next step. After a crash, the next start tells you and offers a support bundle you can choose to send.
 - **Known Roblox issues**, kept current without an app update: what is broken on Roblox's side, what to do, and the RoRoRo feature that helps.
 - **Session history and stats**, local only.
 - **Four built-in themes** plus a build-your-own editor, and streamer mode that disguises names and avatars.
@@ -110,13 +105,13 @@ Run Windows Update first either way: a Windows 10 that's behind can't start mode
 4. Right-click the tray icon → toggle **Multi-Instance: ON**.
 5. Click **Launch As** next to any saved account. Repeat for any other account to spawn another client.
 
-With no default game set, Launch As opens the account at Roblox home. Set a default game or private server in the Games library (the Games button in the main window, Ctrl+G) and every Launch As lands there.
+With no default game set, Launch As opens the account at Roblox home. Set a default game or private server in the Library (the Library button in the main window, Ctrl+G) and every Launch As lands there.
 
 ## What gets stored on your PC
 
 | Where | What |
 |---|---|
-| `%LOCALAPPDATA%\ROROROblox\accounts.dat` | Your saved Roblox cookies. **DPAPI-encrypted** (Windows-issued; tied to your Windows user). Cannot be moved between PCs. |
+| `%LOCALAPPDATA%\ROROROblox\accounts.dat` | Your saved Roblox cookies. **DPAPI-encrypted** (Windows-issued; tied to your Windows user). The file itself cannot be moved between PCs; the passphrase-protected export is how you move accounts. |
 | `%LOCALAPPDATA%\ROROROblox\settings.json` | UI preferences: theme, window placement, memory thresholds, toggles. Plain text (no secrets). |
 | `%LOCALAPPDATA%\ROROROblox\webview2-data\` | Embedded-browser profiles. Every Add Account gets a fresh folder and older ones are swept, so a login never inherits the previous account's cookie. |
 | `%LOCALAPPDATA%\ROROROblox\consent.dat` | Per-plugin consent records (capabilities granted, autostart toggle). **DPAPI-encrypted**, same secrecy contract as `accounts.dat`. Empty until you install your first plugin. |
@@ -125,10 +120,15 @@ With no default game set, Launch As opens the account at Roblox home. Set a defa
 | `%LOCALAPPDATA%\ROROROblox\notify.dat` | Phone-alert settings: the push service you picked, your Pushover user key and application token, your ntfy topic and server. **DPAPI-encrypted.** |
 | `%LOCALAPPDATA%\ROROROblox\favorites.json`, `private-servers.json` | Your games library and saved private servers. Plain text. |
 | `%LOCALAPPDATA%\ROROROblox\session-history.json`, `session-stats.json` | Launch history (last 100 rows) and the stats rollup. Plain text, local only, no telemetry. |
+| `%LOCALAPPDATA%\ROROROblox\last-exit.json` | How the previous session ended (a normal quit, Windows shutting down, or a crash) and when; after a crash, the error's type and message. It is what the crash notice reads. Plain text, never sent anywhere. |
+| `%LOCALAPPDATA%\ROROROblox\known-issues.cache.json` + `.sig`, `known-issues-dismissed.json` | The last verified copy of the known Roblox issues list, and the notices you closed. Plain text, nothing about you. |
+| `%LOCALAPPDATA%\ROROROblox\last-known-mutex.txt`, `.welcome-shown`, `last-update-check.txt` | The last verified singleton name, a marker that the welcome tour ran, and the time of the last update check. Plain text. |
 | `%LOCALAPPDATA%\ROROROblox\rating-ask.json` | Microsoft Store installs only: up to three dates and your answer to the one-time rating request. Plain text, never sent anywhere. |
 | `%LOCALAPPDATA%\ROROROblox\themes\` | Your custom theme files. Plain text. |
 | `%LOCALAPPDATA%\ROROROblox\streamer-identities.dat` | Streamer-mode fake names for friends. Plain text; holds no secrets despite the extension. |
 | `%LOCALAPPDATA%\ROROROblox\logs\` | Daily log files. Cookies and webhook URLs are never written to them. |
+
+On a Microsoft Store install on a PC that never had a direct download, Windows keeps the same files inside the app's package folder under `%LOCALAPPDATA%\Packages\` instead, and uninstalling removes them. Everywhere else the folder above is used and an uninstall leaves it behind. [`docs/PRIVACY.md`](docs/PRIVACY.md) has the full table and how to tell which case you are in.
 
 ## What about my Roblox password?
 
@@ -138,9 +138,9 @@ Long version: when you click *Add Account*, RORORO opens an embedded Microsoft E
 
 What we **do** capture, after Roblox confirms a successful login, is the `.ROBLOSECURITY` session cookie that Roblox sets in your browser. That cookie is what we hand back to Roblox during *Launch As* to start a session as you. Before we write it to disk, we run it through Windows' [Data Protection API](https://learn.microsoft.com/en-us/dotnet/standard/security/how-to-use-data-protection) — encryption tied to your specific Windows user account on your specific machine. The encrypted file (`accounts.dat`) is unreadable on any other PC, by any other Windows user, or even by you if Windows ever loses its DPAPI master key (e.g., after a from-scratch reinstall).
 
-We never log the cookie value. We never send the cookie to anyone other than Roblox. It exists in plaintext only briefly in memory during a single *Launch As* operation, then goes back to disk in encrypted form.
+We never log the cookie value. We never send the cookie to anyone other than Roblox. It is decrypted in memory only while RoRoRo acts as that account: starting a launch, or reading that account's own facts (Robux, Plus, friends online) from Roblox. On disk it stays encrypted.
 
-**No cookies are ever written to disk in plaintext. No data leaves your PC except Roblox-side calls during launch — the same calls Roblox.com makes from your browser.**
+**No cookie is ever written to disk in plaintext, and RoRoRo sends a cookie to Roblox and nowhere else.** The one other way a cookie leaves this PC is the passphrase-protected export, and only when you run it. Everything else RoRoRo talks to (GitHub for updates and its signed feeds, and the alert services you connect yourself) is listed host by host in the [privacy policy](docs/PRIVACY.md).
 
 ## Tech stack
 
@@ -160,7 +160,7 @@ The named-mutex defeat technique originated with **MultiBloxy** by [Zgoly](https
 ## Roblox-side caveats
 
 - Roblox / Hyperion has stated that multi-instancing "may be considered malicious behavior." Risk of a ban appears low because we don't inject into or modify the Roblox client — we only hold a Windows mutex name before launch. But it is non-zero. Don't run this on accounts you can't afford to lose.
-- The auth-ticket endpoint contract is what we depend on. If Roblox changes it, multi-instance launches will start failing — see the [auth-ticket-flow-validator agent](.claude/agents/auth-ticket-flow-validator.md) and the version-drift banner in the main window.
+- The auth-ticket endpoint contract is what we depend on. If Roblox changes it, multi-instance launches will start failing. The [auth-ticket-flow-validator agent](.claude/agents/auth-ticket-flow-validator.md) is the tool for checking it.
 
 ## Building from source
 
@@ -213,10 +213,10 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 - [x] **About-box version.** The csproj `<Version>` and the manifest `<Identity Version>` are patched together by `scripts/finalize-store-build.ps1`, so About and the Store agree.
 - [ ] **Add Account WebView2 white-screen affordance.** Sometimes the embedded login page renders blank on first load and the user has to refresh; add a visible reload hint. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §1.
 - [ ] **Games / Settings tab — make scrollability obvious.** Content can extend past the default window viewport with no scrollbar affordance. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §2.
-- [ ] **Session "expired" vs "needs Roblox 2FA re-verify" — distinguish them.** Today using Friends / Squad Launch / presence-fetching endpoints can surprise-trigger Roblox's anti-fraud re-auth flow within minutes of saving an account; we incorrectly mark the cookie as expired and force a full re-login, when Roblox just wanted a 2FA re-confirm. Add a `NeedsReverification` state distinct from `SessionExpired`, lazy-validate (skip startup pass), better re-auth-flow messaging. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §4.
+- [x] **Session "expired" vs "needs Roblox 2FA re-verify" — distinguish them.** Shipped in v1.36 as the **Needs verification** badge, set only when Roblox answers a launch with a measured challenge. The original ask, kept for history: Today using Friends / Squad Launch / presence-fetching endpoints can surprise-trigger Roblox's anti-fraud re-auth flow within minutes of saving an account; we incorrectly mark the cookie as expired and force a full re-login, when Roblox just wanted a 2FA re-confirm. Add a `NeedsReverification` state distinct from `SessionExpired`, lazy-validate (skip startup pass), better re-auth-flow messaging. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §4.
 - [ ] Per-cookie encryption envelope (today: whole-blob; v1.2: per-account)
 - [ ] Per-account WebView2 profile isolation (today: a fresh per-capture profile folder, swept afterwards)
-- [ ] Crash report opt-in (today: local logs only)
+- [ ] Crash report opt-in (today: local logs, and since v1.38 a notice after a crash that points to a support bundle you send yourself)
 - [ ] Winget community manifest for the direct-download build (the Store build already installs through winget's `msstore` source)
 - [ ] Auto-detect when Roblox renames the singleton mutex; warn with current `roblox-compat.json` version
 
