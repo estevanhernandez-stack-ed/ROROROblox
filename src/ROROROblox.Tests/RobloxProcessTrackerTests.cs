@@ -26,6 +26,10 @@ public sealed class RobloxProcessTrackerTests : IDisposable
 
     public void Dispose()
     {
+        foreach (var t in _trackers)
+        {
+            try { t.Dispose(); } catch { }
+        }
         foreach (var p in _spawned)
         {
             try { if (!p.HasExited) p.Kill(entireProcessTree: true); } catch { }
@@ -468,6 +472,167 @@ public sealed class RobloxProcessTrackerTests : IDisposable
 
         Assert.Null(ex);
         Assert.Equal(new[] { accountId }, secondSaw);
+    }
+
+    // ---- Relaunching a running account: the older client's exit must not take the live one with it ----
+    //
+    // Launch, "Play as" and Follow can all start a second client for an account that is already
+    // running. The second attach replaces the account's slot. Until v1.39 the OLD process's exit then
+    // removed the slot by account id alone, which threw away the NEW client's slot: a live client
+    // the app showed as not running, that Stop would not act on, and that plugins no longer saw.
+
+    private sealed class TwoClients
+    {
+        public required RobloxProcessTracker Tracker { get; init; }
+        public required Guid Account { get; init; }
+        public required int PidX { get; init; }
+        public required int PidY { get; init; }
+        public readonly TaskCompletionSource<RobloxProcessEventArgs> ExitedX = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public readonly TaskCompletionSource<RobloxProcessEventArgs> ExitedY = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    }
+
+    /// <summary>
+    /// Account A attached to process X, then (a second launch) to process Y. Both go through the
+    /// real polled-launch path so the pid claims are taken exactly as in production.
+    /// </summary>
+    private async Task<TwoClients> AttachSameAccountTwiceAsync()
+    {
+        var pidX = SpawnSleeperPid();
+        var pidY = SpawnSleeperPid();
+        var tracker = new RobloxProcessTracker(
+            log: NullLogger<RobloxProcessTracker>.Instance,
+            attachTimeout: TimeSpan.FromSeconds(5),
+            installerExtendedTimeout: TimeSpan.FromSeconds(5),
+            pollInterval: TimeSpan.FromMilliseconds(50),
+            isInstallerRunning: () => false,
+            candidateProcesses: () => ByIds(pidX, pidY));
+        _trackers.Add(tracker);
+
+        var account = Guid.NewGuid();
+        var launchedAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+
+        await tracker.TrackLaunchAsync(account, launchedAt);
+        Assert.Equal(pidX, tracker.Attached[account].Pid);
+        await tracker.TrackLaunchAsync(account, launchedAt);
+        Assert.Equal(pidY, tracker.Attached[account].Pid);
+
+        var clients = new TwoClients { Tracker = tracker, Account = account, PidX = pidX, PidY = pidY };
+        tracker.ProcessExited += (_, e) =>
+        {
+            if (e.Pid == pidX) clients.ExitedX.TrySetResult(e);
+            if (e.Pid == pidY) clients.ExitedY.TrySetResult(e);
+        };
+        return clients;
+    }
+
+    private readonly List<RobloxProcessTracker> _trackers = new();
+
+    private static void KillPid(int pid)
+    {
+        using var p = Process.GetProcessById(pid);
+        p.Kill(entireProcessTree: true);
+    }
+
+    [Fact]
+    public async Task OlderClientExiting_AfterARelaunch_LeavesTheNewClientTracked_AndIsMarkedSuperseded()
+    {
+        var c = await AttachSameAccountTwiceAsync();
+
+        KillPid(c.PidX);
+        var exit = await c.ExitedX.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.True(exit.Superseded, "X was replaced by Y; its exit is the older client's, not the account's.");
+        Assert.Equal(c.Account, exit.AccountId);
+        Assert.True(c.Tracker.IsTracking(c.Account), "The live client's slot must survive the older client's exit.");
+        Assert.Equal(c.PidY, c.Tracker.Attached[c.Account].Pid);
+    }
+
+    [Fact]
+    public async Task NewerClientExiting_RemovesTheSlot_AndIsNotSuperseded()
+    {
+        var c = await AttachSameAccountTwiceAsync();
+        KillPid(c.PidX);
+        await c.ExitedX.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        KillPid(c.PidY);
+        var exit = await c.ExitedY.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.False(exit.Superseded, "Y is the account's own client; its exit is the account stopping.");
+        Assert.False(c.Tracker.IsTracking(c.Account));
+        Assert.DoesNotContain(c.Account, c.Tracker.Attached.Keys);
+    }
+
+    [Fact]
+    public async Task PidClaims_AreReleasedPerProcess_NotPerAccount()
+    {
+        var c = await AttachSameAccountTwiceAsync();
+        Assert.True(c.Tracker.TryResolveAccountByPid(c.PidX, out var ownerX));
+        Assert.Equal(c.Account, ownerX);
+        Assert.True(c.Tracker.TryResolveAccountByPid(c.PidY, out _));
+
+        KillPid(c.PidX);
+        await c.ExitedX.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.False(c.Tracker.TryResolveAccountByPid(c.PidX, out _), "X's claim is released when X exits.");
+        Assert.True(c.Tracker.TryResolveAccountByPid(c.PidY, out var ownerY), "Y's claim is untouched until Y exits.");
+        Assert.Equal(c.Account, ownerY);
+
+        KillPid(c.PidY);
+        await c.ExitedY.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.False(c.Tracker.TryResolveAccountByPid(c.PidY, out _));
+    }
+
+    [Fact]
+    public async Task NewerClientExitingFirst_ThenTheOlder_StillMarksTheOlderSuperseded_AndLeavesNoGhostSlot()
+    {
+        var c = await AttachSameAccountTwiceAsync();
+
+        KillPid(c.PidY);
+        var exitY = await c.ExitedY.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.False(exitY.Superseded);
+        Assert.False(c.Tracker.IsTracking(c.Account));
+
+        // X was replaced by Y even though Y is already gone. The account is not running either way,
+        // and X's late exit must neither resurrect a slot nor read as the account stopping a second time.
+        KillPid(c.PidX);
+        var exitX = await c.ExitedX.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.True(exitX.Superseded);
+        Assert.False(c.Tracker.IsTracking(c.Account));
+        Assert.False(c.Tracker.TryResolveAccountByPid(c.PidX, out _));
+    }
+
+    [Fact]
+    public async Task TheSupersededClient_IsStillHeldUntilItExits_AndStopActsOnTheLiveOne()
+    {
+        var c = await AttachSameAccountTwiceAsync();
+
+        // Stop is keyed by account: it must reach the client the slot holds (Y), not the replaced one.
+        Assert.True(c.Tracker.Kill(c.Account));
+        var exitY = await c.ExitedY.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.False(exitY.Superseded);
+        Assert.False(c.ExitedX.Task.IsCompleted, "Killing the live client must not touch the replaced one.");
+
+        // The replaced client is still watched: its own exit still arrives, once, carrying its own pid.
+        KillPid(c.PidX);
+        var exitX = await c.ExitedX.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.Equal(c.PidX, exitX.Pid);
+        Assert.True(exitX.Superseded);
+    }
+
+    [Fact]
+    public void AnExitWithNoRelaunch_IsNotSuperseded()
+    {
+        // The flag means "a later attach replaced this process", nothing else. A process that was
+        // never replaced, and one nobody attached at all, are both plain exits.
+        using var tracker = NewSeamTracker();
+        var seen = new List<bool>();
+        tracker.ProcessExited += (_, e) => seen.Add(e.Superseded);
+
+        tracker.HandleExited(Guid.NewGuid(), SpawnDeadProcess());
+
+        Assert.Equal(new[] { false }, seen);
     }
 
     [Fact]

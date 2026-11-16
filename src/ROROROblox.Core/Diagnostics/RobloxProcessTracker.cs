@@ -36,6 +36,21 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
     private readonly Func<IReadOnlyList<Process>> _candidateProcesses;
     private readonly ConcurrentDictionary<Guid, AttachedSlot> _attachedByAccount = new();
     private readonly ConcurrentDictionary<int, Guid> _claimedPidToAccount = new();
+
+    /// <summary>
+    /// Processes a later attach for the same account has replaced, by reference. The tracker keeps
+    /// watching each one (its handle, its <c>Exited</c> hook and its pid claim live until it exits)
+    /// but its exit is the OLD client's, not the account's: the slot now belongs to the newer
+    /// process. Entries leave when the process exits (<see cref="HandleExited"/>) or on dispose.
+    /// </summary>
+    private readonly ConcurrentDictionary<Process, byte> _supersededProcesses = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>
+    /// Serialises the two things that must agree: a new attach replacing an account's slot (and marking
+    /// the old process superseded), and an exit deciding whether the slot it finds is its own. Held
+    /// only around dictionary operations, never while raising an event.
+    /// </summary>
+    private readonly object _slotGate = new();
     private bool _disposed;
 
     public RobloxProcessTracker() : this(NullLogger<RobloxProcessTracker>.Instance) { }
@@ -453,7 +468,21 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
             //  5. HasExited double-check synthesizes the exit if it happened before 4
             //     took effect — the once-guard makes the two paths converge.
             var slot = new AttachedSlot(process, _clock.UtcNow);
-            _attachedByAccount[accountId] = slot;
+            lock (_slotGate)
+            {
+                // An account that is already running can be launched again (Launch, "Play as",
+                // Follow). The new client takes the slot; the old one keeps running until it exits,
+                // and its exit must not take the new client's slot with it (see HandleExited).
+                if (_attachedByAccount.TryGetValue(accountId, out var prior)
+                    && !ReferenceEquals(prior.Process, process))
+                {
+                    _supersededProcesses.TryAdd(prior.Process, 0);
+                    _log.LogInformation(
+                        "Account {AccountId} attached to pid {Pid} while pid {OldPid} was still tracked; the older client stays watched until it exits.",
+                        accountId, process.Id, prior.Process.Id);
+                }
+                _attachedByAccount[accountId] = slot;
+            }
             process.Exited += (_, _) => OnExitedOnce();
             _log.LogInformation("Attached to RobloxPlayerBeta pid {Pid} for account {AccountId}", process.Id, accountId);
             Raise(ProcessAttached, nameof(ProcessAttached), new RobloxProcessEventArgs(accountId, process.Id));
@@ -479,7 +508,19 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
     {
         try
         {
-            _attachedByAccount.TryRemove(accountId, out _);
+            // The account's slot is removed only when it holds THIS process. If a later attach for the
+            // same account replaced it, the slot belongs to the newer client and stays; the pid claim
+            // is per process, so it is always released here, and the newer client's claim is not touched.
+            bool superseded;
+            lock (_slotGate)
+            {
+                superseded = _supersededProcesses.TryRemove(process, out _);
+                if (_attachedByAccount.TryGetValue(accountId, out var current)
+                    && ReferenceEquals(current.Process, process))
+                {
+                    _attachedByAccount.TryRemove(accountId, out _);
+                }
+            }
             _claimedPidToAccount.TryRemove(process.Id, out _);
 
             // F-081 — say WHY, not just that it happened.
@@ -507,7 +548,8 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
                 exitCode is { } code ? code.ToString() : "unknown",
                 uptime is { } up ? $"{(int)up.TotalMinutes}m{up.Seconds:D2}s" : "unknown");
 
-            Raise(ProcessExited, nameof(ProcessExited), new RobloxProcessEventArgs(accountId, process.Id));
+            Raise(ProcessExited, nameof(ProcessExited),
+                new RobloxProcessEventArgs(accountId, process.Id) { Superseded = superseded });
         }
         finally
         {
@@ -526,6 +568,12 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
         {
             try { slot.Process.Dispose(); } catch { }
         }
+        // Replaced clients are still watched until they exit; release them with the rest.
+        foreach (var replaced in _supersededProcesses.Keys)
+        {
+            try { replaced.Dispose(); } catch { }
+        }
+        _supersededProcesses.Clear();
         _attachedByAccount.Clear();
         _claimedPidToAccount.Clear();
     }

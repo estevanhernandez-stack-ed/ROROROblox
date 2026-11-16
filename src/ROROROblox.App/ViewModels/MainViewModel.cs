@@ -3564,6 +3564,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnProcessExited(object? sender, RobloxProcessEventArgs e)
     {
+        // Keyed by account. A superseded exit is the OLDER client of an account that was launched
+        // again while it was running; the row now describes the newer client (RunningPid, RunningSinceUtc,
+        // IsRunning), and clearing it would show a live client as not running. Nothing is stamped
+        // closed, no session ends, no presence refresh is needed: the account never stopped.
+        if (e.Superseded) return;
+
         _ui.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);

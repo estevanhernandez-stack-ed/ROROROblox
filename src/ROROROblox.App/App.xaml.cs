@@ -2019,8 +2019,15 @@ public partial class App : Application
 
             tracker.ProcessExited += (_, e) =>
             {
+                // Keyed by PID, so a superseded exit (an older client of an account that was launched
+                // again) is handled like any other: that window is gone. The watchdog's record is
+                // pid-aware too, so it keeps the newer client's record.
                 decorator.Untrack(e.Pid);
                 watchdog.OnAccountExited(e.AccountId, e.Pid);
+                // Keyed by ACCOUNT: an exit is a candidate predecessor for an unowned client that
+                // appears next. A superseded exit is not one, because the account still has a live
+                // tracked client and is not missing one.
+                if (e.Superseded) return;
                 // The successor carries nothing linking it back to an account. This record is the
                 // only reason attribution is possible at all.
                 _orphanSweeper?.OnClientExited(e.AccountId, e.Pid);
@@ -2053,7 +2060,8 @@ public partial class App : Application
             }
 
             tracker.ProcessAttached += (_, e) => monitor.OnAccountLaunched(e.AccountId);
-            tracker.ProcessExited += (_, e) => monitor.OnAccountExited(e.AccountId);
+            // Keyed by account: a superseded exit must not drop the live client's idle record.
+            tracker.ProcessExited += (_, e) => { if (!e.Superseded) monitor.OnAccountExited(e.AccountId); };
             monitor.Start();
         }
         catch (Exception ex)
@@ -3242,6 +3250,9 @@ public partial class App : Application
             {
                 try
                 {
+                    // Keyed by account: a superseded exit is an older client of an account that is
+                    // still running, so plugins are not told the account exited.
+                    if (e.Superseded) return;
                     // AccountsSnapshot: tracker events fire on threadpool continuations.
                     var summary = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == e.AccountId);
                     var snapshot = new ROROROblox.App.Plugins.RunningAccountSnapshot(
