@@ -6,8 +6,10 @@ repository, 26 files and +1,193/−50 under `src/` (measured `v1.37.0.0..main` a
 release branch's own docs). Three changes, all from the 2026-11-10 evidence sweep
 (`docs/cycles/2026-11-10-growth-and-quality/board.md`).
 
-> **SUBMITTED 2026-11-14.** Submission `1152921505702405800` was committed from the console at 14:28 CST
-> on the owner's word and is in Certification. See section 8.
+> **PUBLISHED 2026-11-15.** Submission `1152921505702405800` was committed from the console at 14:28 CST
+> on 2026-11-14 on the owner's word, certified about 25 hours later with no report, and published by the owner on
+> 2026-11-15. The public catalog served 1.38.0.0 at 15:54:56 CST, and the GitHub release went Latest at
+> 18:24 CST the same day. See section 8.
 
 ---
 
@@ -152,15 +154,19 @@ new use the button's wording.
 | Store submission created | about 13:42, `apply`, on the owner's word to ship | `1152921505702405800`, cloned from the published name-test submission; ten `releaseNotes` fields written and read back; captions already matched |
 | Verified before the owner's visit | `verify` | 180 listing fields and captions served; status `PendingCommit` |
 | Tag `v1.38.0.0` pushed | 13:45, after CI went green on main | `release.yml` run 43633796518, success at 13:51 |
-| GitHub release drafted | same run, then by hand | 13 assets: Setup.exe, the two nupkgs, Portable.zip, the signed sideload MSIX, `dev-cert.cer` (v1.37's copy, thumbprint `8232F92D…`, matching the sideload signer), the signed feeds. Notes set from the release notes, below the edit log. **Still a draft.** |
+| GitHub release drafted | same run, then by hand | 13 assets: Setup.exe, the two nupkgs, Portable.zip, the signed sideload MSIX, `dev-cert.cer` (v1.37's copy, thumbprint `8232F92D…`, matching the sideload signer), the signed feeds. Notes set from the release notes, below the edit log. Held as a draft until the Store was live; see the last row. |
 | Owner's two pages | before 14:27 | Packages (x64 and arm64) and the reviewer letter, replacing the whole Additional Testing Information box; done by the owner in Partner Center |
 | Verified after the visit | 14:27, `verify` | status `PendingCommit`, text intact (180 lines); packages still read 1.37, as expected before a commit |
 | Committed | 14:28:02, on the owner's word | `CommitStarted` |
 | Packages visible | 14:31:56, the sixth 30-second poll, about four minutes | status `Certification`; `RORORO-Store-x64-1.38.0.0.msix` and `RORORO-Store-arm64-1.38.0.0.msix`, both `Uploaded` |
+| Still certifying | 19:01 | `verify` read status `Certification`; the public catalog served 1.37.0.0 |
+| Certified | 2026-11-15, shortly before 15:48, by the owner's account | The owner had been checking Partner Center through the day and reported it in session at about 15:48, so the wait was about 25 hours: the longest RoRoRo certification on record, past v1.37's 23. No certification report. Not a logged timestamp; the last `Certification` read from here was 19:01 the evening before |
+| Publish now | 2026-11-15, about 15:48, the owner's click in Partner Center | `verify` read status `Release` at 15:48; the catalog served 1.37.0.0 at 15:48:54 |
+| Live on the Store | 2026-11-15, 15:54:56 | The public catalog served `626LabsLLC.RoRoRoBlox_1.38.0.0` for x64 and arm64, on the fourth two-minute poll; `verify` read status `Published` at 15:55 |
+| GitHub release published as Latest | 2026-11-15, 18:24 (2026-11-16 00:24:22 UTC), on the owner's word | `gh release edit v1.38.0.0 --draft=false --latest`; `releases/latest` answers `v1.38.0.0` with 13 assets. The catalog was read again first and still served 1.38.0.0 |
 
-**Not yet:** the certification result; the owner's **Publish now** click (the submission inherits "don't
-publish until I select Publish now"); publishing the GitHub draft as Latest, held for the Store and the
-owner's word. There is no clan post file this release.
+**Nothing is left open.** Both channels are published. There is no clan post file this release, on the
+owner's word.
 
 **Console:** worktree `_scratch/console-rororo-137`, branch `copy/rororo-1.38`, pinned at `41d304a`.
 Every command named `--payload out/rororo-live-listing.json`, `commit` included.
