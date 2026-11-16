@@ -6,6 +6,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Threading;
 using ROROROblox.App.About;
+using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.Theming;
 using ROROROblox.App.Tray;
 using ROROROblox.App.ViewModels;
@@ -185,8 +186,31 @@ internal partial class MainWindow : FluentWindow
     }
 
     /// <summary>
+    /// Sees a <c>WM_CLOSE</c> that another process posted to this window. Attached once the handle exists
+    /// (a window the test harness builds but never shows never subscribes) and detaches itself when the
+    /// window really closes.
+    /// </summary>
+    private ExternalCloseWatcher? _externalClose;
+
+    /// <summary>
+    /// How an outside close request ends the app: <c>App</c> wires this to the same quit path the tray's
+    /// Quit uses. Unset in tests and before startup has wired the tray, where an outside close just hides.
+    /// </summary>
+    internal Action? ExternalCloseQuit { get; set; }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        _externalClose ??= new ExternalCloseWatcher(this);
+    }
+
+    /// <summary>
     /// Closing the X minimizes to tray (does not quit). Real exit happens via the tray menu's
     /// Quit, which sets <see cref="App.IsShuttingDown"/> before <see cref="Application.Shutdown(int)"/>.
+    /// A close request that arrived from outside the process (<c>taskkill</c> without <c>/F</c>, Task
+    /// Manager's End task) is the one exception: it is identified positively by
+    /// <see cref="ExternalCloseWatcher"/> and quits through <see cref="ExternalCloseQuit"/>. Every other
+    /// close, including any the watcher cannot classify, hides.
     /// </summary>
     protected override void OnClosing(CancelEventArgs e)
     {
@@ -195,10 +219,28 @@ internal partial class MainWindow : FluentWindow
         // miss almost every time the user actually finishes with the window.
         SaveWindowPlacement();
 
-        if (!App.IsShuttingDown)
+        // Asked on every attempt, so the note is cleared by the close it belongs to.
+        var external = _externalClose?.TryConsume() ?? false;
+
+        switch (CloseRequestPolicy.Decide(App.IsShuttingDown, external))
         {
-            e.Cancel = true;
-            Hide();
+            case CloseDisposition.Proceed:
+                break;
+
+            case CloseDisposition.QuitApp:
+                e.Cancel = true;
+                Hide();
+                // Posted, not called: this runs inside Close(), and the quit path closes windows.
+                if (ExternalCloseQuit is { } quit)
+                {
+                    _ = Dispatcher.BeginInvoke(DispatcherPriority.Normal, quit);
+                }
+                break;
+
+            default:
+                e.Cancel = true;
+                Hide();
+                break;
         }
         base.OnClosing(e);
     }

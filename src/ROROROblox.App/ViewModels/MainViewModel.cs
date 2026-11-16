@@ -3564,6 +3564,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnProcessExited(object? sender, RobloxProcessEventArgs e)
     {
+        // Keyed by account. A superseded exit is the OLDER client of an account that was launched
+        // again while it was running; the row now describes the newer client (RunningPid, RunningSinceUtc,
+        // IsRunning), and clearing it would show a live client as not running. Nothing is stamped
+        // closed, no session ends, no presence refresh is needed: the account never stopped.
+        if (e.Superseded) return;
+
         _ui.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
@@ -3805,7 +3811,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         summary.SessionExpired = true;
+        // An expired account leaves the presence poll, so whatever presence last said would freeze
+        // ("In <game>" forever, and OnProcessExited's InGame branch would wait for a confirming poll
+        // that never comes). Clear it the way ApplySessionLimited does. Only presence fields move:
+        // IsRunning/RunningPid stay (the client is still up), and nothing is stamped closed and no
+        // session end is recorded here. The process exit does both, through its not-in-game branch.
+        summary.PresenceState = UserPresenceType.Offline;
+        summary.CurrentGameName = null;
+        summary.InGameSinceUtc = null;
         RelayCommand.RaiseCanExecuteChanged();
+        DiscordPresence?.Refresh();
     }
 
     private void OnAccountSessionLimited(object? sender, Guid accountId)

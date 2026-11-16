@@ -112,6 +112,7 @@ With no default game set, Launch As opens the account at Roblox home. Set a defa
 | Where | What |
 |---|---|
 | `%LOCALAPPDATA%\ROROROblox\accounts.dat` | Your saved Roblox cookies. **DPAPI-encrypted** (Windows-issued; tied to your Windows user). The file itself cannot be moved between PCs; the passphrase-protected export is how you move accounts. |
+| `%LOCALAPPDATA%\ROROROblox\accounts.dat.bak` | The previous good copy of `accounts.dat`, one save behind it, so a write cut short by a power loss cannot lose your accounts. **DPAPI-encrypted** the same way. Removing an account rewrites it. |
 | `%LOCALAPPDATA%\ROROROblox\settings.json` | UI preferences: theme, window placement, memory thresholds, toggles. Plain text (no secrets). |
 | `%LOCALAPPDATA%\ROROROblox\webview2-data\` | Embedded-browser profiles. Every Add Account gets a fresh folder and older ones are swept, so a login never inherits the previous account's cookie. |
 | `%LOCALAPPDATA%\ROROROblox\consent.dat` | Per-plugin consent records (capabilities granted, autostart toggle). **DPAPI-encrypted**, same secrecy contract as `accounts.dat`. Empty until you install your first plugin. |

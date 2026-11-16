@@ -29,6 +29,7 @@ permalink: /privacy/
 | Location | Contents | Encryption |
 |---|---|---|
 | `accounts.dat` (in the app's local data folder) | Your saved Roblox session cookies and minimal account metadata (display name, account ID, avatar URL); cached Robux, membership and friends-online count, and your note *(v1.36+)* | **DPAPI-encrypted** per Windows user |
+| `accounts.dat.bak` *(v1.39+)* (in the app's local data folder) | The previous good copy of `accounts.dat`, one save behind it, kept so a write cut short by a power loss cannot lose your saved accounts. It holds the same kind of data, session cookies included. Removing an account rewrites it, so a removed account is in neither file. After you sign an account in again, its previous session stays in this copy until the next save. | **DPAPI-encrypted** per Windows user |
 | `settings.json` (in the app's local data folder) | UI preferences: theme, window placement, compact-mode state, memory thresholds, toggles | Plain text — no secrets |
 | `webview2-data\` (in the app's local data folder) | Embedded-browser profiles used during Add Account. Every Add Account gets a fresh folder and older ones are swept afterwards, so a login never inherits the previous account's cookie. | Plain — swept, never reused across accounts |
 | `last-update-check.txt` (in the app's local data folder) | Timestamp of the most recent update check | Plain text — no secrets |

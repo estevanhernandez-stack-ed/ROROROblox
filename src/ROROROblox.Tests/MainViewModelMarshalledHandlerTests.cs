@@ -78,6 +78,93 @@ public class MainViewModelMarshalledHandlerTests
         finally { File.Delete(path); }
     }
 
+    // ---- A superseded exit is the OLD client's, not the account's (v1.39 item 4) ----
+    //
+    // The account was launched again while its first client (pid 9001) was up; the tracker now holds
+    // the second (pid 9002). When 9001 exits the tracker says Superseded and the row must not move.
+
+    [Fact]
+    public async Task ASupersededExit_LeavesTheLiveClientRunning_AndNothingClosesOrAlerts()
+    {
+        var history = new MainViewModelTests.RecordingSessionHistoryStore();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher: new MainViewModelTests.RecordingSuccessLauncher(), sessionHistory: history);
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie")) { RobloxUserId = 12345 };
+            vm.Accounts.Add(row);
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(PlaceId: 8737899170));
+            Assert.Single(history.Added);
+
+            tracker.AttachedMap[row.Id] = new TrackedProcess(9001, DateTimeOffset.UtcNow);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(row.Id, 9001));
+            vm.ApplyPresence(new AccountPresenceEventArgs(row.Id, UserPresenceType.InGame, 8737899170, "Pet Sim 99", DateTimeOffset.UtcNow));
+
+            // The relaunch: the tracker's slot now holds 9002.
+            tracker.AttachedMap[row.Id] = new TrackedProcess(9002, DateTimeOffset.UtcNow);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(row.Id, 9002));
+            var runningSince = row.RunningSinceUtc;
+            Assert.Equal(9002, row.RunningPid);
+
+            var alerts = new List<AlertTrigger>();
+            vm.AlertsRaised += (_, triggers) => alerts.AddRange(triggers);
+
+            tracker.RaiseExited(new RobloxProcessEventArgs(row.Id, 9001) { Superseded = true });
+
+            Assert.True(row.IsRunning);
+            Assert.Equal(9002, row.RunningPid);
+            Assert.Equal(runningSince, row.RunningSinceUtc);
+            Assert.Null(row.LastClosedAtUtc);
+            Assert.Empty(history.Ended);
+
+            // Presence reports the session over only once the live client is gone too. While it runs, the
+            // both-signals rule cannot agree the row is closed, so no close is stamped and nobody is paged.
+            vm.ApplyPresence(new AccountPresenceEventArgs(row.Id, UserPresenceType.Offline, null, null, DateTimeOffset.UtcNow));
+            Assert.Null(row.LastClosedAtUtc);
+            Assert.Empty(history.Ended);
+            Assert.Empty(alerts);
+            Assert.Equal(1, vm.LiveProcessCount);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ASupersededExit_ForAnAccountPresenceCannotSee_StampsNoClose_ButTheRealExitStillDoes()
+    {
+        var history = new MainViewModelTests.RecordingSessionHistoryStore();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher: new MainViewModelTests.RecordingSuccessLauncher(), sessionHistory: history);
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie")); // RobloxUserId null: the process is the only signal
+            vm.Accounts.Add(row);
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(PlaceId: 8737899170));
+            var session = Assert.Single(history.Added);
+
+            tracker.AttachedMap[row.Id] = new TrackedProcess(9001, DateTimeOffset.UtcNow);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(row.Id, 9001));
+            tracker.AttachedMap[row.Id] = new TrackedProcess(9002, DateTimeOffset.UtcNow);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(row.Id, 9002));
+
+            tracker.RaiseExited(new RobloxProcessEventArgs(row.Id, 9001) { Superseded = true });
+
+            Assert.True(row.IsRunning);
+            Assert.Equal(9002, row.RunningPid);
+            Assert.Null(row.LastClosedAtUtc);
+            Assert.Empty(history.Ended);
+
+            // The live client's own exit is a normal one and behaves exactly as before.
+            var exitedAt = DateTimeOffset.UtcNow;
+            tracker.AttachedMap.Remove(row.Id);
+            tracker.RaiseExited(new RobloxProcessEventArgs(row.Id, 9002) { OccurredAtUtc = exitedAt });
+
+            Assert.False(row.IsRunning);
+            Assert.Null(row.RunningPid);
+            Assert.Equal(exitedAt, row.LastClosedAtUtc);
+            var ended = Assert.Single(history.Ended);
+            Assert.Equal(session.Id, ended.SessionId);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     [Fact]
     public void AnAttachThatNeverLandsSaysSoOnTheRow()
     {

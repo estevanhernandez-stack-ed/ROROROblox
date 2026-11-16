@@ -69,4 +69,14 @@ public sealed record TrackedProcess(int Pid, DateTimeOffset AttachedAtUtc);
 public sealed record RobloxProcessEventArgs(Guid AccountId, int Pid)
 {
     public DateTimeOffset OccurredAtUtc { get; init; } = DateTimeOffset.UtcNow;
+
+    /// <summary>
+    /// True only on a <see cref="IRobloxProcessTracker.ProcessExited"/> raised for a process that a
+    /// later attach for the same account had already replaced (the account was launched again while
+    /// its first client was still up). The pid is gone, but the ACCOUNT is not: it still has a live,
+    /// tracked client. A subscriber keyed by account ("this account stopped running") must ignore a
+    /// superseded exit; a subscriber keyed by pid ("this process is gone") still handles it. False
+    /// for every other exit, including the exit of the newer process.
+    /// </summary>
+    public bool Superseded { get; init; }
 }

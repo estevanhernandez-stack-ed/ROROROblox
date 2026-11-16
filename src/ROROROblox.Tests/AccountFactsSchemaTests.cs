@@ -211,4 +211,113 @@ public class AccountFactsSchemaTests : IDisposable
         // DPAPI output is salted, so a rewrite would change the bytes even for identical plaintext.
         Assert.Equal(bytes, await File.ReadAllBytesAsync(path));
     }
+
+    // ---------- v1.39 item 2: a refresh that changed nothing but its stamp does not rewrite the vault ----------
+
+    private static readonly DateTimeOffset Stamp0 = new(2026, 11, 16, 12, 0, 0, TimeSpan.Zero);
+
+    private async Task<(AccountStore Store, string Path, Guid Id)> StoreWithFactsAsync(AccountFacts first)
+    {
+        var path = Path.Combine(_tempDir, "accounts.dat");
+        var store = new AccountStore(path);
+        var id = (await store.AddAsync("Alpha", "https://a", "FAKE-COOKIE-schema-EEEE")).Id;
+        await store.SetFactsAsync(id, first);
+        return (store, path, id);
+    }
+
+    [Fact]
+    public async Task SetFacts_SameValuesNewerStampByMinutes_LeavesTheVaultByteIdentical()
+    {
+        var (store, path, id) = await StoreWithFactsAsync(new AccountFacts(5, "none", 1, Stamp0, null));
+        using var _ = store;
+        var before = SHA256.HashData(await File.ReadAllBytesAsync(path));
+
+        await store.SetFactsAsync(id, new AccountFacts(5, "none", 1, Stamp0.AddMinutes(10), null));
+        await store.SetFactsAsync(id, new AccountFacts(5, "none", 1, Stamp0.AddMinutes(20), null));
+
+        Assert.Equal(before, SHA256.HashData(await File.ReadAllBytesAsync(path)));
+    }
+
+    [Fact]
+    public async Task SetFacts_AChangedRobuxValue_Writes()
+    {
+        var (store, path, id) = await StoreWithFactsAsync(new AccountFacts(5, "none", 1, Stamp0, null));
+        using var _ = store;
+        var before = SHA256.HashData(await File.ReadAllBytesAsync(path));
+
+        await store.SetFactsAsync(id, new AccountFacts(6, "none", 1, Stamp0.AddMinutes(10), null));
+
+        Assert.NotEqual(before, SHA256.HashData(await File.ReadAllBytesAsync(path)));
+        Assert.Equal(6, Assert.Single(await store.ListAsync()).Facts!.Robux);
+    }
+
+    [Fact]
+    public async Task SetFacts_AChangedLastError_Writes()
+    {
+        var (store, path, id) = await StoreWithFactsAsync(new AccountFacts(5, "none", 1, Stamp0, null));
+        using var _ = store;
+        var before = SHA256.HashData(await File.ReadAllBytesAsync(path));
+
+        await store.SetFactsAsync(id, new AccountFacts(5, "none", 1, Stamp0, "403"));
+
+        Assert.NotEqual(before, SHA256.HashData(await File.ReadAllBytesAsync(path)));
+    }
+
+    [Theory]
+    [InlineData(360)]
+    [InlineData(361)]
+    public async Task SetFacts_SameValuesSixHoursOrMoreNewer_Writes(int minutes)
+    {
+        var (store, path, id) = await StoreWithFactsAsync(new AccountFacts(5, "none", 1, Stamp0, null));
+        using var _ = store;
+        var before = SHA256.HashData(await File.ReadAllBytesAsync(path));
+
+        var newer = Stamp0.AddMinutes(minutes);
+        await store.SetFactsAsync(id, new AccountFacts(5, "none", 1, newer, null));
+
+        Assert.NotEqual(before, SHA256.HashData(await File.ReadAllBytesAsync(path)));
+        Assert.Equal(newer, Assert.Single(await store.ListAsync()).Facts!.FetchedAtUtc);
+    }
+
+    [Fact]
+    public async Task SetFacts_JustUnderSixHoursNewer_StillSkips()
+    {
+        var (store, path, id) = await StoreWithFactsAsync(new AccountFacts(5, "none", 1, Stamp0, null));
+        using var _ = store;
+        var before = SHA256.HashData(await File.ReadAllBytesAsync(path));
+
+        await store.SetFactsAsync(id, new AccountFacts(5, "none", 1, Stamp0.AddMinutes(359), null));
+
+        Assert.Equal(before, SHA256.HashData(await File.ReadAllBytesAsync(path)));
+    }
+
+    [Fact]
+    public async Task SetFacts_AFirstWriteWithNoStoredFacts_Writes()
+    {
+        var path = Path.Combine(_tempDir, "accounts.dat");
+        using var store = new AccountStore(path);
+        var id = (await store.AddAsync("Alpha", "https://a", "FAKE-COOKIE-schema-FFFF")).Id;
+        var before = SHA256.HashData(await File.ReadAllBytesAsync(path));
+
+        await store.SetFactsAsync(id, new AccountFacts(5, "none", 1, Stamp0, null));
+
+        Assert.NotEqual(before, SHA256.HashData(await File.ReadAllBytesAsync(path)));
+        Assert.Equal(5, Assert.Single(await store.ListAsync()).Facts!.Robux);
+    }
+
+    [Fact]
+    public async Task SetFacts_NullStamps_AreHandled()
+    {
+        // Stored stamp null, incoming has one, values equal: nothing to measure the gap from, so write.
+        var (store, path, id) = await StoreWithFactsAsync(new AccountFacts(5, "none", 1, null, "403"));
+        using var _ = store;
+        var before = SHA256.HashData(await File.ReadAllBytesAsync(path));
+        await store.SetFactsAsync(id, new AccountFacts(5, "none", 1, Stamp0, "403"));
+        Assert.NotEqual(before, SHA256.HashData(await File.ReadAllBytesAsync(path)));
+
+        // Incoming stamp null, stored has one, values equal: a failed refresh that keeps the old stamp. Skip.
+        var mid = SHA256.HashData(await File.ReadAllBytesAsync(path));
+        await store.SetFactsAsync(id, new AccountFacts(5, "none", 1, null, "403"));
+        Assert.Equal(mid, SHA256.HashData(await File.ReadAllBytesAsync(path)));
+    }
 }
