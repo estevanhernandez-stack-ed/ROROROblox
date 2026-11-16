@@ -225,7 +225,40 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
             "No RobloxPlayerBeta.exe spawned within {Timeout}s for account {AccountId}{Extended}. " +
             "Likely silent launch failure (Roblox version drift, place removed, AV interference).",
             waited.TotalSeconds, accountId, extended ? " (installer-extended)" : string.Empty);
-        ProcessAttachFailed?.Invoke(this, new RobloxProcessEventArgs(accountId, 0));
+        Raise(ProcessAttachFailed, nameof(ProcessAttachFailed), new RobloxProcessEventArgs(accountId, 0));
+    }
+
+    /// <summary>
+    /// Raises <paramref name="handler"/> one subscriber at a time, in subscription order, so a
+    /// subscriber that throws neither escapes nor starves the ones behind it.
+    /// <para>
+    /// Escape matters most for <see cref="ProcessExited"/>: it runs on the <c>Process.Exited</c>
+    /// thread-pool callback, where an unhandled exception ends the process. The first subscriber,
+    /// <c>MainViewModel.OnProcessExited</c>, marshals to the UI thread, and that call throws when
+    /// the dispatcher shuts down under it (a client exiting while RoRoRo exits). Starvation matters
+    /// for all three: a plain multicast <c>Invoke</c> stops at the first throw.
+    /// </para>
+    /// </summary>
+    private void Raise(EventHandler<RobloxProcessEventArgs>? handler, string eventName, RobloxProcessEventArgs args)
+    {
+        if (handler is null)
+        {
+            return;
+        }
+
+        foreach (var subscriber in handler.GetInvocationList())
+        {
+            try
+            {
+                ((EventHandler<RobloxProcessEventArgs>)subscriber)(this, args);
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex,
+                    "A {Event} subscriber threw for account {AccountId} pid {Pid}; the remaining subscribers still run.",
+                    eventName, args.AccountId, args.Pid);
+            }
+        }
     }
 
     /// <summary>
@@ -423,7 +456,7 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
             _attachedByAccount[accountId] = slot;
             process.Exited += (_, _) => OnExitedOnce();
             _log.LogInformation("Attached to RobloxPlayerBeta pid {Pid} for account {AccountId}", process.Id, accountId);
-            ProcessAttached?.Invoke(this, new RobloxProcessEventArgs(accountId, process.Id));
+            Raise(ProcessAttached, nameof(ProcessAttached), new RobloxProcessEventArgs(accountId, process.Id));
             process.EnableRaisingEvents = true;
             if (process.HasExited)
             {
@@ -440,7 +473,9 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
         }
     }
 
-    private void HandleExited(Guid accountId, Process process)
+    // Internal for tests: the real caller is the Process.Exited thread-pool callback, where an
+    // escaping exception would take the test host down instead of failing the test.
+    internal void HandleExited(Guid accountId, Process process)
     {
         try
         {
@@ -472,7 +507,7 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
                 exitCode is { } code ? code.ToString() : "unknown",
                 uptime is { } up ? $"{(int)up.TotalMinutes}m{up.Seconds:D2}s" : "unknown");
 
-            ProcessExited?.Invoke(this, new RobloxProcessEventArgs(accountId, process.Id));
+            Raise(ProcessExited, nameof(ProcessExited), new RobloxProcessEventArgs(accountId, process.Id));
         }
         finally
         {

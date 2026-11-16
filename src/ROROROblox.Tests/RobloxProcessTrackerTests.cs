@@ -360,6 +360,116 @@ public sealed class RobloxProcessTrackerTests : IDisposable
         Assert.False(tracker.IsTracking(accountId));
     }
 
+    // ---- A throwing subscriber must neither escape the raise site nor starve the ones behind it ----
+    //
+    // ProcessExited is raised from the Process.Exited thread-pool callback. A subscriber that throws
+    // (MainViewModel.OnProcessExited marshalling through a dispatcher that is shutting down) used to
+    // escape that callback unhandled and take the process down, and starve every later subscriber.
+
+    private sealed class CapturingLogger : Microsoft.Extensions.Logging.ILogger<RobloxProcessTracker>
+    {
+        public List<Microsoft.Extensions.Logging.LogLevel> Levels { get; } = new();
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId,
+            TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            lock (Levels) Levels.Add(logLevel);
+        }
+    }
+
+    private static RobloxProcessTracker NewSeamTracker(Microsoft.Extensions.Logging.ILogger<RobloxProcessTracker> log) => new(
+        log: log,
+        attachTimeout: TimeSpan.FromSeconds(2),
+        installerExtendedTimeout: TimeSpan.FromSeconds(5),
+        pollInterval: TimeSpan.FromMilliseconds(50),
+        isInstallerRunning: () => false,
+        candidateProcesses: Array.Empty<Process>);
+
+    [Fact]
+    public void ProcessExited_ThrowingSubscriber_DoesNotEscapeAndDoesNotStarveTheNext()
+    {
+        var log = new CapturingLogger();
+        using var tracker = NewSeamTracker(log);
+        var accountId = Guid.NewGuid();
+        var secondSaw = new List<(Guid Account, int Pid)>();
+        tracker.ProcessExited += (_, _) => throw new TaskCanceledException("dispatcher shut down");
+        tracker.ProcessExited += (_, e) => secondSaw.Add((e.AccountId, e.Pid));
+
+        var dead = SpawnDeadProcess();
+        var pid = dead.Id;
+
+        // HandleExited is what the Process.Exited callback runs; calling it directly means a
+        // regression fails this test rather than crashing the test host on a pool thread.
+        var ex = Record.Exception(() => tracker.HandleExited(accountId, dead));
+
+        Assert.Null(ex);
+        Assert.Single(secondSaw);
+        Assert.Equal((accountId, pid), secondSaw[0]);
+        lock (log.Levels) Assert.Contains(Microsoft.Extensions.Logging.LogLevel.Warning, log.Levels);
+    }
+
+    [Fact]
+    public void ProcessExited_SubscribersStillRunInSubscriptionOrder()
+    {
+        using var tracker = NewSeamTracker();
+        var order = new List<int>();
+        tracker.ProcessExited += (_, _) => order.Add(1);
+        tracker.ProcessExited += (_, _) => throw new InvalidOperationException("boom");
+        tracker.ProcessExited += (_, _) => order.Add(3);
+
+        tracker.HandleExited(Guid.NewGuid(), SpawnDeadProcess());
+
+        Assert.Equal(new[] { 1, 3 }, order);
+    }
+
+    [Fact]
+    public void ProcessAttached_ThrowingSubscriber_DoesNotStarveTheNextOrFakeAnExit()
+    {
+        var pid = SpawnSleeperPid();
+        using var tracker = NewSeamTracker();
+        var accountId = Guid.NewGuid();
+        var secondAttachedPids = new List<int>();
+        var exitedCount = 0;
+        tracker.ProcessAttached += (_, _) => throw new TaskCanceledException("dispatcher shut down");
+        tracker.ProcessAttached += (_, e) => secondAttachedPids.Add(e.Pid);
+        tracker.ProcessExited += (_, _) => Interlocked.Increment(ref exitedCount);
+
+        var ex = Record.Exception(() => tracker.AttachToProcess(accountId, Process.GetProcessById(pid)));
+
+        Assert.Null(ex);
+        Assert.Equal(new[] { pid }, secondAttachedPids);
+        // A throwing subscriber is not an attach failure: the live client stays tracked.
+        Assert.True(tracker.IsTracking(accountId));
+        Assert.Equal(0, Volatile.Read(ref exitedCount));
+    }
+
+    [Fact]
+    public async Task ProcessAttachFailed_ThrowingSubscriber_DoesNotEscapeAndDoesNotStarveTheNext()
+    {
+        var time = new VirtualTime();
+        var start = time.UtcNow;
+        using var tracker = new RobloxProcessTracker(
+            log: NullLogger<RobloxProcessTracker>.Instance,
+            attachTimeout: TimeSpan.FromMilliseconds(200),
+            installerExtendedTimeout: TimeSpan.FromSeconds(5),
+            pollInterval: TimeSpan.FromMilliseconds(50),
+            isInstallerRunning: () => false,
+            candidateProcesses: Array.Empty<Process>,
+            clock: time,
+            delay: time.Advance);
+
+        var accountId = Guid.NewGuid();
+        var secondSaw = new List<Guid>();
+        tracker.ProcessAttachFailed += (_, _) => throw new TaskCanceledException("dispatcher shut down");
+        tracker.ProcessAttachFailed += (_, e) => secondSaw.Add(e.AccountId);
+
+        var ex = await Record.ExceptionAsync(() => tracker.TrackLaunchAsync(accountId, start));
+
+        Assert.Null(ex);
+        Assert.Equal(new[] { accountId }, secondSaw);
+    }
+
     [Fact]
     public void NullLoggerConvenienceCtor_DoesNotThrow()
     {
