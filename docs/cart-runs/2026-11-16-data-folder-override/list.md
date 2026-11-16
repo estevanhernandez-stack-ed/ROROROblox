@@ -30,7 +30,7 @@ Branch `feat/data-folder-override`, attended, one commit per item, in order: ite
   Verify: the observations themselves.
   Stop class: go
 
-- [ ] **5. Whole suite green; the keystone says how to use it**
+- [x] **5. Whole suite green; the keystone says how to use it**
   Spec ref: repo `CLAUDE.md > Build, test, run` and `Decisions`; `docs/decisions.md`; `docs/features.md`
   What to build: One line in `CLAUDE.md`'s build block showing a dev run on a test folder, and a hard rule that a new data path goes through the helper. A `docs/decisions.md` entry (dev builds only and why, absolute paths only, registrations skipped, what it does not isolate). A `docs/features.md` row. Size S.
   Acceptance: Done when `dotnet build ROROROblox.slnx -c Release` has 0 errors and `dotnet test ROROROblox.slnx -c Release --no-build` passes in full.
