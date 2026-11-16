@@ -37,41 +37,57 @@ public class AppDataRootPathPinTests
     private static string Old(params string[] parts) => Path.Combine(
         [Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ROROROblox", .. parts]);
 
-    private static string Root => Old();
+    /// <summary>
+    /// The one table of the nineteen sites that expose their path: name, how to resolve it, and the
+    /// parts under the data folder it must equal. <see cref="AccessibleSites"/> (the default-path pins)
+    /// and <c>AppDataRootOverrideTests</c> (the same sites under an override) both read it, so the two
+    /// cannot drift apart: a site added or renamed here is checked both ways.
+    /// </summary>
+    internal static IReadOnlyList<(string Site, Func<string> Resolve, string[] Parts)> SiteTable { get; } = BuildSiteTable();
+
+    private static IReadOnlyList<(string Site, Func<string> Resolve, string[] Parts)> BuildSiteTable()
+    {
+        var rows = new List<(string, Func<string>, string[])>();
+        void Row(string site, Func<string> resolve, params string[] parts) => rows.Add((site, resolve, parts));
+
+        // App
+        Row("WelcomeWindow.SentinelPath", () => WelcomeWindow.SentinelPath, ".welcome-shown");
+        Row("LanguageNoticeSentinel.SentinelPath", () => LanguageNoticeSentinel.SentinelPath, ".language-notice-shown");
+        Row("AppLogging.DefaultLogDirectory", () => AppLogging.DefaultLogDirectory, "logs");
+        Row("DpapiCorruptWindow.CorruptAccountsPath", () => DpapiCorruptWindow.CorruptAccountsPath, "accounts.dat");
+        Row("PluginRegistry.DefaultPluginsRoot", () => PluginRegistry.DefaultPluginsRoot, "plugins");
+        Row("MainAvatarTrayPainter.DefaultCacheDirectory", () => MainAvatarTrayPainter.DefaultCacheDirectory, "tray-cache");
+        Row("UpdateChecker.DebounceStampPath", () => UpdateChecker.DebounceStampPath, "last-update-check.txt");
+
+        // Core
+        Row("AccountStore.DefaultPath", () => AccountStore.DefaultPath(), "accounts.dat");
+        Row("AppSettings.DefaultPath", () => AppSettings.DefaultPath(), "settings.json");
+        Row("FavoriteGameStore.DefaultPath", () => FavoriteGameStore.DefaultPath(), "favorites.json");
+        Row("KnownIssuesDismissals.DefaultPath", () => KnownIssuesDismissals.DefaultPath, "known-issues-dismissed.json");
+        Row("KnownIssuesFeed (default cache directory)", KnownIssuesFeedCacheDirectory);
+        Row("GameIconCache.DefaultPath", () => GameIconCache.DefaultPath(), "game-icons.json");
+        Row("PrivateServerStore.DefaultPath", () => PrivateServerStore.DefaultPath(), "private-servers.json");
+        Row("RobloxCompatChecker.LastKnownMutexPath", () => RobloxCompatChecker.LastKnownMutexPath, "last-known-mutex.txt");
+        Row("SessionHistoryStore.DefaultPath", () => SessionHistoryStore.DefaultPath(), "session-history.json");
+        Row("SessionStatsStore.DefaultPath", () => SessionStatsStore.DefaultPath(), "session-stats.json");
+        Row("FileStreamerIdentityStore.DefaultPath", () => FileStreamerIdentityStore.DefaultPath(), "streamer-identities.dat");
+        Row("ThemeStore.DefaultUserThemesFolder", () => ThemeStore.DefaultUserThemesFolder(), "themes");
+
+        return rows.Select(r => (r.Item1, r.Item2, r.Item3)).ToList();
+    }
 
     public static TheoryData<string, string, string> AccessibleSites()
     {
         var data = new TheoryData<string, string, string>();
-        void Row(string site, string actual, string expected) => data.Add(site, actual, expected);
-
-        // App
-        Row("WelcomeWindow.SentinelPath", WelcomeWindow.SentinelPath, Old(".welcome-shown"));
-        Row("LanguageNoticeSentinel.SentinelPath", LanguageNoticeSentinel.SentinelPath, Old(".language-notice-shown"));
-        Row("AppLogging.DefaultLogDirectory", AppLogging.DefaultLogDirectory, Old("logs"));
-        Row("DpapiCorruptWindow.CorruptAccountsPath", DpapiCorruptWindow.CorruptAccountsPath, Old("accounts.dat"));
-        Row("PluginRegistry.DefaultPluginsRoot", PluginRegistry.DefaultPluginsRoot, Old("plugins"));
-        Row("MainAvatarTrayPainter.DefaultCacheDirectory", MainAvatarTrayPainter.DefaultCacheDirectory, Old("tray-cache"));
-        Row("UpdateChecker.DebounceStampPath", UpdateChecker.DebounceStampPath, Old("last-update-check.txt"));
-
-        // Core
-        Row("AccountStore.DefaultPath", AccountStore.DefaultPath(), Old("accounts.dat"));
-        Row("AppSettings.DefaultPath", AppSettings.DefaultPath(), Old("settings.json"));
-        Row("FavoriteGameStore.DefaultPath", FavoriteGameStore.DefaultPath(), Old("favorites.json"));
-        Row("KnownIssuesDismissals.DefaultPath", KnownIssuesDismissals.DefaultPath, Old("known-issues-dismissed.json"));
-        Row("KnownIssuesFeed (default cache directory)", KnownIssuesFeedCacheDirectory(), Root);
-        Row("GameIconCache.DefaultPath", GameIconCache.DefaultPath(), Old("game-icons.json"));
-        Row("PrivateServerStore.DefaultPath", PrivateServerStore.DefaultPath(), Old("private-servers.json"));
-        Row("RobloxCompatChecker.LastKnownMutexPath", RobloxCompatChecker.LastKnownMutexPath, Old("last-known-mutex.txt"));
-        Row("SessionHistoryStore.DefaultPath", SessionHistoryStore.DefaultPath(), Old("session-history.json"));
-        Row("SessionStatsStore.DefaultPath", SessionStatsStore.DefaultPath(), Old("session-stats.json"));
-        Row("FileStreamerIdentityStore.DefaultPath", FileStreamerIdentityStore.DefaultPath(), Old("streamer-identities.dat"));
-        Row("ThemeStore.DefaultUserThemesFolder", ThemeStore.DefaultUserThemesFolder(), Old("themes"));
-
+        foreach (var (site, resolve, parts) in SiteTable)
+        {
+            data.Add(site, resolve(), Old(parts));
+        }
         return data;
     }
 
     /// <summary>The cache directory a <c>KnownIssuesFeed</c> built with no override picks. Private field, no WPF needed.</summary>
-    private static string KnownIssuesFeedCacheDirectory()
+    internal static string KnownIssuesFeedCacheDirectory()
     {
         using var http = new HttpClient();
         var feed = new KnownIssuesFeed(http);
