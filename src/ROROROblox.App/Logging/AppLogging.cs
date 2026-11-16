@@ -14,14 +14,18 @@ namespace ROROROblox.App.Logging;
 /// </summary>
 internal static class AppLogging
 {
-    private static string _logDirectory = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ROROROblox",
-        "logs");
+    /// <summary>
+    /// The folder <see cref="Configure"/> was told to use instead of the default. Null until then.
+    /// The default is derived on each read, never held in a static initialiser, so it cannot be
+    /// frozen before the data-folder root is final.
+    /// </summary>
+    private static string? _logDirectoryOverride;
 
-    public static string LogDirectory => _logDirectory;
+    internal static string DefaultLogDirectory => ROROROblox.Core.AppDataRoot.Combine("logs");
 
-    public static string LogFilePath => Path.Combine(_logDirectory, "rororoblox-.log");
+    public static string LogDirectory => _logDirectoryOverride ?? DefaultLogDirectory;
+
+    public static string LogFilePath => Path.Combine(LogDirectory, "rororoblox-.log");
 
     private static SerilogLoggerFactory? _factory;
 
@@ -29,9 +33,9 @@ internal static class AppLogging
     {
         if (!string.IsNullOrWhiteSpace(logDirectoryOverride))
         {
-            _logDirectory = logDirectoryOverride;
+            _logDirectoryOverride = logDirectoryOverride;
         }
-        Directory.CreateDirectory(_logDirectory);
+        Directory.CreateDirectory(LogDirectory);
 
         var serilogLogger = new LoggerConfiguration()
             .MinimumLevel.Debug()

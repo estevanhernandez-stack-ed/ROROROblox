@@ -46,8 +46,7 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
 
     public static string DefaultPath()
     {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(localAppData, "ROROROblox", "session-stats.json");
+        return AppDataRoot.Combine("session-stats.json");
     }
 
     public async Task<SessionStats> ReadAsync()

@@ -68,9 +68,7 @@ public sealed class KnownIssuesFeed : IKnownIssuesFeed
     {
         _http = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _log = log ?? NullLogger<KnownIssuesFeed>.Instance;
-        _cacheDirectory = cacheDirectory ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ROROROblox");
+        _cacheDirectory = cacheDirectory ?? AppDataRoot.Folder;
         _pinnedPublicKey = pinnedPublicKey ?? RobloxCompatSigningKey.PublicKeySpki;
     }
 

@@ -44,11 +44,11 @@ internal sealed class MainAvatarTrayPainter
         _tray = tray ?? throw new ArgumentNullException(nameof(tray));
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _log = log ?? NullLogger<MainAvatarTrayPainter>.Instance;
-        _cacheDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ROROROblox",
-            "tray-cache");
+        _cacheDir = DefaultCacheDirectory;
     }
+
+    /// <summary>Where the composed tray icons are cached.</summary>
+    internal static string DefaultCacheDirectory => AppDataRoot.Combine("tray-cache");
 
     /// <summary>
     /// Refresh the tray icon based on the current main account. Pass null/empty to revert to

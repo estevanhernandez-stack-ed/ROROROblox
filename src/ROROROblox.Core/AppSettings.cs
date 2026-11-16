@@ -36,8 +36,7 @@ public sealed class AppSettings : IAppSettings, IDisposable
 
     public static string DefaultPath()
     {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(localAppData, "ROROROblox", "settings.json");
+        return AppDataRoot.Combine("settings.json");
     }
 
     // GetDefaultPlaceUrlAsync and the DefaultPlaceUrl blob property were DELETED by F-093,

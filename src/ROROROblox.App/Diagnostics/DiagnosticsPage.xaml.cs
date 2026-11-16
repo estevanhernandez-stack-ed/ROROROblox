@@ -164,10 +164,7 @@ internal partial class DiagnosticsPage : UserControl
 
     private void OnOpenDataFolderClick(object sender, RoutedEventArgs e)
     {
-        var path = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ROROROblox");
-        OpenInExplorer(path);
+        OpenInExplorer(AppDataRoot.Folder);
     }
 
     private static void OpenInExplorer(string path)

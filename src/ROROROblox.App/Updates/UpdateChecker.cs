@@ -22,10 +22,7 @@ internal sealed class UpdateChecker : IUpdateChecker
     private const string GitHubRepoUrl = "https://github.com/estevanhernandez-stack-ed/ROROROblox";
     private static readonly TimeSpan DebounceWindow = TimeSpan.FromHours(24);
 
-    private static readonly string DebounceStampPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ROROROblox",
-        "last-update-check.txt");
+    internal static string DebounceStampPath => ROROROblox.Core.AppDataRoot.Combine("last-update-check.txt");
 
     private readonly ILogger<UpdateChecker> _log;
 

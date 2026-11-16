@@ -37,8 +37,7 @@ public sealed class SessionHistoryStore : ISessionHistoryStore, IDisposable
 
     public static string DefaultPath()
     {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(localAppData, "ROROROblox", "session-history.json");
+        return AppDataRoot.Combine("session-history.json");
     }
 
     public async Task<IReadOnlyList<LaunchSession>> ListAsync()

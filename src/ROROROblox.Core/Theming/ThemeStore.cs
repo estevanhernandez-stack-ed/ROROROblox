@@ -35,8 +35,7 @@ public sealed class ThemeStore : IThemeStore
 
     public static string DefaultUserThemesFolder()
     {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(localAppData, "ROROROblox", "themes");
+        return AppDataRoot.Combine("themes");
     }
 
     public async Task<IReadOnlyList<Theme>> ListAsync()

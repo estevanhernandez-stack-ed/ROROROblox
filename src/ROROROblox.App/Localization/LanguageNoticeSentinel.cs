@@ -19,10 +19,7 @@ internal static class LanguageNoticeSentinel
 {
     /// <summary>Sentinel written after the notice is shown. Absent = not yet shown. Sits with
     /// <c>accounts.dat</c>/<c>settings.json</c>/<c>.welcome-shown</c> in the per-user data dir.</summary>
-    private static readonly string SentinelPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ROROROblox",
-        ".language-notice-shown");
+    internal static string SentinelPath => ROROROblox.Core.AppDataRoot.Combine(".language-notice-shown");
 
     /// <summary>True when the notice has not yet been shown (sentinel absent).</summary>
     public static bool IsPending()

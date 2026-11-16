@@ -1219,10 +1219,7 @@ public partial class App : Application
         // failed silently when the previous capture's msedgewebview2.exe children still pinned
         // files — causing every subsequent Add Account to re-capture the first account.
         services.AddSingleton(sp => new WebView2UserDataDirectory(
-            System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "ROROROblox",
-                "webview2-data"),
+            ROROROblox.Core.AppDataRoot.Combine("webview2-data"),
             sp.GetRequiredService<ILogger<WebView2UserDataDirectory>>()));
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
@@ -1347,9 +1344,7 @@ public partial class App : Application
                 sp.GetRequiredService<ILogger<Tray.MainAvatarTrayPainter>>());
         });
 
-        var dataDir = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ROROROblox");
+        var dataDir = ROROROblox.Core.AppDataRoot.Folder;
 
         // #246: last-exit.json. Registered here, begun in OnStartup right after the container builds.
         services.AddSingleton(sp => new ROROROblox.Core.Diagnostics.LastExitRecorder(
@@ -1466,9 +1461,7 @@ public partial class App : Application
         // launch — every plugin-side service is wrapped at the App.OnStartup hook so a
         // broken plugins root or a corrupt consent file just disables plugin support.
         var pluginsRoot = ROROROblox.App.Plugins.PluginRegistry.DefaultPluginsRoot;
-        var consentPath = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ROROROblox", "consent.dat");
+        var consentPath = ROROROblox.Core.AppDataRoot.Combine("consent.dat");
 
         services.AddSingleton(_ => new ROROROblox.App.Plugins.ConsentStore(consentPath));
         services.AddSingleton(sp => new ROROROblox.App.Plugins.PluginRegistry(

@@ -46,8 +46,7 @@ public sealed class GameIconCache : IGameIconCache
 
     public static string DefaultPath()
     {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(localAppData, "ROROROblox", "game-icons.json");
+        return AppDataRoot.Combine("game-icons.json");
     }
 
     public event EventHandler<GameIconResolvedEventArgs>? IconResolved;
