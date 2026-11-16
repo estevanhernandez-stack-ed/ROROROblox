@@ -308,6 +308,26 @@ public class AccountFactsServiceTests
         Assert.Equal(rig.Ids[1], rig.Service.RunTick());
     }
 
+    [Fact]
+    public async Task UnchangedFacts_StillRotateBetweenAccounts_OnTheTimer()
+    {
+        // v1.39 item 2: the store skips a stamp-only write, but the service stamps the live row and
+        // _lastAttempt on every refresh, so the tick must keep alternating rather than re-pick one account.
+        using var rig = await Rig.CreateAsync(2);
+        var picks = new List<Guid>();
+        for (var round = 0; round < 4; round++)
+        {
+            var picked = rig.Service.RunTick();
+            Assert.NotNull(picked);
+            picks.Add(picked!.Value);
+            var want = round + 1;
+            await rig.PumpUntilAsync(() => rig.Updates.Count == want);
+            rig.Clock.Advance(TimeSpan.FromMinutes(11)); // both are due again; the older attempt must win
+        }
+
+        Assert.Equal([rig.Ids[0], rig.Ids[1], rig.Ids[0], rig.Ids[1]], picks);
+    }
+
     // ---- failure handling ----
 
     [Theory]

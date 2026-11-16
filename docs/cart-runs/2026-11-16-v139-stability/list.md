@@ -9,7 +9,7 @@ Branch `fix/v1.39-stability`, attended, one commit per item. Items run in order:
   Verify: `dotnet build ROROROblox.slnx -c Release`, then `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~AccountStore"`. Remove the backup fallback and see the truncation test fail.
   Stop class: go
 
-- [ ] **2. A facts refresh that changed nothing does not rewrite the vault**
+- [x] **2. A facts refresh that changed nothing does not rewrite the vault**
   Spec ref: `board.md > Tier 1 > 1` (the write frequency); `AccountStore.SetFactsAsync`; `src/ROROROblox.Core/AccountFactsService.cs` (`AgeOf`, `_lastAttempt`, the `fetched with { FetchedAtUtc = now }` line)
   What to build: `SetFactsAsync` skips the save when `Robux`, `Membership`, `FriendsOnline` and `LastError` are unchanged and the stored `FetchedAtUtc` is less than six hours older than the new one. A value change, a first write, or a stamp six hours stale still saves. Scheduling already runs off the in-memory `_lastAttempt`, so rotation between accounts must be unchanged; confirm it and say so. Check that the documented "never at startup" behaviour (`docs/PRIVACY.md`, the `economy.roblox.com` row) still holds when the stored stamp is up to six hours old after a restart, and report what enforces it. Size S.
   Acceptance: Done when tests show: two refreshes with identical values leave `accounts.dat` byte-identical; a changed Robux value writes; identical values with a stamp more than six hours newer write; two accounts with unchanged facts are still refreshed alternately by the service (fake clock); and the existing `AccountFactsServiceTests` and `AccountStore*Tests` pass.

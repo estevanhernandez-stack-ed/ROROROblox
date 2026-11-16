@@ -241,6 +241,33 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    /// <summary>
+    /// How far behind the incoming stamp the stored <see cref="AccountFacts.FetchedAtUtc"/> may fall
+    /// before an otherwise unchanged refresh is written anyway. The service stamps every successful
+    /// refresh, so comparing whole records never skipped and rewrote the encrypted vault about every
+    /// ten minutes per account. The skip is bounded so the persisted stamp (what "Updated N ago" reads
+    /// after a restart) never lags the truth by more than this.
+    /// </summary>
+    internal static readonly TimeSpan FactsStampWriteInterval = TimeSpan.FromHours(6);
+
+    private static bool FactsUnchanged(AccountFacts? stored, AccountFacts incoming)
+    {
+        if (stored is null
+            || stored.Robux != incoming.Robux
+            || stored.Membership != incoming.Membership
+            || stored.FriendsOnline != incoming.FriendsOnline
+            || stored.LastError != incoming.LastError)
+        {
+            return false;
+        }
+        if (incoming.FetchedAtUtc is not { } newer)
+        {
+            return true; // nothing newer to record (a failed refresh keeps the old stamp).
+        }
+        // Stored stamp null with an incoming one: there is no gap to measure, so record it.
+        return stored.FetchedAtUtc is { } older && newer - older < FactsStampWriteInterval;
+    }
+
     public async Task SetFactsAsync(Guid id, AccountFacts facts)
     {
         ArgumentNullException.ThrowIfNull(facts);
@@ -254,7 +281,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
             {
                 return;
             }
-            if (Equals(blob.Accounts[idx].Facts, facts))
+            if (FactsUnchanged(blob.Accounts[idx].Facts, facts))
             {
                 return; // no-op write avoidance: a refresh that changed nothing costs no DPAPI roundtrip.
             }
