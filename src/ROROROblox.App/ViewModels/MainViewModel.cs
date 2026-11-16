@@ -4433,7 +4433,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _relaunchPending.Remove(accountId);
     }
 
-    /// <summary>Mark every running account as expected — app shutdown closes them all at once.
+    /// <summary>Mark every running account's close as expected. Stop all really does close them all at
+    /// once. App shutdown does not (the clients stay up; the summary claimed otherwise until 2026-11-16),
+    /// but a Windows shutdown ends them alongside RoRoRo, and those exits must not alert either.
     /// Stop all also means "leave them stopped": every relaunch auto-rejoin still owes is dropped.</summary>
     internal void ExpectCloseForAll()
     {
