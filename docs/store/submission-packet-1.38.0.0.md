@@ -7,7 +7,7 @@ release branch's own docs). Three changes, all from the 2026-11-10 evidence swee
 (`docs/cycles/2026-11-10-growth-and-quality/board.md`).
 
 > **PUBLISHED 2026-11-15.** Submission `1152921505702405800` was committed from the console at 14:28 CST
-> on 2026-11-14 on the owner's word, certified with no report, and published by the owner on
+> on 2026-11-14 on the owner's word, certified about 25 hours later with no report, and published by the owner on
 > 2026-11-15. The public catalog served 1.38.0.0 at 15:54:56 CST. See section 8.
 
 ---
@@ -159,7 +159,7 @@ new use the button's wording.
 | Committed | 14:28:02, on the owner's word | `CommitStarted` |
 | Packages visible | 14:31:56, the sixth 30-second poll, about four minutes | status `Certification`; `RORORO-Store-x64-1.38.0.0.msix` and `RORORO-Store-arm64-1.38.0.0.msix`, both `Uploaded` |
 | Still certifying | 19:01 | `verify` read status `Certification`; the public catalog served 1.37.0.0 |
-| Certified | not observed; between 19:01 on 2026-11-14 and 15:48 on 2026-11-15 | The owner's report, in session, on 2026-11-15. No certification report. The wait was at most about 25 hours |
+| Certified | 2026-11-15, shortly before 15:48, by the owner's account | The owner had been checking Partner Center through the day and reported it in session at about 15:48, so the wait was about 25 hours: the longest RoRoRo certification on record, past v1.37's 23. No certification report. Not a logged timestamp; the last `Certification` read from here was 19:01 the evening before |
 | Publish now | 2026-11-15, about 15:48, the owner's click in Partner Center | `verify` read status `Release` at 15:48; the catalog served 1.37.0.0 at 15:48:54 |
 | Live on the Store | 2026-11-15, 15:54:56 | The public catalog served `626LabsLLC.RoRoRoBlox_1.38.0.0` for x64 and arm64, on the fourth two-minute poll; `verify` read status `Published` at 15:55 |
 
