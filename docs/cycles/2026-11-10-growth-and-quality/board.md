@@ -192,6 +192,44 @@ presets, or a typed value. A few hours, and it is a reply worth sending to that 
 
     The second read is due 2026-11-16 or later. The way back is the previous name, still reserved,
     in another listing-only submission; if the rank returns after that, the title is the cause.
+    **Second read, 2026-11-16 07:15 CST**, four days after the title went live and about 15 hours
+    after v1.38.0.0 published. An unscheduled pass at 18:52 CST on 2026-11-15 had matched the
+    2026-11-14 table exactly, with the same sixteen listings above RoRoRo on "roblox launcher" in
+    the same order. Overnight five queries moved, four of them up:
+
+    | Query | 11-11 | 11-14 | 11-15 18:52 | 11-16 07:15 | Passes on 11-16 |
+    |---|---|---|---|---|---|
+    | multi instance | 14 | 17 | 17 | **3** | 7 of 7 |
+    | alt accounts | 19 | 19 | 19 | **2** | 5 of 7; the other 2 read 19 |
+    | multibox | absent | absent | absent | **5** | 7 of 7 |
+    | multi-instance launcher | absent | absent | absent | **14** | 4 of 4 |
+    | roblox launcher | 7 | 17 | 17 | 17 | 9 of 10; the other read 12 |
+    | roblox account manager | absent | absent | absent | absent | 7 of 7 |
+    | account manager, instance launcher, multi launcher, launcher | absent | absent | absent | absent | |
+    | rororo | 1 | 1 | 1 | 1 | |
+    | the eight Roblox-word queries (multi roblox, roblox multi, multiple roblox, roblox alts, roblox accounts, and roblox in US, BR, RU, ID, PH) | absent | absent | absent | absent | |
+
+    Against the rule fixed above: the criterion query, "roblox account manager", still has not
+    entered, and "roblox launcher" is still ten places under its baseline. But "multi instance" went
+    from 14 to 3, and a title phrase that was absent now ranks ("multi-instance launcher", 14). So
+    the verdict of 2026-11-14, "worse than nothing", no longer holds.
+
+    **Not established: what moved it.** Two of the four gains are on words that are keywords and
+    not in either title ("alt accounts", "multibox"), which a title change alone does not explain.
+    Nothing changed on our side between the two reads twelve hours apart: v1.38 had been live for
+    three hours at the first of them. That fits Store search re-indexing the listing some time
+    after a publish, and it does not say whether the publish it caught up with was the name
+    (2026-11-12) or v1.38 (2026-11-15), which carried the same name and the same keywords. Two
+    queries answered with two different positions within minutes ("alt accounts" 2 and 19,
+    "roblox launcher" 17 and 12), which reads as an index part-way through a change. Not settled
+    until a later read agrees.
+
+    Installs, for the record and not as evidence either way: 7,266 lifetime through 2026-11-15;
+    Saturday 192 and Sunday 154 against 166 and 151 a week earlier, after four weekdays well under
+    the week before.
+
+    Next read: the evening of 2026-11-16 and again on 2026-11-17. Recommended to the owner: hold
+    the name, since a revert now would end the test at its first movement. The call is his.
 13. **Listing languages.** Indonesia is 4.8% of acquisitions and Ukraine 1.8%, with no localized
     listing. Listing-only, per the standing rule that manifest languages need real UI
     localization.
