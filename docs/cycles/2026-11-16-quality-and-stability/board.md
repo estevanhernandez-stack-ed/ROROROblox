@@ -49,9 +49,16 @@ current state, and it wins where the two disagree.
 - **About a dozen direct `Dispatcher.Invoke` call sites** outside `WpfUiDispatcher` have no shutdown guard (`TrayService`, `App.xaml.cs`, `SingleInstanceGuard`, `ThemeService`, `MainAvatarTrayPainter`). Read from a grep, not traced.
 - **A dev build cannot be pointed at another data folder,** so any live test of unreleased code runs on the developer's real accounts file. That is why v1.39 reached the owner's smoke with no live run behind it.
 
-**Tier 3, measure before touching: all four still unmeasured.** Whether Roblox clients carry
-RoRoRo's package identity on a Store install is still the cheapest, highest-value one (Task Manager,
-Details tab, "Package name" column).
+**Tier 3, measure before touching: one of four is now measured, and the answer is no.** On
+2026-11-16 at 15:54 CST the Store build (1.38.0.0, running from `WindowsApps`) launched one account.
+Asked directly with `GetPackageFullName`: `ROROROblox.App.exe` carries
+`626LabsLLC.RoRoRoBlox_1.38.0.0_x64__wz1chhb2h2v4a`; the `RobloxPlayerBeta.exe` it launched, a direct
+child by parent pid, and that client's `RobloxCrashHandler.exe` both answer 15700, no package
+identity. `tasklist /apps` agrees. **So a Roblox crash or hang is not filed under RoRoRo's package, and
+the unclassified failures in the Store data are RoRoRo's own process.** It also means a Store update
+does not have to end the Roblox clients. One PC, one launch, the `roblox-player:` path; a client
+started another way was not tried. The other three (the updater's 60-second wait, presence polling,
+idle cost) are still unmeasured.
 
 **One reading from the morning that the day corrected:** v1.39 certified in under 36 minutes, after
 19, 23 and about 25 hours on the three releases before it. Nothing here explains either number.
