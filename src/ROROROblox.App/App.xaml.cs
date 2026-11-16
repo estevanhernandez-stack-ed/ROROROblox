@@ -728,6 +728,14 @@ public partial class App : Application
         var mainWindow = _services.GetRequiredService<MainWindow>();
 
         WireTrayEvents(tray, mutex, mainWindow);
+        // A close request from another process (taskkill without /F, End task) ends the app the way the
+        // tray's Quit does. The window identifies the request and posts this; every other close hides.
+        mainWindow.ExternalCloseQuit = () =>
+        {
+            if (IsShuttingDown) return;
+            _log?.LogInformation("An external close request arrived; RoRoRo is quitting.");
+            RequestShutdown();
+        };
         WireMainViewModelEvents(mainWindow);
         WireMutexLost(mutex, tray);
         WireMainAvatarTrayPainter();
