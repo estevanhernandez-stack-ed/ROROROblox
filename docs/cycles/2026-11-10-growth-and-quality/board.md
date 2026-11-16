@@ -223,6 +223,21 @@ presets, or a typed value. A few hours, and it is a reply worth sending to that 
   `APPLICATION_HANG_ENDTASK_HungThreadIsIdle`, means Windows ended the task while the UI thread
   sat idle, which fits someone killing a tray app that would not close. That is a reading of the
   name, not of a dump. One downloadable cab exists (expires 2026-11-20).
+
+  **Read 2026-11-15.** The cab could not be downloaded. The API's failure-details row for it says
+  `cabDownloadable: false`, and `cabdownload` answered 401 with the same credentials that read
+  everything else. Its expiry now reads 2026-12-02, not 11-20; which reading was wrong is not known.
+  Over 90 days it is the only cab. The `stacktrace` endpoint did answer, with 22 frames: a managed
+  exception leaving a window procedure through native frames (`user32!DispatchMessageWorker`,
+  `UserCallWinProcCheckWow`, `coreclr!PropagateExceptionThroughNativeFrames`), and no managed frame
+  named. It belongs to `CLR_EXCEPTION_80263001`, the desktop-composition crash of #246, fixed in
+  v1.35 by `CompositionFaultFilter`; all 12 of its events are on v1.33.0.0. So the cab says nothing
+  new. What the pull did show: **both named failures are v1.33.0.0 only** (92 hangs, 12 crashes),
+  and every failure on v1.34 and later is unclassified (30 days to 2026-11-15, on 1.34, 1.35, 1.36
+  and 1.37: crashes 45, 74, 33, 15; hangs 54, 165, 72, 19). The composition crash being absent after
+  v1.35 is therefore not proof the fix holds, because a later one would land in the unclassified
+  pile. Microsoft's data will not name these. The route to a stack is v1.38's crash notice and the
+  support bundle.
 - **Whether the Store edition of Roblox can multi-instance at all** once it is launched. Untested.
 - **The `aocr.org` referrer** (96 unique visitors in 14 days). The site is a radiology society
   behind a bot wall. Unexplained.
