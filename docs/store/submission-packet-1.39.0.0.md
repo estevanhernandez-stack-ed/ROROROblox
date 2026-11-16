@@ -7,9 +7,10 @@ Everything Partner Center asks for on this submission, in the order it asks. Cer
 new feature, all from the 2026-11-16 quality and stability sweep
 (`docs/cycles/2026-11-16-quality-and-stability/board.md`).
 
-> **NOT SUBMITTED. Prepared 2026-11-16; the owner smoked a build the same morning** (section 7,
-> "Live smoke"). Nothing is tagged, no Store submission exists, and the two pull requests are not
-> merged. The order from here is in section 8.
+> **PUBLISHED 2026-11-16, both channels.** Submission `1152921505702420821` was committed from the
+> console at 11:56 CST on the owner's word, left Certification within 36 minutes with no report, and
+> was published by the owner; the public catalog served 1.39.0.0 at 13:00:02. The GitHub release
+> went Latest at 13:27 CST. See section 8.
 
 ---
 
@@ -183,15 +184,28 @@ memory gate on a PC that is actually short of memory.
 
 ## 8. Shipped
 
-Not started. The order, each step on the owner's word:
+Filled in as each step happens.
 
-1. ~~Smoke a build of this branch.~~ Done 2026-11-16; see section 7, "Live smoke".
-2. Merge #290 (the fixes), then the release pull request, and confirm `ci.yml` is green on main.
-3. Create the Store submission from the listing console (`apply`, then `verify`). A Store write.
-4. Push tag `v1.39.0.0`; `release.yml` drafts the GitHub release. Attach the sideload MSIX and the
-   matching `dev-cert.cer`, and set the notes. Leave it a draft.
-5. Owner's two pages in Partner Center: both Store packages, and the whole Additional Testing
-   Information box replaced with the letter. Not the Store listing page.
-6. `verify`, then `commit` from the console on the owner's word.
-7. Certification (the last three took 19, 23 and about 25 hours), the owner's Publish now, then the
-   GitHub draft to Latest on his word once the public catalog serves 1.39.0.0.
+| Step | When (2026-11-16, CST) | Evidence |
+|---|---|---|
+| Owner's smoke | 11:11 to 11:15 | Section 7, "Live smoke" |
+| PR #290 merged (the fixes), then #291 (release documents and the version bump) | about 11:33 | `main` at `ec952ec`; four green checks on each head before the merge; `ci.yml` green on `ec952ec` by 11:55 |
+| Store submission created | about 11:35, `apply`, on the owner's word ("do the first part of partner center") | `1152921505702420821`, cloned from the published v1.38 submission; the plan showed ten `releaseNotes` fields changing and nothing else; written and read back; captions already matched |
+| Verified before the owner's visit | 11:36, `verify` | 180 listing fields and captions served; status `PendingCommit` |
+| Owner's two pages | before 11:55 | Packages (x64 and arm64) and the reviewer letter replacing the whole Additional Testing Information box; done by the owner in Partner Center |
+| Verified after the visit | 11:55, `verify` | status `PendingCommit`, text intact (180 lines); packages still read 1.38, as expected before a commit |
+| Committed | 11:56:09, on the owner's word ("my side is done") | `CommitStarted` |
+| Packages visible | 12:00:03, the sixth 30-second poll, about four minutes | status `Certification`; `RORORO-Store-x64-1.39.0.0.msix` and `RORORO-Store-arm64-1.39.0.0.msix`, both `Uploaded` |
+| Certified | between 12:22 and 12:32 | A ten-minute status watcher read `Certification` at 12:22 and `Release` at 12:32. No certification report. Twenty-six to thirty-six minutes after the commit |
+| Publish now | about 12:51, the owner's click in Partner Center | The owner's word in session; `verify` read status `Release` at 12:52 and the catalog still served 1.38.0.0 |
+| Tag `v1.39.0.0` pushed | 12:54:41, on the owner's word | On `ec952ec`, with `ci.yml` green there; `release.yml` run 43933778423, success at 12:59 |
+| GitHub release drafted | same run, then by hand | 13 assets: Setup.exe, the two nupkgs, Portable.zip, the signed sideload MSIX, `dev-cert.cer` (v1.37's copy, thumbprint `8232F92D…`, matching the sideload signer), the signed feeds. Notes set from the release notes, below the edit log |
+| Live on the Store | 13:00:02 | The public catalog served `626LabsLLC.RoRoRoBlox_1.38.0.0` at 12:55:17 and `…_1.39.0.0` for x64 and arm64 at 13:00:02; `verify` read status `Publishing` then |
+| GitHub release published as Latest | 13:27 (2026-11-16 19:27:17 UTC), on the owner's word | `gh release edit v1.39.0.0 --draft=false --latest`; `releases/latest` answers `v1.39.0.0` with 13 assets; the update feed serves 1.39.0. The catalog was read again first and still served 1.39.0.0 |
+
+**Nothing is left open.** Both channels are published. There is no clan post file this release.
+The tag came after the Store commit this time, not before it as at v1.38; the order matters to
+neither channel.
+
+**Console:** worktree `_scratch/console-rororo-137`, branch `copy/rororo-1.39`, pinned at `ec952ec`.
+Every command named `--payload out/rororo-live-listing.json`, `commit` included.
