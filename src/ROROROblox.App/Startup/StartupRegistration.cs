@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using ROROROblox.Core;
 
 namespace ROROROblox.App.Startup;
 
@@ -33,6 +34,12 @@ internal sealed class StartupRegistration : IStartupRegistration
 
     private readonly string _runKeyPath;
 
+    /// <summary>
+    /// Under a data-folder override the Run key is never touched, so the toggle keeps its own
+    /// in-memory state (starts off) instead of lying or showing the owner's real value.
+    /// </summary>
+    private bool _shadowEnabled;
+
     public StartupRegistration() : this(DefaultRunKeyPath)
     {
     }
@@ -47,6 +54,7 @@ internal sealed class StartupRegistration : IStartupRegistration
     /// <summary>True if EITHER name is present — a pre-rename value still launches the app.</summary>
     public bool IsEnabled()
     {
+        if (!AppDataRoot.MachineWideRegistrationsAllowed) return _shadowEnabled;
         using var key = Registry.CurrentUser.OpenSubKey(_runKeyPath, writable: false);
         if (key is null) return false;
         return key.GetValue(ValueName) is not null || key.GetValue(LegacyValueName) is not null;
@@ -58,6 +66,11 @@ internal sealed class StartupRegistration : IStartupRegistration
     /// </summary>
     public void Enable()
     {
+        if (!AppDataRoot.MachineWideRegistrationsAllowed)
+        {
+            _shadowEnabled = true;
+            return;
+        }
         var exePath = Environment.ProcessPath
             ?? throw new InvalidOperationException("Cannot determine executable path.");
         using var key = Registry.CurrentUser.OpenSubKey(_runKeyPath, writable: true)
@@ -69,6 +82,11 @@ internal sealed class StartupRegistration : IStartupRegistration
     /// <summary>Clears both names. Off has to mean off, whichever era wrote the value.</summary>
     public void Disable()
     {
+        if (!AppDataRoot.MachineWideRegistrationsAllowed)
+        {
+            _shadowEnabled = false;
+            return;
+        }
         using var key = Registry.CurrentUser.OpenSubKey(_runKeyPath, writable: true);
         if (key is null) return;
         key.DeleteValue(ValueName, throwOnMissingValue: false);

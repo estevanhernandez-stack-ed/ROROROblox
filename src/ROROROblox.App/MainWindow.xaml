@@ -1531,6 +1531,7 @@
         </Grid.RowDefinitions>
 
         <ui:TitleBar Grid.Row="0"
+                     x:Name="MainTitleBar"
                      Title="{loc:Loc MainWindow_Rororo}"
                      ShowMaximize="True"
                      ShowMinimize="True"

@@ -2,6 +2,7 @@ using DiscordRPC;
 using DiscordRPC.Message;
 using Microsoft.Extensions.Logging;
 using ROROROblox.App.Discord;
+using ROROROblox.Core;
 
 namespace ROROROblox.App.Discord.Internal;
 
@@ -83,45 +84,56 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
             // Lachee knows nothing about. Subscribe() throws InvalidConfigurationException unless
             // this ran first. Wrapped and swallowed: a failure here still leaves presence (state,
             // details, party) working, just without the Join button.
-            try
+            // A run on a test data folder must not write the owner's discord-{id} scheme (Lachee's
+            // RegisterUriScheme writes HKCU\Software\Classes itself). Without it Subscribe would
+            // throw, so the Join subscription is skipped too: presence works, minus the Join button.
+            var registerSchemes = AppDataRoot.MachineWideRegistrationsAllowed;
+            if (!registerSchemes)
             {
-                _client.RegisterUriScheme();
-                _log.LogInformation("Discord URI scheme registered.");
+                _log.LogDebug("Data-folder override: skipping Discord URI scheme registration and the Join subscription.");
+            }
+            else
+            {
+                try
+                {
+                    _client.RegisterUriScheme();
+                    _log.LogInformation("Discord URI scheme registered.");
 
-                // Lachee's RegisterUriScheme writes the registry command WITHOUT the "%1"
-                // argument placeholder, so Windows launches us with no argument when Discord
-                // dispatches the discord-{applicationId} scheme. Fix the value it just wrote —
-                // unless this install is packaged, where the manifest's uap10:Protocol owns the
-                // scheme (already with Parameters="%1") and the value Lachee wrote only landed
-                // in the package's virtual registry hive that Explorer never reads (spec
-                // 2026-08-30-packaged-activation-design.md).
-                if (_packagedInstall)
-                {
-                    _log.LogDebug("Packaged install: skipping Discord scheme command fixup; the manifest protocol owns the scheme.");
-                }
-                else
-                {
-                    var exePath = Environment.ProcessPath;
-                    if (exePath is not null)
+                    // Lachee's RegisterUriScheme writes the registry command WITHOUT the "%1"
+                    // argument placeholder, so Windows launches us with no argument when Discord
+                    // dispatches the discord-{applicationId} scheme. Fix the value it just wrote —
+                    // unless this install is packaged, where the manifest's uap10:Protocol owns the
+                    // scheme (already with Parameters="%1") and the value Lachee wrote only landed
+                    // in the package's virtual registry hive that Explorer never reads (spec
+                    // 2026-08-30-packaged-activation-design.md).
+                    if (_packagedInstall)
                     {
-                        JoinUriScheme.FixupDiscordSchemeCommand(_applicationId, exePath);
+                        _log.LogDebug("Packaged install: skipping Discord scheme command fixup; the manifest protocol owns the scheme.");
                     }
                     else
                     {
-                        _log.LogDebug("Environment.ProcessPath was null; skipped Discord URI scheme command fixup.");
+                        var exePath = Environment.ProcessPath;
+                        if (exePath is not null)
+                        {
+                            JoinUriScheme.FixupDiscordSchemeCommand(_applicationId, exePath);
+                        }
+                        else
+                        {
+                            _log.LogDebug("Environment.ProcessPath was null; skipped Discord URI scheme command fixup.");
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                _log.LogWarning(ex, "Discord RegisterUriScheme failed; presence will connect without a Join button this session.");
-            }
+                catch (Exception ex)
+                {
+                    _log.LogWarning(ex, "Discord RegisterUriScheme failed; presence will connect without a Join button this session.");
+                }
 
-            // Without this the Join button renders and its click is never delivered. Subscribing
-            // to JoinRequest (in addition to Join) covers both the in-client Join click and the
-            // "Ask to Join" request path.
-            _client.Subscribe(EventType.Join | EventType.JoinRequest);
-            _log.LogInformation("Discord Join subscription active.");
+                // Without this the Join button renders and its click is never delivered. Subscribing
+                // to JoinRequest (in addition to Join) covers both the in-client Join click and the
+                // "Ask to Join" request path.
+                _client.Subscribe(EventType.Join | EventType.JoinRequest);
+                _log.LogInformation("Discord Join subscription active.");
+            }
         }
         catch (Exception ex)
         {

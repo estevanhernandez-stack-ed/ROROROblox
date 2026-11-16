@@ -60,6 +60,21 @@ public static class AppDataRoot
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         FolderName);
 
+    /// <summary>
+    /// True when RoRoRo's data is somewhere other than the default (a test's scoped override or the
+    /// process-wide one). Machine-wide registrations hang off this: see <see cref="MachineWideRegistrationsAllowed"/>.
+    /// </summary>
+    public static bool IsOverridden => Scoped.Value is not null || _processOverride is not null;
+
+    /// <summary>
+    /// The one predicate for "may this run write or remove things outside the data folder that
+    /// belong to the machine": the roblox-rororo and Discord URI schemes in HKCU\Software\Classes
+    /// and the run-on-login value. False under the override, so a run on a test folder cannot
+    /// repoint or clear the owner's real registrations. Reads <see cref="IsOverridden"/> on every
+    /// call, like <see cref="Folder"/>.
+    /// </summary>
+    public static bool MachineWideRegistrationsAllowed => !IsOverridden;
+
     /// <summary>A path under <see cref="Folder"/>. No parts returns the folder itself.</summary>
     public static string Combine(params string[] parts) => Path.Combine([Folder, .. parts]);
 

@@ -443,6 +443,8 @@ public partial class App : Application
         WindowTheming.RegisterGlobalDarkTitleBar();
 
         _log.LogInformation("ROROROblox starting (v{Version}, OS {Os})", version, Environment.OSVersion);
+        // A run on another data folder says so right here (Warning), or says why the variable was ignored.
+        DataRootMarker.Log(_log, AppDataRoot.Decision);
 
         // Guarded parse-and-raise for inbound joins (see InboundJoinRelay's remarks). Wire the
         // forwarding subscription now, before either call site below can fire: it runs INSIDE

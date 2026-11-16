@@ -32,6 +32,15 @@ internal partial class MainWindow : FluentWindow
     {
         DataContext = viewModel;
         InitializeComponent();
+        // A run on a test data folder labels both titles (taskbar and drawn bar). Both titles are
+        // live {loc:Loc} bindings, and an assignment replaces a binding with a fixed string, so
+        // this must stay inside the check: unconditional, it would freeze the title's language in
+        // every shipped build.
+        if (DataRootMarker.TitleSuffix(AppDataRoot.Decision) is { } testDataTag)
+        {
+            Title += testDataTag;
+            MainTitleBar.Title += testDataTag;
+        }
         // Guarantee the ContextMenu binding proxy carries the VM even if the resource-level
         // Data="{Binding}" inheritance context ever fails to capture it. Context menus live in a
         // separate popup tree and reach VM commands only through this proxy (see BindingProxy.cs).
