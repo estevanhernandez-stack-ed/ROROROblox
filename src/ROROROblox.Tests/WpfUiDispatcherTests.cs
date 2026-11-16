@@ -192,10 +192,13 @@ public class WpfUiDispatcherTests
     }
 
     [Fact]
-    public void Invoke_WithNoApplication_RunsInline()
+    public void Invoke_WithNoDispatcher_RunsInline()
     {
-        // Public parameterless behaviour is unchanged: no Application.Current means run it here.
-        var sut = new WpfUiDispatcher();
+        // No dispatcher means run it here, not drop it (F-100). Staged through the resolver seam:
+        // Application.Current is process-global and other tests in this assembly create one, so the
+        // parameterless constructor cannot be relied on to find none. (The first version of this
+        // test used it and failed in a full run, passing alone: 2026-11-16.)
+        var sut = new WpfUiDispatcher(static () => null);
         var ranOn = -1;
 
         sut.Invoke(() => ranOn = Environment.CurrentManagedThreadId);

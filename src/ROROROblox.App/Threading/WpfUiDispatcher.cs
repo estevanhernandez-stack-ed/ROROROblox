@@ -30,21 +30,34 @@ namespace ROROROblox.App.Threading;
 /// </remarks>
 internal sealed class WpfUiDispatcher : IUiDispatcher
 {
-    private readonly Dispatcher? _fixed;
+    private readonly Func<Dispatcher?> _resolve;
 
-    public WpfUiDispatcher() { }
+    /// <summary>The shipped behaviour: resolve <see cref="Application.Current"/>'s dispatcher at call time.</summary>
+    public WpfUiDispatcher() : this(static () => Application.Current?.Dispatcher) { }
 
     /// <summary>Test seam: drive a specific dispatcher instead of <see cref="Application.Current"/>'s.</summary>
-    internal WpfUiDispatcher(Dispatcher dispatcher)
+    internal WpfUiDispatcher(Dispatcher dispatcher) : this(FixedTo(dispatcher)) { }
+
+    /// <summary>
+    /// Test seam for the "no dispatcher" case. <see cref="Application.Current"/> is process-global and
+    /// other tests create one, so that case cannot be staged through the parameterless constructor.
+    /// </summary>
+    internal WpfUiDispatcher(Func<Dispatcher?> resolve)
     {
-        _fixed = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+        _resolve = resolve ?? throw new ArgumentNullException(nameof(resolve));
+    }
+
+    private static Func<Dispatcher?> FixedTo(Dispatcher dispatcher)
+    {
+        ArgumentNullException.ThrowIfNull(dispatcher);
+        return () => dispatcher;
     }
 
     public void Invoke(Action action)
     {
         ArgumentNullException.ThrowIfNull(action);
 
-        var dispatcher = _fixed ?? Application.Current?.Dispatcher;
+        var dispatcher = _resolve();
         if (dispatcher is null || dispatcher.CheckAccess())
         {
             action();
