@@ -7,9 +7,9 @@ Everything Partner Center asks for on this submission, in the order it asks. Cer
 new feature, all from the 2026-11-16 quality and stability sweep
 (`docs/cycles/2026-11-16-quality-and-stability/board.md`).
 
-> **NOT SUBMITTED. Prepared 2026-11-16; the owner smoked a build the same morning** (section 7,
-> "Live smoke"). Nothing is tagged, no Store submission exists, and the two pull requests are not
-> merged. The order from here is in section 8.
+> **SUBMITTED 2026-11-16.** Submission `1152921505702420821` was committed from the console at 11:56 CST
+> on the owner's word, after his smoke and the two merges, and is in Certification. **Not tagged yet.**
+> See section 8.
 
 ---
 
@@ -183,15 +183,22 @@ memory gate on a PC that is actually short of memory.
 
 ## 8. Shipped
 
-Not started. The order, each step on the owner's word:
+Filled in as each step happens.
 
-1. ~~Smoke a build of this branch.~~ Done 2026-11-16; see section 7, "Live smoke".
-2. Merge #290 (the fixes), then the release pull request, and confirm `ci.yml` is green on main.
-3. Create the Store submission from the listing console (`apply`, then `verify`). A Store write.
-4. Push tag `v1.39.0.0`; `release.yml` drafts the GitHub release. Attach the sideload MSIX and the
-   matching `dev-cert.cer`, and set the notes. Leave it a draft.
-5. Owner's two pages in Partner Center: both Store packages, and the whole Additional Testing
-   Information box replaced with the letter. Not the Store listing page.
-6. `verify`, then `commit` from the console on the owner's word.
-7. Certification (the last three took 19, 23 and about 25 hours), the owner's Publish now, then the
-   GitHub draft to Latest on his word once the public catalog serves 1.39.0.0.
+| Step | When (2026-11-16, CST) | Evidence |
+|---|---|---|
+| Owner's smoke | 11:11 to 11:15 | Section 7, "Live smoke" |
+| PR #290 merged (the fixes), then #291 (release documents and the version bump) | about 11:33 | `main` at `ec952ec`; four green checks on each head before the merge; `ci.yml` green on `ec952ec` by 11:55 |
+| Store submission created | about 11:35, `apply`, on the owner's word ("do the first part of partner center") | `1152921505702420821`, cloned from the published v1.38 submission; the plan showed ten `releaseNotes` fields changing and nothing else; written and read back; captions already matched |
+| Verified before the owner's visit | 11:36, `verify` | 180 listing fields and captions served; status `PendingCommit` |
+| Owner's two pages | before 11:55 | Packages (x64 and arm64) and the reviewer letter replacing the whole Additional Testing Information box; done by the owner in Partner Center |
+| Verified after the visit | 11:55, `verify` | status `PendingCommit`, text intact (180 lines); packages still read 1.38, as expected before a commit |
+| Committed | 11:56:09, on the owner's word ("my side is done") | `CommitStarted` |
+| Packages visible | 12:00:03, the sixth 30-second poll, about four minutes | status `Certification`; `RORORO-Store-x64-1.39.0.0.msix` and `RORORO-Store-arm64-1.39.0.0.msix`, both `Uploaded` |
+
+**Not yet:** the tag (not pushed; the owner has not said so, so there is no GitHub release, draft or
+otherwise); the certification result; the owner's **Publish now** click; the GitHub release as
+Latest, held for the Store and the owner's word. There is no clan post file this release.
+
+**Console:** worktree `_scratch/console-rororo-137`, branch `copy/rororo-1.39`, pinned at `ec952ec`.
+Every command named `--payload out/rororo-live-listing.json`, `commit` included.
