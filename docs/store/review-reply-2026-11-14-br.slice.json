@@ -1,0 +1,21 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "dataset": "app-ui-strings",
+  "sourceLanguage": "en",
+  "languages": [
+    "pt-br"
+  ],
+  "sourceCommit": "6199e2f",
+  "generatedUtc": "2026-11-16T01:48:19+00:00",
+  "sourceOfTruth": "A draft reply to a Microsoft Store review (5 stars, Brazil, 2026-11-14, v1.37.0.0). Not an app string and not listing copy: the slice borrows the app-string shape so the verifier can read the pair. The reply is not sent until the owner approves the wording.",
+  "fields": [
+    {
+      "field": "StoreReviewReply_2026_11_14_BR",
+      "en": "Thanks for telling us! That's exactly the idea: you save each account once and open several at the same time, each in its own window. If something goes wrong or something is missing, write to support@626labs.dev. We read everything.",
+      "translations": {
+        "pt-br": "Valeu por contar! A ideia é essa mesma: você salva cada conta uma vez e abre várias ao mesmo tempo, cada uma na sua janela. Se algo der errado ou se faltar alguma coisa, escreva para support@626labs.dev. A gente lê tudo."
+      }
+    }
+  ]
+}
