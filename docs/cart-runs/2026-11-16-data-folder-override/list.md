@@ -23,7 +23,7 @@ Branch `feat/data-folder-override`, attended, one commit per item, in order: ite
   Verify: the full unit project. Remove the registration guard and see its test fail.
   Stop class: go
 
-- [ ] **4. A live run on an empty folder**
+- [x] **4. A live run on an empty folder**
   Spec ref: brief > Intent
   What to build: Nothing. The orchestrator runs a Release dev build with `RORORO_DATA_DIR` set to an empty scratch folder, with the owner's RoRoRo closed, and records what happened: the folder's contents afterwards, that `%LOCALAPPDATA%\ROROROblox` was not written (compare file times before and after), the Warning line, the title, and a clean exit. If the exit fix (PR #293) is merged into the working copy for the run, the log must also show no "DisposeAsync did not complete" line, which is that PR's missing live check.
   Acceptance: Done when the run is recorded in `report.md` with those observations, or the reason it could not be run.
