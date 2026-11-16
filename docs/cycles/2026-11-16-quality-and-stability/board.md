@@ -22,6 +22,40 @@ sit around it, and the two worth doing first are not crashes:
 Microsoft's failure data cannot rank any of this (see the 2026-11-10 board, "Read 2026-11-15"), so
 the ranking below is by what a user loses and how sure the reading is.
 
+## Where this stands after v1.39.0.0 (written 2026-11-16, the afternoon it shipped)
+
+Rows 1, 2, 3, 4, 5 and 7 shipped in v1.39.0.0 the same day (`docs/cart-runs/2026-11-16-v139-stability/`,
+PRs #290 and #291). The rows below are left as they were written that morning; this table is the
+current state, and it wins where the two disagree.
+
+| # | Row | State | What changed since the morning |
+|---|---|---|---|
+| 1 | The account vault can be lost | **Shipped** (`733be1b`, `0b6affb`) | Backup, self-repair, and the write frequency. Planning found the vault's own no-op check never skipped, so it was rewritten on every facts refresh, not merely often. Not seen rescuing a real damaged file |
+| 2 | A normal quit recorded as a crash | **Shipped** (`d1aaf5d`) | No longer "plausible": a test reproduces the throw on a real dispatcher. Quit itself closes no client (settled by the owner's smoke), so the trigger is a Windows shutdown or logoff with clients open |
+| 3 | A relaunch loses the live client | **Shipped** (`52f5dc7`) | `Superseded` on the older client's exit |
+| 4 | Expiry mid-game freezes the row | **Shipped in part** (`8db3448`) | The row and History are right. **The alert half is not fixed:** nothing tells the user when an expired alt drops |
+| 5 | An outside close cannot end the process | **Shipped** (`d9a8a56`) | Measured: `taskkill` posts `WM_CLOSE` through the queue, and the owner's smoke saw Task Manager's End task take the new path and exit cleanly |
+| 6 | Exit cleanup does not finish | **Open, and confirmed current** | Both exits in the owner's v1.39 smoke logged the 2-second timeout. No longer a v1.35 observation. Cause still not pinned |
+| 7 | Memory warning with nothing running | **Shipped** (`d4f0e27`) | Tests only. The owner's smoke did not exercise it: free memory stayed above the reserve |
+| 8 | Two entry points can take the app down | Open | Unchanged |
+| 9 | A wrong-but-parseable store file crashes every start | Open | Unchanged |
+| 10 | Two accounts cross-wired in a batch | Open | Unchanged |
+
+**New rows the build turned up, none of them fixed:**
+
+- **No alert when an expired alt drops** (the open half of row 4). The dropped-out alert is raised only from the presence path, which an expired account has left.
+- **Plugins hear `AccountLaunched` twice for a relaunch,** with no exit between. Not traced.
+- **A relaunch may leave the first launch's History row without an end.** Not traced.
+- **About a dozen direct `Dispatcher.Invoke` call sites** outside `WpfUiDispatcher` have no shutdown guard (`TrayService`, `App.xaml.cs`, `SingleInstanceGuard`, `ThemeService`, `MainAvatarTrayPainter`). Read from a grep, not traced.
+- **A dev build cannot be pointed at another data folder,** so any live test of unreleased code runs on the developer's real accounts file. That is why v1.39 reached the owner's smoke with no live run behind it.
+
+**Tier 3, measure before touching: all four still unmeasured.** Whether Roblox clients carry
+RoRoRo's package identity on a Store install is still the cheapest, highest-value one (Task Manager,
+Details tab, "Package name" column).
+
+**One reading from the morning that the day corrected:** v1.39 certified in under 36 minutes, after
+19, 23 and about 25 hours on the three releases before it. Nothing here explains either number.
+
 ## Tier 1: do first
 
 | # | What the user loses | Mechanism | Confidence |
