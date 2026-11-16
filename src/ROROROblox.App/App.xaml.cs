@@ -3467,8 +3467,11 @@ public partial class App : Application
     {
         IsShuttingDown = true;
 
-        // Quitting closes every client at once. Without this, the last thing RoRoRo does on its
-        // way out is page the user about a roster they deliberately shut down.
+        // Quitting RoRoRo does NOT close the Roblox clients: nothing on this path ends one, and a
+        // live quit with an account running left its client up (smoke, 2026-11-16). This comment
+        // said "Quitting closes every client at once" until that day. What the call below does is
+        // mark every close as expected, so a client that happens to exit while RoRoRo is on its
+        // way out (a Windows shutdown ends both together) does not page the user about it.
         try { _services?.GetRequiredService<MainViewModel>().ExpectCloseForAll(); }
         catch (Exception ex) { _log?.LogDebug(ex, "Couldn't mark shutdown closes as expected."); }
 

@@ -86,23 +86,27 @@ Problemas conocidos de Roblox — problemas del lado de Roblox, qué hacer y la 
 Volver a unirse si se desconecta: un alt expulsado o atascado fuera del juego se cierra y vuelve a unirse solo, nunca tu cuenta principal
 ```
 
-## What's new in this version (v1.38.0.0, ≤1500 chars)
+## What's new in this version (v1.39.0.0, ≤1500 chars)
 
 ```
-v1.38.0.0
+v1.39.0.0
 
-Más claro cuando algo sale mal
+Cuentas más seguras, RoRoRo más estable
 
-• Cuando un inicio falla, RoRoRo ahora te dice por qué, en tu
-  idioma: sin internet, Roblox tarda demasiado en responder,
-  Roblox le pide a RoRoRo que vaya más despacio, o Roblox tiene
-  problemas. Cada mensaje te dice qué hacer después.
-• Si RoRoRo se cerró de forma inesperada la última vez, el
-  siguiente inicio te lo dice y te lleva a «Diagnóstico», donde
-  puedes guardar un paquete de soporte y enviárnoslo. No se
-  envía nada si no lo envías tú.
-• En la fila de una cuenta nueva, «Quitar» ya no se corta en
-  francés, alemán, ruso, portugués y español.
+• RoRoRo ahora guarda una copia de seguridad de tus cuentas
+  guardadas. Si el archivo de cuentas se daña alguna vez, por un
+  corte de luz por ejemplo, se repara a partir de la copia.
+• Salir de RoRoRo, o apagar tu PC con Roblox abierto, ya no hace
+  que el siguiente inicio diga que RoRoRo se cerró de forma
+  inesperada.
+• La fila de una cuenta sigue siendo correcta cuando inicias una
+  cuenta que ya está en marcha, o cuando su inicio de sesión
+  caduca en mitad de una partida.
+• Cuando otro programa le pide a RoRoRo que se cierre, ahora se
+  cierra en lugar de ocultarse. La X lo sigue enviando a la
+  bandeja.
+• El icono de la bandeja ya no avisa de falta de memoria cuando
+  no hay ningún Roblox abierto.
 
 Sal de RoRoRo antes de actualizar desde la Store: haz clic
 derecho en el icono de la bandeja y elige «Salir».

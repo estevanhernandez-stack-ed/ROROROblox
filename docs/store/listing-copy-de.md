@@ -86,24 +86,27 @@ Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welch
 Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
-## What's new in this version (v1.38.0.0, ≤1500 chars)
+## What's new in this version (v1.39.0.0, ≤1500 chars)
 
 ```
-v1.38.0.0
+v1.39.0.0
 
-Klarer, wenn etwas schiefgeht
+Sicherere Konten, stabileres RoRoRo
 
-• Schlägt ein Start fehl, sagt RoRoRo jetzt in deiner Sprache,
-  warum: kein Internet, Roblox antwortet zu langsam, Roblox
-  bittet RoRoRo, langsamer zu machen, oder Roblox hat gerade
-  Probleme. Jede Meldung sagt, was du als Nächstes tun kannst.
-• Wurde RoRoRo beim letzten Mal unerwartet beendet, sagt es das
-  beim nächsten Start und zeigt dir den Weg zu „Diagnose“. Dort
-  kannst du ein Support-Bündel speichern und uns schicken.
-  Gesendet wird nichts, was du nicht selbst sendest.
-• In der Zeile eines neuen Kontos wird „Entfernen“ auf
-  Französisch, Deutsch, Russisch, Portugiesisch und Spanisch
-  nicht mehr abgeschnitten.
+• RoRoRo legt jetzt eine Sicherung deiner gespeicherten Konten
+  an. Wird die Kontodatei einmal beschädigt, etwa durch einen
+  Stromausfall, repariert RoRoRo sie aus der Sicherung.
+• Wenn du RoRoRo beendest oder den PC herunterfährst, während
+  Roblox offen ist, meldet der nächste Start nicht mehr, RoRoRo
+  sei unerwartet beendet worden.
+• Die Zeile eines Kontos bleibt richtig, wenn du ein Konto
+  startest, das schon läuft, oder wenn seine Anmeldung mitten im
+  Spiel abläuft.
+• Bittet ein anderes Programm RoRoRo, sich zu schließen, dann
+  schließt es sich jetzt, statt sich zu verstecken. Das X
+  schickt es weiterhin in den Infobereich.
+• Das Symbol im Infobereich warnt nicht mehr vor knappem
+  Arbeitsspeicher, wenn kein Roblox läuft.
 
 Beende RoRoRo, bevor du aus dem Store aktualisierst: Rechtsklick
 auf das Symbol im Infobereich, dann „Beenden“.
