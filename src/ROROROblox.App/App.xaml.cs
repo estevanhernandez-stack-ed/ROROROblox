@@ -1055,12 +1055,20 @@ public partial class App : Application
         services.AddSingleton<Tray.IAlertSoundPlayer>(sp => new Tray.AlertSoundPlayer(
             () => AlertSoundSetting,
             sp.GetService<ILogger<Tray.AlertSoundPlayer>>()));
+        // Carries the built tray to OnExit, which has to dispose it on the UI thread ahead of the
+        // container (see Tray.BuiltTray and the note in OnExit).
+        services.AddSingleton<Tray.BuiltTray>();
         services.AddSingleton<ITrayService>(sp => UiBoundFactory.Create(
             System.Windows.Application.Current?.Dispatcher,
-            () => new TrayService(
-                sp.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(),
-                sp.GetService<ILogger<TrayService>>(),
-                sp.GetRequiredService<Tray.IAlertSoundPlayer>())));
+            () =>
+            {
+                var tray = new TrayService(
+                    sp.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(),
+                    sp.GetService<ILogger<TrayService>>(),
+                    sp.GetRequiredService<Tray.IAlertSoundPlayer>());
+                sp.GetRequiredService<Tray.BuiltTray>().Set(tray);
+                return tray;
+            }));
         services.AddSingleton<IAppSettings>(_ => new AppSettings());
         services.AddSingleton<IFavoriteGameStore>(_ => new FavoriteGameStore());
         services.AddSingleton<IPrivateServerStore>(_ => new PrivateServerStore());
@@ -3641,6 +3649,26 @@ public partial class App : Application
         }
 
         _singleInstance?.Dispose();
+
+        // The tray icon is disposed HERE, inline, on the UI thread, BEFORE the container goes below.
+        // The container is disposed on a pool thread while this thread blocks on a bounded wait, and
+        // Hardcodet 2.0.1's TaskbarIcon.Dispose marshals to the dispatcher: when the container reached
+        // the tray, the pool thread waited on this thread and this thread waited on the pool thread,
+        // until the two seconds ran out. Every exit since the container moved off the UI thread
+        // (2026-07-03, v1.8.1) lost those two seconds, left the icon behind, and never disposed
+        // anything created before the tray. Measured with two dotnet-stack captures on a real exit,
+        // 2026-11-16. TrayService.Dispose is guarded, so the container's later call returns at once.
+        // BuiltTray, not GetService<ITrayService>: asking the container would construct a tray, icon
+        // and all, on an exit that happens before anything resolved one. TrayExitOrderFenceTests pins
+        // the ordering.
+        try
+        {
+            _services?.GetService<Tray.BuiltTray>()?.DisposeIfBuilt();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Tray dispose threw on exit; ignoring.");
+        }
 
         // The container holds IAsyncDisposable-only singletons (PluginHostStartupService),
         // and a sync Dispose() throws InvalidOperationException for those — the repeated
