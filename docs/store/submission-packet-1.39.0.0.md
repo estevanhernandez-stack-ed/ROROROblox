@@ -7,10 +7,9 @@ Everything Partner Center asks for on this submission, in the order it asks. Cer
 new feature, all from the 2026-11-16 quality and stability sweep
 (`docs/cycles/2026-11-16-quality-and-stability/board.md`).
 
-> **NOT SUBMITTED. Prepared 2026-11-16, ahead of the owner's smoke.** No build of this code has been
-> run live: a dev build has no data-folder override and would have used the owner's real accounts
-> file. Nothing is tagged, no Store submission exists, and the two pull requests are not merged. The
-> order from here is in section 8.
+> **NOT SUBMITTED. Prepared 2026-11-16; the owner smoked a build the same morning** (section 7,
+> "Live smoke"). Nothing is tagged, no Store submission exists, and the two pull requests are not
+> merged. The order from here is in section 8.
 
 ---
 
@@ -96,15 +95,17 @@ and the box holds the v1.38.0.0 letter. Select everything and paste this one ove
 
 ## 6. Packages
 
-Built 2026-11-16 on Dunder from the release branch at `31df6f7` plus the version stamp, with
-`scripts/finalize-store-build.ps1` (arm64, then x64) and `scripts/build-msix.ps1 -Sideload`. **If
-any code changes after the smoke, rebuild all three.**
+Built 2026-11-16 on Dunder from the release branch, with `scripts/finalize-store-build.ps1` (arm64,
+then x64) and `scripts/build-msix.ps1 -Sideload`. Built twice: first ahead of the smoke, then again
+at 11:18 to 11:20 CST after the comment correction the smoke led to, so the packages match the tree
+this branch ends on. The sizes below are the second build's. **If any code changes again, rebuild
+all three.**
 
 | File | Size | For |
 |---|---|---|
-| `dist/RORORO-Store-x64-1.39.0.0.msix` | 112,390,796 bytes | Partner Center, unsigned |
-| `dist/RORORO-Store-arm64-1.39.0.0.msix` | 105,901,696 bytes | Partner Center, unsigned |
-| `dist/RORORO-Sideload-x64-1.39.0.0.msix` | 112,413,507 bytes | GitHub release, signed |
+| `dist/RORORO-Store-x64-1.39.0.0.msix` | 112,390,820 bytes | Partner Center, unsigned |
+| `dist/RORORO-Store-arm64-1.39.0.0.msix` | 105,901,719 bytes | Partner Center, unsigned |
+| `dist/RORORO-Sideload-x64-1.39.0.0.msix` | 112,413,479 bytes | GitHub release, signed |
 
 The sideload package's signer is `CN=177BCE59-0966-4975-9962-10E36652141F`, SHA-1
 `8232F92D70CE24B9EF2CCEB4B458F8C26D94AB87`, the unrotated dev certificate; the copy of
@@ -146,20 +147,45 @@ that.
 - **Plugin catalog drift:** clean, five entries match their live releases
   (`scripts/check-plugin-catalog-drift.ps1`, exit 0).
 
-**Not verified, and said so in the release notes:** every fix in this release on a live build (the
-smoke list is in the run report under "Not proven"); what Task Manager's End task sends; and,
-carried, the crash line after a real crash, the v1.38 launch messages against a live Roblox
+**Not verified, and said so in the release notes:** the fixes the live smoke below did not reach;
+and, carried, the crash line after a real crash, the v1.38 launch messages against a live Roblox
 failure, the launch check on a PC whose only Roblox is the Store edition, the rating line on a real
 Store install, and the 75/100/180 caps on a live client.
 
-**Open question for the owner:** whether Roblox clients close when RoRoRo quits. A comment in
-`App.RequestShutdown` says so; nothing in the code does it. The comment was left alone.
+### Live smoke, 2026-11-16 (the owner, a Release dev build on Dunder, his real data folder)
+
+The first live run of this code. Times and lines are from `rororoblox-20261116.log`; what the owner
+saw is marked as his report.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The X, Alt+F4 and the taskbar's Close hide the window | Pass | The owner's report |
+| Task Manager's End task ends RoRoRo | **Pass, and now measured** | 11:12:26.979 "An external close request arrived; RoRoRo is quitting.", exit code 0 ten milliseconds later |
+| No crash notice on the start after it | Pass | 11:12:45 "Previous session ended: clean" |
+| The backup appears | Pass | After a launch: `accounts.dat.bak` written 11:14:55.018 and `accounts.dat` 11:14:55.500, same size, not byte-identical (compared by hash), and no swap warning in the log. The backup is one save behind, as designed |
+| Quit from the tray with an account running | Pass, and it answers the open question | The owner's report: the Roblox client stayed up. One `RobloxPlayerBeta` was still running afterwards; exit code 0 at 11:15:18; `last-exit.json` reads `clean` |
+| No memory badge with no client | **Not exercised** | The owner saw no badge, but free memory was 4.9 to 6.3 GB, above any reserve the default can produce (at most 4 GB), so the gate had nothing to gate |
+
+Nothing in the log came from the new code as a warning or an error. The one warning was plugin
+processes left over from the previous session, which is expected after a PC shutdown.
+
+**Seen again, and not part of this release:** both exits logged "ServiceProvider.DisposeAsync did
+not complete within 2s; abandoning." That is board item 6, now two of two exits on v1.39.
+
+**Settled by the smoke:** quitting RoRoRo does not close the Roblox clients. The two comments that
+said it did (`App.RequestShutdown`, `MainViewModel.ExpectCloseForAll`) are corrected in this branch,
+with the date. A comment-only change; the packages were rebuilt after it so they match the tree.
+
+**Still not run live:** a PC shutdown or logoff with a client open; the backup rescuing a damaged
+file; a relaunched account whose older client is then closed; a session expiring mid-game;
+`taskkill` without `/F` against RoRoRo itself (measured against a probe window only); and the
+memory gate on a PC that is actually short of memory.
 
 ## 8. Shipped
 
 Not started. The order, each step on the owner's word:
 
-1. Smoke a build of this branch (the list is in `docs/cart-runs/2026-11-16-v139-stability/report.md`).
+1. ~~Smoke a build of this branch.~~ Done 2026-11-16; see section 7, "Live smoke".
 2. Merge #290 (the fixes), then the release pull request, and confirm `ci.yml` is green on main.
 3. Create the Store submission from the listing console (`apply`, then `verify`). A Store write.
 4. Push tag `v1.39.0.0`; `release.yml` drafts the GitHub release. Attach the sideload MSIX and the

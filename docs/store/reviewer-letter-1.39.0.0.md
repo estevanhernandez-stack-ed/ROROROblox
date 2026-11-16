@@ -25,7 +25,9 @@
 >
 > The "how to see it" section gives one command, `taskkill /IM ROROROblox.App.exe` without `/F`.
 > That was measured against a probe window, and `ROROROblox.App.exe` is the executable the manifest
-> names. It has not been run against a real build of this version; the owner's smoke does that.
+> names. `taskkill` itself has not been run against a real build of this version. Task Manager's
+> End task, which delivers the same posted `WM_CLOSE`, was: the owner's smoke on 2026-11-16 logged
+> "An external close request arrived; RoRoRo is quitting." and a clean exit.
 
 ---
 

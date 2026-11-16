@@ -23,9 +23,11 @@
 > from outside covers it. Five new known issues, each a thing that was built and tested but not
 > watched on a real machine, or a limit that outlives the fix.
 >
-> **Nothing in this release was run as a live build before this draft.** A dev build has no
-> data-folder override and would have used the owner's real accounts file. The owner's smoke is the
-> first live run.
+> **Nothing in this release was run as a live build before the first draft.** A dev build has no
+> data-folder override and uses the owner's real accounts file. The owner smoked one on 2026-11-16
+> (`submission-packet-1.39.0.0.md`, "Live smoke"): the X, Alt+F4 and the taskbar's Close hid the
+> window, Task Manager's End task ended RoRoRo cleanly, the backup appeared, and a quit with an
+> account running left its client up. The Task Manager known issue was rewritten to match.
 >
 > There is no clan post file this release, as at v1.37 and v1.38. The short list below is still
 > written to travel.
@@ -92,8 +94,9 @@ an ordinary shutdown, that was this.
 The X on RoRoRo's window sends it to the tray. That's deliberate, and it hasn't changed, and
 neither has Alt+F4 or Close on the taskbar.
 
-What changed is a close request from another program. `taskkill` without `/F` used to hide the
-window and leave RoRoRo running. It now quits RoRoRo cleanly, the same way Quit on the tray does.
+What changed is a close request from another program. Task Manager's End task and `taskkill`
+without `/F` used to hide the window and leave RoRoRo running. They now quit RoRoRo cleanly, the
+same way Quit on the tray does.
 
 ### No memory warning with nothing running
 
@@ -116,9 +119,9 @@ in again.
 **"Updated … ago" on a row can read up to six hours just after you start RoRoRo,** even though the
 numbers are fresher than that. It corrects itself within a few minutes.
 
-**Closing from Task Manager hasn't been tried on a real build.** `taskkill` was measured. Task
-Manager's End task should behave the same way, and nobody has watched it. If RoRoRo is in the tray,
-Task Manager lists it as a background process and simply ends it.
+**Closing from Task Manager has been seen once, on one PC.** End task on the open window quit
+RoRoRo cleanly, with no crash line on the next start. If RoRoRo is in the tray, Task Manager lists
+it as a background process and simply ends it, as before.
 
 **The crash line hasn't been seen after a real crash.** Its rules were tested and it was looked at
 in captures in English and French. One false cause of it is fixed in this release. It also waits
