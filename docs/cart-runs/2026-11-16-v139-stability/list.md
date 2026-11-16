@@ -30,7 +30,7 @@ Branch `fix/v1.39-stability`, attended, one commit per item. Items run in order:
   Verify: `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~RobloxProcessTracker|FullyQualifiedName~MainViewModel"`. Restore the unconditional remove and see the first test fail.
   Stop class: go
 
-- [ ] **5. A session that expires mid-game stops reading as in game**
+- [x] **5. A session that expires mid-game stops reading as in game**
   Spec ref: `board.md > Tier 1 > 4`; `MainViewModel.ApplySessionExpired`, `ApplySessionLimited`, `OnProcessExited`
   What to build: After its cookie-generation guard, `ApplySessionExpired` clears presence the way `ApplySessionLimited` does (`PresenceState` offline, `CurrentGameName` and `InGameSinceUtc` null, Discord presence refreshed). The client is still running at that point, so nothing may be stamped as closed and no session end may be recorded until the process exits; then the existing "not in game, presence-capable" branch of `OnProcessExited` stamps both, once. Check the interplay with the history end-stamp rules (`SessionHistoryEndStampTests`). Size S.
   Acceptance: Done when a test shows: a running, in-game account that expires reads not in game, still running, with no `LastClosedAtUtc` and no session end recorded; the process exit that follows sets `LastClosedAtUtc` and records exactly one session end; the stale-generation guard still returns early without touching presence; `SessionHistoryEndStampTests` and the existing session-expired tests pass.

@@ -3811,7 +3811,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         summary.SessionExpired = true;
+        // An expired account leaves the presence poll, so whatever presence last said would freeze
+        // ("In <game>" forever, and OnProcessExited's InGame branch would wait for a confirming poll
+        // that never comes). Clear it the way ApplySessionLimited does. Only presence fields move:
+        // IsRunning/RunningPid stay (the client is still up), and nothing is stamped closed and no
+        // session end is recorded here. The process exit does both, through its not-in-game branch.
+        summary.PresenceState = UserPresenceType.Offline;
+        summary.CurrentGameName = null;
+        summary.InGameSinceUtc = null;
         RelayCommand.RaiseCanExecuteChanged();
+        DiscordPresence?.Refresh();
     }
 
     private void OnAccountSessionLimited(object? sender, Guid accountId)
