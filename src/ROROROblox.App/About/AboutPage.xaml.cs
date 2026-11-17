@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Logging;
 
 namespace ROROROblox.App.About;
@@ -36,6 +37,35 @@ internal partial class AboutPage : UserControl
         VersionText.Text = $"v{version}";
 
         // One source of truth (F-112): the same table the windows build their bindings from.
+        ShortcutsList.ItemsSource = Input.KeyboardVocabulary.Shortcuts;
+
+        // The descriptions resolve when read, so a live language switch needs the rows rebuilt.
+        // Subscribe only while the page is in the tree; the shell keeps the page object alive.
+        Loaded += (_, _) =>
+        {
+            TranslationSource.Instance.CultureChanged += OnUiCultureChanged;
+            RefreshShortcuts();
+        };
+        Unloaded += (_, _) => TranslationSource.Instance.CultureChanged -= OnUiCultureChanged;
+    }
+
+    private void OnUiCultureChanged(object? sender, EventArgs e)
+    {
+        // The language switch is raised on the UI thread. If it ever is not, post rather than block:
+        // a blocking Invoke throws on the caller when the dispatcher is shutting down (v1.39).
+        if (Dispatcher.CheckAccess())
+        {
+            RefreshShortcuts();
+        }
+        else
+        {
+            _ = Dispatcher.BeginInvoke(RefreshShortcuts);
+        }
+    }
+
+    private void RefreshShortcuts()
+    {
+        ShortcutsList.ItemsSource = null;
         ShortcutsList.ItemsSource = Input.KeyboardVocabulary.Shortcuts;
     }
 

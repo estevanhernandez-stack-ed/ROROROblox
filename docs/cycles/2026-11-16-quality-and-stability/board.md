@@ -33,21 +33,26 @@ current state, and it wins where the two disagree.
 | 1 | The account vault can be lost | **Shipped** (`733be1b`, `0b6affb`) | Backup, self-repair, and the write frequency. Planning found the vault's own no-op check never skipped, so it was rewritten on every facts refresh, not merely often. Not seen rescuing a real damaged file |
 | 2 | A normal quit recorded as a crash | **Shipped** (`d1aaf5d`) | No longer "plausible": a test reproduces the throw on a real dispatcher. Quit itself closes no client (settled by the owner's smoke), so the trigger is a Windows shutdown or logoff with clients open |
 | 3 | A relaunch loses the live client | **Shipped** (`52f5dc7`) | `Superseded` on the older client's exit |
-| 4 | Expiry mid-game freezes the row | **Shipped in part** (`8db3448`) | The row and History are right. **The alert half is not fixed:** nothing tells the user when an expired alt drops |
+| 4 | Expiry mid-game freezes the row | **Shipped in part** (`8db3448`); **the alert half is fixed on main's next release** (`f72ba48`, 2026-11-17) | The row and History shipped in v1.39. The process exit now raises the dropped-out alert for an expired or rate-limited account |
 | 5 | An outside close cannot end the process | **Shipped** (`d9a8a56`) | Measured: `taskkill` posts `WM_CLOSE` through the queue, and the owner's smoke saw Task Manager's End task take the new path and exit cleanly |
-| 6 | Exit cleanup does not finish | **Open, and confirmed current** | Both exits in the owner's v1.39 smoke logged the 2-second timeout. No longer a v1.35 observation. Cause still not pinned |
+| 6 | Exit cleanup does not finish | **Fixed and merged** (PR #293, `21754d3`, 2026-11-16), unreleased | Root cause: a deadlock. `OnExit` blocked the UI thread while the container disposed the tray icon on a pool thread, and the tray's dispose calls `Dispatcher.Invoke`. Seen in two stack captures. Live on 2026-11-16: 2.5 s and the timeout line without the fix, 0.41 s and 0.58 s and no line with it |
 | 7 | Memory warning with nothing running | **Shipped** (`d4f0e27`) | Tests only. The owner's smoke did not exercise it: free memory stayed above the reserve |
-| 8 | Two entry points can take the app down | Open | Unchanged |
-| 9 | A wrong-but-parseable store file crashes every start | Open | Unchanged |
+| 8 | Two entry points can take the app down | **Fixed** (`a43ca8a`, 2026-11-17), unreleased | Reproduced: the exception escaped both paths. One catch where they converge; the row shows the failure by type |
+| 9 | A wrong-but-parseable store file crashes every start | **Fixed** (`295082f`, `76205d7`, 2026-11-17), unreleased | Wider than listed: six stores threw. Good rows are kept, the vault takes its backup or corrupt path, and Start fresh re-reads before it resets |
 | 10 | Two accounts cross-wired in a batch | Open | Unchanged |
 
-**New rows the build turned up, none of them fixed:**
+**New rows the build turned up** (as of 2026-11-17: the first and the last are fixed, and so is the small item about a plugin's stop on a client that already exited, `1cb5254`; the other three are open):
 
 - **No alert when an expired alt drops** (the open half of row 4). The dropped-out alert is raised only from the presence path, which an expired account has left.
 - **Plugins hear `AccountLaunched` twice for a relaunch,** with no exit between. Not traced.
 - **A relaunch may leave the first launch's History row without an end.** Not traced.
 - **About a dozen direct `Dispatcher.Invoke` call sites** outside `WpfUiDispatcher` have no shutdown guard (`TrayService`, `App.xaml.cs`, `SingleInstanceGuard`, `ThemeService`, `MainAvatarTrayPainter`). Read from a grep, not traced.
 - **A dev build cannot be pointed at another data folder,** so any live test of unreleased code runs on the developer's real accounts file. That is why v1.39 reached the owner's smoke with no live run behind it.
+
+**Added 2026-11-17, from the next release's build (`docs/cart-runs/2026-11-17-stability-part-two/`):**
+
+- **Fixed there:** an outside close during a startup dialog (the rule moved from the main window to the UI thread, `fc0c86e`); the About shortcut list and dates in the UI language (`34d1986`).
+- **Open, new:** a lock on the vault at startup shows the corrupt dialog instead of offering a retry (no longer dangerous; the wording is wrong for the case). About a dozen `async void` handlers in the Games, History, export, import and theme windows were skimmed and not traced. `HandleExited` reads `Process.Id` unwrapped on a shutdown-only race. A dev-build start performs seamless takeover like any start, so a test-folder run closes a windowless Roblox tray client.
 
 **Tier 3, measure before touching: one of four is now measured, and the answer is no.** On
 2026-11-16 at 15:54 CST the Store build (1.38.0.0, running from `WindowsApps`) launched one account.

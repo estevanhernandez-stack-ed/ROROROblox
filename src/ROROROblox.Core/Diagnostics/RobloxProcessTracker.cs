@@ -117,7 +117,7 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
     public IReadOnlyDictionary<Guid, TrackedProcess> Attached =>
         _attachedByAccount.ToDictionary(
             kvp => kvp.Key,
-            kvp => new TrackedProcess(kvp.Value.Process.Id, kvp.Value.AttachedAtUtc));
+            kvp => new TrackedProcess(kvp.Value.Pid, kvp.Value.AttachedAtUtc));
 
     public bool IsTracking(Guid accountId) => _attachedByAccount.ContainsKey(accountId);
 
@@ -329,9 +329,15 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
                 new Windows.Win32.Foundation.WPARAM(PInvoke.SC_CLOSE),
                 default);
         }
+        catch (InvalidOperationException)
+        {
+            // The client exited and its Process was disposed after we took the slot: already gone, nothing to ask.
+            _log.LogDebug("RequestClose for account {AccountId} pid {Pid}: the process is already gone.", accountId, slot.Pid);
+            return false;
+        }
         catch (Exception ex)
         {
-            _log.LogWarning(ex, "RequestClose failed for account {AccountId} pid {Pid}", accountId, slot.Process.Id);
+            _log.LogWarning(ex, "RequestClose failed for account {AccountId} pid {Pid}", accountId, slot.Pid);
             return false;
         }
     }
@@ -352,9 +358,15 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
             slot.Process.Kill(entireProcessTree: false);
             return true;
         }
+        catch (InvalidOperationException)
+        {
+            // The client exited and its Process was disposed after we took the slot: already gone, nothing to kill.
+            _log.LogDebug("Kill for account {AccountId} pid {Pid}: the process is already gone.", accountId, slot.Pid);
+            return false;
+        }
         catch (Exception ex)
         {
-            _log.LogWarning(ex, "Kill failed for account {AccountId} pid {Pid}", accountId, slot.Process.Id);
+            _log.LogWarning(ex, "Kill failed for account {AccountId} pid {Pid}", accountId, slot.Pid);
             return false;
         }
     }
@@ -467,7 +479,7 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
             //  4. EnableRaisingEvents arms delivery;
             //  5. HasExited double-check synthesizes the exit if it happened before 4
             //     took effect — the once-guard makes the two paths converge.
-            var slot = new AttachedSlot(process, _clock.UtcNow);
+            var slot = new AttachedSlot(process, process.Id, _clock.UtcNow);
             lock (_slotGate)
             {
                 // An account that is already running can be launched again (Launch, "Play as",
@@ -479,7 +491,7 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
                     _supersededProcesses.TryAdd(prior.Process, 0);
                     _log.LogInformation(
                         "Account {AccountId} attached to pid {Pid} while pid {OldPid} was still tracked; the older client stays watched until it exits.",
-                        accountId, process.Id, prior.Process.Id);
+                        accountId, process.Id, prior.Pid);
                 }
                 _attachedByAccount[accountId] = slot;
             }
@@ -607,5 +619,8 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
         }
     }
 
-    private sealed record AttachedSlot(Process Process, DateTimeOffset AttachedAtUtc);
+    // Pid is captured at attach: once the Process object is disposed (HandleExited and Dispose do
+    // that, possibly while a caller already holds the slot) Process.Id and HasExited throw
+    // InvalidOperationException, so nothing reachable from a plugin or the UI may read the pid from it.
+    private sealed record AttachedSlot(Process Process, int Pid, DateTimeOffset AttachedAtUtc);
 }

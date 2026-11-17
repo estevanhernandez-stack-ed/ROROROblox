@@ -271,6 +271,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
         // F-106 seam defaults — the real dialogs. Assigned here rather than at the property
         // because they capture instance state (stores, the API client, the share-URL resolver).
+        DpapiCorruptPrompt = () =>
+        {
+            var window = new DpapiCorruptWindow(_accountStore.StartFreshAsync);
+            Parented(window);
+            return window.ShowDialog() == true;
+        };
         SquadLaunchPicker = (eligible, running, expired) =>
         {
             var window = Parented(new SquadLaunchWindow(
@@ -325,6 +331,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             ? LaunchAccountAsync(row, new LaunchTarget.Home())
             : Task.FromResult(0));
         OpenGamesCommand = new RelayCommand(OpenGames);
+        UpdateButtonCommand = new RelayCommand(RunUpdateButton);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => _ = StopAccountAsync(p as AccountSummary));
         RecycleAccountCommand = new RelayCommand(p => _ = RecycleAccountAsync(p as AccountSummary));
@@ -567,6 +574,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         _ticker.Stop();
         TranslationSource.Instance.CultureChanged -= OnUiCultureChanged;
+        if (_updateAvailability is not null) { _updateAvailability.Changed -= OnUpdateAvailabilityChanged; }
     }
 
     /// <summary>
@@ -920,13 +928,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         window.ShowDialog();
     };
 
-    /// <summary>The corrupt-store question: true = start fresh, false = quit to restore a backup.</summary>
-    internal Func<bool> DpapiCorruptPrompt { get; set; } = static () =>
-    {
-        var window = new DpapiCorruptWindow();
-        Parented(window);
-        return window.ShowDialog() == true;
-    };
+    /// <summary>
+    /// The corrupt-store question: true = the vault was set aside and the list starts empty, false = quit
+    /// to restore a backup. The default dialog does the setting aside itself (through the store) and only
+    /// returns true once it worked, so a failure stays on screen instead of reaching this method.
+    /// </summary>
+    internal Func<bool> DpapiCorruptPrompt { get; set; }
 
     /// <summary>How "quit so the user can restore a backup" happens. A seam because the recovery
     /// logic around it is exactly what wants testing, and <c>Application.Current</c> is null there.</summary>
@@ -1327,40 +1334,58 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>Completes when <see cref="AccountsLoaded"/> becomes true.</summary>
     public Task WhenAccountsLoaded => _accountsLoaded.Task;
 
+    /// <summary>
+    /// The whole startup load <c>MainWindow.OnLoaded</c> runs (rows, compact mode, saved placement), as one
+    /// call that never throws. <c>OnLoaded</c> is an <c>async void</c> handler, so an exception out of it
+    /// would reach the dispatcher and end the app on every start; this is where the handler's await ends
+    /// instead, and it is what a test can drive. Returns the saved window placement, or null.
+    /// </summary>
+    internal async Task<Core.WindowPlacement?> RunStartupLoadAsync()
+    {
+        try
+        {
+            await LoadAsync();
+
+            // v1.18 — compact mode is sticky. Restored after LoadAsync so the rows the compact
+            // strip renders already exist, and before the welcome dialog, which blocks.
+            await RestoreCompactModeAsync();
+
+            // F-060. After the compact restore, which also moves the geometry.
+            return await LoadWindowPlacementAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogError(ex, "Startup load failed ({ExceptionType}); the window opens as it is.", ex.GetType().Name);
+            return null;
+        }
+    }
+
     /// <summary>Loads accounts + games from disk. Called once at MainWindow load.</summary>
     public async Task LoadAsync()
     {
         try
         {
+            // A load that works takes the failure notice down; a failed one puts it back below.
+            AccountsLoadFailedText = string.Empty;
             var accounts = await _accountStore.ListAsync();
-            // Detach the streamer-identity subscription before discarding the old rows — the
-            // provider is a long-lived app singleton, so a row left subscribed to its Changed
-            // event would stay rooted forever (one leaked AccountSummary per reload).
-            foreach (var stale in Accounts)
-            {
-                stale.DetachIdentityProvider();
-            }
-            Accounts.Clear();
-            // Manual SortOrder wins when set; among rows that share a SortOrder (typical: every
-            // account at 0 because the user has never reordered), fall back to most-recently-
-            // launched first so freshly-touched accounts surface naturally.
-            var ordered = accounts
-                .OrderBy(a => a.SortOrder)
-                .ThenByDescending(a => a.LastLaunchedAt ?? a.CreatedAt);
-            foreach (var account in ordered)
-            {
-                var summary = new AccountSummary(account);
-                WireAccountSummary(summary);
-                Accounts.Add(summary);
-            }
-            // Open state: the persisted choice, else the main's panel, else (no main) the first row's.
-            var firstRow = Accounts.Any(a => a.IsMain) ? null : Accounts.FirstOrDefault();
-            foreach (var row in Accounts) row.Panel?.ResolveExpanded(row.IsMain || ReferenceEquals(row, firstRow));
+            ShowAccountRows(accounts);
             await PrimeLastPlayedAsync();
         }
         catch (AccountStoreCorruptException)
         {
             ShowDpapiCorruptModal();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Last line of defence: a store that fails in a way nobody planned (a wrong-shape file that
+            // slipped past its guard) must not stop the window loading. The list stays as it is, and
+            // nothing here can write it back: the account store is the only writer and every write it
+            // makes starts with its own fresh read, which fails the same way and aborts before any save
+            // (and AccountStore only overwrites its backup after a read it judged good). The view
+            // model holds no copy of the vault to persist.
+            _log.LogError(ex, "Loading the saved accounts failed ({ExceptionType}); the list stays empty for this session and the vault file is untouched.", ex.GetType().Name);
+            // To the user an empty list reads as "every account is gone", so say what happened.
+            AccountsLoadFailedText = Loc.Get("Shell_Msg_AccountsNotRead");
         }
         finally
         {
@@ -1376,14 +1401,36 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // by InitializeBloxstrapWarningAsync) so it is guaranteed to land before the very first
         // RefreshFpsCapWarning() call below -- LoadAsync is genuinely awaited by MainWindow before
         // first paint, so this can't race the way a fire-and-forget ctor read could.
-        _dismissedFpsCapSignature = await _settings.GetDismissedFpsCapWarningSignatureAsync();
-        RefreshFpsCapWarning();
+        // Each read below is a preference or a list that costs a feature, not the window, when it fails.
+        try
+        {
+            _dismissedFpsCapSignature = await _settings.GetDismissedFpsCapWarningSignatureAsync();
+            RefreshFpsCapWarning();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogWarning(ex, "Reading the dismissed FPS-cap warning failed ({ExceptionType}); continuing with defaults.", ex.GetType().Name);
+        }
 
         // Same reasoning as the read above — awaited before first paint, so the rows never flash
         // the wrong Recycle visibility. Preferences writes both the setting and this flag.
-        AlwaysShowRecycle = await _settings.GetAlwaysShowRecycleAsync();
+        try
+        {
+            AlwaysShowRecycle = await _settings.GetAlwaysShowRecycleAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogWarning(ex, "Reading the always-show-Recycle preference failed ({ExceptionType}); continuing with defaults.", ex.GetType().Name);
+        }
 
-        await ReloadGamesAsync();
+        try
+        {
+            await ReloadGamesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogWarning(ex, "Loading the saved games failed ({ExceptionType}); the game list stays as it was.", ex.GetType().Name);
+        }
         OnPropertyChanged(nameof(MainAccount));
         OnPropertyChanged(nameof(CompactEmptyKind));
         OnPropertyChanged(nameof(CompactRows));
@@ -1397,7 +1444,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // backfill raises AccountUserIdResolved and ApplyUserIdResolved sets the live row's id (the
         // provider re-reads AccountsSnapshot every tick, but the backfill itself writes the store
         // only; the old "enter the poll snapshot automatically" was wrong until v1.36).
-        _presenceService.Start();
+        try
+        {
+            _presenceService.Start();
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Starting the presence poll failed ({ExceptionType}); presence stays off until the next load.", ex.GetType().Name);
+        }
     }
 
     private readonly SemaphoreSlim _reloadGamesGate = new(1, 1);
@@ -2079,7 +2133,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             switch (result)
             {
                 case LaunchResult.Started started:
-                    await _accountStore.TouchLastLaunchedAsync(summary.Id);
+                    // The client is already running, so a failed "last launched" stamp must not turn
+                    // into a failed launch (and skip the tracker below): log it and carry on.
+                    try
+                    {
+                        await _accountStore.TouchLastLaunchedAsync(summary.Id);
+                    }
+                    catch (Exception touchEx)
+                    {
+                        _log.LogWarning(touchEx, "Couldn't stamp last-launched for {AccountId}; the launch itself went through.", summary.Id);
+                    }
                     summary.StampLaunched(DateTimeOffset.UtcNow);
                     summary.SessionExpired = false;
                     summary.SessionNeedsVerification = false; // a launch that starts proves the challenge is behind us
@@ -2139,6 +2202,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 default:
                     return 0;
             }
+        }
+        catch (Exception ex)
+        {
+            // Every caller of this method ends here, and two of them (the follow chip and the
+            // pasted-link modal) run from async void handlers where an escaping exception ends the
+            // app (App.xaml.cs leaves DispatcherUnhandledException unhandled on purpose). The Launch
+            // button's RelayCommand swallowed the same exception with no log and left the row on
+            // "Launching...". Same row status a failed auth-ticket launch already uses; 0 = not started.
+            _log.LogWarning(ex, "Launch failed for account {AccountId} before the client started.", summary.Id);
+            // The row gets the exception's TYPE, never its message (the v1.38 rule): a store failure's
+            // message carries a file path with the Windows user name in it, and a row is on screen
+            // for anyone watching a stream. The whole exception is in the log line above.
+            summary.StatusText = CoreMessageCatalog.For(new LaunchResult.Failed(LaunchFailureKind.AuthTicketFailed, ex.GetType().Name));
+            return 0;
         }
         finally
         {
@@ -3575,6 +3652,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
 
+            // Read before the clear below: an exit event for a row that was not running (a stale or
+            // duplicate delivery) is not a drop-out.
+            var wasRunning = summary.IsRunning;
+
             // The pid is genuinely gone — always clear process state.
             summary.IsRunning = false;
             summary.RunningPid = null;
@@ -3608,6 +3689,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 // is the only signal. Keep the pre-v1.5.0 behavior: stamp the close immediately.
                 summary.LastClosedAtUtc = e.OccurredAtUtc;
                 _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
+            }
+
+            // The dropped-out alert for an account presence can no longer see. A session-expired (401)
+            // or rate-limited (403) account is out of the poll and its presence fields were cleared, so
+            // ApplyPresence never confirms its close and, before 2026-11-17, nobody was told. The
+            // process exit is the only signal left, so it raises here, through the same RaiseAlerts
+            // and the same user-asked-for-it suppression. Not-expired accounts stay with presence.
+            //
+            // No respawn deferral: the bootstrapper's kill-and-respawn happens in the seconds after a
+            // launch, and the tracker has no re-attach for it at all (TrackLaunchAsync returns at the
+            // first attach; the respawned pid is never claimed). An account that went expired was
+            // launched long before, since launching needs a live cookie, and a second launch of a
+            // running account is already filtered as Superseded above.
+            if (wasRunning && (summary.SessionExpired || summary.SessionLimited))
+            {
+                RaiseDropOutForUnpolledAccount(summary, e.OccurredAtUtc);
             }
 
             LiveProcessCount = _processTracker.Attached.Count;
@@ -3810,6 +3907,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        RememberGameForAlert(summary);
         summary.SessionExpired = true;
         // An expired account leaves the presence poll, so whatever presence last said would freeze
         // ("In <game>" forever, and OnProcessExited's InGame branch would wait for a confirming poll
@@ -3836,6 +3934,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
         if (summary is null) return;
+        RememberGameForAlert(summary);
         summary.SessionLimited = true;
         summary.PresenceState = UserPresenceType.Offline;  // clear the frozen "In game"
         summary.CurrentGameName = null;
@@ -4445,6 +4544,42 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _closeRequests[row.Id] = _closeRequests.GetValueOrDefault(row.Id) + 1;
         }
         _relaunchPending.Clear();
+    }
+
+    /// <summary>
+    /// True once the app is on its way out (Quit, or WPF's OnExit). Exits arrive in a burst then, and
+    /// none of them is a drop-out. A seam so a test can set it; production reads
+    /// <c>App.IsShuttingDown</c>.
+    /// </summary>
+    internal Func<bool> IsShuttingDown { get; set; } = static () => global::ROROROblox.App.App.IsShuttingDown;
+
+    /// <summary>
+    /// The game an account was in when its session expired or was limited, kept only for the
+    /// dropped-out alert. The row's own CurrentGameName is cleared at that moment (a frozen
+    /// "In game" row was the v1.39 bug), so the alert text would otherwise lose it. Consumed at exit.
+    /// </summary>
+    private readonly Dictionary<Guid, string?> _gameAtLostPresence = [];
+
+    private void RememberGameForAlert(AccountSummary summary) => _gameAtLostPresence[summary.Id] = summary.CurrentGameName;
+
+    private void RaiseDropOutForUnpolledAccount(AccountSummary summary, DateTimeOffset occurredAtUtc)
+    {
+        _gameAtLostPresence.Remove(summary.Id, out var lastGameName);
+
+        if (IsShuttingDown())
+        {
+            _log.LogDebug("Suppressed a dropped-out alert for {AccountId}: the app is shutting down.", summary.Id);
+            return;
+        }
+        if (WasCloseExpected(summary.Id, occurredAtUtc))
+        {
+            _expectedCloses.Remove(summary.Id);
+            _log.LogDebug("Suppressed a dropped-out alert for {AccountId}: the close was user-initiated.", summary.Id);
+            return;
+        }
+        RaiseAlerts([new AlertTrigger(
+            AlertKind.AccountDroppedOut, summary.Id, summary.RenderName,
+            summary.DisplayName, lastGameName, PrivateBytes: null, occurredAtUtc)]);
     }
 
     private bool WasCloseExpected(Guid accountId, DateTimeOffset atUtc) =>
@@ -5289,6 +5424,61 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void ShowRobloxNotInstalledModal() => RobloxNotInstalledPrompt();
 
+    /// <summary>Replaces the rows with these accounts, in display order. UI thread.</summary>
+    private void ShowAccountRows(IReadOnlyList<Account> accounts)
+    {
+        // Detach the streamer-identity subscription before discarding the old rows — the
+        // provider is a long-lived app singleton, so a row left subscribed to its Changed
+        // event would stay rooted forever (one leaked AccountSummary per reload).
+        foreach (var stale in Accounts)
+        {
+            stale.DetachIdentityProvider();
+        }
+        Accounts.Clear();
+        // Manual SortOrder wins when set; among rows that share a SortOrder (typical: every
+        // account at 0 because the user has never reordered), fall back to most-recently-
+        // launched first so freshly-touched accounts surface naturally.
+        var ordered = accounts
+            .OrderBy(a => a.SortOrder)
+            .ThenByDescending(a => a.LastLaunchedAt ?? a.CreatedAt);
+        foreach (var account in ordered)
+        {
+            var summary = new AccountSummary(account);
+            WireAccountSummary(summary);
+            Accounts.Add(summary);
+        }
+        // Open state: the persisted choice, else the main's panel, else (no main) the first row's.
+        var firstRow = Accounts.Any(a => a.IsMain) ? null : Accounts.FirstOrDefault();
+        foreach (var row in Accounts) row.Panel?.ResolveExpanded(row.IsMain || ReferenceEquals(row, firstRow));
+    }
+
+    /// <summary>
+    /// After Start fresh, show what the store holds rather than assume it is empty. The corrupt dialog
+    /// also appears for a vault that was only locked for a moment; the store then finds it readable,
+    /// sets nothing aside (<c>StartFreshResult.StoreWasReadable</c>), and every saved account is still
+    /// there. An empty list and "Started fresh" over a vault that is fine would read as total loss.
+    /// Internal so a test can await it; <see cref="ShowDpapiCorruptModal"/> fires it and moves on.
+    /// </summary>
+    internal async Task ShowWhatTheStoreHoldsAsync()
+    {
+        try
+        {
+            var accounts = await _accountStore.ListAsync();
+            if (accounts.Count == 0)
+            {
+                return; // a real fresh start: the list is already empty and the banner is right
+            }
+            ShowAccountRows(accounts);
+            RefreshFpsCapWarning();
+            StatusBanner = string.Empty;
+            await PrimeLastPlayedAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogDebug(ex, "Could not re-read the saved accounts after Start fresh ({ExceptionType}); the list stays empty.", ex.GetType().Name);
+        }
+    }
+
     /// <summary>
     /// Corrupt-store recovery, assertable since F-106: the dialog is <see cref="DpapiCorruptPrompt"/>,
     /// the quit is <see cref="QuitApplication"/>, and this method owns everything between them.
@@ -5298,9 +5488,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var startFresh = DpapiCorruptPrompt();
         if (startFresh)
         {
-            // The store's load already failed; renaming + creating-empty is the recovery path.
-            // For v1 we let the next AddAsync naturally overwrite the corrupt file via the
-            // atomic-write path. The accounts list stays empty.
+            // The dialog has already had the store set the vault files aside (IAccountStore.StartFreshAsync),
+            // so the store reads as empty and the next add writes a new file. The list stays empty.
             foreach (var stale in Accounts)
             {
                 stale.DetachIdentityProvider();
@@ -5308,6 +5497,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             Accounts.Clear();
             RefreshFpsCapWarning();
             StatusBanner = Loc.Get("Shell_Msg_StartedFresh");
+            // Usually a no-op (the store is empty now). When the vault turned out to be readable, this
+            // puts the accounts back on screen and takes the banner down.
+            _ = ShowWhatTheStoreHoldsAsync();
         }
         else
         {
@@ -5500,6 +5692,28 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private string _accountsLoadFailedText = string.Empty;
+
+    /// <summary>
+    /// Non-empty only after the account store failed in a way nobody planned: the saved accounts could not
+    /// be read this time and the file was not changed. Empty on a normal empty list and on a first run, and
+    /// cleared by a later load that works. The strip collapses on empty, like the rows beside it.
+    /// </summary>
+    public string AccountsLoadFailedText
+    {
+        get => _accountsLoadFailedText;
+        private set
+        {
+            if (SetField(ref _accountsLoadFailedText, value))
+            {
+                OnPropertyChanged(nameof(AccountsLoadFailed));
+            }
+        }
+    }
+
+    /// <summary>True while <see cref="AccountsLoadFailedText"/> is showing. An empty list in this state is not a first run.</summary>
+    public bool AccountsLoadFailed => _accountsLoadFailedText.Length > 0;
+
     private string _contestedBannerText = string.Empty;
 
     /// <summary>Runtime banner text — non-empty only when Roblox holds the multi-instance lock
@@ -5561,6 +5775,89 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(KnownIssueNoticeText));
         OnPropertyChanged(nameof(KnownIssuesMenuHeader));
+    }
+
+    // === The header's update button (2026-11-17) ===
+    //
+    // A Store install left running holds its update back, and a direct-download install stages one
+    // that only lands on close; nothing in the window said either. UpdateAvailability knows which
+    // case this is. This is only the face: visibility, words, and what the click does.
+
+    private Updates.UpdateAvailability? _updateAvailability;
+
+    /// <summary>
+    /// Set once by the App at startup, like <see cref="KnownIssuesNotice"/>; null in tests that do not
+    /// exercise it (no update, no button). The service raises Changed on any thread, so the notify
+    /// goes through <c>_ui</c>.
+    /// </summary>
+    internal Updates.UpdateAvailability? UpdateAvailability
+    {
+        get => _updateAvailability;
+        set
+        {
+            if (ReferenceEquals(_updateAvailability, value))
+            {
+                return;
+            }
+
+            if (_updateAvailability is not null)
+            {
+                _updateAvailability.Changed -= OnUpdateAvailabilityChanged;
+            }
+
+            _updateAvailability = value;
+            if (_updateAvailability is not null)
+            {
+                _updateAvailability.Changed += OnUpdateAvailabilityChanged;
+            }
+
+            RaiseUpdateButtonChanged();
+        }
+    }
+
+    private Updates.UpdateStatus UpdateStatus => _updateAvailability?.Current ?? Updates.UpdateStatus.None;
+
+    public bool UpdateButtonVisible => UpdateStatus.Kind != Updates.UpdateKind.None;
+
+    public string UpdateButtonLabel => UpdateStatus.Kind == Updates.UpdateKind.Staged
+        ? Loc.Get("MainWindow_UpdateQuitToUpdate")
+        : Loc.Get("MainWindow_UpdateAvailable");
+
+    /// <summary>Says what the click does: opens the Store page, or quits so the staged update installs.</summary>
+    public string UpdateButtonTooltip => UpdateStatus switch
+    {
+        { Kind: Updates.UpdateKind.Store } => Loc.Get("MainWindow_UpdateStoreTooltip"),
+        { Kind: Updates.UpdateKind.Staged, Version: { Length: > 0 } version } => Loc.Format("MainWindow_UpdateStagedTooltip", version),
+        { Kind: Updates.UpdateKind.Staged } => Loc.Get("MainWindow_UpdateStagedTooltipNoVersion"),
+        _ => string.Empty,
+    };
+
+    public ICommand UpdateButtonCommand { get; }
+
+    private void RunUpdateButton()
+    {
+        switch (UpdateStatus.Kind)
+        {
+            case Updates.UpdateKind.Store:
+                // Opens the Store's page for RoRoRo. It does not install in place: a running packaged
+                // desktop app's behaviour under an in-place install is not something we have measured.
+                _shellOpener.Open(Updates.UpdateAvailability.StoreListingUri);
+                break;
+            case Updates.UpdateKind.Staged:
+                // The normal quit (the tray's Quit): the staged package applies when the process exits.
+                // No restart, on purpose; the person chose to quit.
+                QuitApplication();
+                break;
+        }
+    }
+
+    private void OnUpdateAvailabilityChanged(object? sender, EventArgs e) => _ui.Invoke(RaiseUpdateButtonChanged);
+
+    private void RaiseUpdateButtonChanged()
+    {
+        OnPropertyChanged(nameof(UpdateButtonVisible));
+        OnPropertyChanged(nameof(UpdateButtonLabel));
+        OnPropertyChanged(nameof(UpdateButtonTooltip));
     }
 
     // === The one-time rating ask (2026-11-10) ===

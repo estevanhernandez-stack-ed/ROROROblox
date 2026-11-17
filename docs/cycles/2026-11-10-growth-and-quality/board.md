@@ -230,6 +230,16 @@ presets, or a typed value. A few hours, and it is a reply worth sending to that 
 
     Next read: the evening of 2026-11-16 and again on 2026-11-17. Recommended to the owner: hold
     the name, since a revert now would end the test at its first movement. The call is his.
+
+    **Third read, 2026-11-17 09:45 CST** (the evening read on 2026-11-16 was not taken). The four
+    gains hold exactly: "multi instance" 3 (three passes: 3, 3, 3), "alt accounts" 2, "multibox" 5,
+    "multi-instance launcher" 14. **"roblox launcher" is now outside the top 20 on three passes**
+    (7 before the rename, 17 on 11-14 and 11-16). "roblox account manager", the criterion query, is
+    still absent, and the other fifteen queries are unchanged. There is no search-volume data here,
+    so whether the lost query outweighs the four gained ones is not known. Installs the week of
+    11-08 ran 122 a day against 154 the week before; the weekday dip began on 11-09, three days
+    before the rename went live, so it does not settle the question either. The owner held the name
+    on 2026-11-16, and held it again on 2026-11-17 with this read in front of him.
 13. **Listing languages.** Indonesia is 4.8% of acquisitions and Ukraine 1.8%, with no localized
     listing. Listing-only, per the standing rule that manifest languages need real UI
     localization.

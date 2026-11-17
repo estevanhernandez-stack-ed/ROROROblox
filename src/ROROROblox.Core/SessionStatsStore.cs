@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.Core;
 
@@ -31,17 +32,19 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
 
     private readonly string _filePath;
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
+    private readonly WrongShapeWarning _shape;
     private bool _disposed;
 
     public SessionStatsStore() : this(DefaultPath()) { }
 
-    public SessionStatsStore(string filePath)
+    public SessionStatsStore(string filePath, ILogger<SessionStatsStore>? log = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException("File path must not be empty.", nameof(filePath));
         }
         _filePath = filePath;
+        _shape = new WrongShapeWarning(log);
     }
 
     public static string DefaultPath()
@@ -275,7 +278,30 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
             if (!File.Exists(_filePath)) return new Blob();
             var json = await File.ReadAllTextAsync(_filePath).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(json)) return new Blob();
-            return JsonSerializer.Deserialize<Blob>(json, JsonOptions) ?? new Blob();
+            var blob = JsonSerializer.Deserialize<Blob>(json, JsonOptions);
+            if (blob is null)
+            {
+                _shape.Report(_filePath, "empty");
+                return new Blob();
+            }
+            // Salvage at each level: a null row costs that row, a null section costs that section, and
+            // the sections around it are kept.
+            var dropped = 0;
+            var missing = false;
+            Dictionary<TK, TV> Level<TK, TV>(Dictionary<TK, TV>? map) where TK : notnull where TV : class
+            {
+                missing |= map is null;
+                var kept = StoreShape.GoodEntries(map, out var n);
+                dropped += n;
+                return kept;
+            }
+            blob.Accounts = Level(blob.Accounts);
+            blob.Games = Level(blob.Games);
+            blob.Days = Level(blob.Days);
+            blob.Months = Level(blob.Months);
+            if (missing) _shape.Report(_filePath, "empty in the section that was missing, keeping the rest");
+            else _shape.ReportDropped(_filePath, dropped);
+            return blob;
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {

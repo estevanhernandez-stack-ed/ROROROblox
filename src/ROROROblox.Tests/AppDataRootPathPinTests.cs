@@ -38,7 +38,7 @@ public class AppDataRootPathPinTests
         [Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ROROROblox", .. parts]);
 
     /// <summary>
-    /// The one table of the nineteen sites that expose their path: name, how to resolve it, and the
+    /// The one table of the eighteen sites that expose their path: name, how to resolve it, and the
     /// parts under the data folder it must equal. <see cref="AccessibleSites"/> (the default-path pins)
     /// and <c>AppDataRootOverrideTests</c> (the same sites under an override) both read it, so the two
     /// cannot drift apart: a site added or renamed here is checked both ways.
@@ -54,7 +54,6 @@ public class AppDataRootPathPinTests
         Row("WelcomeWindow.SentinelPath", () => WelcomeWindow.SentinelPath, ".welcome-shown");
         Row("LanguageNoticeSentinel.SentinelPath", () => LanguageNoticeSentinel.SentinelPath, ".language-notice-shown");
         Row("AppLogging.DefaultLogDirectory", () => AppLogging.DefaultLogDirectory, "logs");
-        Row("DpapiCorruptWindow.CorruptAccountsPath", () => DpapiCorruptWindow.CorruptAccountsPath, "accounts.dat");
         Row("PluginRegistry.DefaultPluginsRoot", () => PluginRegistry.DefaultPluginsRoot, "plugins");
         Row("MainAvatarTrayPainter.DefaultCacheDirectory", () => MainAvatarTrayPainter.DefaultCacheDirectory, "tray-cache");
         Row("UpdateChecker.DebounceStampPath", () => UpdateChecker.DebounceStampPath, "last-update-check.txt");

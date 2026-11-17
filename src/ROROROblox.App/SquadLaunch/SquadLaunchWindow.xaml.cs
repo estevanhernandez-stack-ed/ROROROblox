@@ -425,6 +425,6 @@ internal partial class SquadLaunchWindow : Window
         if (span < TimeSpan.FromHours(1)) return Loc.Format("Shell_Ago_Minutes", (int)span.TotalMinutes);
         if (span < TimeSpan.FromDays(1)) return Loc.Format("Shell_Ago_Hours", (int)span.TotalHours);
         if (span < TimeSpan.FromDays(7)) return Loc.Plural("Shell_Ago_Days", (int)span.TotalDays);
-        return when.ToLocalTime().ToString("MMM d");
+        return DisplayDate.ShortMonthDay(when);
     }
 }

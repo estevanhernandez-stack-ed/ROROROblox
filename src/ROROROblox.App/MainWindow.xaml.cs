@@ -132,19 +132,12 @@ internal partial class MainWindow : FluentWindow
     {
         if (DataContext is MainViewModel vm)
         {
-            await vm.LoadAsync();
-
-            // v1.18 — compact mode is sticky. Restored after LoadAsync so the rows the compact
-            // strip renders already exist, and before the welcome dialog below, which blocks.
-            // The geometry follows for free: the restore raises IsCompact's change notification and
-            // OnViewModelPropertyChanged runs ApplyCompactState off it, the same path the status-bar
-            // toggle takes. The VM swallows a read failure, so this cannot stop the window loading.
-            await vm.RestoreCompactModeAsync();
-
-            // F-060. After the compact restore, which also moves the geometry — applying placement
-            // first would have it immediately overwritten. Same hook the compact restore already
-            // uses, so the two stay in one order rather than racing from two places.
-            if (await vm.LoadWindowPlacementAsync() is { } placement)
+            // LoadAsync, then the sticky compact-mode restore (v1.18), then the saved placement (F-060),
+            // in that order: the compact restore moves the geometry, so placement applied first would be
+            // overwritten, and the rows the compact strip renders must exist before it. RunStartupLoadAsync
+            // never throws (this handler is async void, so a throw would end the app on every start); a
+            // failed step is logged there and the window loads with what it has.
+            if (await vm.RunStartupLoadAsync() is { } placement)
             {
                 RestoreWindowPlacement(placement);
             }
@@ -157,15 +150,36 @@ internal partial class MainWindow : FluentWindow
         // later launch either. Tools > Welcome tour now reaches it on demand regardless (F-001);
         // this stops the app recording that it showed something it did not.
         //
+        // An empty list that a failed load left behind is not a first run, so the tour stays out of the way
+        // of the notice that says why the list is empty.
+        //
         // Consequence, deliberate: an upgrading user keeps IsFirstRun() true, so if they later
         // remove every account the tour appears. An empty list is the state the tour is written for
         // and they have never seen it.
         if (DataContext is MainViewModel mvm
-            && WelcomeWindow.ShouldShowOnStartup(WelcomeWindow.IsFirstRun(), mvm.Accounts.Count))
+            && WelcomeWindow.ShouldShowOnStartup(WelcomeWindow.IsFirstRun(), mvm.Accounts.Count, mvm.AccountsLoadFailed))
         {
+            // Let Show() finish first. On a first run the load above completes without yielding, so
+            // this point is still inside the Loaded event, before the window is on screen: the tour
+            // then came up over a HIDDEN main window, and a polite close from outside (taskkill, End
+            // task) reached neither of them, because it goes to one unowned window and prefers a
+            // visible one (measured and seen live 2026-11-17: one taskkill, no effect). With the main
+            // window visible it is the window that receives the close, and the v1.39 quit path ends
+            // the app, tour included.
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            if (!IsLoaded || App.IsShuttingDown)
+            {
+                return; // closed or quitting while we waited
+            }
+
             WelcomeWindow.MarkShown();
             var welcome = new WelcomeWindow { Owner = this };
             welcome.ShowDialog();
+            if (welcome.ClosedFromOutside)
+            {
+                // The sentinel is already written (above); an outside close does not un-show the tour.
+                ExternalCloseQuit?.Invoke();
+            }
         }
     }
 

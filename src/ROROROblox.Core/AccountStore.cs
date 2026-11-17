@@ -812,6 +812,104 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    /// <inheritdoc />
+    public async Task<StartFreshResult> StartFreshAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            // Look again before setting anything aside. The corrupt dialog also appears for a read that
+            // failed on I/O (a scanner or a sync tool holding the file for a moment), which says nothing
+            // about the vault. If the store reads now, by its ordinary rules, backup included, there is
+            // nothing to start fresh from: setting a readable vault aside would hide every saved account
+            // behind a rename the user would not know to undo.
+            try
+            {
+                await LoadAsync().ConfigureAwait(false);
+                _mainReadGood = false; // a probe, not the read before a save
+                _log.LogWarning("Start fresh was asked for, but {VaultFile} reads correctly now; nothing was set aside.", Path.GetFileName(_filePath));
+                return new StartFreshResult([], []) { StoreWasReadable = true };
+            }
+            catch (AccountStoreCorruptException)
+            {
+                // Still unreadable: this is the case Start fresh is for.
+                _mainReadGood = false;
+            }
+
+            // The backup goes first and is the one undone if main then refuses: a main left in place beside
+            // a set-aside backup cannot bring stale accounts back, the reverse order could.
+            var stamp = $"corrupt-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}";
+            var setAside = new List<string>();
+            string? backupAside = null;
+
+            if (File.Exists(BackupPath))
+            {
+                backupAside = UniqueAsideName(BackupPath, stamp);
+                if (!TryMove(BackupPath, backupAside))
+                {
+                    return new StartFreshResult([], [Path.GetFileName(BackupPath)]);
+                }
+                setAside.Add(Path.GetFileName(backupAside));
+            }
+
+            if (File.Exists(_filePath))
+            {
+                var mainAside = UniqueAsideName(_filePath, stamp);
+                if (!TryMove(_filePath, mainAside))
+                {
+                    var failed = new List<string> { Path.GetFileName(_filePath) };
+                    if (backupAside is not null && !TryMove(backupAside, BackupPath))
+                    {
+                        // Could not undo: say so. The backup stays set aside, which cannot restore anything.
+                        failed.Add(Path.GetFileName(BackupPath));
+                    }
+                    else if (backupAside is not null)
+                    {
+                        setAside.Clear();
+                    }
+                    return new StartFreshResult(setAside, failed);
+                }
+                setAside.Add(Path.GetFileName(mainAside));
+            }
+
+            // The store now reads as empty: reset what a read remembers about the old files.
+            _mainReadGood = false;
+            _recoveryWarningLatched = false;
+            _emptyWarningLogged = false;
+            _log.LogWarning("Started the vault fresh; set aside {Files}.", string.Join(", ", setAside));
+            return new StartFreshResult(setAside, []);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    // A name beside the file, never over another set-aside copy: a second Start fresh in the same second
+    // must not collide with, or replace, the first.
+    private static string UniqueAsideName(string path, string stamp)
+    {
+        var candidate = $"{path}.{stamp}";
+        for (var n = 2; File.Exists(candidate); n++)
+        {
+            candidate = $"{path}.{stamp}-{n}";
+        }
+        return candidate;
+    }
+
+    private static bool TryMove(string from, string to)
+    {
+        try
+        {
+            File.Move(from, to, overwrite: false);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
     // The previous good vault. SaveAsync only ever overwrites it with a main file LoadAsync just read
     // successfully, so it is at most one write behind a good main and never a copy of a damaged one.
     private string BackupPath => _filePath + ".bak";
@@ -929,7 +1027,33 @@ public sealed class AccountStore : IAccountStore, IDisposable
         try
         {
             var blob = JsonSerializer.Deserialize<StoredAccountsBlob>(plaintext, SerializerOptions);
-            return new VaultRead(VaultReadStatus.Good, blob ?? new StoredAccountsBlob(Version: 1, Accounts: []));
+            // A vault that decrypts and parses but has the wrong shape (the literal null, a missing or null
+            // accounts list, a null row) is Damaged, never an empty store: an empty list read as Good would
+            // let the next save write over every saved account, and would let that empty file replace the
+            // backup. Damaged sends it to the backup, then to the corrupt path.
+            if (blob is null || !StoreShape.ListOk(blob.Accounts))
+            {
+                return new VaultRead(VaultReadStatus.Damaged, Error: new AccountStoreCorruptException("accounts.dat decrypted but its JSON shape is invalid."));
+            }
+
+            // A row with a missing name, avatar or cookie is a different case and is REPAIRED, not
+            // rejected. Rejecting it would turn a vault that opens today into the corrupt dialog for
+            // every account in it, to protect against one bad row. Empty strings are safe everywhere a
+            // null is not: a row with no cookie reads as signed out and asks to sign in again.
+            for (var i = 0; i < blob.Accounts.Count; i++)
+            {
+                var row = blob.Accounts[i];
+                if (row.DisplayName is null || row.Cookie is null || row.AvatarUrl is null)
+                {
+                    blob.Accounts[i] = row with
+                    {
+                        DisplayName = row.DisplayName ?? string.Empty,
+                        Cookie = row.Cookie ?? string.Empty,
+                        AvatarUrl = row.AvatarUrl ?? string.Empty,
+                    };
+                }
+            }
+            return new VaultRead(VaultReadStatus.Good, blob);
         }
         catch (JsonException ex)
         {

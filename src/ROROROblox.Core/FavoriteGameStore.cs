@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.Core;
 
@@ -20,6 +21,7 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
 
     private readonly string _filePath;
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
+    private readonly WrongShapeWarning _shape;
     private bool _disposed;
 
     /// <inheritdoc />
@@ -27,13 +29,14 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
 
     public FavoriteGameStore() : this(DefaultPath()) { }
 
-    public FavoriteGameStore(string filePath)
+    public FavoriteGameStore(string filePath, ILogger<FavoriteGameStore>? log = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException("File path must not be empty.", nameof(filePath));
         }
         _filePath = filePath;
+        _shape = new WrongShapeWarning(log);
     }
 
     public static string DefaultPath()
@@ -274,8 +277,21 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
 
         try
         {
-            return JsonSerializer.Deserialize<FavoritesBlob>(bytes, JsonOptions)
-                ?? new FavoritesBlob(Version: 1, Favorites: []);
+            var blob = JsonSerializer.Deserialize<FavoritesBlob>(bytes, JsonOptions);
+            if (blob?.Favorites is null)
+            {
+                // The literal null or a missing list: no rows to keep.
+                _shape.Report(_filePath, "empty");
+                return new FavoritesBlob(Version: 1, Favorites: []);
+            }
+            // One bad row (null, or no name) costs that row, not the file.
+            var good = StoreShape.GoodRows(blob.Favorites, out var dropped, f => f.Name is not null);
+            if (dropped == 0)
+            {
+                return blob;
+            }
+            _shape.ReportDropped(_filePath, dropped);
+            return blob with { Favorites = good };
         }
         catch (JsonException)
         {

@@ -13,6 +13,14 @@ public interface IAccountStore
     Task<Account> AddAsync(string displayName, string avatarUrl, string cookie);
     Task RemoveAsync(Guid id);
     Task<string> RetrieveCookieAsync(Guid id);
+
+    /// <summary>
+    /// Starts the vault over: sets aside <c>accounts.dat</c> and its backup under timestamped names beside
+    /// them (never deleting either), so the store reads as empty and the next add can write. Reports a
+    /// file it could not set aside instead of swallowing it, and changes nothing it cannot undo. A default
+    /// member so the many test doubles of this interface keep compiling; only <see cref="AccountStore"/> implements it.
+    /// </summary>
+    Task<StartFreshResult> StartFreshAsync() => throw new NotSupportedException();
     Task UpdateCookieAsync(Guid id, string newCookie);
 
     /// <summary>

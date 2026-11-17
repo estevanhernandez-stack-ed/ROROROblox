@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
@@ -22,6 +23,34 @@ internal partial class RobloxAlreadyRunningWindow : Window
     /// <summary>The user's choice. Defaults to <see cref="BlockedModalOutcome.Quit"/> (fail closed)
     /// so a closed-without-choosing window is treated as Quit.</summary>
     public BlockedModalOutcome Outcome { get; private set; } = BlockedModalOutcome.Quit;
+
+    private ExternalCloseWatcher? _externalClose;
+
+    /// <summary>
+    /// True when this window was closed by a request from another process (<c>taskkill</c> without
+    /// <c>/F</c>, Task Manager's End task, <c>CloseMainWindow</c>), as <see cref="ExternalCloseWatcher"/>
+    /// identifies it. The caller reads it after <c>ShowDialog</c> and ends the app instead of treating
+    /// the close as the user's answer. taskkill posts to one unowned top-level window, never to an owned
+    /// one (measured 2026-11-17), so this is only ever set on a dialog that has no owner.
+    /// </summary>
+    public bool ClosedFromOutside { get; private set; }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        _externalClose ??= new ExternalCloseWatcher(this);
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        // Asked on every attempt so the note is cleared by the close it belongs to.
+        if (_externalClose?.TryConsume() ?? false)
+        {
+            ClosedFromOutside = true;
+        }
+
+        base.OnClosing(e);
+    }
 
     public RobloxAlreadyRunningWindow(Func<Task<bool>> onCloseForMe, Func<Task<bool>> onRetry)
     {

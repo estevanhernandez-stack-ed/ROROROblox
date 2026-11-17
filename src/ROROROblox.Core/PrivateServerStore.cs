@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.Core;
 
@@ -21,19 +22,21 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
 
     private readonly string _filePath;
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
+    private readonly WrongShapeWarning _shape;
     private bool _disposed;
 
     public event EventHandler? DefaultChanged;
 
     public PrivateServerStore() : this(DefaultPath()) { }
 
-    public PrivateServerStore(string filePath)
+    public PrivateServerStore(string filePath, ILogger<PrivateServerStore>? log = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException("File path must not be empty.", nameof(filePath));
         }
         _filePath = filePath;
+        _shape = new WrongShapeWarning(log);
     }
 
     public static string DefaultPath()
@@ -309,17 +312,22 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
             // Pre-discriminator records always wrote what the user pasted into accessCode, but
             // users mostly pasted share URLs (linkCode), so legacy values default to LinkCode.
             var stored = JsonSerializer.Deserialize<StoredBlob>(bytes, JsonOptions);
-            if (stored is null)
+            if (stored?.Servers is null)
             {
+                // Null file or null list: parsed, but nothing to keep.
+                _shape.Report(_filePath, "empty");
                 return new PrivateServersBlob(Version: 1, Servers: []);
             }
 
-            var migrated = new List<SavedPrivateServer>(stored.Servers.Count);
-            foreach (var s in stored.Servers)
+            // A null row is dropped like a row we cannot reconstruct: one bad row costs that row.
+            var rows = StoreShape.GoodRows(stored.Servers, out var dropped);
+            var migrated = new List<SavedPrivateServer>(rows.Count);
+            foreach (var s in rows)
             {
                 var code = !string.IsNullOrEmpty(s.Code) ? s.Code : s.AccessCode ?? string.Empty;
                 if (string.IsNullOrEmpty(code))
                 {
+                    dropped++;
                     continue; // skip rows we can't reconstruct
                 }
                 var kind = s.CodeKind ?? SavedPrivateServer.DefaultLegacyKind;
@@ -336,6 +344,7 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
                     LocalName: s.LocalName,
                     IsDefault: s.IsDefault));
             }
+            _shape.ReportDropped(_filePath, dropped);
             return new PrivateServersBlob(Version: 1, Servers: migrated);
         }
         catch (JsonException)

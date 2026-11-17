@@ -40,6 +40,13 @@ public partial class App : Application
     /// <summary>F-103. Adopts clients Roblox restarts for itself; see OrphanedClientSweeper.</summary>
     private Tray.OrphanedClientSweeper? _orphanSweeper;
 
+    // A polite close from outside the process, whichever window it lands on. See ThreadCloseWatcher.
+    private AppLifecycle.ThreadCloseWatcher? _outsideClose;
+    // The startup dialog that is open right now, if any, so an outside close can end it.
+    private Window? _openStartupDialog;
+    // Set once the main window's quit path is wired; before that, startup is abandoned instead.
+    private Action? _quitForOutsideClose;
+
     /// <summary>#222. Ends idle tray clients that outlive a launch; its own 30 s timer, see IdleTrayClientSweeper.</summary>
     private Tray.IdleTrayClientSweeper? _idleTraySweeper;
 
@@ -597,6 +604,11 @@ public partial class App : Application
         var acquired = acquireOutcome == MutexAcquireOutcome.Acquired;
         var verdict = gate.Evaluate(acquireOutcome);
 
+        // From here on a polite close from outside (taskkill without /F, End task) ends the app,
+        // whichever of our windows it lands on. Before the first dialog, because the dialogs below
+        // are where it used to be swallowed.
+        _outsideClose = new AppLifecycle.ThreadCloseWatcher(OnOutsideClose);
+
         // Bind the plugin-host pipe BEFORE the gate's modals. Both modals below block OnStartup
         // in a nested message loop, and the leftover modal fires whenever stale Roblox clients
         // exist — the exact condition an agent is trying to recover from. Binding here means the
@@ -650,7 +662,17 @@ public partial class App : Application
                 _log.LogInformation(
                     "Startup paused: Roblox already holds the singleton name — showing the "
                     + "already-running dialog and waiting for the user.");
+                _openStartupDialog = modal;
                 modal.ShowDialog();
+                _openStartupDialog = null;
+                if (modal.ClosedFromOutside || OutsideCloseSeen)
+                {
+                    // A polite close from another process (taskkill without /F, End task) is a request
+                    // to end the app, whatever the dialog's own answer was.
+                    _log.LogInformation("Startup abandoned at the gate: an outside close request arrived.");
+                    Shutdown(0);
+                    return;
+                }
                 var (proceed, holdsMutex) = AppLifecycle.BlockedStartupDecision.Resolve(modal.Outcome);
                 _log.LogInformation(
                     "Startup resumed: already-running dialog answered {Outcome} — proceed={Proceed}, "
@@ -711,7 +733,16 @@ public partial class App : Application
                     "Startup paused: {Windowless} windowless + {Windowed} windowed leftover Roblox "
                     + "process(es) — showing the leftover-process dialog and waiting for the user.",
                     leftover.Windowless, leftover.Windowed);
+                _openStartupDialog = info;
                 info.ShowDialog();
+                _openStartupDialog = null;
+                if (info.ClosedFromOutside || OutsideCloseSeen)
+                {
+                    // Without this the close read as "Continue" and startup carried on (seen 2026-11-16).
+                    _log.LogInformation("Startup abandoned at the leftover dialog: an outside close request arrived.");
+                    Shutdown(0);
+                    return;
+                }
                 _log.LogInformation("Startup resumed: leftover dialog answered {Action}.", info.Action);
                 switch (info.Action)
                 {
@@ -726,6 +757,14 @@ public partial class App : Application
             // mutex already held — proceed regardless
         }
 
+        if (OutsideCloseSeen)
+        {
+            // It arrived between the dialogs and here, with no window of ours to close.
+            _log.LogInformation("Startup abandoned before the main window: an outside close request arrived.");
+            Shutdown(0);
+            return;
+        }
+
         var tray = _services.GetRequiredService<ITrayService>();
         var mainWindow = _services.GetRequiredService<MainWindow>();
 
@@ -738,6 +777,7 @@ public partial class App : Application
             _log?.LogInformation("An external close request arrived; RoRoRo is quitting.");
             RequestShutdown();
         };
+        _quitForOutsideClose = mainWindow.ExternalCloseQuit;
         WireMainViewModelEvents(mainWindow);
         WireMutexLost(mutex, tray);
         WireMainAvatarTrayPainter();
@@ -770,6 +810,12 @@ public partial class App : Application
         _services.GetRequiredService<MainViewModel>().ShellPageOpener = OpenShellPage;
         _services.GetRequiredService<MainViewModel>().KnownIssuesNotice =
             _services.GetRequiredService<KnownIssues.KnownIssuesNoticeModel>();
+        // The header's update button. Its quit is the tray's Quit (RequestShutdown), so a staged
+        // update installs on the same exit path every other quit takes; the corrupt-vault "quit to
+        // restore a backup" shares this seam and now takes that path too.
+        _services.GetRequiredService<MainViewModel>().UpdateAvailability =
+            _services.GetRequiredService<UpdateAvailability>();
+        _services.GetRequiredService<MainViewModel>().QuitApplication = RequestShutdown;
         // How the previous session ended. A recorded crash opens this start with a notice that
         // points at Diagnostics; set before the rating ask, though either order gives the same result.
         _services.GetRequiredService<MainViewModel>().PreviousExit = _lastExit?.Previous;
@@ -807,6 +853,11 @@ public partial class App : Application
         // exception boundary (see InboundJoinRelay's remarks) — a throw here must not kill the
         // pipe-listener thread this callback runs on.
         _singleInstance.JoinUriReceived += relayedUri => _joinRelay!.Handle(relayedUri, "relay");
+
+        if (IsShuttingDown)
+        {
+            return; // an outside close arrived while the wiring above was still awaiting
+        }
 
         tray.Show();
         _singleInstance.StartListening(mainWindow);
@@ -895,6 +946,18 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "WebView2 user-data startup sweep threw; ignoring.");
+        }
+
+        // The Store half of the update button: one check now, then every six hours. Start returns at
+        // once (the check runs on the pool) and is a no-op off the Store build; it comes before the
+        // Velopack check so a slow one there cannot delay it.
+        try
+        {
+            _services.GetRequiredService<UpdateAvailability>().Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Update availability could not start; no update button this session.");
         }
 
         try
@@ -1072,13 +1135,13 @@ public partial class App : Application
                 return tray;
             }));
         services.AddSingleton<IAppSettings>(_ => new AppSettings());
-        services.AddSingleton<IFavoriteGameStore>(_ => new FavoriteGameStore());
-        services.AddSingleton<IPrivateServerStore>(_ => new PrivateServerStore());
-        services.AddSingleton<ISessionStatsStore>(_ => new SessionStatsStore());
+        services.AddSingleton<IFavoriteGameStore>(sp => new FavoriteGameStore(FavoriteGameStore.DefaultPath(), sp.GetService<ILogger<FavoriteGameStore>>()));
+        services.AddSingleton<IPrivateServerStore>(sp => new PrivateServerStore(PrivateServerStore.DefaultPath(), sp.GetService<ILogger<PrivateServerStore>>()));
+        services.AddSingleton<ISessionStatsStore>(sp => new SessionStatsStore(SessionStatsStore.DefaultPath(), sp.GetService<ILogger<SessionStatsStore>>()));
         // The history store is WRAPPED rather than called alongside a stats service. Two call
         // sites that must agree forever is F-121's shape; one call path cannot drift from itself.
         services.AddSingleton<ISessionHistoryStore>(sp => new StatsRecordingSessionHistoryStore(
-            new SessionHistoryStore(),
+            new SessionHistoryStore(SessionHistoryStore.DefaultPath(), sp.GetService<ILogger<SessionHistoryStore>>()),
             sp.GetRequiredService<ISessionStatsStore>(),
             sp.GetService<ILogger<StatsRecordingSessionHistoryStore>>()));
         services.AddSingleton<IThemeStore>(_ => new ThemeStore());
@@ -1093,7 +1156,7 @@ public partial class App : Application
         // an unobserved Task exception.
         services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerNamePool>(_ => new ROROROblox.Core.StreamerMode.StreamerNamePool());
         services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerAvatarPool>(_ => new ROROROblox.Core.StreamerMode.StreamerAvatarPool());
-        services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerIdentityStore>(_ => new ROROROblox.Core.StreamerMode.FileStreamerIdentityStore());
+        services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerIdentityStore>(sp => new ROROROblox.Core.StreamerMode.FileStreamerIdentityStore(ROROROblox.Core.StreamerMode.FileStreamerIdentityStore.DefaultPath(), sp.GetService<ILogger<ROROROblox.Core.StreamerMode.FileStreamerIdentityStore>>()));
         services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(sp =>
         {
             var store = sp.GetRequiredService<IAccountStore>();
@@ -1232,6 +1295,17 @@ public partial class App : Application
             ROROROblox.Core.AppDataRoot.Combine("webview2-data"),
             sp.GetRequiredService<ILogger<WebView2UserDataDirectory>>()));
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
+        // What the header's update button reads. A packaged install asks the Store (never on the
+        // startup path; Start() runs from RunStartupChecksAsync), a direct-download install is told by
+        // UpdateChecker when it has staged an update, a dev build is neither. The probe is built but
+        // never called unless IsPackaged: the WinRT call needs package identity.
+        services.AddSingleton<IStoreUpdateProbe>(sp => new StoreContextUpdateProbe(
+            sp.GetRequiredService<ILogger<StoreContextUpdateProbe>>()));
+        services.AddSingleton(sp => new UpdateAvailability(
+            sp.GetRequiredService<Distribution.IDistributionMode>().IsPackaged,
+            sp.GetRequiredService<IStoreUpdateProbe>(),
+            TimeProvider.System,
+            sp.GetRequiredService<ILogger<UpdateAvailability>>()));
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
         services.AddSingleton<RobloxWindowDecorator>();
@@ -1473,7 +1547,7 @@ public partial class App : Application
         var pluginsRoot = ROROROblox.App.Plugins.PluginRegistry.DefaultPluginsRoot;
         var consentPath = ROROROblox.Core.AppDataRoot.Combine("consent.dat");
 
-        services.AddSingleton(_ => new ROROROblox.App.Plugins.ConsentStore(consentPath));
+        services.AddSingleton(sp => new ROROROblox.App.Plugins.ConsentStore(consentPath, sp.GetService<ILogger<ROROROblox.App.Plugins.ConsentStore>>()));
         services.AddSingleton(sp => new ROROROblox.App.Plugins.PluginRegistry(
             pluginsRoot,
             sp.GetRequiredService<ROROROblox.App.Plugins.ConsentStore>()));
@@ -3482,9 +3556,45 @@ public partial class App : Application
     }
 
     /// <summary>#246: Windows is ending the session (logoff or shutdown); WPF still runs OnExit after this, which must not read as clean.</summary>
+    /// <summary>True once a polite close from outside the process has come off the UI thread's queue.</summary>
+    private bool OutsideCloseSeen => (_outsideClose?.Seen ?? 0) > 0;
+
+    /// <summary>
+    /// A polite close from outside reached one of our windows (see <see cref="AppLifecycle.ThreadCloseWatcher"/>
+    /// for why "one of", not "the main one"). Once the main window is wired this is the tray's quit
+    /// path. Before that it ends the startup dialog that is open, and the check after that dialog's
+    /// ShowDialog abandons startup; calling Shutdown from here instead would let OnStartup run on and
+    /// build windows for an application that is already shutting down.
+    /// </summary>
+    private void OnOutsideClose()
+    {
+        if (IsShuttingDown)
+        {
+            return;
+        }
+
+        if (_quitForOutsideClose is { } quit)
+        {
+            quit();
+            return;
+        }
+
+        _log?.LogInformation("An outside close request arrived during startup.");
+        try { _openStartupDialog?.Close(); }
+        catch (InvalidOperationException) { /* already closing: the check after ShowDialog still runs */ }
+    }
+
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
     {
         _lastExit?.RecordSessionEnding(e.ReasonSessionEnding.ToString());
+
+        // Windows is shutting down or logging off, so every client is about to exit, and none of
+        // those exits is a drop-out. IsShuttingDown cannot be set here: a shutdown can still be
+        // cancelled, and a flag left set would silence alerts for the rest of the session. The
+        // expected-close stamp lapses on its own after a minute, so it fits.
+        try { _services?.GetService<MainViewModel>()?.ExpectCloseForAll(); }
+        catch (Exception ex) { _log?.LogDebug(ex, "Could not mark closes as expected at session end."); }
+
         base.OnSessionEnding(e);
     }
 
@@ -3585,6 +3695,7 @@ public partial class App : Application
             try
             {
                 _orphanSweeper?.Dispose();
+                _outsideClose?.Dispose();
                 _orphanSweeper = null;
             }
             catch (Exception ex)
@@ -3600,6 +3711,17 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "Idle tray sweeper dispose threw on exit; ignoring.");
+            }
+
+            // The Store re-check timer, stopped before the provider goes: a tick must not fire into a
+            // disposed container.
+            try
+            {
+                _services.GetService<UpdateAvailability>()?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "Update availability dispose threw on exit; ignoring.");
             }
 
             // Stop the activity-monitor sample timer before the provider disposes (same shape

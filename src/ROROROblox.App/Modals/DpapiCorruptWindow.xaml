@@ -36,11 +36,19 @@
                    Opacity="0.85"
                    Margin="0,12,0,0" />
 
+        <!-- Shown only when Start fresh could not set the vault files aside; the dialog stays open. -->
+        <TextBlock Grid.Row="2" x:Name="FailureText"
+                   Visibility="Collapsed"
+                   TextWrapping="Wrap"
+                   FontSize="{DynamicResource BodyFontSize}"
+                   Foreground="{DynamicResource RowExpiredAccentBrush}"
+                   Margin="0,12,0,0" />
+
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{loc:Loc DpapiCorruptWindow_StartFresh}" Padding="16,8" Margin="0,0,8,0"
+            <Button x:Name="StartFreshButton" Style="{StaticResource SecondaryButtonStyle}" Content="{loc:Loc DpapiCorruptWindow_StartFresh}" Padding="16,8" Margin="0,0,8,0"
                     Click="OnStartFreshClick" />
-            <!-- F-054. IsCancel so Esc lands on the SAFE answer. The other button renames accounts.dat
-                 and starts empty; Esc must never be able to reach that. -->
+            <!-- F-054. IsCancel so Esc lands on the SAFE answer. The other button sets accounts.dat
+                 aside and starts empty; Esc must never be able to reach that. -->
             <Button Style="{StaticResource CtaButtonStyle}" Content="{loc:Loc DpapiCorruptWindow_Quit}" Padding="16,8" IsDefault="True" IsCancel="True"
                     Click="OnQuitClick" />
         </StackPanel>

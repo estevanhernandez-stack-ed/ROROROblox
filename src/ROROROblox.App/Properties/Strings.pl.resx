@@ -1320,6 +1320,36 @@
   <data name="ShellWindow_Settings" xml:space="preserve">
     <value>Ustawienia</value>
   </data>
+  <data name="Shortcut_AddAccount" xml:space="preserve">
+    <value>Dodaj konto</value>
+  </data>
+  <data name="Shortcut_LaunchMultiple" xml:space="preserve">
+    <value>Uruchom wiele</value>
+  </data>
+  <data name="Shortcut_SquadLaunch" xml:space="preserve">
+    <value>Squad Launch</value>
+  </data>
+  <data name="Shortcut_FilterAccounts" xml:space="preserve">
+    <value>Filtruj konta</value>
+  </data>
+  <data name="Shortcut_Library" xml:space="preserve">
+    <value>Biblioteka</value>
+  </data>
+  <data name="Shortcut_Settings" xml:space="preserve">
+    <value>Ustawienia</value>
+  </data>
+  <data name="Shortcut_History" xml:space="preserve">
+    <value>Historia</value>
+  </data>
+  <data name="Shortcut_Diagnostics" xml:space="preserve">
+    <value>Diagnostyka</value>
+  </data>
+  <data name="Shortcut_Plugins" xml:space="preserve">
+    <value>Wtyczki</value>
+  </data>
+  <data name="Shortcut_KeyboardShortcutsList" xml:space="preserve">
+    <value>Skróty klawiszowe (ta lista)</value>
+  </data>
   <data name="SquadLaunchWindow_CarefulModeLandAccountsOne" xml:space="preserve">
     <value>Tryb ostrożny — wprowadzaj konta pojedynczo</value>
   </data>
@@ -2256,6 +2286,12 @@ Aby dodać je z powrotem, musisz zalogować się ponownie.</value>
   </data>
   <data name="Shell_Msg_StartedFresh" xml:space="preserve">
     <value>Zaczęto od nowa. Dodaj konta, aby rozpocząć.</value>
+  </data>
+  <data name="Shell_Msg_AccountsNotRead" xml:space="preserve">
+    <value>Tym razem nie udało się odczytać Twoich zapisanych kont. Plik nie został zmieniony. Uruchom RoRoRo ponownie, aby spróbować jeszcze raz.</value>
+  </data>
+  <data name="DpapiCorruptWindow_CouldNotSetAside" xml:space="preserve">
+    <value>Nie udało się odłożyć pliku {0} na bok. Zamknij każdy program, który go używa, i spróbuj ponownie kliknąć „Zacznij od nowa”. Nic nie zostało usunięte.</value>
   </data>
   <data name="Shell_Msg_CouldntRemoveGame" xml:space="preserve">
     <value>Nie udało się usunąć tej gry. Błąd dysku?</value>
@@ -3761,5 +3797,20 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   </data>
   <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
     <value>Przy więcej niż jednym koncie</value>
+  </data>
+  <data name="MainWindow_UpdateAvailable" xml:space="preserve">
+    <value>Dostępna aktualizacja</value>
+  </data>
+  <data name="MainWindow_UpdateQuitToUpdate" xml:space="preserve">
+    <value>Zakończ i zaktualizuj</value>
+  </data>
+  <data name="MainWindow_UpdateStoreTooltip" xml:space="preserve">
+    <value>Otwiera RoRoRo w Microsoft Store, gdzie możesz zainstalować nową wersję.</value>
+  </data>
+  <data name="MainWindow_UpdateStagedTooltip" xml:space="preserve">
+    <value>RoRoRo {0} jest pobrany. Zakończ RoRoRo i otwórz go ponownie, aby dokończyć aktualizację. Kliknij, aby zakończyć teraz.</value>
+  </data>
+  <data name="MainWindow_UpdateStagedTooltipNoVersion" xml:space="preserve">
+    <value>Nowa wersja jest pobrana. Zakończ RoRoRo i otwórz go ponownie, aby dokończyć aktualizację. Kliknij, aby zakończyć teraz.</value>
   </data>
 </root>

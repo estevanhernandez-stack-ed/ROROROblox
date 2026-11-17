@@ -133,7 +133,7 @@ public class KeyboardVocabularyTests
     {
         // v1.36 item 8: Games became the Library. The display name changes; the gesture and the action do not.
         var g = KeyboardVocabulary.Shortcuts.Single(s => s.Action == ShortcutAction.OpenGames);
-        Assert.Equal("Library", g.Label);
+        Assert.Equal("Shortcut_Library", g.LabelKey); // the description is a resx key now (item 6); its English text is "Library"
         Assert.Equal("Ctrl+G", g.GestureText);
         Assert.Equal(Key.G, g.Key);
         Assert.Equal(ModifierKeys.Control, g.Modifiers);

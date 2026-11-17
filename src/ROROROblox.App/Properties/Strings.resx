@@ -1756,6 +1756,16 @@
     <value>Settings</value>
     <comment>duplicate value; key kept addressable for x:Static</comment>
   </data>
+  <data name="Shortcut_AddAccount" xml:space="preserve"><value>Add account</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_LaunchMultiple" xml:space="preserve"><value>Launch multiple</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_SquadLaunch" xml:space="preserve"><value>Squad Launch</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_FilterAccounts" xml:space="preserve"><value>Filter accounts</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_Library" xml:space="preserve"><value>Library</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_Settings" xml:space="preserve"><value>Settings</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_History" xml:space="preserve"><value>History</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_Diagnostics" xml:space="preserve"><value>Diagnostics</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_Plugins" xml:space="preserve"><value>Plugins</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_KeyboardShortcutsList" xml:space="preserve"><value>Keyboard shortcuts (this list)</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
   <data name="SquadLaunchWindow_CarefulModeLandAccountsOne" xml:space="preserve">
     <value>Careful mode — land accounts one at a time</value>
     <comment>src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:79 xaml-text</comment>
@@ -2510,6 +2520,8 @@ You'll need to log in again to add it back.</value><comment>Remove-account confi
   <data name="Shell_Msg_MainCleared" xml:space="preserve"><value>Main account cleared.</value><comment>Main-account banner (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_IsNowMain" xml:space="preserve"><value>{0} is now your main.</value><comment>Main-account banner; {0}=name (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_StartedFresh" xml:space="preserve"><value>Started fresh. Add accounts to begin.</value><comment>DPAPI-corrupt recovery banner (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_AccountsNotRead" xml:space="preserve"><value>Your saved accounts couldn't be read this time. The file wasn't changed. Restart RoRoRo to try again.</value><comment>Persistent strip in the main window when the account store failed unexpectedly on load: the list is empty for the session, the vault file was not changed (stability-part-two item 8)</comment></data>
+  <data name="DpapiCorruptWindow_CouldNotSetAside" xml:space="preserve"><value>Couldn't set aside {0}. Close any program that has it open, then try Start Fresh again. Nothing was deleted.</value><comment>Shown in the corrupt-vault dialog when Start Fresh could not set the vault files aside; {0}=file name(s). "Start Fresh" is that dialog's button label (stability-part-two item 8)</comment></data>
   <data name="Shell_Msg_CouldntRemoveGame" xml:space="preserve"><value>Couldn't remove that game. Disk error?</value><comment>Game-management banner (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_GameNotSaved" xml:space="preserve"><value>That game isn't saved any more.</value><comment>Game-management banner (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_ItemNotSaved" xml:space="preserve"><value>That {0} isn't saved any more.</value><comment>Rename banner; {0}=kind noun (English enum text, minor) (localized Phase D step 3)</comment></data>
@@ -3241,4 +3253,9 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="WelcomeWindow_WhenYouWantAlts" xml:space="preserve"><value>When you want alts, add another account.</value><comment>WelcomeWindow step 3 title (v1.36 item 10)</comment></data>
   <data name="WelcomeWindow_WhenYouWantAlts_Detail" xml:space="preserve"><value>With two or more, Launch multiple and Squad Launch appear, and each account opens its own Roblox window.</value><comment>WelcomeWindow step 3 detail (v1.36 item 10)</comment></data>
   <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve"><value>With more than one account</value><comment>WelcomeWindow quick-tips heading for the multi-account tips (v1.36 item 10)</comment></data>
+  <data name="MainWindow_UpdateAvailable" xml:space="preserve"><value>Update available</value><comment>Header button on a Microsoft Store install when the Store has a newer RoRoRo. Opens RoRoRo's Store page. (update button, 2026-11-17)</comment></data>
+  <data name="MainWindow_UpdateQuitToUpdate" xml:space="preserve"><value>Quit to update</value><comment>Header button on a direct-download install once an update is downloaded and staged. Quits RoRoRo; the update installs as it closes. Keep it short: it sits in a row of short buttons. (update button, 2026-11-17)</comment></data>
+  <data name="MainWindow_UpdateStoreTooltip" xml:space="preserve"><value>Opens RoRoRo in the Microsoft Store, where you can install the new version.</value><comment>Tooltip of the Update available button. "Microsoft Store" stays verbatim. (update button, 2026-11-17)</comment></data>
+  <data name="MainWindow_UpdateStagedTooltip" xml:space="preserve"><value>RoRoRo {0} is downloaded. Quit RoRoRo and open it again to finish updating. Click to quit now.</value><comment>Tooltip of the Quit to update button; {0}=the new version number such as 1.40.0. (update button, 2026-11-17)</comment></data>
+  <data name="MainWindow_UpdateStagedTooltipNoVersion" xml:space="preserve"><value>The new version is downloaded. Quit RoRoRo and open it again to finish updating. Click to quit now.</value><comment>Tooltip of the Quit to update button when the version is not known. (update button, 2026-11-17)</comment></data>
 </root>

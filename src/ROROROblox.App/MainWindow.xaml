@@ -1648,6 +1648,21 @@
                              window. Two paths to Games where one of them was two clicks behind a
                              chevron. Removed from the Tools menu in the same change so the app has
                              one route per destination, not two. -->
+                        <!-- An update is waiting. At the LEFT end so Games, Settings and Tools keep
+                             their places, and absent (Collapsed) when there is nothing to act on.
+                             Store install: opens RoRoRo's Microsoft Store page. Direct download: quits
+                             so the staged update installs. Label, tooltip and name all come from the
+                             view model, which words them per kind. The whole header is hidden in
+                             compact mode, so the button is too; expanding brings it back. -->
+                        <Button Content="{Binding UpdateButtonLabel}"
+                                AutomationProperties.AutomationId="ToolbarUpdate"
+                                AutomationProperties.Name="{Binding UpdateButtonLabel}"
+                                Command="{Binding UpdateButtonCommand}"
+                                Visibility="{Binding UpdateButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Padding="10,6" Margin="0,0,6,0"
+                                Style="{StaticResource CtaButtonStyle}"
+                                FontSize="{DynamicResource BodyFontSize}"
+                                ToolTip="{Binding UpdateButtonTooltip}" />
                         <Button Content="{loc:Loc MainWindow_Games}"
                                 AutomationProperties.AutomationId="ToolbarGames"
                                 Command="{Binding OpenGamesCommand}"
@@ -2066,6 +2081,7 @@
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding StatusBanner}" Value="" />
+                                <Condition Binding="{Binding AccountsLoadFailedText}" Value="" />
                                 <Condition Binding="{Binding IdleSummaryText}" Value="" />
                                 <Condition Binding="{Binding ContestedBannerText}" Value="" />
                                 <Condition Binding="{Binding FpsCapWarningText}" Value="" />
@@ -2083,6 +2099,15 @@
                            FontSize="{DynamicResource BodyFontSize}"
                            Foreground="{DynamicResource WhiteBrush}"
                            Visibility="{Binding StatusBanner, Converter={StaticResource StringToVisibilityConverter}}" />
+                <!-- The saved accounts could not be read this time. Persistent (not the StatusBanner, which the
+                     next action overwrites) and in the warning accent: an empty list otherwise reads as
+                     "every account is gone". Cleared by a later load that works. -->
+                <TextBlock Text="{Binding AccountsLoadFailedText}"
+                           FontSize="{DynamicResource BodyFontSize}"
+                           TextWrapping="Wrap"
+                           Margin="0,4,0,0"
+                           Foreground="{DynamicResource RowExpiredAccentBrush}"
+                           Visibility="{Binding AccountsLoadFailedText, Converter={StaticResource StringToVisibilityConverter}}" />
                 <!-- Passive idle-summary strip (v1.8) — "N accounts idle > Mm". Driven by
                      ActivitySnapshotApplier + IdleSummary on the 30s ticker; never blocks or
                      acts on the client, display-only. -->

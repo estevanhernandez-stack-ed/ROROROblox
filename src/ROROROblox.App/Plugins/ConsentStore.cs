@@ -2,6 +2,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.App.Plugins;
 
@@ -21,9 +22,13 @@ public sealed class ConsentStore
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
     };
 
-    public ConsentStore(string filePath)
+    private readonly ILogger<ConsentStore>? _log;
+    private int _shapeReported;
+
+    public ConsentStore(string filePath, ILogger<ConsentStore>? log = null)
     {
         _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
+        _log = log;
     }
 
     public async Task<IReadOnlyList<ConsentRecord>> ListAsync()
@@ -79,7 +84,36 @@ public sealed class ConsentStore
             {
                 return new Dictionary<string, ConsentRecord>();
             }
-            return list.ToDictionary(r => r.PluginId, StringComparer.Ordinal);
+            // One bad row (null, no plugin id, no capability list, or an id that appears twice) costs
+            // that plugin's record and nothing else. A dropped record means that plugin asks for consent
+            // again: the safe direction, since consent is never granted by a row going missing.
+            var kept = new Dictionary<string, ConsentRecord>(list.Count, StringComparer.Ordinal);
+            var dropped = 0;
+            var repeated = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var record in list)
+            {
+                if (record is null || record.PluginId is null || record.GrantedCapabilities is null)
+                {
+                    dropped++;
+                }
+                else if (!kept.TryAdd(record.PluginId, record))
+                {
+                    repeated.Add(record.PluginId);
+                    dropped++;
+                }
+            }
+            // Two rows for one plugin cannot both be believed, and neither is a grant the user can be
+            // shown to have made, so that plugin asks again.
+            foreach (var id in repeated)
+            {
+                kept.Remove(id);
+                dropped++;
+            }
+            if (dropped > 0 && Interlocked.Exchange(ref _shapeReported, 1) == 0)
+            {
+                _log?.LogWarning("{File} had {Dropped} unusable row(s); they were dropped and the rest kept.", Path.GetFileName(_filePath), dropped);
+            }
+            return kept;
         }
         catch (CryptographicException)
         {

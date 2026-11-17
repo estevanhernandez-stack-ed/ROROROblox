@@ -39,7 +39,7 @@ public class WindowContentFitsTests
     /// </summary>
     public static TheoryData<string, Func<Window>> Windows() => new()
     {
-        { "DpapiCorruptWindow", () => new App.Modals.DpapiCorruptWindow() },
+        { "DpapiCorruptWindow", () => new App.Modals.DpapiCorruptWindow(() => Task.FromResult(new ROROROblox.Core.StartFreshResult([], []))) },
         { "RobloxNotInstalledWindow", () => new App.Modals.RobloxNotInstalledWindow() },
         // 2026-11-10: the taller state, with the Microsoft Store edition sentence showing.
         { "RobloxNotInstalledWindow (Store edition found)", () => new App.Modals.RobloxNotInstalledWindow(storeEditionFound: true) },
