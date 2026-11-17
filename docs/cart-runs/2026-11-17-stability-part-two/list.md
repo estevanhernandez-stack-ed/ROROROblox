@@ -2,7 +2,7 @@
 
 Branch `fix/stability-part-two`, attended, one commit per item. Order is smallest and most certain first; no item depends on another. No worker launches the app. The full unit project runs before every commit, the harness too when Core or plugin-facing code moved.
 
-- [ ] **1. A plugin's stop for a client that already exited returns cleanly**
+- [x] **1. A plugin's stop for a client that already exited returns cleanly**
   Spec ref: board > "Small, kept so they are not lost" (`RobloxProcessTracker.Kill` and `RequestClose`)
   What to build: `RobloxProcessTracker.RequestClose` and `Kill` (`src/ROROROblox.Core/Diagnostics/RobloxProcessTracker.cs`) read `slot.Process.HasExited` inside a try, and their catch blocks log `slot.Process.Id`. On a process object that is already gone both throw `InvalidOperationException` ("No process is associated with this object"), so the catch itself throws and a plugin's StopAccount fails (seen twice in the owner's logs). Make both return false for such a slot without throwing, and log the pid from a value captured at attach, never from the dead `Process`. Find every other read of `Process.Id` or `HasExited` on a tracked slot (`Attached` at line ~120 projects `kvp.Value.Process.Id`) and report which can throw the same way; fix the ones on a path a plugin or the UI can reach. Size S.
   Acceptance: Done when a test hands the tracker a slot whose process has exited and been disposed (or otherwise reproduces the exact exception) and `RequestClose` and `Kill` both return false with no exception; the `Attached` projection does not throw for that slot; and a test shows the plugin stop sequence (`ProcessTrackerAccountStopper.RunStopSequenceAsync`) completing for it.
