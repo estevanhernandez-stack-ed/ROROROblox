@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using ROROROblox.App.Localization;
 
 namespace ROROROblox.App.Input;
 
@@ -17,9 +18,17 @@ internal enum ShortcutAction
     OpenShortcutsList,
 }
 
-/// <summary>One row of the vocabulary: the gesture, its display text, and what it means.</summary>
+/// <summary>
+/// One row of the vocabulary: the gesture, its display text, and what it means. The meaning is a
+/// resx key, resolved when read, so the About list follows the UI language. The gesture text is
+/// not translated: key names are the same on every keyboard layout this app ships for.
+/// </summary>
 internal sealed record KeyboardShortcut(
-    Key Key, ModifierKeys Modifiers, string GestureText, ShortcutAction Action, string Label);
+    Key Key, ModifierKeys Modifiers, string GestureText, ShortcutAction Action, string LabelKey)
+{
+    /// <summary>The description in the current UI language.</summary>
+    public string Label => Loc.Get(LabelKey);
+}
 
 /// <summary>
 /// The app's one keyboard vocabulary (F-112). Before this, RoRoRo had no shortcuts at all —
@@ -66,16 +75,16 @@ internal static class KeyboardVocabulary
     /// </summary>
     internal static readonly IReadOnlyList<KeyboardShortcut> Shortcuts =
     [
-        new(Key.N, ModifierKeys.Control, "Ctrl+N", ShortcutAction.AddAccount, "Add account"),
-        new(Key.L, ModifierKeys.Control, "Ctrl+L", ShortcutAction.LaunchAll, "Launch multiple"),
-        new(Key.J, ModifierKeys.Control, "Ctrl+J", ShortcutAction.SquadLaunch, "Squad Launch"),
-        new(Key.F, ModifierKeys.Control, "Ctrl+F", ShortcutAction.FocusFilter, "Filter accounts"),
-        new(Key.G, ModifierKeys.Control, "Ctrl+G", ShortcutAction.OpenGames, "Library"),
-        new(Key.OemComma, ModifierKeys.Control, "Ctrl+,", ShortcutAction.OpenSettings, "Settings"),
-        new(Key.H, ModifierKeys.Control, "Ctrl+H", ShortcutAction.OpenHistory, "History"),
-        new(Key.D, ModifierKeys.Control, "Ctrl+D", ShortcutAction.OpenDiagnostics, "Diagnostics"),
-        new(Key.P, ModifierKeys.Control, "Ctrl+P", ShortcutAction.OpenPlugins, "Plugins"),
-        new(Key.F1, ModifierKeys.None, "F1", ShortcutAction.OpenShortcutsList, "Keyboard shortcuts (this list)"),
+        new(Key.N, ModifierKeys.Control, "Ctrl+N", ShortcutAction.AddAccount, "Shortcut_AddAccount"),
+        new(Key.L, ModifierKeys.Control, "Ctrl+L", ShortcutAction.LaunchAll, "Shortcut_LaunchMultiple"),
+        new(Key.J, ModifierKeys.Control, "Ctrl+J", ShortcutAction.SquadLaunch, "Shortcut_SquadLaunch"),
+        new(Key.F, ModifierKeys.Control, "Ctrl+F", ShortcutAction.FocusFilter, "Shortcut_FilterAccounts"),
+        new(Key.G, ModifierKeys.Control, "Ctrl+G", ShortcutAction.OpenGames, "Shortcut_Library"),
+        new(Key.OemComma, ModifierKeys.Control, "Ctrl+,", ShortcutAction.OpenSettings, "Shortcut_Settings"),
+        new(Key.H, ModifierKeys.Control, "Ctrl+H", ShortcutAction.OpenHistory, "Shortcut_History"),
+        new(Key.D, ModifierKeys.Control, "Ctrl+D", ShortcutAction.OpenDiagnostics, "Shortcut_Diagnostics"),
+        new(Key.P, ModifierKeys.Control, "Ctrl+P", ShortcutAction.OpenPlugins, "Shortcut_Plugins"),
+        new(Key.F1, ModifierKeys.None, "F1", ShortcutAction.OpenShortcutsList, "Shortcut_KeyboardShortcutsList"),
     ];
 
     /// <summary>

@@ -1320,6 +1320,36 @@
   <data name="ShellWindow_Settings" xml:space="preserve">
     <value>Einstellungen</value>
   </data>
+  <data name="Shortcut_AddAccount" xml:space="preserve">
+    <value>Konto hinzufügen</value>
+  </data>
+  <data name="Shortcut_LaunchMultiple" xml:space="preserve">
+    <value>Mehrere starten</value>
+  </data>
+  <data name="Shortcut_SquadLaunch" xml:space="preserve">
+    <value>Squad Launch</value>
+  </data>
+  <data name="Shortcut_FilterAccounts" xml:space="preserve">
+    <value>Konten filtern</value>
+  </data>
+  <data name="Shortcut_Library" xml:space="preserve">
+    <value>Bibliothek</value>
+  </data>
+  <data name="Shortcut_Settings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="Shortcut_History" xml:space="preserve">
+    <value>Verlauf</value>
+  </data>
+  <data name="Shortcut_Diagnostics" xml:space="preserve">
+    <value>Diagnose</value>
+  </data>
+  <data name="Shortcut_Plugins" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="Shortcut_KeyboardShortcutsList" xml:space="preserve">
+    <value>Tastenkürzel (diese Liste)</value>
+  </data>
   <data name="SquadLaunchWindow_CarefulModeLandAccountsOne" xml:space="preserve">
     <value>Vorsichtsmodus — Konten nacheinander landen lassen</value>
   </data>

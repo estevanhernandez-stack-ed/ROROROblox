@@ -1320,6 +1320,36 @@
   <data name="ShellWindow_Settings" xml:space="preserve">
     <value>Настройки</value>
   </data>
+  <data name="Shortcut_AddAccount" xml:space="preserve">
+    <value>Добавить аккаунт</value>
+  </data>
+  <data name="Shortcut_LaunchMultiple" xml:space="preserve">
+    <value>Запустить несколько</value>
+  </data>
+  <data name="Shortcut_SquadLaunch" xml:space="preserve">
+    <value>Squad Launch</value>
+  </data>
+  <data name="Shortcut_FilterAccounts" xml:space="preserve">
+    <value>Фильтр аккаунтов</value>
+  </data>
+  <data name="Shortcut_Library" xml:space="preserve">
+    <value>Библиотека</value>
+  </data>
+  <data name="Shortcut_Settings" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
+  <data name="Shortcut_History" xml:space="preserve">
+    <value>История</value>
+  </data>
+  <data name="Shortcut_Diagnostics" xml:space="preserve">
+    <value>Диагностика</value>
+  </data>
+  <data name="Shortcut_Plugins" xml:space="preserve">
+    <value>Плагины</value>
+  </data>
+  <data name="Shortcut_KeyboardShortcutsList" xml:space="preserve">
+    <value>Сочетания клавиш (этот список)</value>
+  </data>
   <data name="SquadLaunchWindow_CarefulModeLandAccountsOne" xml:space="preserve">
     <value>Аккуратный режим — подключать аккаунты по одному</value>
   </data>

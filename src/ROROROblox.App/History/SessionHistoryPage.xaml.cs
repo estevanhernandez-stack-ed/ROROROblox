@@ -255,7 +255,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
             var local = row.LaunchedAtUtc.ToLocalTime().Date;
             var bucket = local == today ? Loc.Get("Shell_History_Today")
                 : local == yesterday ? Loc.Get("Shell_History_Yesterday")
-                : local.ToString("dddd, MMMM d");
+                : DisplayDate.WeekdayMonthDay(local);
             if (bucket != lastBucket)
             {
                 HistoryList.Children.Add(BuildBucketHeader(bucket));
@@ -412,7 +412,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
         };
         rightPanel.Children.Add(new TextBlock
         {
-            Text = row.LaunchedAtUtc.ToLocalTime().ToString("h:mm tt"),
+            Text = DisplayDate.TimeOfDay(row.LaunchedAtUtc),
             FontSize = 11,
             Foreground = (Brush)FindResource("WhiteBrush"),
             HorizontalAlignment = HorizontalAlignment.Right,
@@ -486,7 +486,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
             display.Name,
             row.GameName,
             row.IsPrivateServer,
-            row.LaunchedAtUtc.ToLocalTime().ToString("h:mm tt"),
+            DisplayDate.TimeOfDay(row.LaunchedAtUtc),
             FormatDuration(row),
             row.OutcomeHint,
             row.PlaceId is { } placeId && _knownPlaceIds.Contains(placeId)));

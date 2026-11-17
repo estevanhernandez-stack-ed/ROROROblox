@@ -1756,6 +1756,16 @@
     <value>Settings</value>
     <comment>duplicate value; key kept addressable for x:Static</comment>
   </data>
+  <data name="Shortcut_AddAccount" xml:space="preserve"><value>Add account</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_LaunchMultiple" xml:space="preserve"><value>Launch multiple</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_SquadLaunch" xml:space="preserve"><value>Squad Launch</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_FilterAccounts" xml:space="preserve"><value>Filter accounts</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_Library" xml:space="preserve"><value>Library</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_Settings" xml:space="preserve"><value>Settings</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_History" xml:space="preserve"><value>History</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_Diagnostics" xml:space="preserve"><value>Diagnostics</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_Plugins" xml:space="preserve"><value>Plugins</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
+  <data name="Shortcut_KeyboardShortcutsList" xml:space="preserve"><value>Keyboard shortcuts (this list)</value><comment>About page keyboard shortcut list, description of the shortcut (stability part two item 6)</comment></data>
   <data name="SquadLaunchWindow_CarefulModeLandAccountsOne" xml:space="preserve">
     <value>Careful mode — land accounts one at a time</value>
     <comment>src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:79 xaml-text</comment>
