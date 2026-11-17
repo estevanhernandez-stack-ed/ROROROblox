@@ -37,5 +37,5 @@ Captures of the real header, drawn off screen by the rendering tests, are in `ca
 
 ## Open, waiting on the owner
 
-- A look at the captures against the placement he picked.
-- Push the branch and open a PR; the translation verifier; the version; the Store submission and the tag.
+- ~~A look at the captures against the placement he picked.~~ Done 2026-11-17 13:36: "captures look good".
+- ~~Push the branch and open a PR; the translation verifier; the version.~~ Done the same afternoon: PR #295 merged (`db8f3ec`), all 102 translation pairs approved, version 1.40.0.0. Still open: the Store submission and the tag.

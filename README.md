@@ -38,6 +38,20 @@ Building your own? Start at [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR
 
 ---
 
+## Next up: v1.40 (prepared, not released yet)
+
+v1.40.0.0 is written up and not published: the Store edition and the direct download are both still on **v1.39.0.0**. When it ships, this is what it holds.
+
+**An Update available button.** On a Store install, RoRoRo asks the Microsoft Store (through Windows) whether an update is waiting, after it starts and every six hours, and the button opens RoRoRo's Store page. It tells you about the next update, not the one that brings it. On the direct download it reads Quit to update once an update is downloaded: quit RoRoRo and open it again.
+
+**Damaged files no longer stop RoRoRo from starting.** A damaged saved-games, private-servers, history or stats file is read around, and a damaged accounts file goes to its backup, never to an empty list. Start Fresh checks again first and only sets the file aside, never deletes it.
+
+**Quitting is quicker,** and another program asking RoRoRo to close now works during startup too.
+
+**An alert when an alt with an expired sign-in drops out,** a failed launch that shows on its row, and an About page whose shortcut list and dates follow your language.
+
+---
+
 ## What's new in v1.39
 
 The Store edition and the direct download are both on **v1.39.0.0** (2026-11-16). The [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version.

@@ -35,6 +35,10 @@ accounts.dat
 accounts.dat.bak
 accounts.dat.tmp
 accounts.dat.bak.tmp
+# What Start Fresh sets aside (v1.40): the unreadable vault and its backup, renamed. Same contents,
+# same rule. The old dialog made the first of these since v1.0 and it was never listed.
+accounts.dat.corrupt-*
+accounts.dat.bak.corrupt-*
 # Account export bundles (v1.6) — passphrase-encrypted, contain cookies. NEVER commit one.
 *.rororo-accounts
 # Per-plugin user consent (DPAPI-encrypted, lives next to accounts.dat in %LOCALAPPDATA%\ROROROblox\)
