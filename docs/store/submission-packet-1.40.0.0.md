@@ -162,31 +162,61 @@ kept is in the letter file's header.
 
 ## 6. Packages
 
-**Not built.** Build per the playbook, Phase 3 and 4, after the version is stamped: arm64 and x64
-Store MSIX with `scripts/finalize-store-build.ps1`, and the sideload MSIX with
-`scripts/build-msix.ps1 -Sideload`. Fill this table when they exist, with sizes and the signer.
+Built 2026-11-17 14:07 to 14:08 CST on Dunder from `release/1.40.0.0`, with
+`scripts/finalize-store-build.ps1` (arm64, then x64) and `scripts/build-msix.ps1 -Sideload`. The
+tree is main's code (`db8f3ec`) plus the release documents and the version stamp. **If any code
+changes again, rebuild all three.**
 
-| File | Size | For |
-|---|---|---|
-| `dist/RORORO-Store-x64-1.40.0.0.msix` | not built | Partner Center, unsigned |
-| `dist/RORORO-Store-arm64-1.40.0.0.msix` | not built | Partner Center, unsigned |
-| `dist/RORORO-Sideload-x64-1.40.0.0.msix` | not built | GitHub release, signed |
+| File | Size | SHA-256 | For |
+|---|---|---|---|
+| `dist/RORORO-Store-x64-1.40.0.0.msix` | 112,448,575 bytes | `A364733463FDE55071329657A4C859E2EEE828BFACE266476B277D7B7C1A7EAB` | Partner Center, unsigned |
+| `dist/RORORO-Store-arm64-1.40.0.0.msix` | 105,956,063 bytes | `13C745C881E2D5EB16E6039E8AFF8B4B50BEBAAAEE39A5A73D80E8970480C62F` | Partner Center, unsigned |
+| `dist/RORORO-Sideload-x64-1.40.0.0.msix` | 112,471,201 bytes | `BEBF94930A6C11876BA753B9EB75D9015D63A1FAF26EAF74E8796D3AA9353169` | GitHub release, signed |
 
-The sideload package's signer must be `CN=177BCE59-0966-4975-9962-10E36652141F`, SHA-1
-`8232F92D70CE24B9EF2CCEB4B458F8C26D94AB87` (the unrotated dev certificate). The repo-root
-`dev-cert.cer` on Dunder was a stray with a different key at v1.39; compare thumbprints before
-attaching.
+Read out of each Store package's `AppxManifest.xml`: `Name="626LabsLLC.RoRoRoBlox"`,
+`Publisher="CN=177BCE59-0966-4975-9962-10E36652141F"`, `Version="1.40.0.0"`, and
+`ProcessorArchitecture` `x64` and `arm64` respectively. The source manifest's diff against
+`v1.39.0.0` is the Version attribute and nothing else, as the reviewer letter says.
+
+The sideload package's signer is SHA-1 `8232F92D70CE24B9EF2CCEB4B458F8C26D94AB87`, the unrotated dev
+certificate. `Get-AuthenticodeSignature` reports its status as `UnknownError` on this PC, which is
+what a self-signed certificate that is not in the machine's trusted store reads as; the thumbprint is
+the check. The repo-root `dev-cert.cer` on Dunder was a stray with a different key at v1.39; attach
+the copy from the v1.37.0.0 release, and compare thumbprints first.
+
+**The first build attempt failed, and why.** At 14:05 the arm64 publish died in `ResolvePackageAssets`
+with a `NullReferenceException`. The app project's `obj/project.assets.json` had been rewritten in the
+same second without the `win-arm64` target, while the two library projects kept theirs. The version
+stamp edits the csproj, and the editor's background restore shares `obj` with command-line builds; it
+most likely overwrote the publish's restore. Re-run with the csproj already stamped, all three built.
+If it recurs, re-run; if it recurs twice, close the editor for the build.
 
 ## 7. Verification
 
-- **App strings.** 17 new keys in seven languages. The slice is committed
-  (`docs/store/ui-translations-1.40-delta.json`, `5e0e751`). **This draft did not run the translation
-  verifier on them** (the edit noted in section 1 says all 102 pairs were approved; confirm it). The stability-run report calls it a gate before any tag, and it needs a pushed
-  commit.
-- **Listing verifier on What's new.** Not run. Run it at the pushed commit on all six languages in
-  both shapes, as for v1.39. Expect the same Rule 3 finding on the tray menu's Quit in the closing
-  paragraph, which the owner overruled at v1.36 to v1.39. The new text is the headline and five
-  bullets; check particularly the four disclosure and product-noun lines.
+- **App strings.** 17 new keys in seven languages
+  (`docs/store/ui-translations-1.40-delta.json`, `5e0e751`). Translation verifier, both shapes,
+  2026-11-17: all 102 pairs judged, 97 clean. Five flagged, all `DpapiCorruptWindow_CouldNotSetAside`
+  (fr, ru, pt-br, pl, es), all Rule 3: the verifier wants the button name left in English because it
+  believes the app's interface is English. Checked against the catalogs: in all six languages the
+  sentence names the button exactly as `DpapiCorruptWindow_StartFresh` labels it. No string changed.
+  **Approval recorded on the owner's word:** 102 of 102, all six languages ready.
+- **Listing verifier.** `docs/store/listing-translations-1.40-delta.json` at `1894f47`, two fields
+  (What's new and the long description, whose privacy paragraph gained one sentence), both shapes,
+  2026-11-17. All 12 pairs judged.
+  - **What's new, six languages:** only Rule 3 findings, the same class the owner overruled at v1.36
+    to v1.39: the tray menu's Quit, the Start Fresh button, the About page and (Spanish) the update
+    button are named in the reader's language, as the localized app labels them. Each name was
+    checked against that language's catalog. Nothing substantive.
+  - **Long description:** German, Russian, Portuguese, Polish and Spanish approved, the new privacy
+    sentence included. **French flagged, on sentences this release did not touch**, and differently on
+    two runs: "si vous décrochez du jeu" for "if the game drops", a trademark line without "déposé",
+    and a missing "en même temps". All three are published text from earlier releases. Left as they
+    are; listed here for the owner to rule on.
+  - **A first run was invalid and is not counted.** `export-listing-translations.py` still pointed at
+    the v1.39 English block (`WHATS_NEW_VERSION`), so the verifier compared the 1.40 translations
+    against the wrong source and flagged all six. The constant moves with every release; fixed in
+    `1894f47` and re-run.
+  - **Approval in the verifier is not recorded.** Listing copy is the owner's to approve.
 - **Tests.** `dotnet test src/ROROROblox.Tests/ -c Release --no-build` on the release branch at
   `f1d0eeb` with this documentation drafted: **3,986 passed, 12 skipped, 0 failed** (1 m 30 s,
   2026-11-17). The 27 harness tests were not re-run in this drafting session; the update-button
@@ -217,9 +247,20 @@ attaching.
   would have paged for every expired account, a Start Fresh that set aside a healthy vault, and an
   outside-close fix that missed the reported case), plus a direct-download tooltip that claimed when
   the update installs. See the two reports.
-- **Pre-release agents:** not run in this drafting session (the cookie-exposure audit over
-  `git diff v1.39.0.0..HEAD -- src`, the MSIX asset review, the plugin-catalog drift check
-  `scripts/check-plugin-catalog-drift.ps1`). Run them before the tag.
+- **Pre-release checks, 2026-11-17:**
+  - *Plugin catalog drift* (`scripts/check-plugin-catalog-drift.ps1`): exit 0, five entries match
+    live releases, tags and manifests.
+  - *Store assets* (the `msix-asset-reviewer` agent): pass. All seven manifest references resolve to
+    real art with every scale variant; the manifest, logos, graphics and screenshots are byte for
+    byte v1.39's.
+  - *Cookie exposure* (the `dpapi-cookie-blast-radius` agent, over `git diff v1.39.0.0..HEAD -- src`):
+    no cookie, decrypted JSON or auth ticket reaches any log, screen, alert or support bundle. Three
+    low findings, none a cookie leak: (1) the ignore list did not cover `accounts.dat.corrupt-*` and
+    `accounts.dat.bak.corrupt-*`, **fixed** in `1894f47`; (2) a failed store read logs the whole
+    exception, whose message can carry a path with the Windows user name, into the log file and so
+    into a support bundle, which already prints the data path: left, backlog; (3) the bundle's
+    redaction matches the cookie's name, not its shape, and nothing new depends on it: left, already
+    a dashboard task.
 
 **Not verified, and said so in the release notes:** the Store query on a real install; the
 direct-download button; whether a staged update applies at exit or at the next start; and, carried,
