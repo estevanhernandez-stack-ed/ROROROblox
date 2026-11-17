@@ -45,9 +45,11 @@ internal static class PanelWindowFixtures
         bool savedGames = false,
         Func<AccountSummary, AccountPanelViewModel, Task>? beforeOpen = null,
         bool plus = false,
-        Action? openLibrary = null)
+        Action? openLibrary = null,
+        Action<MainViewModel>? configureVm = null)
     {
         var built = MainViewModelTests.Build();
+        configureVm?.Invoke(built.Vm);
         var now = DateTimeOffset.UtcNow;
         if (savedGames)
         {

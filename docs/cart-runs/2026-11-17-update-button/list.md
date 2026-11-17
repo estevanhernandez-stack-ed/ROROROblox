@@ -2,7 +2,7 @@
 
 Branch `fix/stability-part-two`, attended. Item 1 is the build; item 2 is the orchestrator's. No worker launches the app. The full unit project runs before every commit.
 
-- [ ] **1. The header shows an update button when an update is waiting**
+- [x] **1. The header shows an update button when an update is waiting**
   Spec ref: brief > Done when, Inferred
   What to build:
   **(a) Knowing.** One small service in `src/ROROROblox.App/Updates/` that holds "is an update waiting, and of which kind": none, a Store update waiting, or a direct-download update staged (with its version). It raises a change event and never throws.

@@ -331,6 +331,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             ? LaunchAccountAsync(row, new LaunchTarget.Home())
             : Task.FromResult(0));
         OpenGamesCommand = new RelayCommand(OpenGames);
+        UpdateButtonCommand = new RelayCommand(RunUpdateButton);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => _ = StopAccountAsync(p as AccountSummary));
         RecycleAccountCommand = new RelayCommand(p => _ = RecycleAccountAsync(p as AccountSummary));
@@ -573,6 +574,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         _ticker.Stop();
         TranslationSource.Instance.CultureChanged -= OnUiCultureChanged;
+        if (_updateAvailability is not null) { _updateAvailability.Changed -= OnUpdateAvailabilityChanged; }
     }
 
     /// <summary>
@@ -5773,6 +5775,89 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(KnownIssueNoticeText));
         OnPropertyChanged(nameof(KnownIssuesMenuHeader));
+    }
+
+    // === The header's update button (2026-11-17) ===
+    //
+    // A Store install left running holds its update back, and a direct-download install stages one
+    // that only lands on close; nothing in the window said either. UpdateAvailability knows which
+    // case this is. This is only the face: visibility, words, and what the click does.
+
+    private Updates.UpdateAvailability? _updateAvailability;
+
+    /// <summary>
+    /// Set once by the App at startup, like <see cref="KnownIssuesNotice"/>; null in tests that do not
+    /// exercise it (no update, no button). The service raises Changed on any thread, so the notify
+    /// goes through <c>_ui</c>.
+    /// </summary>
+    internal Updates.UpdateAvailability? UpdateAvailability
+    {
+        get => _updateAvailability;
+        set
+        {
+            if (ReferenceEquals(_updateAvailability, value))
+            {
+                return;
+            }
+
+            if (_updateAvailability is not null)
+            {
+                _updateAvailability.Changed -= OnUpdateAvailabilityChanged;
+            }
+
+            _updateAvailability = value;
+            if (_updateAvailability is not null)
+            {
+                _updateAvailability.Changed += OnUpdateAvailabilityChanged;
+            }
+
+            RaiseUpdateButtonChanged();
+        }
+    }
+
+    private Updates.UpdateStatus UpdateStatus => _updateAvailability?.Current ?? Updates.UpdateStatus.None;
+
+    public bool UpdateButtonVisible => UpdateStatus.Kind != Updates.UpdateKind.None;
+
+    public string UpdateButtonLabel => UpdateStatus.Kind == Updates.UpdateKind.Staged
+        ? Loc.Get("MainWindow_UpdateQuitToUpdate")
+        : Loc.Get("MainWindow_UpdateAvailable");
+
+    /// <summary>Says what the click does: opens the Store page, or quits so the staged update installs.</summary>
+    public string UpdateButtonTooltip => UpdateStatus switch
+    {
+        { Kind: Updates.UpdateKind.Store } => Loc.Get("MainWindow_UpdateStoreTooltip"),
+        { Kind: Updates.UpdateKind.Staged, Version: { Length: > 0 } version } => Loc.Format("MainWindow_UpdateStagedTooltip", version),
+        { Kind: Updates.UpdateKind.Staged } => Loc.Get("MainWindow_UpdateStagedTooltipNoVersion"),
+        _ => string.Empty,
+    };
+
+    public ICommand UpdateButtonCommand { get; }
+
+    private void RunUpdateButton()
+    {
+        switch (UpdateStatus.Kind)
+        {
+            case Updates.UpdateKind.Store:
+                // Opens the Store's page for RoRoRo. It does not install in place: a running packaged
+                // desktop app's behaviour under an in-place install is not something we have measured.
+                _shellOpener.Open(Updates.UpdateAvailability.StoreListingUri);
+                break;
+            case Updates.UpdateKind.Staged:
+                // The normal quit (the tray's Quit): the staged package applies when the process exits.
+                // No restart, on purpose; the person chose to quit.
+                QuitApplication();
+                break;
+        }
+    }
+
+    private void OnUpdateAvailabilityChanged(object? sender, EventArgs e) => _ui.Invoke(RaiseUpdateButtonChanged);
+
+    private void RaiseUpdateButtonChanged()
+    {
+        OnPropertyChanged(nameof(UpdateButtonVisible));
+        OnPropertyChanged(nameof(UpdateButtonLabel));
+        OnPropertyChanged(nameof(UpdateButtonTooltip));
     }
 
     // === The one-time rating ask (2026-11-10) ===

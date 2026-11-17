@@ -3798,4 +3798,19 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
     <value>Если аккаунтов больше одного</value>
   </data>
+  <data name="MainWindow_UpdateAvailable" xml:space="preserve">
+    <value>Доступно обновление</value>
+  </data>
+  <data name="MainWindow_UpdateQuitToUpdate" xml:space="preserve">
+    <value>Выйти и обновить</value>
+  </data>
+  <data name="MainWindow_UpdateStoreTooltip" xml:space="preserve">
+    <value>Открывает RoRoRo в Microsoft Store, где можно установить новую версию.</value>
+  </data>
+  <data name="MainWindow_UpdateStagedTooltip" xml:space="preserve">
+    <value>RoRoRo {0} загружен. Закройте RoRoRo и откройте его снова, чтобы завершить обновление. Нажмите, чтобы выйти сейчас.</value>
+  </data>
+  <data name="MainWindow_UpdateStagedTooltipNoVersion" xml:space="preserve">
+    <value>Новая версия загружена. Закройте RoRoRo и откройте его снова, чтобы завершить обновление. Нажмите, чтобы выйти сейчас.</value>
+  </data>
 </root>

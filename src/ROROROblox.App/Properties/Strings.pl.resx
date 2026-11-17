@@ -3798,4 +3798,19 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
     <value>Przy więcej niż jednym koncie</value>
   </data>
+  <data name="MainWindow_UpdateAvailable" xml:space="preserve">
+    <value>Dostępna aktualizacja</value>
+  </data>
+  <data name="MainWindow_UpdateQuitToUpdate" xml:space="preserve">
+    <value>Zakończ i zaktualizuj</value>
+  </data>
+  <data name="MainWindow_UpdateStoreTooltip" xml:space="preserve">
+    <value>Otwiera RoRoRo w Microsoft Store, gdzie możesz zainstalować nową wersję.</value>
+  </data>
+  <data name="MainWindow_UpdateStagedTooltip" xml:space="preserve">
+    <value>RoRoRo {0} jest pobrany. Zakończ RoRoRo i otwórz go ponownie, aby dokończyć aktualizację. Kliknij, aby zakończyć teraz.</value>
+  </data>
+  <data name="MainWindow_UpdateStagedTooltipNoVersion" xml:space="preserve">
+    <value>Nowa wersja jest pobrana. Zakończ RoRoRo i otwórz go ponownie, aby dokończyć aktualizację. Kliknij, aby zakończyć teraz.</value>
+  </data>
 </root>

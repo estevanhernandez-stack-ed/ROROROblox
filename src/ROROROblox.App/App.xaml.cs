@@ -810,6 +810,12 @@ public partial class App : Application
         _services.GetRequiredService<MainViewModel>().ShellPageOpener = OpenShellPage;
         _services.GetRequiredService<MainViewModel>().KnownIssuesNotice =
             _services.GetRequiredService<KnownIssues.KnownIssuesNoticeModel>();
+        // The header's update button. Its quit is the tray's Quit (RequestShutdown), so a staged
+        // update installs on the same exit path every other quit takes; the corrupt-vault "quit to
+        // restore a backup" shares this seam and now takes that path too.
+        _services.GetRequiredService<MainViewModel>().UpdateAvailability =
+            _services.GetRequiredService<UpdateAvailability>();
+        _services.GetRequiredService<MainViewModel>().QuitApplication = RequestShutdown;
         // How the previous session ended. A recorded crash opens this start with a notice that
         // points at Diagnostics; set before the rating ask, though either order gives the same result.
         _services.GetRequiredService<MainViewModel>().PreviousExit = _lastExit?.Previous;
@@ -940,6 +946,18 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "WebView2 user-data startup sweep threw; ignoring.");
+        }
+
+        // The Store half of the update button: one check now, then every six hours. Start returns at
+        // once (the check runs on the pool) and is a no-op off the Store build; it comes before the
+        // Velopack check so a slow one there cannot delay it.
+        try
+        {
+            _services.GetRequiredService<UpdateAvailability>().Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Update availability could not start; no update button this session.");
         }
 
         try
@@ -1277,6 +1295,17 @@ public partial class App : Application
             ROROROblox.Core.AppDataRoot.Combine("webview2-data"),
             sp.GetRequiredService<ILogger<WebView2UserDataDirectory>>()));
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
+        // What the header's update button reads. A packaged install asks the Store (never on the
+        // startup path; Start() runs from RunStartupChecksAsync), a direct-download install is told by
+        // UpdateChecker when it has staged an update, a dev build is neither. The probe is built but
+        // never called unless IsPackaged: the WinRT call needs package identity.
+        services.AddSingleton<IStoreUpdateProbe>(sp => new StoreContextUpdateProbe(
+            sp.GetRequiredService<ILogger<StoreContextUpdateProbe>>()));
+        services.AddSingleton(sp => new UpdateAvailability(
+            sp.GetRequiredService<Distribution.IDistributionMode>().IsPackaged,
+            sp.GetRequiredService<IStoreUpdateProbe>(),
+            TimeProvider.System,
+            sp.GetRequiredService<ILogger<UpdateAvailability>>()));
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
         services.AddSingleton<RobloxWindowDecorator>();
@@ -3682,6 +3711,17 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "Idle tray sweeper dispose threw on exit; ignoring.");
+            }
+
+            // The Store re-check timer, stopped before the provider goes: a tick must not fire into a
+            // disposed container.
+            try
+            {
+                _services.GetService<UpdateAvailability>()?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "Update availability dispose threw on exit; ignoring.");
             }
 
             // Stop the activity-monitor sample timer before the provider disposes (same shape

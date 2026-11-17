@@ -1648,6 +1648,21 @@
                              window. Two paths to Games where one of them was two clicks behind a
                              chevron. Removed from the Tools menu in the same change so the app has
                              one route per destination, not two. -->
+                        <!-- An update is waiting. At the LEFT end so Games, Settings and Tools keep
+                             their places, and absent (Collapsed) when there is nothing to act on.
+                             Store install: opens RoRoRo's Microsoft Store page. Direct download: quits
+                             so the staged update installs. Label, tooltip and name all come from the
+                             view model, which words them per kind. The whole header is hidden in
+                             compact mode, so the button is too; expanding brings it back. -->
+                        <Button Content="{Binding UpdateButtonLabel}"
+                                AutomationProperties.AutomationId="ToolbarUpdate"
+                                AutomationProperties.Name="{Binding UpdateButtonLabel}"
+                                Command="{Binding UpdateButtonCommand}"
+                                Visibility="{Binding UpdateButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Padding="10,6" Margin="0,0,6,0"
+                                Style="{StaticResource CtaButtonStyle}"
+                                FontSize="{DynamicResource BodyFontSize}"
+                                ToolTip="{Binding UpdateButtonTooltip}" />
                         <Button Content="{loc:Loc MainWindow_Games}"
                                 AutomationProperties.AutomationId="ToolbarGames"
                                 Command="{Binding OpenGamesCommand}"

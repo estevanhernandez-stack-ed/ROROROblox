@@ -3798,4 +3798,19 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="WelcomeWindow_WithMoreThanOneAccount" xml:space="preserve">
     <value>Mit mehr als einem Konto</value>
   </data>
+  <data name="MainWindow_UpdateAvailable" xml:space="preserve">
+    <value>Update verfügbar</value>
+  </data>
+  <data name="MainWindow_UpdateQuitToUpdate" xml:space="preserve">
+    <value>Zum Update beenden</value>
+  </data>
+  <data name="MainWindow_UpdateStoreTooltip" xml:space="preserve">
+    <value>Öffnet RoRoRo im Microsoft Store, wo du die neue Version installieren kannst.</value>
+  </data>
+  <data name="MainWindow_UpdateStagedTooltip" xml:space="preserve">
+    <value>RoRoRo {0} ist heruntergeladen. Beende RoRoRo und öffne es erneut, um das Update abzuschließen. Klicke, um jetzt zu beenden.</value>
+  </data>
+  <data name="MainWindow_UpdateStagedTooltipNoVersion" xml:space="preserve">
+    <value>Die neue Version ist heruntergeladen. Beende RoRoRo und öffne es erneut, um das Update abzuschließen. Klicke, um jetzt zu beenden.</value>
+  </data>
 </root>

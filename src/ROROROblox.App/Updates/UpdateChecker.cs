@@ -25,12 +25,14 @@ internal sealed class UpdateChecker : IUpdateChecker
     internal static string DebounceStampPath => ROROROblox.Core.AppDataRoot.Combine("last-update-check.txt");
 
     private readonly ILogger<UpdateChecker> _log;
+    private readonly UpdateAvailability? _availability;
 
     public UpdateChecker() : this(NullLogger<UpdateChecker>.Instance) { }
 
-    public UpdateChecker(ILogger<UpdateChecker> log)
+    public UpdateChecker(ILogger<UpdateChecker> log, UpdateAvailability? availability = null)
     {
         _log = log ?? NullLogger<UpdateChecker>.Instance;
+        _availability = availability;
     }
 
     public async Task CheckForUpdatesAsync()
@@ -68,6 +70,10 @@ internal sealed class UpdateChecker : IUpdateChecker
                 _log.LogInformation(
                     "Update {Version} downloaded and staged; it installs when RoRoRo closes.",
                     update.TargetFullRelease.Version);
+
+                // Tell the header, after the staging call has succeeded: the button promises
+                // the update installs on close, so it must not appear before that is true.
+                _availability?.ReportStaged(update.TargetFullRelease.Version.ToString());
             }
             else
             {
