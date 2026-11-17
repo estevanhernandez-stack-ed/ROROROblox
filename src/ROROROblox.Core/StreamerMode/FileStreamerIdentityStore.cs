@@ -15,9 +15,7 @@ public sealed class FileStreamerIdentityStore : IStreamerIdentityStore
 
     public FileStreamerIdentityStore(string path) => _path = path;
 
-    private static string DefaultPath() => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ROROROblox", "streamer-identities.dat");
+    internal static string DefaultPath() => AppDataRoot.Combine("streamer-identities.dat");
 
     public async Task<IReadOnlyDictionary<string, StreamerIdentity>> LoadAllAsync()
     {

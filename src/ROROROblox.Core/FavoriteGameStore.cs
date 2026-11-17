@@ -38,8 +38,7 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
 
     public static string DefaultPath()
     {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(localAppData, "ROROROblox", "favorites.json");
+        return AppDataRoot.Combine("favorites.json");
     }
 
     public async Task<IReadOnlyList<FavoriteGame>> ListAsync()

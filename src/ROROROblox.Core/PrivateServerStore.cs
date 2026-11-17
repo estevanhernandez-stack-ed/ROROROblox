@@ -38,8 +38,7 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
 
     public static string DefaultPath()
     {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(localAppData, "ROROROblox", "private-servers.json");
+        return AppDataRoot.Combine("private-servers.json");
     }
 
     public async Task<IReadOnlyList<SavedPrivateServer>> ListAsync()

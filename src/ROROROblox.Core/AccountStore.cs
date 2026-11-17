@@ -51,8 +51,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
 
     public static string DefaultPath()
     {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(localAppData, "ROROROblox", "accounts.dat");
+        return AppDataRoot.Combine("accounts.dat");
     }
 
     public async Task<IReadOnlyList<Account>> ListAsync()

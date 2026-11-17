@@ -198,10 +198,7 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
         }
     }
 
-    private static string LastKnownMutexPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ROROROblox",
-        LastKnownMutexFileName);
+    internal static string LastKnownMutexPath => AppDataRoot.Combine(LastKnownMutexFileName);
 
     private static string? ReadLastKnownMutexFromDisk()
     {

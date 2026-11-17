@@ -10,15 +10,17 @@ Maps live next door: [docs/architecture.md](docs/architecture.md) (modules, star
 
 ```powershell
 dotnet build ROROROblox.slnx -c Release                              # 0 errors; ~43 warnings are known noise
-dotnet test  ROROROblox.slnx -c Release --no-build                   # 3,596 unit + 27 harness pass (2026-11-16); 1 harness [Skip] by design, and the opt-in capture tests skip unless their env var is set
+dotnet test  ROROROblox.slnx -c Release --no-build                   # 3,715 unit + 27 harness pass (2026-11-16); 1 harness [Skip] by design, and the opt-in capture tests skip unless their env var is set
 dotnet test  src/ROROROblox.Tests/ -c Release --no-build             # unit only
 dotnet test  src/ROROROblox.PluginTestHarness/ -c Release --no-build # named-pipe gRPC integration only
 dotnet run --project src/ROROROblox.App                              # not re-verified this pass: the single-instance guard surfaces an existing window
+$env:RORORO_DATA_DIR = "$env:TEMP\rororo-test"; & src\ROROROblox.App\bin\Release\net10.0-windows10.0.19041.0\ROROROblox.App.exe  # a dev build on a test folder (verified 2026-11-16); close every other RoRoRo first
 powershell -ExecutionPolicy Bypass -File .claude/hooks/install.ps1   # once per box: pre-commit secret scan + local-path guard
 ```
 
 - **Always name `ROROROblox.slnx`.** Qodo regenerates a gitignored legacy `ROROROblox.sln` beside it; bare `dotnet build` errors MSB1011 while both exist. CI runs the whole solution on x64 and native arm64; unit-green is not landable.
 - **A running dev-build RoRoRo locks `bin\Debug`**, so a Debug build fails at the copy step. Build Release or quit it from the tray. `Get-Process ROROROblox.App | Select-Object Path` tells you which build is up; a Store build and a dev build can coexist.
+- **A dev build with no `RORORO_DATA_DIR` uses the real `accounts.dat`.** Set the variable to an absolute folder for any run that is not meant to touch real accounts: the data goes there, the title reads `RoRoRo [test data]`, the log says so in a Warning, and the join-link and run-on-login registry values are left alone. Packaged and Velopack builds ignore it. It does not isolate the single-instance guard, the plugin pipe, the singleton name or Roblox's own folders, so one RoRoRo at a time, and an account launched from a test profile still writes the real Roblox client's settings.
 - There is no `.editorconfig`. Style is csproj flags (`Nullable`, `ImplicitUsings`) plus the fence tests.
 - Tests read the source tree from disk (they walk up to the `.slnx`), and `ContrastPairGateTests` parses `docs/superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md`. A docs edit can fail the suite.
 
@@ -35,6 +37,7 @@ powershell -ExecutionPolicy Bypass -File .claude/hooks/install.ps1   # once per 
 - **Typed HttpClient classes have exactly one applicable ctor and take `ILogger<T>`**, or startup crashes at resolve time with a green suite (`TypedHttpClientRegistrationTests`).
 - **Themed brushes are replaced, not mutated.** Reference them and the type-ladder tokens with `DynamicResource` only. `ControlStyles.xaml` merges after WPF-UI's dictionaries.
 - **A button may not paint itself** (`ButtonRankFenceTests`); hover/pressed are sheens, never Opacity or a Chrome repaint (`ButtonStateGateTests`). A button that needs triggers uses `<Button.Style><Style BasedOn="{StaticResource …ButtonStyle}">` with Visibility/IsEnabled setters only. Fences have vacuity floors and ratchet ceilings that move in the same commit as the change: `AccessibleNamingFenceTests` unnamed ceiling 1 (asserted as equality), `ThemedStatusColourTests` literal ceiling 25, `TypeLadderFenceTests` 3 raw sizes.
+- **Every RoRoRo data path goes through `AppDataRoot`** (`Folder` or `Combine`), read on every use and never cached in a `static readonly` field. `AppDataRootFenceTests` fails on a new `SpecialFolder.LocalApplicationData` outside the helper and its exact allow-list of the ten Roblox-folder sites, and a new site gets a row in `AppDataRootPathPinTests.SiteTable`. Registry writes live only in `JoinUriScheme` and `StartupRegistration`, behind `AppDataRoot.MachineWideRegistrationsAllowed` (`NoRegistryWriteOutsideTheGuardedClasses`). `AppDataRoot.Configure` is called once, in `Program.Main`, before anything reads `settings.json`.
 - **Off the UI thread read `MainViewModel.AccountsSnapshot`, never `Accounts`.** WPF-affine singletons register through `UiBoundFactory`. Marshal through `IUiDispatcher`, not `Application.Current?.Dispatcher`.
 - **Startup order is load-bearing:** theme → resolve mutex name → `TryAcquire` → gate; the plugin pipe binds before the gate modals, autostart after. Resolving `IMutexHolder` earlier freezes the hardcoded name.
 - **Every gRPC method needs an `RpcMethodCapabilityMap` entry.** Absence is denial. A missed entry fails `RpcMethodCapabilityMapTests` and the harness's `CapabilityMap_CoversEveryHostMethod`; at runtime the bind task faults, is logged at Debug, and plugins are silently off for the session (the code comments saying it "crashes" are stale). A new RPC also needs a `PluginCapability` entry, a `PluginHostService` override, and usually a provider interface added as an optional ctor parameter so the two test construction sites keep compiling.

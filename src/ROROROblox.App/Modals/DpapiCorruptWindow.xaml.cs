@@ -23,13 +23,14 @@ internal partial class DpapiCorruptWindow : Window
         Close();
     }
 
+    /// <summary>The accounts file the window sets aside when the user starts fresh.</summary>
+    internal static string CorruptAccountsPath => ROROROblox.Core.AppDataRoot.Combine("accounts.dat");
+
     private static void TryRenameCorruptFile()
     {
         try
         {
-            var path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "ROROROblox", "accounts.dat");
+            var path = CorruptAccountsPath;
             if (!File.Exists(path))
             {
                 return;

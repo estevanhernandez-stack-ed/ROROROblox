@@ -20,10 +20,7 @@ public sealed class KnownIssuesDismissals
 
     public KnownIssuesDismissals(string path) => _path = path ?? throw new ArgumentNullException(nameof(path));
 
-    public static string DefaultPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ROROROblox",
-        FileName);
+    public static string DefaultPath => AppDataRoot.Combine(FileName);
 
     public IReadOnlySet<string> Load()
     {

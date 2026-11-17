@@ -9,10 +9,7 @@ internal partial class WelcomeWindow : Window
     /// Sentinel file written after the welcome modal is shown. Absent file = first run.
     /// Lives next to <c>accounts.dat</c> + <c>settings.json</c> in the per-user data directory.
     /// </summary>
-    private static readonly string SentinelPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ROROROblox",
-        ".welcome-shown");
+    internal static string SentinelPath => ROROROblox.Core.AppDataRoot.Combine(".welcome-shown");
 
     public WelcomeWindow()
     {

@@ -87,9 +87,11 @@ public class BrandNameFenceTests
 
         // The floor. The assertion below passes trivially if the walk finds nothing, and this walk
         // climbs the filesystem from the test assembly — a moved output directory would break it
-        // silently. 25 sits comfortably under the 33 measured on 2026-08-20 and comfortably over
-        // anything a real reduction would reach.
-        Assert.True(scanned >= 25,
+        // silently. Was 25 (under the 33 measured on 2026-08-20). The data-folder move behind
+        // AppDataRoot (2026-11-16) took the folder-name literal out of the call sites that built
+        // RoRoRo's data paths, leaving 22 measured, so the floor moved to 20: just under what is there,
+        // and far over the 0 a broken walk produces.
+        Assert.True(scanned >= 20,
             $"Expected to find the repo-name literals, found {scanned}. That is the scan breaking, not the code getting tidy.");
 
         Assert.True(offenders.Count == 0,

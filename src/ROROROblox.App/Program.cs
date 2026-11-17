@@ -1,4 +1,5 @@
 using System;
+using ROROROblox.Core;
 using Velopack;
 
 namespace ROROROblox.App;
@@ -12,6 +13,17 @@ public static class Program
     public static int Main(string[] args)
     {
         VelopackApp.Build().SetArgs(args).Run();
+
+        // A dev build can be pointed at another data folder (RORORO_DATA_DIR). This MUST run before
+        // anything resolves a RoRoRo path, and the first reader is UiCulture.ApplyFromSettings below
+        // (it reads settings.json), so it sits here, straight after Velopack and before everything
+        // else. Shipped builds (MSIX-packaged, or a Velopack layout) ignore the variable. It does not
+        // log: logging is not up yet, so the outcome waits in AppDataRoot.Decision for the startup
+        // log lines. A source fence (ProgramDataRootCallOrderTests) pins this position.
+        AppDataRoot.Configure(
+            isPackaged: new Distribution.Win32DistributionMode().IsPackaged,
+            isVelopackInstalled: IsVelopackInstalledLayout(AppContext.BaseDirectory),
+            rawValue: Environment.GetEnvironmentVariable(AppDataRoot.EnvironmentVariableName));
 
         // Portable runs get their own AppUserModelID. Velopack sets the same
         // "velopack.RORORO" for installed AND portable, and Windows resolves a taskbar
@@ -38,6 +50,21 @@ public static class Program
         var app = new App();
         app.InitializeComponent();
         return app.Run();
+    }
+
+    // A Velopack-managed layout (installed "current\" or portable) has Update.exe one level above
+    // the app folder; a dev build under bin\ does not. Same probe shape as IsPortableInstall.
+    // Failure reads as "not installed": a path that cannot be probed has no Update.exe to find.
+    internal static bool IsVelopackInstalledLayout(string baseDirectory)
+    {
+        try
+        {
+            return System.IO.File.Exists(System.IO.Path.Combine(baseDirectory, "..", "Update.exe"));
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     // Velopack's portable zip carries a ".portable" marker next to Update.exe, one level

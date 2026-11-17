@@ -9,9 +9,7 @@ namespace ROROROblox.App.Plugins;
 /// </summary>
 public sealed class PluginRegistry
 {
-    public static string DefaultPluginsRoot => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ROROROblox", "plugins");
+    public static string DefaultPluginsRoot => ROROROblox.Core.AppDataRoot.Combine("plugins");
 
     private readonly string _pluginsRoot;
     private readonly ConsentStore _consentStore;

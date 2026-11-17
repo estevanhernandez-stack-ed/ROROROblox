@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using ROROROblox.Core;
 
 namespace ROROROblox.App.Discord;
 
@@ -15,9 +16,20 @@ public static class JoinUriScheme
 {
     public const string SchemeName = "roblox-rororo";
 
-    public static void Register(string exePath)
+    private const string DefaultClassesPath = @"Software\Classes";
+
+    public static void Register(string exePath) => Register(exePath, DefaultClassesPath);
+
+    /// <summary>
+    /// Seam for tests: the classes root is injectable so the suite can exercise the real write
+    /// against a scratch key. Skipped under a data-folder override
+    /// (<see cref="AppDataRoot.MachineWideRegistrationsAllowed"/>): a run on a test folder must
+    /// not repoint the owner's real <c>roblox-rororo:</c> handler at the test build.
+    /// </summary>
+    internal static void Register(string exePath, string classesPath)
     {
-        using var key = Registry.CurrentUser.CreateSubKey($@"Software\Classes\{SchemeName}");
+        if (!AppDataRoot.MachineWideRegistrationsAllowed) return;
+        using var key = Registry.CurrentUser.CreateSubKey($@"{classesPath}\{SchemeName}");
         key.SetValue("", $"URL:{SchemeName}");
         key.SetValue("URL Protocol", "");
         using var command = key.CreateSubKey(@"shell\open\command");
@@ -33,9 +45,14 @@ public static class JoinUriScheme
     /// fence. Best-effort by design: called from a swallowed try/catch, since a failure here still
     /// leaves the rest of presence working.
     /// </summary>
-    public static void FixupDiscordSchemeCommand(string applicationId, string exePath)
+    public static void FixupDiscordSchemeCommand(string applicationId, string exePath) =>
+        FixupDiscordSchemeCommand(applicationId, exePath, DefaultClassesPath);
+
+    /// <summary>Test seam, and the same override guard as <see cref="Register(string, string)"/>.</summary>
+    internal static void FixupDiscordSchemeCommand(string applicationId, string exePath, string classesPath)
     {
-        var commandKeyPath = $@"Software\Classes\discord-{applicationId}\shell\open\command";
+        if (!AppDataRoot.MachineWideRegistrationsAllowed) return;
+        var commandKeyPath = $@"{classesPath}\discord-{applicationId}\shell\open\command";
         using var key = Registry.CurrentUser.CreateSubKey(commandKeyPath);
         key.SetValue("", BuildCommandValue(exePath));
     }
