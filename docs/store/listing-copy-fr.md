@@ -25,9 +25,9 @@ Un seul endroit pour lancer Roblox sous Windows : vos jeux, limites de FPS, aler
 ```
 Un seul endroit pour lancer Roblox sous Windows.
 
-Ajoutez votre compte Roblox une fois, via la page de connexion officielle de Roblox, et RoRoRo devient votre lanceur : tous vos jeux dans une seule Bibliothèque, un clic pour entrer dans un jeu ou un serveur privé enregistré, une limite de FPS qui tient, et une alerte sur votre téléphone si vous décrochez du jeu. Votre compte affiche d'un coup d'œil ses Robux, Plus et amis en ligne, et vous prévient quand il demande votre attention.
+Ajoutez votre compte Roblox une fois, via la page de connexion officielle de Roblox, et RoRoRo devient votre lanceur : tous vos jeux dans une seule Bibliothèque, un clic pour entrer dans un jeu ou un serveur privé enregistré, une limite de FPS qui tient, et une alerte sur votre téléphone si vous êtes déconnecté du jeu. Votre compte affiche d'un coup d'œil ses Robux, Plus et amis en ligne, et vous prévient quand il demande votre attention.
 
-Quand vous voulez des alts, RoRoRo fait tourner plusieurs clients Roblox sur un même PC, chacun connecté à un compte différent que vous possédez. Lancez-les d'un clic — vers leur jeu par défaut, un serveur privé enregistré, ou n'importe quel lien de jeu collé.
+Quand vous voulez des alts, RoRoRo fait tourner plusieurs clients Roblox en même temps sur un même PC, chacun connecté à un compte différent que vous possédez. Lancez-les d'un clic — vers leur jeu par défaut, un serveur privé enregistré, ou n'importe quel lien de jeu collé.
 
 Ce que vous obtenez :
 • Multi-instance en un clic. RoRoRo détient le mutex singleton de Roblox : les clients supplémentaires s'ouvrent au lieu de ramener le premier au premier plan.
@@ -52,7 +52,7 @@ Confidentialité et sécurité :
 Votre mot de passe Roblox n'est jamais vu par RoRoRo. La connexion se fait entièrement dans la page de Roblox, intégrée dans un cadre Microsoft Edge WebView2 — même HTML, même connexion HTTPS que votre navigateur. RoRoRo ne capture que le cookie de session posé par Roblox après connexion, et le chiffre avant de l'écrire sur disque. Les informations de compte (Robux, Plus, amis en ligne) sont lues depuis Roblox avec la propre session de ce compte, et conservées uniquement dans le même coffre chiffré. Pas de télémétrie. Pas d'analytique. Rien de ce qui vous concerne ne quitte votre machine hormis les appels Roblox du lancement — les mêmes que ceux de Roblox.com dans votre navigateur — et, uniquement si vous les configurez vous-même, les alertes vers votre webhook Discord ou le service de notification choisi (Pushover ou ntfy). RoRoRo télécharge aussi ses propres fichiers signés depuis ses publications GitHub — les mises à jour, les réglages de compatibilité Roblox et la liste des problèmes Roblox connus — sans rien envoyer à votre sujet pour les obtenir. Sur une installation Store, RoRoRo demande aussi au Microsoft Store, via Windows, si une mise à jour est disponible, sans rien envoyer de lui-même.
 
 Important : marques et affiliation.
-« Roblox » et le logo Roblox sont des marques de Roblox Corporation. RoRoRo est un outil tiers indépendant, non affilié à, ni approuvé, ni sponsorisé par Roblox Corporation. Le terme n'est utilisé que pour décrire la compatibilité avec la plateforme Roblox. RoRoRo lance le client Roblox officiel sans le modifier — aucune injection, aucun hook, aucune altération du processus Roblox ; il ne fait que détenir un mutex nommé Windows avant le lancement, pour que les instances de client suivantes voient le contrôle singleton comme déjà pris.
+« Roblox » et le logo Roblox sont des marques de Roblox Corporation. RoRoRo est un outil tiers indépendant, non affilié à, ni approuvé, ni sponsorisé par Roblox Corporation. Le terme déposé n'est utilisé que pour décrire la compatibilité avec la plateforme Roblox. RoRoRo lance le client Roblox officiel sans le modifier — aucune injection, aucun hook, aucune altération du processus Roblox ; il ne fait que détenir un mutex nommé Windows avant le lancement, pour que les instances de client suivantes voient le contrôle singleton comme déjà pris.
 
 Un produit 626 Labs.
 ```
@@ -130,7 +130,7 @@ tous les autres réglages sont conservés tels quels.
 ## Trademark info
 
 ```
-« Roblox » et le logo Roblox sont des marques de Roblox Corporation. RORORO est un outil tiers indépendant, non affilié à, ni approuvé, ni sponsorisé par Roblox Corporation. Le terme n'est utilisé que pour décrire la compatibilité avec la plateforme Roblox. RORORO lance le client Roblox officiel sans le modifier.
+« Roblox » et le logo Roblox sont des marques de Roblox Corporation. RORORO est un outil tiers indépendant, non affilié à, ni approuvé, ni sponsorisé par Roblox Corporation. Le terme déposé n'est utilisé que pour décrire la compatibilité avec la plateforme Roblox. RORORO lance le client Roblox officiel sans le modifier.
 ```
 
 ## Screenshot captions (one per image, in file-number order)

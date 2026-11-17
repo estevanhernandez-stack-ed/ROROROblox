@@ -73,8 +73,8 @@ and the tag.
 
 **Listing audited against the v1.40 release notes on 2026-11-17. Short description and product
 features: unchanged. Long description: one sentence added to the privacy paragraph, in all seven
-sheets, and the auto-update bullet held. The added sentence is listing copy, so it is the owner's to
-approve before any Store write.**
+sheets, and the auto-update bullet held. **The owner approved the added sentence on 2026-11-17**, and
+asked for three French sentences to be fixed (below).**
 
 | Surface | Checked for | Outcome |
 |---|---|---|
@@ -210,13 +210,18 @@ If it recurs, re-run; if it recurs twice, close the editor for the build.
   - **Long description:** German, Russian, Portuguese, Polish and Spanish approved, the new privacy
     sentence included. **French flagged, on sentences this release did not touch**, and differently on
     two runs: "si vous décrochez du jeu" for "if the game drops", a trademark line without "déposé",
-    and a missing "en même temps". All three are published text from earlier releases. Left as they
-    are; listed here for the owner to rule on.
+    and a missing "en même temps". All three were published text from earlier releases. **Fixed on the
+    owner's word, 2026-11-17:** "si vous êtes déconnecté du jeu", "en même temps sur un même PC", and
+    "Le terme déposé". The French trademark field carried the same sentence without "déposé" and was
+    fixed with it, so the French listings change in three fields, not two. Re-verified; see below.
   - **A first run was invalid and is not counted.** `export-listing-translations.py` still pointed at
     the v1.39 English block (`WHATS_NEW_VERSION`), so the verifier compared the 1.40 translations
     against the wrong source and flagged all six. The constant moves with every release; fixed in
     `1894f47` and re-run.
-  - **Approval in the verifier is not recorded.** Listing copy is the owner's to approve.
+  - **Rule 3 on What's new: overruled by the owner, 2026-11-17,** as at v1.36 to v1.39. The app's
+    interface is localized, so its buttons are named as each language shows them.
+  - **Approval:** the owner approved the listing copy on 2026-11-17 (the privacy sentence, the Rule 3
+    overrule, the French fixes). Recorded in the verifier after the French re-verify.
 - **Tests.** `dotnet test src/ROROROblox.Tests/ -c Release --no-build` on the release branch at
   `f1d0eeb` with this documentation drafted: **3,986 passed, 12 skipped, 0 failed** (1 m 30 s,
   2026-11-17). The 27 harness tests were not re-run in this drafting session; the update-button
