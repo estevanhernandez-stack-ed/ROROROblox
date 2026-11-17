@@ -3485,6 +3485,14 @@ public partial class App : Application
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
     {
         _lastExit?.RecordSessionEnding(e.ReasonSessionEnding.ToString());
+
+        // Windows is shutting down or logging off, so every client is about to exit, and none of
+        // those exits is a drop-out. IsShuttingDown cannot be set here: a shutdown can still be
+        // cancelled, and a flag left set would silence alerts for the rest of the session. The
+        // expected-close stamp lapses on its own after a minute, so it fits.
+        try { _services?.GetService<MainViewModel>()?.ExpectCloseForAll(); }
+        catch (Exception ex) { _log?.LogDebug(ex, "Could not mark closes as expected at session end."); }
+
         base.OnSessionEnding(e);
     }
 

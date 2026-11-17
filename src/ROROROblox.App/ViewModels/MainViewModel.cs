@@ -3663,6 +3663,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
 
+            // Read before the clear below: an exit event for a row that was not running (a stale or
+            // duplicate delivery) is not a drop-out.
+            var wasRunning = summary.IsRunning;
+
             // The pid is genuinely gone — always clear process state.
             summary.IsRunning = false;
             summary.RunningPid = null;
@@ -3696,6 +3700,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 // is the only signal. Keep the pre-v1.5.0 behavior: stamp the close immediately.
                 summary.LastClosedAtUtc = e.OccurredAtUtc;
                 _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
+            }
+
+            // The dropped-out alert for an account presence can no longer see. A session-expired (401)
+            // or rate-limited (403) account is out of the poll and its presence fields were cleared, so
+            // ApplyPresence never confirms its close and, before 2026-11-17, nobody was told. The
+            // process exit is the only signal left, so it raises here, through the same RaiseAlerts
+            // and the same user-asked-for-it suppression. Not-expired accounts stay with presence.
+            //
+            // No respawn deferral: the bootstrapper's kill-and-respawn happens in the seconds after a
+            // launch, and the tracker has no re-attach for it at all (TrackLaunchAsync returns at the
+            // first attach; the respawned pid is never claimed). An account that went expired was
+            // launched long before, since launching needs a live cookie, and a second launch of a
+            // running account is already filtered as Superseded above.
+            if (wasRunning && (summary.SessionExpired || summary.SessionLimited))
+            {
+                RaiseDropOutForUnpolledAccount(summary, e.OccurredAtUtc);
             }
 
             LiveProcessCount = _processTracker.Attached.Count;
@@ -3898,6 +3918,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        RememberGameForAlert(summary);
         summary.SessionExpired = true;
         // An expired account leaves the presence poll, so whatever presence last said would freeze
         // ("In <game>" forever, and OnProcessExited's InGame branch would wait for a confirming poll
@@ -3924,6 +3945,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
         if (summary is null) return;
+        RememberGameForAlert(summary);
         summary.SessionLimited = true;
         summary.PresenceState = UserPresenceType.Offline;  // clear the frozen "In game"
         summary.CurrentGameName = null;
@@ -4533,6 +4555,42 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _closeRequests[row.Id] = _closeRequests.GetValueOrDefault(row.Id) + 1;
         }
         _relaunchPending.Clear();
+    }
+
+    /// <summary>
+    /// True once the app is on its way out (Quit, or WPF's OnExit). Exits arrive in a burst then, and
+    /// none of them is a drop-out. A seam so a test can set it; production reads
+    /// <c>App.IsShuttingDown</c>.
+    /// </summary>
+    internal Func<bool> IsShuttingDown { get; set; } = static () => global::ROROROblox.App.App.IsShuttingDown;
+
+    /// <summary>
+    /// The game an account was in when its session expired or was limited, kept only for the
+    /// dropped-out alert. The row's own CurrentGameName is cleared at that moment (a frozen
+    /// "In game" row was the v1.39 bug), so the alert text would otherwise lose it. Consumed at exit.
+    /// </summary>
+    private readonly Dictionary<Guid, string?> _gameAtLostPresence = [];
+
+    private void RememberGameForAlert(AccountSummary summary) => _gameAtLostPresence[summary.Id] = summary.CurrentGameName;
+
+    private void RaiseDropOutForUnpolledAccount(AccountSummary summary, DateTimeOffset occurredAtUtc)
+    {
+        _gameAtLostPresence.Remove(summary.Id, out var lastGameName);
+
+        if (IsShuttingDown())
+        {
+            _log.LogDebug("Suppressed a dropped-out alert for {AccountId}: the app is shutting down.", summary.Id);
+            return;
+        }
+        if (WasCloseExpected(summary.Id, occurredAtUtc))
+        {
+            _expectedCloses.Remove(summary.Id);
+            _log.LogDebug("Suppressed a dropped-out alert for {AccountId}: the close was user-initiated.", summary.Id);
+            return;
+        }
+        RaiseAlerts([new AlertTrigger(
+            AlertKind.AccountDroppedOut, summary.Id, summary.RenderName,
+            summary.DisplayName, lastGameName, PrivateBytes: null, occurredAtUtc)]);
     }
 
     private bool WasCloseExpected(Guid accountId, DateTimeOffset atUtc) =>
