@@ -289,6 +289,7 @@ rating line on a real Store install, and the 75/100/180 caps on a live client.
 | Store submission created and verified | 14:36, on the owner's word ("do the store write once 296 is merged") | Submission `1152921505702432520`, `PendingCommit`. `apply`: 20 fields written and read back (description and releaseNotes, ten listings). `captions`: already matched. `verify`: 180 fields and captions ok. Console pinned at `8d74ab4`, whose listing files are identical to main's |
 | Owner's two pages (packages, reviewer letter) | 14:42 ("my side is done") | A verify straight after read 180 of 180 fields and captions still matching, `PendingCommit`: the text survived the visit |
 | Committed | 14:43:42, from the console, on the owner's word | `commit` returned `CommitStarted` |
+| In certification, packages confirmed | 14:47:29, about four minutes after the commit | Status `Certification`. The API now names `RORORO-Store-arm64-1.40.0.0.msix` and `RORORO-Store-x64-1.40.0.0.msix`, both `1.40.0.0`, `Uploaded`: the owner's upload, seen for the first time. 180 fields and captions still match |
 | Certified | | |
 | Tag pushed, GitHub release drafted | | |
 | Live on the Store | | |
