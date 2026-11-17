@@ -987,6 +987,8 @@
   "Shell_Msg_SessionsExpired_other": "{0} sessions enregistrées ont expiré. Cliquez sur Réauthentifier pour les actualiser.",
   "Shell_Msg_SourceExpired": "{0} a une session expirée — réauthentifiez-vous d'abord.",
   "Shell_Msg_StartedFresh": "Nouveau départ. Ajoutez des comptes pour commencer.",
+  "Shell_Msg_AccountsNotRead": "Vos comptes enregistrés n'ont pas pu être lus cette fois. Le fichier n'a pas été modifié. Redémarrez RoRoRo pour réessayer.",
+  "DpapiCorruptWindow_CouldNotSetAside": "Impossible de mettre {0} de côté. Fermez tout programme qui l'a ouvert, puis réessayez « Repartir de zéro ». Rien n'a été supprimé.",
   "Shell_Msg_TakeoverClause": " Cela prend le contrôle de la session en cours de {0}.",
   "Shell_Msg_ThatFriend": "cet ami",
   "Shell_Msg_WaitingForLanding": "En attente de l'arrivée de {0} pour que les autres puissent rejoindre ce serveur...",

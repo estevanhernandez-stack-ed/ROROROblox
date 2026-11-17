@@ -29,11 +29,11 @@ public class AppDataRootOverrideTests
     }
 
     [Fact]
-    public void SiteTable_HasAllNineteenSites()
+    public void SiteTable_HasAllEighteenSites()
     {
         // Vacuity floor: the shared table is what both the default pins and the override check read.
         // An emptied table would pass every row below by having none.
-        Assert.Equal(19, AppDataRootPathPinTests.SiteTable.Count);
+        Assert.Equal(18, AppDataRootPathPinTests.SiteTable.Count);
         Assert.Equal(AppDataRootPathPinTests.SiteTable.Count,
             AppDataRootPathPinTests.SiteTable.Select(r => r.Site).Distinct().Count());
     }

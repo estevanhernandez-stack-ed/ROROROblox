@@ -271,6 +271,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
         // F-106 seam defaults — the real dialogs. Assigned here rather than at the property
         // because they capture instance state (stores, the API client, the share-URL resolver).
+        DpapiCorruptPrompt = () =>
+        {
+            var window = new DpapiCorruptWindow(_accountStore.StartFreshAsync);
+            Parented(window);
+            return window.ShowDialog() == true;
+        };
         SquadLaunchPicker = (eligible, running, expired) =>
         {
             var window = Parented(new SquadLaunchWindow(
@@ -920,13 +926,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         window.ShowDialog();
     };
 
-    /// <summary>The corrupt-store question: true = start fresh, false = quit to restore a backup.</summary>
-    internal Func<bool> DpapiCorruptPrompt { get; set; } = static () =>
-    {
-        var window = new DpapiCorruptWindow();
-        Parented(window);
-        return window.ShowDialog() == true;
-    };
+    /// <summary>
+    /// The corrupt-store question: true = the vault was set aside and the list starts empty, false = quit
+    /// to restore a backup. The default dialog does the setting aside itself (through the store) and only
+    /// returns true once it worked, so a failure stays on screen instead of reaching this method.
+    /// </summary>
+    internal Func<bool> DpapiCorruptPrompt { get; set; }
 
     /// <summary>How "quit so the user can restore a backup" happens. A seam because the recovery
     /// logic around it is exactly what wants testing, and <c>Application.Current</c> is null there.</summary>
@@ -1358,30 +1363,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         try
         {
+            // A load that works takes the failure notice down; a failed one puts it back below.
+            AccountsLoadFailedText = string.Empty;
             var accounts = await _accountStore.ListAsync();
-            // Detach the streamer-identity subscription before discarding the old rows — the
-            // provider is a long-lived app singleton, so a row left subscribed to its Changed
-            // event would stay rooted forever (one leaked AccountSummary per reload).
-            foreach (var stale in Accounts)
-            {
-                stale.DetachIdentityProvider();
-            }
-            Accounts.Clear();
-            // Manual SortOrder wins when set; among rows that share a SortOrder (typical: every
-            // account at 0 because the user has never reordered), fall back to most-recently-
-            // launched first so freshly-touched accounts surface naturally.
-            var ordered = accounts
-                .OrderBy(a => a.SortOrder)
-                .ThenByDescending(a => a.LastLaunchedAt ?? a.CreatedAt);
-            foreach (var account in ordered)
-            {
-                var summary = new AccountSummary(account);
-                WireAccountSummary(summary);
-                Accounts.Add(summary);
-            }
-            // Open state: the persisted choice, else the main's panel, else (no main) the first row's.
-            var firstRow = Accounts.Any(a => a.IsMain) ? null : Accounts.FirstOrDefault();
-            foreach (var row in Accounts) row.Panel?.ResolveExpanded(row.IsMain || ReferenceEquals(row, firstRow));
+            ShowAccountRows(accounts);
             await PrimeLastPlayedAsync();
         }
         catch (AccountStoreCorruptException)
@@ -1397,6 +1382,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // (and AccountStore only overwrites its backup after a read it judged good). The view
             // model holds no copy of the vault to persist.
             _log.LogError(ex, "Loading the saved accounts failed ({ExceptionType}); the list stays empty for this session and the vault file is untouched.", ex.GetType().Name);
+            // To the user an empty list reads as "every account is gone", so say what happened.
+            AccountsLoadFailedText = Loc.Get("Shell_Msg_AccountsNotRead");
         }
         finally
         {
@@ -5435,6 +5422,61 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void ShowRobloxNotInstalledModal() => RobloxNotInstalledPrompt();
 
+    /// <summary>Replaces the rows with these accounts, in display order. UI thread.</summary>
+    private void ShowAccountRows(IReadOnlyList<Account> accounts)
+    {
+        // Detach the streamer-identity subscription before discarding the old rows — the
+        // provider is a long-lived app singleton, so a row left subscribed to its Changed
+        // event would stay rooted forever (one leaked AccountSummary per reload).
+        foreach (var stale in Accounts)
+        {
+            stale.DetachIdentityProvider();
+        }
+        Accounts.Clear();
+        // Manual SortOrder wins when set; among rows that share a SortOrder (typical: every
+        // account at 0 because the user has never reordered), fall back to most-recently-
+        // launched first so freshly-touched accounts surface naturally.
+        var ordered = accounts
+            .OrderBy(a => a.SortOrder)
+            .ThenByDescending(a => a.LastLaunchedAt ?? a.CreatedAt);
+        foreach (var account in ordered)
+        {
+            var summary = new AccountSummary(account);
+            WireAccountSummary(summary);
+            Accounts.Add(summary);
+        }
+        // Open state: the persisted choice, else the main's panel, else (no main) the first row's.
+        var firstRow = Accounts.Any(a => a.IsMain) ? null : Accounts.FirstOrDefault();
+        foreach (var row in Accounts) row.Panel?.ResolveExpanded(row.IsMain || ReferenceEquals(row, firstRow));
+    }
+
+    /// <summary>
+    /// After Start fresh, show what the store holds rather than assume it is empty. The corrupt dialog
+    /// also appears for a vault that was only locked for a moment; the store then finds it readable,
+    /// sets nothing aside (<c>StartFreshResult.StoreWasReadable</c>), and every saved account is still
+    /// there. An empty list and "Started fresh" over a vault that is fine would read as total loss.
+    /// Internal so a test can await it; <see cref="ShowDpapiCorruptModal"/> fires it and moves on.
+    /// </summary>
+    internal async Task ShowWhatTheStoreHoldsAsync()
+    {
+        try
+        {
+            var accounts = await _accountStore.ListAsync();
+            if (accounts.Count == 0)
+            {
+                return; // a real fresh start: the list is already empty and the banner is right
+            }
+            ShowAccountRows(accounts);
+            RefreshFpsCapWarning();
+            StatusBanner = string.Empty;
+            await PrimeLastPlayedAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogDebug(ex, "Could not re-read the saved accounts after Start fresh ({ExceptionType}); the list stays empty.", ex.GetType().Name);
+        }
+    }
+
     /// <summary>
     /// Corrupt-store recovery, assertable since F-106: the dialog is <see cref="DpapiCorruptPrompt"/>,
     /// the quit is <see cref="QuitApplication"/>, and this method owns everything between them.
@@ -5444,9 +5486,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var startFresh = DpapiCorruptPrompt();
         if (startFresh)
         {
-            // The store's load already failed; renaming + creating-empty is the recovery path.
-            // For v1 we let the next AddAsync naturally overwrite the corrupt file via the
-            // atomic-write path. The accounts list stays empty.
+            // The dialog has already had the store set the vault files aside (IAccountStore.StartFreshAsync),
+            // so the store reads as empty and the next add writes a new file. The list stays empty.
             foreach (var stale in Accounts)
             {
                 stale.DetachIdentityProvider();
@@ -5454,6 +5495,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             Accounts.Clear();
             RefreshFpsCapWarning();
             StatusBanner = Loc.Get("Shell_Msg_StartedFresh");
+            // Usually a no-op (the store is empty now). When the vault turned out to be readable, this
+            // puts the accounts back on screen and takes the banner down.
+            _ = ShowWhatTheStoreHoldsAsync();
         }
         else
         {
@@ -5645,6 +5689,28 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 break;
         }
     }
+
+    private string _accountsLoadFailedText = string.Empty;
+
+    /// <summary>
+    /// Non-empty only after the account store failed in a way nobody planned: the saved accounts could not
+    /// be read this time and the file was not changed. Empty on a normal empty list and on a first run, and
+    /// cleared by a later load that works. The strip collapses on empty, like the rows beside it.
+    /// </summary>
+    public string AccountsLoadFailedText
+    {
+        get => _accountsLoadFailedText;
+        private set
+        {
+            if (SetField(ref _accountsLoadFailedText, value))
+            {
+                OnPropertyChanged(nameof(AccountsLoadFailed));
+            }
+        }
+    }
+
+    /// <summary>True while <see cref="AccountsLoadFailedText"/> is showing. An empty list in this state is not a first run.</summary>
+    public bool AccountsLoadFailed => _accountsLoadFailedText.Length > 0;
 
     private string _contestedBannerText = string.Empty;
 

@@ -60,8 +60,8 @@ internal partial class WelcomeWindow : Window
     /// bug this replaces: an upgrading user with accounts burned the sentinel and never saw the tour.
     /// </para>
     /// </summary>
-    internal static bool ShouldShowOnStartup(bool isFirstRun, int accountCount) =>
-        isFirstRun && accountCount == 0;
+    internal static bool ShouldShowOnStartup(bool isFirstRun, int accountCount, bool accountsLoadFailed = false) =>
+        isFirstRun && accountCount == 0 && !accountsLoadFailed;
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
 

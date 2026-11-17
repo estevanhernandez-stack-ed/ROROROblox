@@ -197,13 +197,19 @@ public sealed class SessionHistoryStore : ISessionHistoryStore, IDisposable
         try
         {
             var blob = JsonSerializer.Deserialize<SessionsBlob>(bytes, JsonOptions);
-            if (blob is not null && StoreShape.ListOk(blob.Sessions)
-                && blob.Sessions.All(s => s.AccountDisplayName is not null))
+            if (blob?.Sessions is null)
+            {
+                _shape.Report(_filePath, "empty");
+                return new SessionsBlob(Version: 1, Sessions: []);
+            }
+            // One bad row (null, or no account name) costs that row, not the whole History.
+            var good = StoreShape.GoodRows(blob.Sessions, out var dropped, s => s.AccountDisplayName is not null);
+            if (dropped == 0)
             {
                 return blob;
             }
-            _shape.Report(_filePath, "empty");
-            return new SessionsBlob(Version: 1, Sessions: []);
+            _shape.ReportDropped(_filePath, dropped);
+            return new SessionsBlob(Version: 1, Sessions: good);
         }
         catch (JsonException)
         {

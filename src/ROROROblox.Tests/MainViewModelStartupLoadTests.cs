@@ -166,4 +166,50 @@ public sealed class MainViewModelStartupLoadTests
             foreach (var f in new[] { path, path + ".bak", path + ".tmp" }) { if (File.Exists(f)) File.Delete(f); }
         }
     }
+
+    // The corrupt dialog also appears over a vault that was only locked for a moment. Start fresh then
+    // finds the store readable and sets nothing aside, so the window must show the accounts, not an
+    // empty list under "Started fresh".
+    [Fact]
+    public async Task AfterStartFresh_OverAStoreThatReadsCorrectly_TheAccountsAreShown_NotAnEmptyList()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-fresh-{Guid.NewGuid():N}.dat");
+        var (vm, store, _, _) = MainViewModelTests.Build(accountStorePath: path);
+        try
+        {
+            var a = await store.AddAsync("UserA", "", "FAKE-COOKIE-a");
+            vm.DpapiCorruptPrompt = () => true; // the user clicked Start fresh; the store set nothing aside
+
+            vm.ShowDpapiCorruptModal();
+            await vm.ShowWhatTheStoreHoldsAsync();
+
+            Assert.Equal(a.Id, Assert.Single(vm.Accounts).Id);
+            Assert.Equal(string.Empty, vm.StatusBanner);
+        }
+        finally
+        {
+            foreach (var f in new[] { path, path + ".bak", path + ".tmp" }) { if (File.Exists(f)) File.Delete(f); }
+        }
+    }
+
+    [Fact]
+    public async Task AfterStartFresh_OverAnEmptyStore_TheListStaysEmpty_AndSaysSo()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-fresh-{Guid.NewGuid():N}.dat");
+        var (vm, _, _, _) = MainViewModelTests.Build(accountStorePath: path);
+        try
+        {
+            vm.DpapiCorruptPrompt = () => true;
+
+            vm.ShowDpapiCorruptModal();
+            await vm.ShowWhatTheStoreHoldsAsync();
+
+            Assert.Empty(vm.Accounts);
+            Assert.NotEqual(string.Empty, vm.StatusBanner);
+        }
+        finally
+        {
+            foreach (var f in new[] { path, path + ".bak", path + ".tmp" }) { if (File.Exists(f)) File.Delete(f); }
+        }
+    }
 }

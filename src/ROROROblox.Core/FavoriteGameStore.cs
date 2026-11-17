@@ -278,14 +278,20 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
         try
         {
             var blob = JsonSerializer.Deserialize<FavoritesBlob>(bytes, JsonOptions);
-            if (blob is not null && StoreShape.ListOk(blob.Favorites)
-                && blob.Favorites.All(f => f.Name is not null))
+            if (blob?.Favorites is null)
+            {
+                // The literal null or a missing list: no rows to keep.
+                _shape.Report(_filePath, "empty");
+                return new FavoritesBlob(Version: 1, Favorites: []);
+            }
+            // One bad row (null, or no name) costs that row, not the file.
+            var good = StoreShape.GoodRows(blob.Favorites, out var dropped, f => f.Name is not null);
+            if (dropped == 0)
             {
                 return blob;
             }
-            // Parsed but the wrong shape (null list, null row, row without a name): same as corrupt.
-            _shape.Report(_filePath, "empty");
-            return new FavoritesBlob(Version: 1, Favorites: []);
+            _shape.ReportDropped(_filePath, dropped);
+            return blob with { Favorites = good };
         }
         catch (JsonException)
         {

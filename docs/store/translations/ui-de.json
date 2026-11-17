@@ -987,6 +987,8 @@
   "Shell_Msg_SessionsExpired_other": "{0} gespeicherte Sitzungen sind abgelaufen. Klicke auf „Erneut authentifizieren“, um sie zu aktualisieren.",
   "Shell_Msg_SourceExpired": "{0} hat eine abgelaufene Sitzung — authentifiziere zuerst erneut.",
   "Shell_Msg_StartedFresh": "Neu gestartet. Füge Konten hinzu, um zu beginnen.",
+  "Shell_Msg_AccountsNotRead": "Deine gespeicherten Konten ließen sich dieses Mal nicht lesen. Die Datei wurde nicht verändert. Starte RoRoRo neu, um es erneut zu versuchen.",
+  "DpapiCorruptWindow_CouldNotSetAside": "{0} ließ sich nicht beiseitelegen. Schließe jedes Programm, das die Datei geöffnet hat, und versuche es mit „Neu beginnen“ erneut. Es wurde nichts gelöscht.",
   "Shell_Msg_TakeoverClause": " Das übernimmt die laufende Sitzung von {0}.",
   "Shell_Msg_ThatFriend": "diesem Freund",
   "Shell_Msg_WaitingForLanding": "Warte darauf, dass {0} landet, damit die übrigen diesem Server beitreten können...",

@@ -84,19 +84,36 @@ public sealed class ConsentStore
             {
                 return new Dictionary<string, ConsentRecord>();
             }
-            // Parsed but the wrong shape (a null row, a null id or capability list, a repeated id): a null
-            // reaches ToDictionary or a reader and a repeat throws there, so treat it as the tampered
-            // case below, an empty list. Plugins ask for consent again.
-            if (list.Any(r => r is null || r.PluginId is null || r.GrantedCapabilities is null)
-                || list.Select(r => r.PluginId).Distinct(StringComparer.Ordinal).Count() != list.Count)
+            // One bad row (null, no plugin id, no capability list, or an id that appears twice) costs
+            // that plugin's record and nothing else. A dropped record means that plugin asks for consent
+            // again: the safe direction, since consent is never granted by a row going missing.
+            var kept = new Dictionary<string, ConsentRecord>(list.Count, StringComparer.Ordinal);
+            var dropped = 0;
+            var repeated = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var record in list)
             {
-                if (Interlocked.Exchange(ref _shapeReported, 1) == 0)
+                if (record is null || record.PluginId is null || record.GrantedCapabilities is null)
                 {
-                    _log?.LogWarning("{File} parsed but has the wrong shape; treating it as empty.", Path.GetFileName(_filePath));
+                    dropped++;
                 }
-                return new Dictionary<string, ConsentRecord>();
+                else if (!kept.TryAdd(record.PluginId, record))
+                {
+                    repeated.Add(record.PluginId);
+                    dropped++;
+                }
             }
-            return list.ToDictionary(r => r.PluginId, StringComparer.Ordinal);
+            // Two rows for one plugin cannot both be believed, and neither is a grant the user can be
+            // shown to have made, so that plugin asks again.
+            foreach (var id in repeated)
+            {
+                kept.Remove(id);
+                dropped++;
+            }
+            if (dropped > 0 && Interlocked.Exchange(ref _shapeReported, 1) == 0)
+            {
+                _log?.LogWarning("{File} had {Dropped} unusable row(s); they were dropped and the rest kept.", Path.GetFileName(_filePath), dropped);
+            }
+            return kept;
         }
         catch (CryptographicException)
         {

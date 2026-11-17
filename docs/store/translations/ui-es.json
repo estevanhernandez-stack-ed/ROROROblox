@@ -987,6 +987,8 @@
   "Shell_Msg_SessionsExpired_other": "{0} sesiones guardadas han caducado. Pulsa Volver a autenticar para actualizarlas.",
   "Shell_Msg_SourceExpired": "{0} tiene una sesión caducada: vuelve a autenticar primero.",
   "Shell_Msg_StartedFresh": "Empezamos de cero. Añade cuentas para comenzar.",
+  "Shell_Msg_AccountsNotRead": "Esta vez no se pudieron leer tus cuentas guardadas. El archivo no se modificó. Reinicia RoRoRo para intentarlo de nuevo.",
+  "DpapiCorruptWindow_CouldNotSetAside": "No se pudo apartar {0}. Cierra cualquier programa que lo tenga abierto y vuelve a probar con «Empezar de cero». No se borró nada.",
   "Shell_Msg_TakeoverClause": " Esto toma el control de la sesión en ejecución de {0}.",
   "Shell_Msg_ThatFriend": "ese amigo",
   "Shell_Msg_WaitingForLanding": "Esperando a que {0} entre para que el resto pueda unirse a ese servidor...",

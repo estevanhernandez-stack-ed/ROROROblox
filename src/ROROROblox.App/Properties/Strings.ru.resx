@@ -2257,6 +2257,12 @@
   <data name="Shell_Msg_StartedFresh" xml:space="preserve">
     <value>Начато с чистого листа. Добавьте аккаунты, чтобы начать.</value>
   </data>
+  <data name="Shell_Msg_AccountsNotRead" xml:space="preserve">
+    <value>В этот раз не удалось прочитать сохранённые аккаунты. Файл не изменён. Перезапустите RoRoRo, чтобы попробовать снова.</value>
+  </data>
+  <data name="DpapiCorruptWindow_CouldNotSetAside" xml:space="preserve">
+    <value>Не удалось отложить файл {0}. Закройте все программы, которые его используют, и снова нажмите «Начать заново». Ничего не удалено.</value>
+  </data>
   <data name="Shell_Msg_CouldntRemoveGame" xml:space="preserve">
     <value>Не удалось удалить эту игру. Ошибка диска?</value>
   </data>

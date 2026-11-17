@@ -150,11 +150,14 @@ internal partial class MainWindow : FluentWindow
         // later launch either. Tools > Welcome tour now reaches it on demand regardless (F-001);
         // this stops the app recording that it showed something it did not.
         //
+        // An empty list that a failed load left behind is not a first run, so the tour stays out of the way
+        // of the notice that says why the list is empty.
+        //
         // Consequence, deliberate: an upgrading user keeps IsFirstRun() true, so if they later
         // remove every account the tour appears. An empty list is the state the tour is written for
         // and they have never seen it.
         if (DataContext is MainViewModel mvm
-            && WelcomeWindow.ShouldShowOnStartup(WelcomeWindow.IsFirstRun(), mvm.Accounts.Count))
+            && WelcomeWindow.ShouldShowOnStartup(WelcomeWindow.IsFirstRun(), mvm.Accounts.Count, mvm.AccountsLoadFailed))
         {
             WelcomeWindow.MarkShown();
             var welcome = new WelcomeWindow { Owner = this };

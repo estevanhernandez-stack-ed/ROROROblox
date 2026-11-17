@@ -279,15 +279,29 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
             var json = await File.ReadAllTextAsync(_filePath).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(json)) return new Blob();
             var blob = JsonSerializer.Deserialize<Blob>(json, JsonOptions);
-            if (blob is not null
-                && StoreShape.MapOk(blob.Accounts) && StoreShape.MapOk(blob.Games)
-                && StoreShape.MapOk(blob.Days) && StoreShape.MapOk(blob.Months))
+            if (blob is null)
             {
-                return blob;
+                _shape.Report(_filePath, "empty");
+                return new Blob();
             }
-            // Parsed but the wrong shape (a null map or a null row): same as corrupt, start fresh.
-            _shape.Report(_filePath, "empty");
-            return new Blob();
+            // Salvage at each level: a null row costs that row, a null section costs that section, and
+            // the sections around it are kept.
+            var dropped = 0;
+            var missing = false;
+            Dictionary<TK, TV> Level<TK, TV>(Dictionary<TK, TV>? map) where TK : notnull where TV : class
+            {
+                missing |= map is null;
+                var kept = StoreShape.GoodEntries(map, out var n);
+                dropped += n;
+                return kept;
+            }
+            blob.Accounts = Level(blob.Accounts);
+            blob.Games = Level(blob.Games);
+            blob.Days = Level(blob.Days);
+            blob.Months = Level(blob.Months);
+            if (missing) _shape.Report(_filePath, "empty in the section that was missing, keeping the rest");
+            else _shape.ReportDropped(_filePath, dropped);
+            return blob;
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {

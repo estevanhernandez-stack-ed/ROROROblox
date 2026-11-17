@@ -987,6 +987,8 @@
   "Shell_Msg_SessionsExpired_other": "{0} sessões salvas expiraram. Clique em Reautenticar para atualizá-las.",
   "Shell_Msg_SourceExpired": "{0} tem uma sessão expirada — reautentique primeiro.",
   "Shell_Msg_StartedFresh": "Começamos do zero. Adicione contas para começar.",
+  "Shell_Msg_AccountsNotRead": "Não foi possível ler suas contas salvas desta vez. O arquivo não foi alterado. Reinicie o RoRoRo para tentar de novo.",
+  "DpapiCorruptWindow_CouldNotSetAside": "Não foi possível separar {0}. Feche qualquer programa que esteja com ele aberto e tente “Começar do zero” de novo. Nada foi apagado.",
   "Shell_Msg_TakeoverClause": " Isso assume a sessão em execução de {0}.",
   "Shell_Msg_ThatFriend": "esse amigo",
   "Shell_Msg_WaitingForLanding": "Esperando {0} entrar para que os demais possam entrar nesse servidor...",

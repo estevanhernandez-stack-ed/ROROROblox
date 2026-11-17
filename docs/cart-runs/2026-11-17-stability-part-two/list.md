@@ -44,7 +44,7 @@ Branch `fix/stability-part-two`, attended, one commit per item. Order is smalles
   Verify: the full unit project. The orchestrator runs the translation verifier on the new keys before any tag; that is not this item.
   Stop class: go
 
-- [ ] **8. Three loose ends from item 3: one bad row, Start fresh, and an empty list with no word** (built after item 4, before item 5)
+- [x] **8. Three loose ends from item 3: one bad row, Start fresh, and an empty list with no word** (built after item 4, before item 5)
   Spec ref: the owner, 2026-11-17: "can we fix those items not changed, but that need to?", in answer to item 3's report
   What to build: Item 3 left three things as they were. Fix all three.
   (a) **One bad row no longer costs the rest of the file.** After item 3, a non-vault store that finds one null or invalid row treats the whole file as corrupt and reads as empty, and the next save writes that over the file: one bad favorite loses every favorite, one bad session loses the History. Keep the good rows and drop the bad ones, in `FavoriteGameStore`, `PrivateServerStore`, `SessionHistoryStore`, `SessionStatsStore`, `FileStreamerIdentityStore`, `GameIconCache`, `Plugins/ConsentStore` and the plugin catalog parser (which already drops them). A file whose container is missing or null still reads as empty: there are no rows to keep. Warn once with the file name and how many rows were dropped. For `ConsentStore` a dropped row means that plugin asks for consent again, which is the safe direction; say so in a comment. Do not touch `AccountStore`: its rule (list-level damage goes to the backup, field-level nulls are repaired) was settled in item 3.

@@ -156,13 +156,16 @@ public sealed class GameIconCache : IGameIconCache
                 return [];
             }
             var blob = JsonSerializer.Deserialize<Blob>(bytes, JsonOptions);
-            if (blob?.Games is { } games && StoreShape.MapOk(games))
+            if (blob?.Games is null)
             {
-                return new Dictionary<long, GameIconInfo>(games);
+                // The literal null or a null map: nothing to keep. Rebuild it.
+                _shape.Report(_filePath, "an empty icon cache");
+                return [];
             }
-            // The literal null, a null map or a null row: a cache that cannot be trusted. Rebuild it.
-            _shape.Report(_filePath, "an empty icon cache");
-            return [];
+            // A null row costs that icon, which is fetched again; the rest of the cache is kept.
+            var kept = StoreShape.GoodEntries(blob.Games, out var dropped);
+            _shape.ReportDropped(_filePath, dropped);
+            return kept;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {

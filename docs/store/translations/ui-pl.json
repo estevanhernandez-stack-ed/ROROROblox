@@ -987,6 +987,8 @@
   "Shell_Msg_SessionsExpired_other": "Wygasło {0} zapisanej sesji. Kliknij Uwierzytelnij ponownie, aby je odświeżyć.",
   "Shell_Msg_SourceExpired": "{0} ma wygasłą sesję — najpierw uwierzytelnij ponownie.",
   "Shell_Msg_StartedFresh": "Zaczęto od nowa. Dodaj konta, aby rozpocząć.",
+  "Shell_Msg_AccountsNotRead": "Tym razem nie udało się odczytać Twoich zapisanych kont. Plik nie został zmieniony. Uruchom RoRoRo ponownie, aby spróbować jeszcze raz.",
+  "DpapiCorruptWindow_CouldNotSetAside": "Nie udało się odłożyć pliku {0} na bok. Zamknij każdy program, który go używa, i spróbuj ponownie kliknąć „Zacznij od nowa”. Nic nie zostało usunięte.",
   "Shell_Msg_TakeoverClause": " Przejmuje to działającą sesję konta {0}.",
   "Shell_Msg_ThatFriend": "tego znajomego",
   "Shell_Msg_WaitingForLanding": "Czekanie, aż {0} wyląduje, aby reszta mogła dołączyć do tego serwera...",

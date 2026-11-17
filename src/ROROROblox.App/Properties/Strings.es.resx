@@ -2257,6 +2257,12 @@ Tendrás que iniciar sesión de nuevo para volver a añadirla.</value>
   <data name="Shell_Msg_StartedFresh" xml:space="preserve">
     <value>Empezamos de cero. Añade cuentas para comenzar.</value>
   </data>
+  <data name="Shell_Msg_AccountsNotRead" xml:space="preserve">
+    <value>Esta vez no se pudieron leer tus cuentas guardadas. El archivo no se modificó. Reinicia RoRoRo para intentarlo de nuevo.</value>
+  </data>
+  <data name="DpapiCorruptWindow_CouldNotSetAside" xml:space="preserve">
+    <value>No se pudo apartar {0}. Cierra cualquier programa que lo tenga abierto y vuelve a probar con «Empezar de cero». No se borró nada.</value>
+  </data>
   <data name="Shell_Msg_CouldntRemoveGame" xml:space="preserve">
     <value>No se pudo eliminar ese juego. ¿Error de disco?</value>
   </data>

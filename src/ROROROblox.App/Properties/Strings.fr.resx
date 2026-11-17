@@ -2257,6 +2257,12 @@ Vous devrez vous reconnecter pour le rajouter.</value>
   <data name="Shell_Msg_StartedFresh" xml:space="preserve">
     <value>Nouveau départ. Ajoutez des comptes pour commencer.</value>
   </data>
+  <data name="Shell_Msg_AccountsNotRead" xml:space="preserve">
+    <value>Vos comptes enregistrés n'ont pas pu être lus cette fois. Le fichier n'a pas été modifié. Redémarrez RoRoRo pour réessayer.</value>
+  </data>
+  <data name="DpapiCorruptWindow_CouldNotSetAside" xml:space="preserve">
+    <value>Impossible de mettre {0} de côté. Fermez tout programme qui l'a ouvert, puis réessayez « Repartir de zéro ». Rien n'a été supprimé.</value>
+  </data>
   <data name="Shell_Msg_CouldntRemoveGame" xml:space="preserve">
     <value>Impossible de supprimer ce jeu. Erreur disque ?</value>
   </data>

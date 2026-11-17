@@ -2257,6 +2257,12 @@ Du musst dich erneut anmelden, um es wieder hinzuzufügen.</value>
   <data name="Shell_Msg_StartedFresh" xml:space="preserve">
     <value>Neu gestartet. Füge Konten hinzu, um zu beginnen.</value>
   </data>
+  <data name="Shell_Msg_AccountsNotRead" xml:space="preserve">
+    <value>Deine gespeicherten Konten ließen sich dieses Mal nicht lesen. Die Datei wurde nicht verändert. Starte RoRoRo neu, um es erneut zu versuchen.</value>
+  </data>
+  <data name="DpapiCorruptWindow_CouldNotSetAside" xml:space="preserve">
+    <value>{0} ließ sich nicht beiseitelegen. Schließe jedes Programm, das die Datei geöffnet hat, und versuche es mit „Neu beginnen“ erneut. Es wurde nichts gelöscht.</value>
+  </data>
   <data name="Shell_Msg_CouldntRemoveGame" xml:space="preserve">
     <value>Dieses Spiel konnte nicht entfernt werden. Festplattenfehler?</value>
   </data>
