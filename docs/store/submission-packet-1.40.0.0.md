@@ -212,8 +212,12 @@ If it recurs, re-run; if it recurs twice, close the editor for the build.
     two runs: "si vous décrochez du jeu" for "if the game drops", a trademark line without "déposé",
     and a missing "en même temps". All three were published text from earlier releases. **Fixed on the
     owner's word, 2026-11-17:** "si vous êtes déconnecté du jeu", "en même temps sur un même PC", and
-    "Le terme déposé". The French trademark field carried the same sentence without "déposé" and was
-    fixed with it, so the French listings change in three fields, not two. Re-verified; see below.
+    "Le terme déposé". The sheet's separate French "Trademark info" block carried the same sentence
+    without "déposé" and was fixed with it. That block is not a Store field: Partner Center has one
+    copyright-and-trademark field and the console sends the copyright block only, so the Store still
+    changes in two fields per listing (the console's plan: 20 fields, description and releaseNotes in
+    ten listings). Re-verified at `8d74ab4`: the French trademark block approved, and the French long
+    description and What's new carry only Rule 3 flags.
   - **A first run was invalid and is not counted.** `export-listing-translations.py` still pointed at
     the v1.39 English block (`WHATS_NEW_VERSION`), so the verifier compared the 1.40 translations
     against the wrong source and flagged all six. The constant moves with every release; fixed in
