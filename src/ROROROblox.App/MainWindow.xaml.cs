@@ -159,9 +159,27 @@ internal partial class MainWindow : FluentWindow
         if (DataContext is MainViewModel mvm
             && WelcomeWindow.ShouldShowOnStartup(WelcomeWindow.IsFirstRun(), mvm.Accounts.Count, mvm.AccountsLoadFailed))
         {
+            // Let Show() finish first. On a first run the load above completes without yielding, so
+            // this point is still inside the Loaded event, before the window is on screen: the tour
+            // then came up over a HIDDEN main window, and a polite close from outside (taskkill, End
+            // task) reached neither of them, because it goes to one unowned window and prefers a
+            // visible one (measured and seen live 2026-11-17: one taskkill, no effect). With the main
+            // window visible it is the window that receives the close, and the v1.39 quit path ends
+            // the app, tour included.
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            if (!IsLoaded || App.IsShuttingDown)
+            {
+                return; // closed or quitting while we waited
+            }
+
             WelcomeWindow.MarkShown();
             var welcome = new WelcomeWindow { Owner = this };
             welcome.ShowDialog();
+            if (welcome.ClosedFromOutside)
+            {
+                // The sentinel is already written (above); an outside close does not un-show the tour.
+                ExternalCloseQuit?.Invoke();
+            }
         }
     }
 

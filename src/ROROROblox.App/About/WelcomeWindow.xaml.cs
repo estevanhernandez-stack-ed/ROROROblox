@@ -1,3 +1,5 @@
+using ROROROblox.App.AppLifecycle;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 
@@ -10,6 +12,34 @@ internal partial class WelcomeWindow : Window
     /// Lives next to <c>accounts.dat</c> + <c>settings.json</c> in the per-user data directory.
     /// </summary>
     internal static string SentinelPath => ROROROblox.Core.AppDataRoot.Combine(".welcome-shown");
+
+    private ExternalCloseWatcher? _externalClose;
+
+    /// <summary>
+    /// True when this window was closed by a request from another process (<c>taskkill</c> without
+    /// <c>/F</c>, Task Manager's End task, <c>CloseMainWindow</c>), as <see cref="ExternalCloseWatcher"/>
+    /// identifies it. The caller reads it after <c>ShowDialog</c> and ends the app instead of treating
+    /// the close as the user's answer. taskkill posts to one unowned top-level window, never to an owned
+    /// one (measured 2026-11-17), so this is only ever set on a dialog that has no owner.
+    /// </summary>
+    public bool ClosedFromOutside { get; private set; }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        _externalClose ??= new ExternalCloseWatcher(this);
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        // Asked on every attempt so the note is cleared by the close it belongs to.
+        if (_externalClose?.TryConsume() ?? false)
+        {
+            ClosedFromOutside = true;
+        }
+
+        base.OnClosing(e);
+    }
 
     public WelcomeWindow()
     {
@@ -96,5 +126,10 @@ internal partial class WelcomeWindow : Window
         }
 
         dialog.ShowDialog();
+        if (dialog.ClosedFromOutside)
+        {
+            // Unowned (tray, main window hidden), the tour is the one window an outside close can reach.
+            (Application.Current?.MainWindow as MainWindow)?.ExternalCloseQuit?.Invoke();
+        }
     }
 }

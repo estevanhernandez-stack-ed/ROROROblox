@@ -40,6 +40,13 @@ public partial class App : Application
     /// <summary>F-103. Adopts clients Roblox restarts for itself; see OrphanedClientSweeper.</summary>
     private Tray.OrphanedClientSweeper? _orphanSweeper;
 
+    // A polite close from outside the process, whichever window it lands on. See ThreadCloseWatcher.
+    private AppLifecycle.ThreadCloseWatcher? _outsideClose;
+    // The startup dialog that is open right now, if any, so an outside close can end it.
+    private Window? _openStartupDialog;
+    // Set once the main window's quit path is wired; before that, startup is abandoned instead.
+    private Action? _quitForOutsideClose;
+
     /// <summary>#222. Ends idle tray clients that outlive a launch; its own 30 s timer, see IdleTrayClientSweeper.</summary>
     private Tray.IdleTrayClientSweeper? _idleTraySweeper;
 
@@ -597,6 +604,11 @@ public partial class App : Application
         var acquired = acquireOutcome == MutexAcquireOutcome.Acquired;
         var verdict = gate.Evaluate(acquireOutcome);
 
+        // From here on a polite close from outside (taskkill without /F, End task) ends the app,
+        // whichever of our windows it lands on. Before the first dialog, because the dialogs below
+        // are where it used to be swallowed.
+        _outsideClose = new AppLifecycle.ThreadCloseWatcher(OnOutsideClose);
+
         // Bind the plugin-host pipe BEFORE the gate's modals. Both modals below block OnStartup
         // in a nested message loop, and the leftover modal fires whenever stale Roblox clients
         // exist — the exact condition an agent is trying to recover from. Binding here means the
@@ -650,7 +662,17 @@ public partial class App : Application
                 _log.LogInformation(
                     "Startup paused: Roblox already holds the singleton name — showing the "
                     + "already-running dialog and waiting for the user.");
+                _openStartupDialog = modal;
                 modal.ShowDialog();
+                _openStartupDialog = null;
+                if (modal.ClosedFromOutside || OutsideCloseSeen)
+                {
+                    // A polite close from another process (taskkill without /F, End task) is a request
+                    // to end the app, whatever the dialog's own answer was.
+                    _log.LogInformation("Startup abandoned at the gate: an outside close request arrived.");
+                    Shutdown(0);
+                    return;
+                }
                 var (proceed, holdsMutex) = AppLifecycle.BlockedStartupDecision.Resolve(modal.Outcome);
                 _log.LogInformation(
                     "Startup resumed: already-running dialog answered {Outcome} — proceed={Proceed}, "
@@ -711,7 +733,16 @@ public partial class App : Application
                     "Startup paused: {Windowless} windowless + {Windowed} windowed leftover Roblox "
                     + "process(es) — showing the leftover-process dialog and waiting for the user.",
                     leftover.Windowless, leftover.Windowed);
+                _openStartupDialog = info;
                 info.ShowDialog();
+                _openStartupDialog = null;
+                if (info.ClosedFromOutside || OutsideCloseSeen)
+                {
+                    // Without this the close read as "Continue" and startup carried on (seen 2026-11-16).
+                    _log.LogInformation("Startup abandoned at the leftover dialog: an outside close request arrived.");
+                    Shutdown(0);
+                    return;
+                }
                 _log.LogInformation("Startup resumed: leftover dialog answered {Action}.", info.Action);
                 switch (info.Action)
                 {
@@ -726,6 +757,14 @@ public partial class App : Application
             // mutex already held — proceed regardless
         }
 
+        if (OutsideCloseSeen)
+        {
+            // It arrived between the dialogs and here, with no window of ours to close.
+            _log.LogInformation("Startup abandoned before the main window: an outside close request arrived.");
+            Shutdown(0);
+            return;
+        }
+
         var tray = _services.GetRequiredService<ITrayService>();
         var mainWindow = _services.GetRequiredService<MainWindow>();
 
@@ -738,6 +777,7 @@ public partial class App : Application
             _log?.LogInformation("An external close request arrived; RoRoRo is quitting.");
             RequestShutdown();
         };
+        _quitForOutsideClose = mainWindow.ExternalCloseQuit;
         WireMainViewModelEvents(mainWindow);
         WireMutexLost(mutex, tray);
         WireMainAvatarTrayPainter();
@@ -807,6 +847,11 @@ public partial class App : Application
         // exception boundary (see InboundJoinRelay's remarks) — a throw here must not kill the
         // pipe-listener thread this callback runs on.
         _singleInstance.JoinUriReceived += relayedUri => _joinRelay!.Handle(relayedUri, "relay");
+
+        if (IsShuttingDown)
+        {
+            return; // an outside close arrived while the wiring above was still awaiting
+        }
 
         tray.Show();
         _singleInstance.StartListening(mainWindow);
@@ -3482,6 +3527,34 @@ public partial class App : Application
     }
 
     /// <summary>#246: Windows is ending the session (logoff or shutdown); WPF still runs OnExit after this, which must not read as clean.</summary>
+    /// <summary>True once a polite close from outside the process has come off the UI thread's queue.</summary>
+    private bool OutsideCloseSeen => (_outsideClose?.Seen ?? 0) > 0;
+
+    /// <summary>
+    /// A polite close from outside reached one of our windows (see <see cref="AppLifecycle.ThreadCloseWatcher"/>
+    /// for why "one of", not "the main one"). Once the main window is wired this is the tray's quit
+    /// path. Before that it ends the startup dialog that is open, and the check after that dialog's
+    /// ShowDialog abandons startup; calling Shutdown from here instead would let OnStartup run on and
+    /// build windows for an application that is already shutting down.
+    /// </summary>
+    private void OnOutsideClose()
+    {
+        if (IsShuttingDown)
+        {
+            return;
+        }
+
+        if (_quitForOutsideClose is { } quit)
+        {
+            quit();
+            return;
+        }
+
+        _log?.LogInformation("An outside close request arrived during startup.");
+        try { _openStartupDialog?.Close(); }
+        catch (InvalidOperationException) { /* already closing: the check after ShowDialog still runs */ }
+    }
+
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
     {
         _lastExit?.RecordSessionEnding(e.ReasonSessionEnding.ToString());
@@ -3593,6 +3666,7 @@ public partial class App : Application
             try
             {
                 _orphanSweeper?.Dispose();
+                _outsideClose?.Dispose();
                 _orphanSweeper = null;
             }
             catch (Exception ex)
