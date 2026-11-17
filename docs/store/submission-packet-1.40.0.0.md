@@ -279,7 +279,7 @@ rating line on a real Store install, and the 75/100/180 caps on a live client.
 
 ## 8. Shipped
 
-**Submitted for the owner's two pages; not committed.** Filled in as each step happens. Times are CST, 2026-11-17.
+**Committed and in the Store's hands.** Filled in as each step happens. Times are CST, 2026-11-17.
 
 | Step | When | Evidence |
 |---|---|---|
@@ -287,8 +287,8 @@ rating line on a real Store install, and the 75/100/180 caps on a live client.
 | Translation verifier and listing verifier | 13:32 app strings approved, 102 of 102; 14:24 listing re-verified after the French fixes | section 7; `5e0e751`, `8d74ab4` |
 | PR merged | 13:33 #295 (code), `db8f3ec`; 14:35 #296 (documents and stamp), `28c8f9a` | All four CI checks green on each head |
 | Store submission created and verified | 14:36, on the owner's word ("do the store write once 296 is merged") | Submission `1152921505702432520`, `PendingCommit`. `apply`: 20 fields written and read back (description and releaseNotes, ten listings). `captions`: already matched. `verify`: 180 fields and captions ok. Console pinned at `8d74ab4`, whose listing files are identical to main's |
-| Owner's two pages (packages, reviewer letter) | | |
-| Committed | | |
+| Owner's two pages (packages, reviewer letter) | 14:42 ("my side is done") | A verify straight after read 180 of 180 fields and captions still matching, `PendingCommit`: the text survived the visit |
+| Committed | 14:43:42, from the console, on the owner's word | `commit` returned `CommitStarted` |
 | Certified | | |
 | Tag pushed, GitHub release drafted | | |
 | Live on the Store | | |
