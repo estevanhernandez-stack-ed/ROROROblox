@@ -1,0 +1,223 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "dataset": "app-ui-strings",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "c8f6ae3",
+  "generatedUtc": "2026-11-17T19:24:01+00:00",
+  "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
+  "fields": [
+    {
+      "field": "Shortcut_AddAccount",
+      "en": "Add account",
+      "translations": {
+        "fr": "Ajouter un compte",
+        "de": "Konto hinzufügen",
+        "ru": "Добавить аккаунт",
+        "pt-br": "Adicionar conta",
+        "pl": "Dodaj konto",
+        "es": "Añadir cuenta"
+      }
+    },
+    {
+      "field": "Shortcut_LaunchMultiple",
+      "en": "Launch multiple",
+      "translations": {
+        "fr": "Lancer plusieurs",
+        "de": "Mehrere starten",
+        "ru": "Запустить несколько",
+        "pt-br": "Iniciar vários",
+        "pl": "Uruchom wiele",
+        "es": "Iniciar varias"
+      }
+    },
+    {
+      "field": "Shortcut_SquadLaunch",
+      "en": "Squad Launch",
+      "translations": {
+        "fr": "Squad Launch",
+        "de": "Squad Launch",
+        "ru": "Squad Launch",
+        "pt-br": "Squad Launch",
+        "pl": "Squad Launch",
+        "es": "Squad Launch"
+      }
+    },
+    {
+      "field": "Shortcut_FilterAccounts",
+      "en": "Filter accounts",
+      "translations": {
+        "fr": "Filtrer les comptes",
+        "de": "Konten filtern",
+        "ru": "Фильтр аккаунтов",
+        "pt-br": "Filtrar contas",
+        "pl": "Filtruj konta",
+        "es": "Filtrar cuentas"
+      }
+    },
+    {
+      "field": "Shortcut_Library",
+      "en": "Library",
+      "translations": {
+        "fr": "Bibliothèque",
+        "de": "Bibliothek",
+        "ru": "Библиотека",
+        "pt-br": "Biblioteca",
+        "pl": "Biblioteka",
+        "es": "Biblioteca"
+      }
+    },
+    {
+      "field": "Shortcut_Settings",
+      "en": "Settings",
+      "translations": {
+        "fr": "Paramètres",
+        "de": "Einstellungen",
+        "ru": "Настройки",
+        "pt-br": "Configurações",
+        "pl": "Ustawienia",
+        "es": "Ajustes"
+      }
+    },
+    {
+      "field": "Shortcut_History",
+      "en": "History",
+      "translations": {
+        "fr": "Historique",
+        "de": "Verlauf",
+        "ru": "История",
+        "pt-br": "Histórico",
+        "pl": "Historia",
+        "es": "Historial"
+      }
+    },
+    {
+      "field": "Shortcut_Diagnostics",
+      "en": "Diagnostics",
+      "translations": {
+        "fr": "Diagnostics",
+        "de": "Diagnose",
+        "ru": "Диагностика",
+        "pt-br": "Diagnóstico",
+        "pl": "Diagnostyka",
+        "es": "Diagnóstico"
+      }
+    },
+    {
+      "field": "Shortcut_Plugins",
+      "en": "Plugins",
+      "translations": {
+        "fr": "Plugins",
+        "de": "Plugins",
+        "ru": "Плагины",
+        "pt-br": "Plugins",
+        "pl": "Wtyczki",
+        "es": "Plugins"
+      }
+    },
+    {
+      "field": "Shortcut_KeyboardShortcutsList",
+      "en": "Keyboard shortcuts (this list)",
+      "translations": {
+        "fr": "Raccourcis clavier (cette liste)",
+        "de": "Tastenkürzel (diese Liste)",
+        "ru": "Сочетания клавиш (этот список)",
+        "pt-br": "Atalhos de teclado (esta lista)",
+        "pl": "Skróty klawiszowe (ta lista)",
+        "es": "Atajos de teclado (esta lista)"
+      }
+    },
+    {
+      "field": "Shell_Msg_AccountsNotRead",
+      "en": "Your saved accounts couldn't be read this time. The file wasn't changed. Restart RoRoRo to try again.",
+      "translations": {
+        "fr": "Vos comptes enregistrés n'ont pas pu être lus cette fois. Le fichier n'a pas été modifié. Redémarrez RoRoRo pour réessayer.",
+        "de": "Deine gespeicherten Konten ließen sich dieses Mal nicht lesen. Die Datei wurde nicht verändert. Starte RoRoRo neu, um es erneut zu versuchen.",
+        "ru": "В этот раз не удалось прочитать сохранённые аккаунты. Файл не изменён. Перезапустите RoRoRo, чтобы попробовать снова.",
+        "pt-br": "Não foi possível ler suas contas salvas desta vez. O arquivo não foi alterado. Reinicie o RoRoRo para tentar de novo.",
+        "pl": "Tym razem nie udało się odczytać Twoich zapisanych kont. Plik nie został zmieniony. Uruchom RoRoRo ponownie, aby spróbować jeszcze raz.",
+        "es": "Esta vez no se pudieron leer tus cuentas guardadas. El archivo no se modificó. Reinicia RoRoRo para intentarlo de nuevo."
+      }
+    },
+    {
+      "field": "DpapiCorruptWindow_CouldNotSetAside",
+      "en": "Couldn't set aside {0}. Close any program that has it open, then try Start Fresh again. Nothing was deleted.",
+      "translations": {
+        "fr": "Impossible de mettre {0} de côté. Fermez tout programme qui l'a ouvert, puis réessayez « Repartir de zéro ». Rien n'a été supprimé.",
+        "de": "{0} ließ sich nicht beiseitelegen. Schließe jedes Programm, das die Datei geöffnet hat, und versuche es mit „Neu beginnen“ erneut. Es wurde nichts gelöscht.",
+        "ru": "Не удалось отложить файл {0}. Закройте все программы, которые его используют, и снова нажмите «Начать заново». Ничего не удалено.",
+        "pt-br": "Não foi possível separar {0}. Feche qualquer programa que esteja com ele aberto e tente “Começar do zero” de novo. Nada foi apagado.",
+        "pl": "Nie udało się odłożyć pliku {0} na bok. Zamknij każdy program, który go używa, i spróbuj ponownie kliknąć „Zacznij od nowa”. Nic nie zostało usunięte.",
+        "es": "No se pudo apartar {0}. Cierra cualquier programa que lo tenga abierto y vuelve a probar con «Empezar de cero». No se borró nada."
+      }
+    },
+    {
+      "field": "MainWindow_UpdateAvailable",
+      "en": "Update available",
+      "translations": {
+        "fr": "Mise à jour disponible",
+        "de": "Update verfügbar",
+        "ru": "Доступно обновление",
+        "pt-br": "Atualização disponível",
+        "pl": "Dostępna aktualizacja",
+        "es": "Actualización disponible"
+      }
+    },
+    {
+      "field": "MainWindow_UpdateQuitToUpdate",
+      "en": "Quit to update",
+      "translations": {
+        "fr": "Quitter pour mettre à jour",
+        "de": "Zum Update beenden",
+        "ru": "Выйти и обновить",
+        "pt-br": "Sair para atualizar",
+        "pl": "Zakończ i zaktualizuj",
+        "es": "Salir para actualizar"
+      }
+    },
+    {
+      "field": "MainWindow_UpdateStoreTooltip",
+      "en": "Opens RoRoRo in the Microsoft Store, where you can install the new version.",
+      "translations": {
+        "fr": "Ouvre RoRoRo dans le Microsoft Store, où vous pouvez installer la nouvelle version.",
+        "de": "Öffnet RoRoRo im Microsoft Store, wo du die neue Version installieren kannst.",
+        "ru": "Открывает RoRoRo в Microsoft Store, где можно установить новую версию.",
+        "pt-br": "Abre o RoRoRo na Microsoft Store, onde você pode instalar a nova versão.",
+        "pl": "Otwiera RoRoRo w Microsoft Store, gdzie możesz zainstalować nową wersję.",
+        "es": "Abre RoRoRo en Microsoft Store, donde puedes instalar la nueva versión."
+      }
+    },
+    {
+      "field": "MainWindow_UpdateStagedTooltip",
+      "en": "RoRoRo {0} is downloaded. Quit RoRoRo and open it again to finish updating. Click to quit now.",
+      "translations": {
+        "fr": "RoRoRo {0} est téléchargé. Quittez RoRoRo et rouvrez-le pour terminer la mise à jour. Cliquez pour quitter maintenant.",
+        "de": "RoRoRo {0} ist heruntergeladen. Beende RoRoRo und öffne es erneut, um das Update abzuschließen. Klicke, um jetzt zu beenden.",
+        "ru": "RoRoRo {0} загружен. Закройте RoRoRo и откройте его снова, чтобы завершить обновление. Нажмите, чтобы выйти сейчас.",
+        "pt-br": "O RoRoRo {0} foi baixado. Saia do RoRoRo e abra-o de novo para concluir a atualização. Clique para sair agora.",
+        "pl": "RoRoRo {0} jest pobrany. Zakończ RoRoRo i otwórz go ponownie, aby dokończyć aktualizację. Kliknij, aby zakończyć teraz.",
+        "es": "RoRoRo {0} está descargado. Sal de RoRoRo y vuelve a abrirlo para terminar la actualización. Haz clic para salir ahora."
+      }
+    },
+    {
+      "field": "MainWindow_UpdateStagedTooltipNoVersion",
+      "en": "The new version is downloaded. Quit RoRoRo and open it again to finish updating. Click to quit now.",
+      "translations": {
+        "fr": "La nouvelle version est téléchargée. Quittez RoRoRo et rouvrez-le pour terminer la mise à jour. Cliquez pour quitter maintenant.",
+        "de": "Die neue Version ist heruntergeladen. Beende RoRoRo und öffne es erneut, um das Update abzuschließen. Klicke, um jetzt zu beenden.",
+        "ru": "Новая версия загружена. Закройте RoRoRo и откройте его снова, чтобы завершить обновление. Нажмите, чтобы выйти сейчас.",
+        "pt-br": "A nova versão foi baixada. Saia do RoRoRo e abra-o de novo para concluir a atualização. Clique para sair agora.",
+        "pl": "Nowa wersja jest pobrana. Zakończ RoRoRo i otwórz go ponownie, aby dokończyć aktualizację. Kliknij, aby zakończyć teraz.",
+        "es": "La nueva versión está descargada. Sal de RoRoRo y vuelve a abrirlo para terminar la actualización. Haz clic para salir ahora."
+      }
+    }
+  ]
+}
