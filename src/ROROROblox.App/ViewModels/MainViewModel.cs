@@ -2079,7 +2079,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             switch (result)
             {
                 case LaunchResult.Started started:
-                    await _accountStore.TouchLastLaunchedAsync(summary.Id);
+                    // The client is already running, so a failed "last launched" stamp must not turn
+                    // into a failed launch (and skip the tracker below): log it and carry on.
+                    try
+                    {
+                        await _accountStore.TouchLastLaunchedAsync(summary.Id);
+                    }
+                    catch (Exception touchEx)
+                    {
+                        _log.LogWarning(touchEx, "Couldn't stamp last-launched for {AccountId}; the launch itself went through.", summary.Id);
+                    }
                     summary.StampLaunched(DateTimeOffset.UtcNow);
                     summary.SessionExpired = false;
                     summary.SessionNeedsVerification = false; // a launch that starts proves the challenge is behind us
@@ -2139,6 +2148,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 default:
                     return 0;
             }
+        }
+        catch (Exception ex)
+        {
+            // Every caller of this method ends here, and two of them (the follow chip and the
+            // pasted-link modal) run from async void handlers where an escaping exception ends the
+            // app (App.xaml.cs leaves DispatcherUnhandledException unhandled on purpose). The Launch
+            // button's RelayCommand swallowed the same exception with no log and left the row on
+            // "Launching...". Same row status a failed auth-ticket launch already uses; 0 = not started.
+            _log.LogWarning(ex, "Launch failed for account {AccountId} before the client started.", summary.Id);
+            // The row gets the exception's TYPE, never its message (the v1.38 rule): a store failure's
+            // message carries a file path with the Windows user name in it, and a row is on screen
+            // for anyone watching a stream. The whole exception is in the log line above.
+            summary.StatusText = CoreMessageCatalog.For(new LaunchResult.Failed(LaunchFailureKind.AuthTicketFailed, ex.GetType().Name));
+            return 0;
         }
         finally
         {
