@@ -279,14 +279,14 @@ rating line on a real Store install, and the 75/100/180 caps on a live client.
 
 ## 8. Shipped
 
-**Nothing has shipped.** Filled in as each step happens.
+**Submitted for the owner's two pages; not committed.** Filled in as each step happens. Times are CST, 2026-11-17.
 
 | Step | When | Evidence |
 |---|---|---|
-| Version confirmed and stamped | | |
-| Translation verifier and listing verifier | | |
-| PR merged | | |
-| Store submission created and verified | | |
+| Version confirmed and stamped | 13:31 confirmed ("1.40.0.0 it is"); 14:08 stamped and built | `7ab45c7`; packages in section 6 |
+| Translation verifier and listing verifier | 13:32 app strings approved, 102 of 102; 14:24 listing re-verified after the French fixes | section 7; `5e0e751`, `8d74ab4` |
+| PR merged | 13:33 #295 (code), `db8f3ec`; 14:35 #296 (documents and stamp), `28c8f9a` | All four CI checks green on each head |
+| Store submission created and verified | 14:36, on the owner's word ("do the store write once 296 is merged") | Submission `1152921505702432520`, `PendingCommit`. `apply`: 20 fields written and read back (description and releaseNotes, ten listings). `captions`: already matched. `verify`: 180 fields and captions ok. Console pinned at `8d74ab4`, whose listing files are identical to main's |
 | Owner's two pages (packages, reviewer letter) | | |
 | Committed | | |
 | Certified | | |
