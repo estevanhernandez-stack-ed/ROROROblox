@@ -1288,3 +1288,15 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **What would revisit it:** a number format found with the same fault; `N0` and `F1` formats were out of scope.
 
 **Evidence:** `DisplayDateTests`; commit `34d1986`.
+
+### 2026-11-17 — An update button, and the Store is asked directly
+
+**Context:** The in-app update check runs only on the direct-download build: on a packaged build Velopack reports not-installed and the check returns, so a Store user had no in-app sign that an update exists, and the direct-download build downloads and stages silently. A running app holds a Store update back. The owner's own Store install was still 1.38.0.0 a day after 1.39.0.0 published.
+
+**Decision:** A button in the main window's header, at the left of the button group, shown only while an update is waiting. The owner chose three things: a Store install asks the Store API (`StoreContext.GetAppAndOptionalStorePackageUpdatesAsync`) rather than reading a version from the signed feed that would have to be bumped by hand after every Store publish; the header rather than a banner strip or the status bar; and the same release as the stability fixes, because only versions that contain the button can ever show it. Under those: the Store button opens RoRoRo's page in the Microsoft Store and does not install in place, since the URI launch can be tested now and an in-place install cannot; the direct-download build shows the same button once an update is staged, labelled "Quit to update", and the click takes the tray's quit path; the Store is asked after startup and every six hours, because the case that prompted this is an app left running for days.
+
+**Consequences:** One new network call, made by Windows on a Store install, listed in `docs/PRIVACY.md` and owed to the reviewer letter. The Store call cannot be exercised before release: it needs a Store-installed build, and the sideload package cannot be installed beside the Store one. If it fails there is no button, and a failed re-check keeps what was last seen. The direct-download tooltip says to quit and open RoRoRo again and does not say when the update installs: whether Velopack applies a staged update at exit or at the next start is still unmeasured. A direct-download build left running learns of an update only at its next start; re-running the staging call mid-session was left alone for the same reason. The corrupt-vault dialog's Quit now takes `RequestShutdown` too, since the view model has one quit seam.
+
+**What would revisit it:** the first Store release after this one, which is the live test: if the button does not appear for an update that is waiting, the probe is wrong. Once it is proven, installing in place through `RequestDownloadAndInstallStorePackageUpdatesAsync` is the natural next step.
+
+**Evidence:** `UpdateAvailabilityTests`, `StoreContextUpdateProbeTests`, `UpdateButtonViewModelTests`, `UpdateButtonRenderTests` (the header still clears the centre column in seven languages; worst case Spanish, 402 DIP against a 340 maximum); captures in `docs/cart-runs/2026-11-17-update-button/captures/`.

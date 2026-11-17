@@ -20,7 +20,7 @@ Branch `fix/stability-part-two`, attended. Item 1 is the build; item 2 is the or
   Verify: the full unit project and the harness. Make the probe's exception escape and see its test fail.
   Stop class: go
 
-- [ ] **2. Docs, a look at the captures, and a whole green suite**
+- [x] **2. Docs, a look at the captures, and a whole green suite**
   Spec ref: keystone; `docs/PRIVACY.md`; `docs/features.md`; `docs/decisions.md`
   What to build: The orchestrator reviews the captures against the placement the owner picked and puts them in front of him. `docs/PRIVACY.md`'s network table gains a Microsoft Store row (what is asked, when, and that it goes through Windows); the README's mirror of that table too if it has one. A `docs/decisions.md` entry (the three choices, why the button opens the Store, what cannot be tested before release). A `docs/features.md` row. The open-the-Store click is checked on a dev build as far as it can be: the URI opens the Store on RoRoRo's page. Size S.
   Acceptance: Done when `dotnet build ROROROblox.slnx -c Release` has 0 errors, `dotnet test ROROROblox.slnx -c Release --no-build` passes in full, and the report says what was and was not exercised.
