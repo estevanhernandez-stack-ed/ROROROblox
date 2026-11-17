@@ -239,7 +239,7 @@ presets, or a typed value. A few hours, and it is a reply worth sending to that 
     so whether the lost query outweighs the four gained ones is not known. Installs the week of
     11-08 ran 122 a day against 154 the week before; the weekday dip began on 11-09, three days
     before the rename went live, so it does not settle the question either. The owner held the name
-    on 2026-11-16; hold or revert is still his call.
+    on 2026-11-16, and held it again on 2026-11-17 with this read in front of him.
 13. **Listing languages.** Indonesia is 4.8% of acquisitions and Ukraine 1.8%, with no localized
     listing. Listing-only, per the standing rule that manifest languages need real UI
     localization.
