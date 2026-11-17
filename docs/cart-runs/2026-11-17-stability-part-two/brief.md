@@ -3,6 +3,8 @@
 ## Ask
 "do all 6", in answer to the six candidates listed for the next release on 2026-11-16 and again on 2026-11-17.
 
+Added mid-run, 2026-11-17 10:00: "can we fix those items not changed, but that need to?", in answer to the three things item 3's report said it had left alone. That is item 8.
+
 ## Source
 - **Kind:** a list the owner picked from, planned here
 - **Location:** `docs/cycles/2026-11-16-quality-and-stability/board.md` (row 4's open half, rows 8 and 9, the small items), `docs/cart-runs/2026-11-16-data-folder-override/report.md` (finding 2), and two dashboard tasks from 2026-11-03 (About shortcut list, Library dates).
@@ -15,6 +17,7 @@ The next release closes what v1.39 left open: one alert that never fires, one cl
 - A polite close from outside the process ends RoRoRo while a startup dialog is in front, and the dialog's own close button still behaves as it does today.
 - A failure on the follow-chip and pasted-link launch paths is logged and shown, and the app stays up.
 - A store file that parses but has the wrong shape no longer stops the app from starting.
+- One bad row in a store file costs that row and not the file; Start fresh on a damaged vault either works or says it could not; an account list left empty by a failed load says why.
 - A plugin's stop request for a client that has already exited returns cleanly.
 - The About page's shortcut list and the Library's older dates follow the UI language.
 - `dotnet build ROROROblox.slnx -c Release` has 0 errors and the full unit and harness suites pass.
