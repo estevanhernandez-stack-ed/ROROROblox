@@ -50,6 +50,10 @@ internal static class PluginCatalogParser
         var entries = new List<PluginCatalogEntry>(dtos.Count);
         foreach (var d in dtos)
         {
+            if (d is null)
+            {
+                continue; // a null row in the array is a damaged row like any other missing-field row
+            }
             // Required fields — an entry missing any of these can't be shown or installed, so drop it
             // rather than surface a half-broken row.
             if (string.IsNullOrWhiteSpace(d.Id) || string.IsNullOrWhiteSpace(d.Name)

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.Core;
 
@@ -21,19 +22,21 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
 
     private readonly string _filePath;
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
+    private readonly WrongShapeWarning _shape;
     private bool _disposed;
 
     public event EventHandler? DefaultChanged;
 
     public PrivateServerStore() : this(DefaultPath()) { }
 
-    public PrivateServerStore(string filePath)
+    public PrivateServerStore(string filePath, ILogger<PrivateServerStore>? log = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException("File path must not be empty.", nameof(filePath));
         }
         _filePath = filePath;
+        _shape = new WrongShapeWarning(log);
     }
 
     public static string DefaultPath()
@@ -309,8 +312,10 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
             // Pre-discriminator records always wrote what the user pasted into accessCode, but
             // users mostly pasted share URLs (linkCode), so legacy values default to LinkCode.
             var stored = JsonSerializer.Deserialize<StoredBlob>(bytes, JsonOptions);
-            if (stored is null)
+            if (stored is null || !StoreShape.ListOk(stored.Servers))
             {
+                // Null file, null list or a null row: parsed, but the wrong shape. Same as corrupt.
+                _shape.Report(_filePath, "empty");
                 return new PrivateServersBlob(Version: 1, Servers: []);
             }
 

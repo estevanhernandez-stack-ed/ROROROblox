@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.Core;
 
@@ -22,17 +23,19 @@ public sealed class SessionHistoryStore : ISessionHistoryStore, IDisposable
 
     private readonly string _filePath;
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
+    private readonly WrongShapeWarning _shape;
     private bool _disposed;
 
     public SessionHistoryStore() : this(DefaultPath()) { }
 
-    public SessionHistoryStore(string filePath)
+    public SessionHistoryStore(string filePath, ILogger<SessionHistoryStore>? log = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException("File path must not be empty.", nameof(filePath));
         }
         _filePath = filePath;
+        _shape = new WrongShapeWarning(log);
     }
 
     public static string DefaultPath()
@@ -194,7 +197,13 @@ public sealed class SessionHistoryStore : ISessionHistoryStore, IDisposable
         try
         {
             var blob = JsonSerializer.Deserialize<SessionsBlob>(bytes, JsonOptions);
-            return blob ?? new SessionsBlob(Version: 1, Sessions: []);
+            if (blob is not null && StoreShape.ListOk(blob.Sessions)
+                && blob.Sessions.All(s => s.AccountDisplayName is not null))
+            {
+                return blob;
+            }
+            _shape.Report(_filePath, "empty");
+            return new SessionsBlob(Version: 1, Sessions: []);
         }
         catch (JsonException)
         {

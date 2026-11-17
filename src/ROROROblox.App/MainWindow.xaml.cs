@@ -132,19 +132,12 @@ internal partial class MainWindow : FluentWindow
     {
         if (DataContext is MainViewModel vm)
         {
-            await vm.LoadAsync();
-
-            // v1.18 — compact mode is sticky. Restored after LoadAsync so the rows the compact
-            // strip renders already exist, and before the welcome dialog below, which blocks.
-            // The geometry follows for free: the restore raises IsCompact's change notification and
-            // OnViewModelPropertyChanged runs ApplyCompactState off it, the same path the status-bar
-            // toggle takes. The VM swallows a read failure, so this cannot stop the window loading.
-            await vm.RestoreCompactModeAsync();
-
-            // F-060. After the compact restore, which also moves the geometry — applying placement
-            // first would have it immediately overwritten. Same hook the compact restore already
-            // uses, so the two stay in one order rather than racing from two places.
-            if (await vm.LoadWindowPlacementAsync() is { } placement)
+            // LoadAsync, then the sticky compact-mode restore (v1.18), then the saved placement (F-060),
+            // in that order: the compact restore moves the geometry, so placement applied first would be
+            // overwritten, and the rows the compact strip renders must exist before it. RunStartupLoadAsync
+            // never throws (this handler is async void, so a throw would end the app on every start); a
+            // failed step is logged there and the window loads with what it has.
+            if (await vm.RunStartupLoadAsync() is { } placement)
             {
                 RestoreWindowPlacement(placement);
             }

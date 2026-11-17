@@ -1072,13 +1072,13 @@ public partial class App : Application
                 return tray;
             }));
         services.AddSingleton<IAppSettings>(_ => new AppSettings());
-        services.AddSingleton<IFavoriteGameStore>(_ => new FavoriteGameStore());
-        services.AddSingleton<IPrivateServerStore>(_ => new PrivateServerStore());
-        services.AddSingleton<ISessionStatsStore>(_ => new SessionStatsStore());
+        services.AddSingleton<IFavoriteGameStore>(sp => new FavoriteGameStore(FavoriteGameStore.DefaultPath(), sp.GetService<ILogger<FavoriteGameStore>>()));
+        services.AddSingleton<IPrivateServerStore>(sp => new PrivateServerStore(PrivateServerStore.DefaultPath(), sp.GetService<ILogger<PrivateServerStore>>()));
+        services.AddSingleton<ISessionStatsStore>(sp => new SessionStatsStore(SessionStatsStore.DefaultPath(), sp.GetService<ILogger<SessionStatsStore>>()));
         // The history store is WRAPPED rather than called alongside a stats service. Two call
         // sites that must agree forever is F-121's shape; one call path cannot drift from itself.
         services.AddSingleton<ISessionHistoryStore>(sp => new StatsRecordingSessionHistoryStore(
-            new SessionHistoryStore(),
+            new SessionHistoryStore(SessionHistoryStore.DefaultPath(), sp.GetService<ILogger<SessionHistoryStore>>()),
             sp.GetRequiredService<ISessionStatsStore>(),
             sp.GetService<ILogger<StatsRecordingSessionHistoryStore>>()));
         services.AddSingleton<IThemeStore>(_ => new ThemeStore());
@@ -1093,7 +1093,7 @@ public partial class App : Application
         // an unobserved Task exception.
         services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerNamePool>(_ => new ROROROblox.Core.StreamerMode.StreamerNamePool());
         services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerAvatarPool>(_ => new ROROROblox.Core.StreamerMode.StreamerAvatarPool());
-        services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerIdentityStore>(_ => new ROROROblox.Core.StreamerMode.FileStreamerIdentityStore());
+        services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerIdentityStore>(sp => new ROROROblox.Core.StreamerMode.FileStreamerIdentityStore(ROROROblox.Core.StreamerMode.FileStreamerIdentityStore.DefaultPath(), sp.GetService<ILogger<ROROROblox.Core.StreamerMode.FileStreamerIdentityStore>>()));
         services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(sp =>
         {
             var store = sp.GetRequiredService<IAccountStore>();
@@ -1473,7 +1473,7 @@ public partial class App : Application
         var pluginsRoot = ROROROblox.App.Plugins.PluginRegistry.DefaultPluginsRoot;
         var consentPath = ROROROblox.Core.AppDataRoot.Combine("consent.dat");
 
-        services.AddSingleton(_ => new ROROROblox.App.Plugins.ConsentStore(consentPath));
+        services.AddSingleton(sp => new ROROROblox.App.Plugins.ConsentStore(consentPath, sp.GetService<ILogger<ROROROblox.App.Plugins.ConsentStore>>()));
         services.AddSingleton(sp => new ROROROblox.App.Plugins.PluginRegistry(
             pluginsRoot,
             sp.GetRequiredService<ROROROblox.App.Plugins.ConsentStore>()));

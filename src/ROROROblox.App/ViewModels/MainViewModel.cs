@@ -1327,6 +1327,32 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>Completes when <see cref="AccountsLoaded"/> becomes true.</summary>
     public Task WhenAccountsLoaded => _accountsLoaded.Task;
 
+    /// <summary>
+    /// The whole startup load <c>MainWindow.OnLoaded</c> runs (rows, compact mode, saved placement), as one
+    /// call that never throws. <c>OnLoaded</c> is an <c>async void</c> handler, so an exception out of it
+    /// would reach the dispatcher and end the app on every start; this is where the handler's await ends
+    /// instead, and it is what a test can drive. Returns the saved window placement, or null.
+    /// </summary>
+    internal async Task<Core.WindowPlacement?> RunStartupLoadAsync()
+    {
+        try
+        {
+            await LoadAsync();
+
+            // v1.18 — compact mode is sticky. Restored after LoadAsync so the rows the compact
+            // strip renders already exist, and before the welcome dialog, which blocks.
+            await RestoreCompactModeAsync();
+
+            // F-060. After the compact restore, which also moves the geometry.
+            return await LoadWindowPlacementAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogError(ex, "Startup load failed ({ExceptionType}); the window opens as it is.", ex.GetType().Name);
+            return null;
+        }
+    }
+
     /// <summary>Loads accounts + games from disk. Called once at MainWindow load.</summary>
     public async Task LoadAsync()
     {
@@ -1362,6 +1388,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             ShowDpapiCorruptModal();
         }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Last line of defence: a store that fails in a way nobody planned (a wrong-shape file that
+            // slipped past its guard) must not stop the window loading. The list stays as it is, and
+            // nothing here can write it back: the account store is the only writer and every write it
+            // makes starts with its own fresh read, which fails the same way and aborts before any save
+            // (and AccountStore only overwrites its backup after a read it judged good). The view
+            // model holds no copy of the vault to persist.
+            _log.LogError(ex, "Loading the saved accounts failed ({ExceptionType}); the list stays empty for this session and the vault file is untouched.", ex.GetType().Name);
+        }
         finally
         {
             // After the rows are in, so a plugin released by this never reads a half-filled list.
@@ -1376,14 +1412,36 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // by InitializeBloxstrapWarningAsync) so it is guaranteed to land before the very first
         // RefreshFpsCapWarning() call below -- LoadAsync is genuinely awaited by MainWindow before
         // first paint, so this can't race the way a fire-and-forget ctor read could.
-        _dismissedFpsCapSignature = await _settings.GetDismissedFpsCapWarningSignatureAsync();
-        RefreshFpsCapWarning();
+        // Each read below is a preference or a list that costs a feature, not the window, when it fails.
+        try
+        {
+            _dismissedFpsCapSignature = await _settings.GetDismissedFpsCapWarningSignatureAsync();
+            RefreshFpsCapWarning();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogWarning(ex, "Reading the dismissed FPS-cap warning failed ({ExceptionType}); continuing with defaults.", ex.GetType().Name);
+        }
 
         // Same reasoning as the read above — awaited before first paint, so the rows never flash
         // the wrong Recycle visibility. Preferences writes both the setting and this flag.
-        AlwaysShowRecycle = await _settings.GetAlwaysShowRecycleAsync();
+        try
+        {
+            AlwaysShowRecycle = await _settings.GetAlwaysShowRecycleAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogWarning(ex, "Reading the always-show-Recycle preference failed ({ExceptionType}); continuing with defaults.", ex.GetType().Name);
+        }
 
-        await ReloadGamesAsync();
+        try
+        {
+            await ReloadGamesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogWarning(ex, "Loading the saved games failed ({ExceptionType}); the game list stays as it was.", ex.GetType().Name);
+        }
         OnPropertyChanged(nameof(MainAccount));
         OnPropertyChanged(nameof(CompactEmptyKind));
         OnPropertyChanged(nameof(CompactRows));
@@ -1397,7 +1455,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // backfill raises AccountUserIdResolved and ApplyUserIdResolved sets the live row's id (the
         // provider re-reads AccountsSnapshot every tick, but the backfill itself writes the store
         // only; the old "enter the poll snapshot automatically" was wrong until v1.36).
-        _presenceService.Start();
+        try
+        {
+            _presenceService.Start();
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Starting the presence poll failed ({ExceptionType}); presence stays off until the next load.", ex.GetType().Name);
+        }
     }
 
     private readonly SemaphoreSlim _reloadGamesGate = new(1, 1);

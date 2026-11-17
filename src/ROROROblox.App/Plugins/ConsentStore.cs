@@ -2,6 +2,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.App.Plugins;
 
@@ -21,9 +22,13 @@ public sealed class ConsentStore
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
     };
 
-    public ConsentStore(string filePath)
+    private readonly ILogger<ConsentStore>? _log;
+    private int _shapeReported;
+
+    public ConsentStore(string filePath, ILogger<ConsentStore>? log = null)
     {
         _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
+        _log = log;
     }
 
     public async Task<IReadOnlyList<ConsentRecord>> ListAsync()
@@ -77,6 +82,18 @@ public sealed class ConsentStore
             var list = JsonSerializer.Deserialize<List<ConsentRecord>>(decrypted, JsonOptions);
             if (list is null)
             {
+                return new Dictionary<string, ConsentRecord>();
+            }
+            // Parsed but the wrong shape (a null row, a null id or capability list, a repeated id): a null
+            // reaches ToDictionary or a reader and a repeat throws there, so treat it as the tampered
+            // case below, an empty list. Plugins ask for consent again.
+            if (list.Any(r => r is null || r.PluginId is null || r.GrantedCapabilities is null)
+                || list.Select(r => r.PluginId).Distinct(StringComparer.Ordinal).Count() != list.Count)
+            {
+                if (Interlocked.Exchange(ref _shapeReported, 1) == 0)
+                {
+                    _log?.LogWarning("{File} parsed but has the wrong shape; treating it as empty.", Path.GetFileName(_filePath));
+                }
                 return new Dictionary<string, ConsentRecord>();
             }
             return list.ToDictionary(r => r.PluginId, StringComparer.Ordinal);

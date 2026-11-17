@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.Core;
 
@@ -20,6 +21,7 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
 
     private readonly string _filePath;
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
+    private readonly WrongShapeWarning _shape;
     private bool _disposed;
 
     /// <inheritdoc />
@@ -27,13 +29,14 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
 
     public FavoriteGameStore() : this(DefaultPath()) { }
 
-    public FavoriteGameStore(string filePath)
+    public FavoriteGameStore(string filePath, ILogger<FavoriteGameStore>? log = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException("File path must not be empty.", nameof(filePath));
         }
         _filePath = filePath;
+        _shape = new WrongShapeWarning(log);
     }
 
     public static string DefaultPath()
@@ -274,8 +277,15 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
 
         try
         {
-            return JsonSerializer.Deserialize<FavoritesBlob>(bytes, JsonOptions)
-                ?? new FavoritesBlob(Version: 1, Favorites: []);
+            var blob = JsonSerializer.Deserialize<FavoritesBlob>(bytes, JsonOptions);
+            if (blob is not null && StoreShape.ListOk(blob.Favorites)
+                && blob.Favorites.All(f => f.Name is not null))
+            {
+                return blob;
+            }
+            // Parsed but the wrong shape (null list, null row, row without a name): same as corrupt.
+            _shape.Report(_filePath, "empty");
+            return new FavoritesBlob(Version: 1, Favorites: []);
         }
         catch (JsonException)
         {

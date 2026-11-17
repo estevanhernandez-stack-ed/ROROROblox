@@ -35,6 +35,7 @@ public sealed class GameIconCache : IGameIconCache
     private readonly HashSet<long> _attempted = [];
     private Dictionary<long, GameIconInfo>? _rows;
     private Func<long, bool>? _enqueue;
+    private readonly WrongShapeWarning _shape;
 
     public GameIconCache(IRobloxApi api, string? filePath = null, TimeProvider? time = null, ILogger<GameIconCache>? log = null)
     {
@@ -42,6 +43,7 @@ public sealed class GameIconCache : IGameIconCache
         _filePath = string.IsNullOrWhiteSpace(filePath) ? DefaultPath() : filePath;
         _time = time ?? TimeProvider.System;
         _log = log ?? NullLogger<GameIconCache>.Instance;
+        _shape = new WrongShapeWarning(_log);
     }
 
     public static string DefaultPath()
@@ -154,7 +156,13 @@ public sealed class GameIconCache : IGameIconCache
                 return [];
             }
             var blob = JsonSerializer.Deserialize<Blob>(bytes, JsonOptions);
-            return blob?.Games is { } games ? new Dictionary<long, GameIconInfo>(games) : [];
+            if (blob?.Games is { } games && StoreShape.MapOk(games))
+            {
+                return new Dictionary<long, GameIconInfo>(games);
+            }
+            // The literal null, a null map or a null row: a cache that cannot be trusted. Rebuild it.
+            _shape.Report(_filePath, "an empty icon cache");
+            return [];
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {

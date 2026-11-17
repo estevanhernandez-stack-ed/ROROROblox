@@ -929,7 +929,33 @@ public sealed class AccountStore : IAccountStore, IDisposable
         try
         {
             var blob = JsonSerializer.Deserialize<StoredAccountsBlob>(plaintext, SerializerOptions);
-            return new VaultRead(VaultReadStatus.Good, blob ?? new StoredAccountsBlob(Version: 1, Accounts: []));
+            // A vault that decrypts and parses but has the wrong shape (the literal null, a missing or null
+            // accounts list, a null row) is Damaged, never an empty store: an empty list read as Good would
+            // let the next save write over every saved account, and would let that empty file replace the
+            // backup. Damaged sends it to the backup, then to the corrupt path.
+            if (blob is null || !StoreShape.ListOk(blob.Accounts))
+            {
+                return new VaultRead(VaultReadStatus.Damaged, Error: new AccountStoreCorruptException("accounts.dat decrypted but its JSON shape is invalid."));
+            }
+
+            // A row with a missing name, avatar or cookie is a different case and is REPAIRED, not
+            // rejected. Rejecting it would turn a vault that opens today into the corrupt dialog for
+            // every account in it, to protect against one bad row. Empty strings are safe everywhere a
+            // null is not: a row with no cookie reads as signed out and asks to sign in again.
+            for (var i = 0; i < blob.Accounts.Count; i++)
+            {
+                var row = blob.Accounts[i];
+                if (row.DisplayName is null || row.Cookie is null || row.AvatarUrl is null)
+                {
+                    blob.Accounts[i] = row with
+                    {
+                        DisplayName = row.DisplayName ?? string.Empty,
+                        Cookie = row.Cookie ?? string.Empty,
+                        AvatarUrl = row.AvatarUrl ?? string.Empty,
+                    };
+                }
+            }
+            return new VaultRead(VaultReadStatus.Good, blob);
         }
         catch (JsonException ex)
         {

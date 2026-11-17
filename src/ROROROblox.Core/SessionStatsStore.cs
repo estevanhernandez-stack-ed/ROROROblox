@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.Core;
 
@@ -31,17 +32,19 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
 
     private readonly string _filePath;
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
+    private readonly WrongShapeWarning _shape;
     private bool _disposed;
 
     public SessionStatsStore() : this(DefaultPath()) { }
 
-    public SessionStatsStore(string filePath)
+    public SessionStatsStore(string filePath, ILogger<SessionStatsStore>? log = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException("File path must not be empty.", nameof(filePath));
         }
         _filePath = filePath;
+        _shape = new WrongShapeWarning(log);
     }
 
     public static string DefaultPath()
@@ -275,7 +278,16 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
             if (!File.Exists(_filePath)) return new Blob();
             var json = await File.ReadAllTextAsync(_filePath).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(json)) return new Blob();
-            return JsonSerializer.Deserialize<Blob>(json, JsonOptions) ?? new Blob();
+            var blob = JsonSerializer.Deserialize<Blob>(json, JsonOptions);
+            if (blob is not null
+                && StoreShape.MapOk(blob.Accounts) && StoreShape.MapOk(blob.Games)
+                && StoreShape.MapOk(blob.Days) && StoreShape.MapOk(blob.Months))
+            {
+                return blob;
+            }
+            // Parsed but the wrong shape (a null map or a null row): same as corrupt, start fresh.
+            _shape.Report(_filePath, "empty");
+            return new Blob();
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
