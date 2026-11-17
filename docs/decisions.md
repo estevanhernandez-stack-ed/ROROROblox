@@ -1216,3 +1216,75 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **What would revisit it:** a user-facing portable-data mode, which would need the privacy documents to move with it; or a need to run two builds side by side, which means renaming the pipe and the single-instance guard under the override.
 
 **Evidence:** `AppDataRootFenceTests`, `AppDataRootPathPinTests`, `AppDataRootDecisionTests`, `AppDataRootOverrideTests`, `AppDataRootProcessWideTests`, `ProgramDataRootCallOrderTests`, `DataRootMarkerTests`, `DataRootRegistrationGuardTests`; three live runs recorded in `docs/cart-runs/2026-11-16-data-folder-override/report.md` (0 differences across the real folder's 1,679 files and the registry values, from two exe paths); commits `b82c936`, `6550166`, `09673ab`.
+
+### 2026-11-17 — A launch that fails before the client starts stays on the row
+
+**Context:** `LaunchAccountAsync` was try/finally with no catch. The follow chip and the pasted-link modal reach it from `async void` handlers, and `DispatcherUnhandledException` is left unhandled on purpose, so an exception there ended the app. The board had this as plausible (row 8). A test with a store that throws on the cookie read showed the exception escaping both paths.
+
+**Decision:** One catch where the paths converge, not a try in each handler. The failure is logged and the row carries the failed-launch sentence with the exception's **type**, never its message: a store error's message names a path under the user's profile, a row is on screen for anyone watching a stream, and v1.38 already set the rule that a row names a failure by kind. A failed last-launched stamp after the client has started is logged and is not a failed launch.
+
+**Consequences:** The Launch button is fixed too: `RelayCommand` used to swallow the same exception with no log and leave the row on "Launching...". Every caller (recycle, squad, plugins, auto-rejoin) now gets pid 0 instead of an exception. The sentence says it could not sign the account in, which is loose for a disk error.
+
+**What would revisit it:** a second kind of pre-launch failure common enough to deserve its own sentence in seven languages.
+
+**Evidence:** `MainViewModelLaunchFailureContainmentTests` (three fail on the old code); commit `a43ca8a`.
+
+### 2026-11-17 — A store file with the wrong shape is a corrupt file, and the vault is the exception
+
+**Context:** `System.Text.Json` accepts `{"version":1}` and leaves a null list. Favorites, private servers, session history, session stats, the plugin consent store and the plugin catalog then threw on load, and `MainWindow.OnLoaded` awaited the load with no try: a crash on every start until the file was found and deleted (board row 9). Measured on the old code, 39 of 131 table rows failed.
+
+**Decision:** A non-vault store checks its parsed blob (`StoreShape`) and treats a wrong shape as it treats an unparseable file. A file with a usable container keeps its good rows and drops the bad ones, warning once with the count; a file with no container reads as empty. The vault follows a different rule. A decrypted `accounts.dat` that is null, has no list or has a null row is Damaged: it goes to the backup and then to the corrupt path, never to an empty list. The literal `null` used to read as a good empty vault, which the next save would have written over the backup. A row with a missing name, avatar or cookie is repaired to empty strings instead of rejected: rejecting it would put every account in a vault that opens today behind the corrupt dialog, or roll the vault back one save where a backup exists, to guard against one bad row. The window's load is one call that cannot throw.
+
+**Consequences:** A dropped plugin-consent row means that plugin asks again, the safe direction; a repeated consent id drops both rows. A repaired account row reads as signed out. An unplanned account-store failure leaves the list empty for the session with the vault untouched, and the window says so (`Shell_Msg_AccountsNotRead`); the first-run tour does not open over it. A row of the wrong JSON type still makes its file unparseable.
+
+**What would revisit it:** a report of a vault that opened before this and shows the corrupt dialog after it.
+
+**Evidence:** `StoreWrongShapeTests`, `StoreSalvageTests`, `AccountStoreWrongShapeTests`, `MainViewModelStartupLoadTests`, `AccountsLoadFailedNoticeTests`; commits `295082f`, `76205d7`.
+
+### 2026-11-17 — Start fresh looks before it resets
+
+**Context:** The corrupt dialog's Start fresh renamed `accounts.dat` aside and swallowed a failed rename, on the assumption that the next add would overwrite the file. v1.39 made every vault write read first, so with the damaged file still in place the next add threw again and the dialog returned on every start. Measured: with the file held open, list and add threw until the app was restarted with the file free. Also measured: a read that fails on I/O throws the corrupt exception without trying the backup, so the dialog can appear over a healthy vault that a scanner or a sync tool is holding for a moment.
+
+**Decision:** `AccountStore.StartFreshAsync` first runs the store's ordinary load, backup rule included. If that succeeds, nothing is set aside and the window shows the accounts. Only a store that still cannot be read is reset: the backup, then the main file, are renamed to `<name>.corrupt-<time>` beside the vault, never deleted, the backup put back if the main file refuses, and every failure reported. The dialog stays open and names the file it could not move.
+
+**Consequences:** Two set-aside names can now exist in the data folder, `accounts.dat.corrupt-<time>` (the old dialog already made it) and `accounts.dat.bak.corrupt-<time>`; both hold encrypted session cookies and are in `docs/PRIVACY.md`. A lock on the vault at startup still shows the corrupt dialog, whose text blames a Windows restore; it is no longer dangerous, and the wording is still wrong for that case.
+
+**What would revisit it:** making an I/O failure at load a retry instead of the corrupt dialog, which needs new wording in seven languages.
+
+**Evidence:** `AccountStoreStartFreshTests` (real DPAPI, real files, a file held open); `MainViewModelStartupLoadTests.AfterStartFresh_*`; commit `76205d7`.
+
+### 2026-11-17 — An expired account's drop is raised from the process exit
+
+**Context:** The dropped-out alert was raised only where presence and the process agree an account is gone. An account whose session expired (401) or was rate-limited (403) is out of the presence poll, so when its client later exited the close was stamped and nobody was told. This is the half of the 2026-11-16 expiry entry that did not ship in v1.39.
+
+**Decision:** For those accounts the process exit raises `AccountDroppedOut` itself, at once, through the same routing, cadence, text and user-asked-for-it suppression. No respawn deferral: the bootstrapper's kill-and-respawn follows a launch within seconds, launching needs a live cookie, the tracker never re-attaches a respawned pid so there is nothing to wait on, and a relaunch is already filtered as Superseded. The game name is remembered at the moment presence is lost, for the alert only; the row still clears. A Windows shutdown or logoff marks every close as expected (`App.OnSessionEnding` calls `ExpectCloseForAll`), because that stamp lapses after a minute where a shutting-down flag would stay set through a cancelled shutdown.
+
+**Consequences:** No new setting and no new string. An account whose cookie dies within seconds of launch, with a respawn in that window, could alert once. After a cancelled Windows shutdown a real drop inside that minute is silent and any auto-rejoin owed at that moment is dropped.
+
+**What would revisit it:** a false dropped-out alert reported right after launching an account whose cookie was already failing.
+
+**Evidence:** `ExpiredAccountDropOutAlertTests` (four fail with the raise removed); commit `f72ba48`.
+
+### 2026-11-17 — An outside close is a matter for the thread, not the window
+
+**Context:** The 2026-11-16 entry watched the main window for a posted `WM_CLOSE`. At startup that was not enough: a `taskkill` during the leftover-clients dialog read as "continue", and with the first-run tour up one `taskkill` did nothing. A probe measured why: `taskkill` posts to ONE window, an unowned top-level one, never an owned one, a visible one if there is any. Two live runs then showed which one is not the app's to choose. With the tour up the main window was not yet on screen, because the first-run load completes without yielding and the tour opened inside the Loaded event. With the main window shown first, the request went to a toast popup ahead of it in z-order, which closed.
+
+**Decision:** The rule moves from the window to the thread. `ThreadCloseWatcher` hooks `ComponentDispatcher.ThreadFilterMessage` for the UI thread, and any `WM_CLOSE` that comes off the queue is an outside close. Before the main window's quit path is wired it closes the open startup dialog, and a check after each `ShowDialog` and before the main window is built abandons startup; calling `Shutdown` from the callback would let `OnStartup` run on into an application that is shutting down. Afterwards it is the tray's quit path. The first-run tour opens after the main window is on screen.
+
+**Consequences:** The same inference as before (the app's own closes are sent, and `SC_CLOSE` from the taskbar or Alt+F4 turns into a sent `WM_CLOSE` and still hides to the tray), applied to more windows. A tool that posts `WM_CLOSE` to one of RoRoRo's dialogs (AutoHotkey `WinClose`, for one) now quits the app, as it already did for the main window. A close posted during a native modal loop is still not seen, nor one aimed at a window on another thread. A new user sees the main window first, with the tour over it.
+
+**What would revisit it:** a report of RoRoRo quitting when a helper tool closes one of its dialogs; or End task found to send something other than a posted `WM_CLOSE`, which is still unmeasured.
+
+**Evidence:** `ThreadCloseWatcherTests`, `StartupDialogExternalCloseTests`; live, 2026-11-17: one `taskkill` with the tour up had no effect on two earlier builds and exits in 0.39 s and 0.33 s on this one, while the tour's own close carries on to the main window (`docs/cart-runs/2026-11-17-stability-part-two/report.md`); commit `fc0c86e`.
+
+### 2026-11-17 — Dates on screen take the UI culture explicitly
+
+**Context:** `UiCulture.ApplyFromSettings` sets `CurrentUICulture` and the translation source, never `CurrentCulture`. A date formatted with a bare pattern therefore used the Windows regional culture: a French UI on an English-region PC showed "Nov 3". The About page's shortcut list carried English literals and read English in all six translated languages.
+
+**Decision:** `Localization/DisplayDate` formats with the UI culture and is the one way a date or time reaches the screen. The month-day form comes from each culture's `MonthDayPattern` with the month shortened, so order and connecting words follow the language ("3. Nov", "3 de nov") and English output is unchanged. `CurrentCulture` is not set globally: that would also change parsing and anything written to a file. Each shortcut description is a string key resolved when read, and the About page rebinds on a language switch; key names are not translated.
+
+**Consequences:** History's times follow the language's short time, so the six translated languages show 24-hour times. The Diagnostics clock (numeric, 24-hour) and dates in logs and file names are unchanged.
+
+**What would revisit it:** a number format found with the same fault; `N0` and `F1` formats were out of scope.
+
+**Evidence:** `DisplayDateTests`; commit `34d1986`.

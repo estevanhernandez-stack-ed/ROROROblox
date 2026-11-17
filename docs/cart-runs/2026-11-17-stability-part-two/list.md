@@ -55,7 +55,7 @@ Branch `fix/stability-part-two`, attended, one commit per item. Order is smalles
   Verify: the full unit project and the harness. Put the whole-file fallback back in one store and see its row fail; make the reset swallow a failed set-aside and see that test fail.
   Stop class: go
 
-- [ ] **7. A live run on a test folder, the docs, and a whole green suite**
+- [x] **7. A live run on a test folder, the docs, and a whole green suite**
   Spec ref: keystone > Build, test, run; `docs/decisions.md`; `docs/features.md`; the board
   What to build: The orchestrator runs the finished branch as a Release dev build under `RORORO_DATA_DIR` on an empty folder and records it: a clean start and exit, an outside close during the leftover or Welcome dialog ending the app (item 5's live check), and the About page and a wrong-shape store file where they can be exercised without an account. Then: `docs/decisions.md` entries for items 3, 4 and 5; `docs/features.md` rows touched by any item; the board's status table corrected (row 6 merged and seen live, rows 4, 8, 9 and the small item closed); keystone test counts. Size S.
   Acceptance: Done when the run is recorded in `report.md`, `dotnet build ROROROblox.slnx -c Release` has 0 errors, and `dotnet test ROROROblox.slnx -c Release --no-build` passes in full.
