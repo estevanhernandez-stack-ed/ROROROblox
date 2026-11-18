@@ -1,8 +1,8 @@
 # Submission packet — v1.40.0.0
 
-> **PREPARED, NOT SHIPPED.** Drafted 2026-11-17 on `release/1.40.0.0`. Nothing here has been
-> submitted, tagged, built or published, and the version is not stamped in the csproj or the manifest.
-> Sections 6 and 8 are empty on purpose and are filled as each step happens.
+> **SHIPPED 2026-11-18, both channels.** Live on the Store between 17:05:43 and 17:09:44 CST and
+> GitHub Latest at 17:27:40 CST; section 8 has every step and its evidence. Drafted 2026-11-17 on
+> `release/1.40.0.0`; this banner said "PREPARED, NOT SHIPPED" until then.
 
 Everything Partner Center asks for on this submission, in the order it asks. Certification last saw
 **v1.39.0.0**, so this is a single version's delta, measured `v1.39.0.0..f1d0eeb` on the release
@@ -279,7 +279,7 @@ rating line on a real Store install, and the 75/100/180 caps on a live client.
 
 ## 8. Shipped
 
-**Live on the Store.** The tag and the GitHub release are not done. Filled in as each step happens. Times are CST, 2026-11-17.
+**Shipped on both channels, 2026-11-18.** Times are CST, on 2026-11-17 unless the row names the date.
 
 | Step | When | Evidence |
 |---|---|---|
@@ -291,9 +291,9 @@ rating line on a real Store install, and the 75/100/180 caps on a live client.
 | Committed | 14:43:42, from the console, on the owner's word | `commit` returned `CommitStarted` |
 | In certification, packages confirmed | 14:47:29, about four minutes after the commit | Status `Certification`. The API now names `RORORO-Store-arm64-1.40.0.0.msix` and `RORORO-Store-x64-1.40.0.0.msix`, both `1.40.0.0`, `Uploaded`: the owner's upload, seen for the first time. 180 fields and captions still match |
 | Certified | 2026-11-18, before 17:03 CST; the exact time was not observed | The owner reported it published at 17:03. The status watcher from 2026-11-17 did not survive the session, so the moment certification passed is not on record. Committed 14:43 on 11-17, so certification plus the publish took at most about 26 hours |
-| Tag pushed, GitHub release drafted | | |
 | Live on the Store | 2026-11-18, between 17:05:43 and 17:09:44 CST | The public catalog served `626LabsLLC.RoRoRoBlox_1.39.0.0` at 17:05:43 and `1.40.0.0` (x64 and arm64) at 17:09:44. The API read `Certification` at 17:05 and `Published` at 17:10: it ran a few minutes behind the owner's Partner Center, as before |
-| GitHub release published as Latest | | |
+| Tag pushed, GitHub release drafted | 2026-11-18, 17:19:49, on the owner's word ("Push and publish") | Tag `v1.40.0.0` on `28c8f9a`. `release.yml` run `44419788454` finished green at 17:26:04 and drafted one release with 11 assets. The sideload MSIX (112,471,201 bytes) and the saved `dev-cert.cer` (832 bytes, thumbprint `8232F92D…`, the package's signer; not the stray in the repo root) were attached by hand, and the notes set from `release-notes-1.40.0.0.md`: 13 assets |
+| GitHub release published as Latest | 2026-11-18, 17:27:40 | `gh release list` reads Latest, the releases API names `v1.40.0.0` as the latest, and `releases/latest/download/roblox-compat.json` answers 200 |
 
 **Before the first row:** the update-button report's open items (the owner's look at the captures
 against the placement he picked), the PR for `fix/stability-part-two`, and the name-test decision

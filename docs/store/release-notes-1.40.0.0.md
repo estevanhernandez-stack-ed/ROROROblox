@@ -1,9 +1,9 @@
 # RoRoRo v1.40.0.0 — release notes
 
-> **PREPARED, NOT SHIPPED.** Drafted 2026-11-17 on `release/1.40.0.0` from `git diff v1.39.0.0..HEAD`
-> at `f1d0eeb`. The version is not stamped in the csproj or the manifest, nothing is tagged, nothing
-> is submitted to the Store. Do not paste the body below the `---` into a GitHub release until the
-> tag is pushed and the owner has said so.
+> **SHIPPED 2026-11-18, both channels.** Tag `v1.40.0.0` on `28c8f9a`; the body below the `---` is
+> the GitHub release's notes, published as Latest at 17:27 CST after the Store went live. Drafted
+> 2026-11-17 on `release/1.40.0.0` from `git diff v1.39.0.0..HEAD` at `f1d0eeb`; this banner said
+> "PREPARED, NOT SHIPPED" until then.
 >
 > **Edit log.** A MINOR bump from 1.39.0.0: the release adds something a user can see and click (the
 > update button) on top of the stability fixes, and two more things a user may rely on (an outside

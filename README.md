@@ -38,13 +38,13 @@ Building your own? Start at [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR
 
 ---
 
-## Next up: v1.40 (prepared, not released yet)
+## What's new in v1.40
 
-v1.40.0.0 is written up and not published: the Store edition and the direct download are both still on **v1.39.0.0**. When it ships, this is what it holds.
+The Store edition and the direct download are both on **v1.40.0.0** (2026-11-18). The [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version.
 
 **An Update available button.** On a Store install, RoRoRo asks the Microsoft Store (through Windows) whether an update is waiting, after it starts and every six hours, and the button opens RoRoRo's Store page. It tells you about the next update, not the one that brings it. On the direct download it reads Quit to update once an update is downloaded: quit RoRoRo and open it again.
 
-**Damaged files no longer stop RoRoRo from starting.** A damaged saved-games, private-servers, history or stats file is read around, and a damaged accounts file goes to its backup, never to an empty list. Start Fresh checks again first and only sets the file aside, never deletes it.
+**Damaged files no longer stop RoRoRo from starting.** A damaged saved-games, private-servers, history or stats file is read around, and a damaged accounts file is restored from its backup and is never read as empty. Start Fresh checks again first and only sets the file aside, never deletes it.
 
 **Quitting is quicker,** and another program asking RoRoRo to close now works during startup too.
 
@@ -52,9 +52,9 @@ v1.40.0.0 is written up and not published: the Store edition and the direct down
 
 ---
 
-## What's new in v1.39
+## In v1.39
 
-The Store edition and the direct download are both on **v1.39.0.0** (2026-11-16). The [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version.
+Shipped 2026-11-16.
 
 **Your saved accounts have a backup.** RoRoRo keeps the previous good copy of the accounts file beside it, encrypted the same way, and repairs itself from it if the file is ever damaged, by a power cut for example. Removing an account removes it from the backup too.
 

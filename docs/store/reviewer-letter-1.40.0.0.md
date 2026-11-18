@@ -1,7 +1,8 @@
 # Notes for certification — reviewer letter (v1.40.0.0)
 
-> **PREPARED, NOT SHIPPED.** Drafted 2026-11-17 on `release/1.40.0.0`. Nothing is submitted. Re-run
-> the manifest check after the version stamp and before pasting.
+> **SUBMITTED 2026-11-17, CERTIFIED AND PUBLISHED 2026-11-18.** The owner pasted this letter into
+> Partner Center before the 14:43 CST commit, and certification passed with no report. Drafted
+> 2026-11-17 on `release/1.40.0.0`; this banner said "PREPARED, NOT SHIPPED" until then.
 >
 > Paste the block below the `---` marker, from the greeting to `support@626labs.dev`, into Partner
 > Center. The same text, paste-ready and already plain, is `reviewer-letter-1.40.0.0.paste.txt`.
