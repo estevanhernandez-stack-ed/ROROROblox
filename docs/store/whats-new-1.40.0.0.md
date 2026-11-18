@@ -5,8 +5,9 @@
 > language listing. (Since v1.28 the rows go in through the listing console instead; the blocks are the
 > same either way.)
 >
-> **PREPARED, NOT SHIPPED.** Drafted 2026-11-17 on `release/1.40.0.0`. Nothing here has been
-> submitted, and the version is not stamped.
+> **SHIPPED 2026-11-18.** These seven blocks are the What's new text live on the Store, written by
+> the listing console on 2026-11-17 and read back. Drafted 2026-11-17 on `release/1.40.0.0`; this
+> banner said "PREPARED, NOT SHIPPED" until the release published.
 >
 > **Written for someone on the v1.39 Store install.** Single-version delta, five bullets. The update
 > button leads because it is the one new thing a user can see and use. The damaged-file and Start Fresh
@@ -42,7 +43,8 @@
 >
 > **The two closing paragraphs are v1.36's, unchanged, in every language** (checked by script against
 > the v1.39 blocks). They passed the listing verifier at v1.36 through v1.39; only the headline and
-> the five bullets are new text, and they are **not yet through the listing verifier**.
+> the five bullets are new text. They went through the listing verifier on 2026-11-17 (packet,
+> section 7): only Rule 3 findings, overruled by the owner as at v1.36 to v1.39.
 >
 > Register follows each existing sheet: **vous** in French, **вы** in Russian, **du** in German,
 > informal elsewhere. Product nouns stay English and undeclined: RoRoRo, Roblox, Microsoft Store.

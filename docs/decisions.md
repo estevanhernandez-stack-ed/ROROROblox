@@ -1300,3 +1300,15 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **What would revisit it:** the first Store release after this one, which is the live test: if the button does not appear for an update that is waiting, the probe is wrong. Once it is proven, installing in place through `RequestDownloadAndInstallStorePackageUpdatesAsync` is the natural next step.
 
 **Evidence:** `UpdateAvailabilityTests`, `StoreContextUpdateProbeTests`, `UpdateButtonViewModelTests`, `UpdateButtonRenderTests` (the header still clears the centre column in seven languages; worst case Spanish, 402 DIP against a 340 maximum); captures in `docs/cart-runs/2026-11-17-update-button/captures/`.
+
+### 2026-11-18 — v1.40.0.0 shipped on both channels; the Store went first and the tag waited
+
+**Context:** v1.40.0.0 (the update button and the second stability pass, PRs #295 and #296) was committed to the Store from the console at 14:43:42 CST on 2026-11-17. As since v1.31, the tag and the GitHub release were held until the Store accepted it, so the direct download never runs ahead of a build certification might reject.
+
+**Decision:** The owner reported the Store publish at 17:03 CST on 2026-11-18 and gave the word ("Push and publish"). Tag `v1.40.0.0` went onto `28c8f9a` at 17:19:49, `release.yml` drafted the release, the sideload MSIX and the saved `dev-cert.cer` (thumbprint `8232F92D…`) were attached, and the release was published as Latest at 17:27:40.
+
+**Consequences:** The update button's Store check is now on Store installs without ever having run on one. Commit to live took between 26 h 22 min and 26 h 26 min: with 19, 23 and about 25 hours on v1.36 to v1.38, v1.39's 36 minutes is the exception, and a release should budget a day for certification. The watcher that would have timed certification died with its session, so the moment it passed is not on record.
+
+**What would revisit it:** the next Store release. A machine still on 1.40 should show **Update available** once that release is live; if it does not, the probe is wrong and the fix ships in the release after.
+
+**Evidence:** `docs/store/submission-packet-1.40.0.0.md` section 8; `release.yml` run 44419788454; the public catalog read 1.39.0.0 at 17:05:43 and 1.40.0.0 at 17:09:44 CST.

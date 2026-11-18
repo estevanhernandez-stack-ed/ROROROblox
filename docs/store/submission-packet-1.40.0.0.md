@@ -1,8 +1,8 @@
 # Submission packet — v1.40.0.0
 
-> **PREPARED, NOT SHIPPED.** Drafted 2026-11-17 on `release/1.40.0.0`. Nothing here has been
-> submitted, tagged, built or published, and the version is not stamped in the csproj or the manifest.
-> Sections 6 and 8 are empty on purpose and are filled as each step happens.
+> **SHIPPED 2026-11-18, both channels.** Live on the Store between 17:05:43 and 17:09:44 CST and
+> GitHub Latest at 17:27:40 CST; section 8 has every step and its evidence. Drafted 2026-11-17 on
+> `release/1.40.0.0`; this banner said "PREPARED, NOT SHIPPED" until then.
 
 Everything Partner Center asks for on this submission, in the order it asks. Certification last saw
 **v1.39.0.0**, so this is a single version's delta, measured `v1.39.0.0..f1d0eeb` on the release
@@ -279,20 +279,21 @@ rating line on a real Store install, and the 75/100/180 caps on a live client.
 
 ## 8. Shipped
 
-**Nothing has shipped.** Filled in as each step happens.
+**Shipped on both channels, 2026-11-18.** Times are CST, on 2026-11-17 unless the row names the date.
 
 | Step | When | Evidence |
 |---|---|---|
-| Version confirmed and stamped | | |
-| Translation verifier and listing verifier | | |
-| PR merged | | |
-| Store submission created and verified | | |
-| Owner's two pages (packages, reviewer letter) | | |
-| Committed | | |
-| Certified | | |
-| Tag pushed, GitHub release drafted | | |
-| Live on the Store | | |
-| GitHub release published as Latest | | |
+| Version confirmed and stamped | 13:31 confirmed ("1.40.0.0 it is"); 14:08 stamped and built | `7ab45c7`; packages in section 6 |
+| Translation verifier and listing verifier | 13:32 app strings approved, 102 of 102; 14:24 listing re-verified after the French fixes | section 7; `5e0e751`, `8d74ab4` |
+| PR merged | 13:33 #295 (code), `db8f3ec`; 14:35 #296 (documents and stamp), `28c8f9a` | All four CI checks green on each head |
+| Store submission created and verified | 14:36, on the owner's word ("do the store write once 296 is merged") | Submission `1152921505702432520`, `PendingCommit`. `apply`: 20 fields written and read back (description and releaseNotes, ten listings). `captions`: already matched. `verify`: 180 fields and captions ok. Console pinned at `8d74ab4`, whose listing files are identical to main's |
+| Owner's two pages (packages, reviewer letter) | 14:42 ("my side is done") | A verify straight after read 180 of 180 fields and captions still matching, `PendingCommit`: the text survived the visit |
+| Committed | 14:43:42, from the console, on the owner's word | `commit` returned `CommitStarted` |
+| In certification, packages confirmed | 14:47:29, about four minutes after the commit | Status `Certification`. The API now names `RORORO-Store-arm64-1.40.0.0.msix` and `RORORO-Store-x64-1.40.0.0.msix`, both `1.40.0.0`, `Uploaded`: the owner's upload, seen for the first time. 180 fields and captions still match |
+| Certified | 2026-11-18, before 17:03 CST; the exact time was not observed | The owner reported it published at 17:03. The status watcher from 2026-11-17 did not survive the session, so the moment certification passed is not on record. Committed 14:43 on 11-17, so certification plus the publish took at most about 26 hours |
+| Live on the Store | 2026-11-18, between 17:05:43 and 17:09:44 CST | The public catalog served `626LabsLLC.RoRoRoBlox_1.39.0.0` at 17:05:43 and `1.40.0.0` (x64 and arm64) at 17:09:44. The API read `Certification` at 17:05 and `Published` at 17:10: it ran a few minutes behind the owner's Partner Center, as before |
+| Tag pushed, GitHub release drafted | 2026-11-18, 17:19:49, on the owner's word ("Push and publish") | Tag `v1.40.0.0` on `28c8f9a`. `release.yml` run `44419788454` finished green at 17:26:04 and drafted one release with 11 assets. The sideload MSIX (112,471,201 bytes) and the saved `dev-cert.cer` (832 bytes, thumbprint `8232F92D…`, the package's signer; not the stray in the repo root) were attached by hand, and the notes set from `release-notes-1.40.0.0.md`: 13 assets |
+| GitHub release published as Latest | 2026-11-18, 17:27:40 | `gh release list` reads Latest, the releases API names `v1.40.0.0` as the latest, and `releases/latest/download/roblox-compat.json` answers 200 |
 
 **Before the first row:** the update-button report's open items (the owner's look at the captures
 against the placement he picked), the PR for `fix/stability-part-two`, and the name-test decision
