@@ -279,7 +279,7 @@ rating line on a real Store install, and the 75/100/180 caps on a live client.
 
 ## 8. Shipped
 
-**Committed and in the Store's hands.** Filled in as each step happens. Times are CST, 2026-11-17.
+**Live on the Store.** The tag and the GitHub release are not done. Filled in as each step happens. Times are CST, 2026-11-17.
 
 | Step | When | Evidence |
 |---|---|---|
@@ -290,9 +290,9 @@ rating line on a real Store install, and the 75/100/180 caps on a live client.
 | Owner's two pages (packages, reviewer letter) | 14:42 ("my side is done") | A verify straight after read 180 of 180 fields and captions still matching, `PendingCommit`: the text survived the visit |
 | Committed | 14:43:42, from the console, on the owner's word | `commit` returned `CommitStarted` |
 | In certification, packages confirmed | 14:47:29, about four minutes after the commit | Status `Certification`. The API now names `RORORO-Store-arm64-1.40.0.0.msix` and `RORORO-Store-x64-1.40.0.0.msix`, both `1.40.0.0`, `Uploaded`: the owner's upload, seen for the first time. 180 fields and captions still match |
-| Certified | | |
+| Certified | 2026-11-18, before 17:03 CST; the exact time was not observed | The owner reported it published at 17:03. The status watcher from 2026-11-17 did not survive the session, so the moment certification passed is not on record. Committed 14:43 on 11-17, so certification plus the publish took at most about 26 hours |
 | Tag pushed, GitHub release drafted | | |
-| Live on the Store | | |
+| Live on the Store | 2026-11-18, between 17:05:43 and 17:09:44 CST | The public catalog served `626LabsLLC.RoRoRoBlox_1.39.0.0` at 17:05:43 and `1.40.0.0` (x64 and arm64) at 17:09:44. The API read `Certification` at 17:05 and `Published` at 17:10: it ran a few minutes behind the owner's Partner Center, as before |
 | GitHub release published as Latest | | |
 
 **Before the first row:** the update-button report's open items (the owner's look at the captures
