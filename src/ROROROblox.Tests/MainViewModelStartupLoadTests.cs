@@ -181,7 +181,7 @@ public sealed class MainViewModelStartupLoadTests
             vm.DpapiCorruptPrompt = () => true; // the user clicked Start fresh; the store set nothing aside
 
             vm.ShowDpapiCorruptModal();
-            await vm.ShowWhatTheStoreHoldsAsync();
+            await vm.StartFreshReload; // the one re-read the handler started; a second one races it
 
             Assert.Equal(a.Id, Assert.Single(vm.Accounts).Id);
             Assert.Equal(string.Empty, vm.StatusBanner);
@@ -202,7 +202,7 @@ public sealed class MainViewModelStartupLoadTests
             vm.DpapiCorruptPrompt = () => true;
 
             vm.ShowDpapiCorruptModal();
-            await vm.ShowWhatTheStoreHoldsAsync();
+            await vm.StartFreshReload; // the one re-read the handler started; a second one races it
 
             Assert.Empty(vm.Accounts);
             Assert.NotEqual(string.Empty, vm.StatusBanner);

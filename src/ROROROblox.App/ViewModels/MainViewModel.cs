@@ -5453,13 +5453,24 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// The re-read <see cref="ShowDpapiCorruptModal"/> started after Start fresh, or a completed task
+    /// when none has run. A failed re-read is logged and leaves the list empty, so awaiting this does
+    /// not throw for a store error. A test awaits this instead of starting a second re-read.
+    /// </summary>
+    internal Task StartFreshReload { get; private set; } = Task.CompletedTask;
+
+    /// <summary>
     /// After Start fresh, show what the store holds rather than assume it is empty. The corrupt dialog
     /// also appears for a vault that was only locked for a moment; the store then finds it readable,
     /// sets nothing aside (<c>StartFreshResult.StoreWasReadable</c>), and every saved account is still
     /// there. An empty list and "Started fresh" over a vault that is fine would read as total loss.
-    /// Internal so a test can await it; <see cref="ShowDpapiCorruptModal"/> fires it and moves on.
+    /// Private on purpose: <see cref="ShowDpapiCorruptModal"/> is the only caller, and a test waits
+    /// for that run through <see cref="StartFreshReload"/>. Two tests used to call this a second time
+    /// themselves; with no UI thread in the test host the two runs wrote the row list from two pool
+    /// threads at once, which failed CI on main twice (2026-11-17 and 2026-11-18) with two rows, or
+    /// one row and a null.
     /// </summary>
-    internal async Task ShowWhatTheStoreHoldsAsync()
+    private async Task ShowWhatTheStoreHoldsAsync()
     {
         try
         {
@@ -5498,8 +5509,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             RefreshFpsCapWarning();
             StatusBanner = Loc.Get("Shell_Msg_StartedFresh");
             // Usually a no-op (the store is empty now). When the vault turned out to be readable, this
-            // puts the accounts back on screen and takes the banner down.
-            _ = ShowWhatTheStoreHoldsAsync();
+            // puts the accounts back on screen and takes the banner down. Not awaited: the caller moves on.
+            StartFreshReload = ShowWhatTheStoreHoldsAsync();
         }
         else
         {
