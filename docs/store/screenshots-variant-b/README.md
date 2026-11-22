@@ -1,6 +1,6 @@
 # Store screenshots, variant B (draft)
 
-> **Status: approved to run by Este, 2026-11-22. Not uploaded yet. English only.**
+> **Status: submitted as a product page experiment 2026-11-22; in certification. English only.**
 
 A second screenshot set for a Partner Center product page experiment. The set on the listing today (`../screenshots/en/`, variant A) opens on the account list and carries no words. Variant B opens on the eight-client wall and puts a headline on every frame.
 
@@ -56,7 +56,11 @@ Fonts come from the `626labs-design` skill's folder; pass `--fonts DIR` to point
 
 ## Where it stands (2026-11-22)
 
-**Staged as a draft in Partner Center, not submitted.** Application overview shows "Product page experiments: In draft" with one experiment, "Variant B: wall first, headlines", holding these nine frames in order. The **Submit experiment** button is Este's click.
+**Submitted 2026-11-22, about 11:28 CST, on Este's word ("Submit the experiment as staged").** Application overview reads "Product page experiments: In certification" for the one experiment, "Variant B: wall first, headlines", which holds these nine frames in order. It is not live until certification passes.
+
+Submitting asked nothing: no confirmation and no field for the share of visitors who see the variant. So the split was not chosen here and is not known; Microsoft's page describes an even split as the usual case.
+
+**Until this experiment ends, no submission changes the listing's logo or screenshots.**
 
 What the experiment page and Microsoft's page on it say (read 2026-11-22, `learn.microsoft.com/en-us/windows/apps/publish/product-page-experiments`):
 
