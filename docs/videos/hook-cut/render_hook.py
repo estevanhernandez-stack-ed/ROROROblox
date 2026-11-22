@@ -2,15 +2,15 @@
 
     python docs/videos/hook-cut/render_hook.py [--hub DIR] [--fonts DIR] [--skill FILE]
 
-Four beats, about 25 seconds:
+Four beats, about 27 seconds:
   1. the wall, clients arriving one by one, then a slow push toward RoRoRo's own window
   2. the account list
   3. the Library
-  4. an end card
+  4. an end card, with a spoken close
 
-Every picture is a real capture of the shipping app. The narration is three takes already
-approved for the launch trailer (the hub repo's voiceover/slide_01, 02 and 05), so nothing
-here spends voice credits or says a word that has not been signed off. The end card is silent.
+Every picture is a real capture of the shipping app. The narration is takes already approved
+for the launch trailer (the hub repo's voiceover/slide_01, 02 and 05, and a close cut from
+slide_10), so nothing here spends voice credits or says a word that has not been signed off.
 
 Beat 3 is the Library and not Squad Launch: the only Squad Launch capture on hand is the
 empty dialog (no saved servers), and an empty dialog held for seven seconds is the weakest
@@ -277,6 +277,42 @@ def end_card(cube_path, out):
     im.save(out, optimize=True)
 
 
+# The trailer's closing take reads: "Free on the Microsoft Store, / Windows AND Mac. / Scan the
+# code, / save the page, / grab it on your desktop. / RoRoRo, / from six-two-six Labs. / Imagine
+# something else." ffmpeg's silencedetect finds eight pauses in it, one after each phrase
+# (measured 2026-11-22: 1.45, 2.87, 3.98, 5.04, 6.32, 7.79, 9.42, 11.15 s). The close below
+# keeps the first phrase and the sixth and seventh.
+CLOSE_FIRST = (0.0, 1.55)     # "Free on the Microsoft Store"
+CLOSE_SECOND = (6.62, 9.50)   # "RoRoRo, from six-two-six Labs."
+CLOSE_PAUSE = 0.28
+
+
+def spoken_close(bv, vo, tmpdir):
+    """The end card's narration.
+
+    A file at voiceover/close.mp3 beside this script wins: that is where a line generated or
+    recorded for this cut goes. Without one, the close is cut from the launch trailer's
+    approved closing take, so it is made only of words already signed off:
+    "Free on the Microsoft Store. RoRoRo, from six-two-six Labs."
+    """
+    override = os.path.join(HERE, "voiceover", "close.mp3")
+    if os.path.exists(override):
+        return override
+    src = os.path.join(vo, "slide_10.mp3")
+    out = os.path.join(tmpdir, "close.wav")
+    fmt = "aformat=sample_rates=44100:channel_layouts=mono"
+    a0, a1 = CLOSE_FIRST
+    b0, b1 = CLOSE_SECOND
+    graph = (
+        f"[0:a]atrim={a0}:{a1},asetpts=PTS-STARTPTS,{fmt},afade=t=out:st={a1 - a0 - 0.05:.3f}:d=0.05[a];"
+        f"anullsrc=r=44100:cl=mono,atrim=0:{CLOSE_PAUSE},{fmt}[s];"
+        f"[0:a]atrim={b0}:{b1},asetpts=PTS-STARTPTS,{fmt},afade=t=in:d=0.03,"
+        f"afade=t=out:st={b1 - b0 - 0.05:.3f}:d=0.05[b];"
+        "[a][s][b]concat=n=3:v=0:a=1[out]")
+    bv.run(["ffmpeg", "-y", "-i", src, "-filter_complex", graph, "-map", "[out]", out])
+    return out
+
+
 def main():
     global FONTS
     ap = argparse.ArgumentParser()
@@ -323,12 +359,13 @@ def main():
 
     card = os.path.join(HERE, "end-card-9x16.png")
     end_card(cube, card)
-    d4 = 2.8
+    close = spoken_close(bv, vo, tmp)
+    d4 = bv.probe_duration(close) + 0.5
     bv.W, bv.H = W, H
     fitted = bv.image_target
     bv.image_target = lambda iw, ih, n, layout, idx: (W, H, 0, 0) if (iw, ih) == (W, H) else fitted(iw, ih, n, layout, idx)
     slide4 = {"images": [{"path": card, "effect": "fade"}]}
-    segs.append(bv.build_slide(3, slide4, {"fps": FPS, "background": {"type": "color", "color": "#0f1f31"}}, d4, None, tmp))
+    segs.append(bv.build_slide(3, slide4, {"fps": FPS, "background": {"type": "color", "color": "#0f1f31"}}, d4, close, tmp))
     print(f"[4/4] the end card ({d4:.2f}s)")
     total += d4
 

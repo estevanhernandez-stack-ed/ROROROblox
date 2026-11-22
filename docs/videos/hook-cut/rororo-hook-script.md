@@ -1,10 +1,11 @@
 # TikTok: RoRoRo hook cut, "eight clients, one PC"
 
-> **Status: DRAFT for Este's review, 2026-11-22. Not posted anywhere.**
+> **Status: approved to post by Este, 2026-11-22. Not posted yet; posting is his click.**
+> Listen to the close before posting: it is a cut of an existing take and has not been heard by a person.
 > Render: `python docs/videos/hook-cut/render_hook.py` (needs the hub checkout beside this repo).
-> Output: `rororo-hook-9x16.mp4`, 1080x1920, 24.6 s, H.264 + AAC.
+> Output: `rororo-hook-9x16.mp4`, 1080x1920, 27.0 s, H.264 + AAC.
 
-**Runtime:** ~25s · **Slides:** 4 · **Voiceover:** yes (ElevenLabs voice: ItsJustEste, the three takes already approved for the launch trailer; nothing new was generated)
+**Runtime:** ~27s · **Slides:** 4 · **Voiceover:** yes (ElevenLabs voice: ItsJustEste, four takes already approved for the launch trailer; nothing new was generated)
 
 This is the short cut the July ad plan asked for (`docs/marketing/tiktok-ad-plan.md`, 21 to 34 seconds, the count-up open). The launch trailer is 87 seconds; this is the first 25, rebuilt around the wall.
 
@@ -27,9 +28,13 @@ No text is burned into the video. Add the overlays below in TikTok's editor, whe
 - **Overlay text (add in TikTok):** "pick who plays"
 - **Voiceover:** "Every game you've played lands in the Library. Search it, filter it, and pick which account plays."
 
-## CTA (final slide, 21.8 s to 24.6 s)
+## CTA (final slide, 21.8 s to 27.0 s)
 - **Overlay text:** none needed; the card says "Free on the Microsoft Store. Search RoRoRo."
-- **Voiceover:** silent in this draft. A spoken close would be one new line in the same voice, for example: "Free on the Microsoft Store. Search RoRoRo." It is not generated; say the word and it is one call.
+- **Voiceover:** "Free on the Microsoft Store. RoRoRo, from six-two-six Labs."
+
+The close is cut from the launch trailer's closing take (`slide_10`): its first phrase, then its sixth and seventh. The cut points sit in the take's own pauses, found by measurement, and the result has the three phrases and two pauses expected. Nobody has listened to it. "Store" was spoken before a comma in the original, so it may not land as the end of a sentence.
+
+The line asked for was "Free on the Microsoft Store. Search RoRoRo." It could not be generated on 2026-11-22: the ElevenLabs key on this machine was rejected (401, invalid API key). To use a new line, generated or recorded, save it as `voiceover/close.mp3` beside the renderer and render again; it replaces the cut. Voice `ItsJustEste`, the trailer's model and stability 0.45, then level it with the hub's `level_vo.py`.
 
 ## Caption
 Eight Roblox clients on one PC, free on the Microsoft Store. Every alt saved, one click each. Search RoRoRo.
@@ -47,7 +52,7 @@ Bio link, with a campaign id so the Store's channel report can tell this traffic
 https://apps.microsoft.com/detail/9NMJCS390KWB?cid=tiktok
 ```
 
-For YouTube Shorts use `?cid=youtube-shorts`. The Store report showed no clicks under a `youtube` campaign in the 90 days to 2026-11-21, so today there is no measured traffic from video at all.
+For YouTube Shorts use `?cid=youtube-shorts`. The launch trailer is on YouTube and TikTok (Este, 2026-11-22), and the Store report showed no clicks under a `youtube` campaign in the 90 days to 2026-11-21. So video either sends nobody or sends them without the campaign id; check that the link under each posted video carries its `cid`.
 
 ## What is not in this cut, and why
 
@@ -70,3 +75,6 @@ Save all your alts and manage your accounts. One click each, with live status an
 
 [NARRATOR]
 Every game you've played lands in the Library. Search it, filter it, and pick which account plays.
+
+[NARRATOR]
+Free on the Microsoft Store. RoRoRo, from six-two-six Labs.

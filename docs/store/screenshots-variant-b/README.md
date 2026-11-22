@@ -1,6 +1,6 @@
 # Store screenshots, variant B (draft)
 
-> **Status: DRAFT for Este's review, 2026-11-22. Not uploaded. English only.**
+> **Status: approved to run by Este, 2026-11-22. Not uploaded yet. English only.**
 
 A second screenshot set for a Partner Center product page experiment. The set on the listing today (`../screenshots/en/`, variant A) opens on the account list and carries no words. Variant B opens on the eight-client wall and puts a headline on every frame.
 
