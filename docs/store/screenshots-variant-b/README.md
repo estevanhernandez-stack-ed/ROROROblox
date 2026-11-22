@@ -54,7 +54,19 @@ python scripts/store-graphics/make_listing_variant_b.py
 
 Fonts come from the `626labs-design` skill's folder; pass `--fonts DIR` to point elsewhere.
 
-## Before this goes anywhere
+## Where it stands (2026-11-22)
 
-- Setting up the experiment is a Partner Center action and Este's call. Product page experiments cover the logo and screenshots only, run up to 90 days, and the original's assets must not change while one runs (noted 2026-11-16; not re-read since, so check the page).
-- Whether an experiment can be limited to English, and whether the six translated listings need their own variant, is not known. The headlines here are English; a translated variant would go through the translation verifier first.
+**Staged as a draft in Partner Center, not submitted.** Application overview shows "Product page experiments: In draft" with one experiment, "Variant B: wall first, headlines", holding these nine frames in order. The **Submit experiment** button is Este's click.
+
+What the experiment page and Microsoft's page on it say (read 2026-11-22, `learn.microsoft.com/en-us/windows/apps/publish/product-page-experiments`):
+
+- **It runs across all languages.** The form has no language choice. So visitors on the six translated listings who land in the variant group see this English set. Whether it replaces each language's own screenshots is not stated in so many words; assume it does.
+- **Submitting sends it through certification.** Budget a day, as for a release.
+- The share of visitors who see the variant can be chosen; an even split is recommended. The draft form did not show that field, so it may appear at submit.
+- It runs for up to 90 days and can be stopped from the overview page. A winning variant can be applied to the product page.
+- While it is live, Microsoft recommends not changing the logo or screenshots of the original listing in an update submission, because that can invalidate the result. So the recapture of the theme builder screenshot waits for the experiment to end.
+- It reports the original's and the variant's conversion rate. Nothing is said about confidence.
+
+**How long until it says anything.** On the funnel numbers we can read (2,125 views in 30 days, 53% clicking Get), telling a 10% relative lift from noise takes about 1,300 views in each group, which at an even split is about five weeks. That is an estimate from signed-in views only; if the experiment counts every visitor it is sooner, and that is not known. Either way the answer arrives after the 10K date. What the experiment does before then is show the variant to its share of visitors.
+
+A translated variant is not possible inside one experiment: there is one screenshot set for every language.
