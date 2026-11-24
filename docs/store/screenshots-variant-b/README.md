@@ -1,6 +1,6 @@
 # Store screenshots, variant B (draft)
 
-> **Status: submitted as a product page experiment 2026-11-22; in certification. English only.**
+> **Status: live as a product page experiment, 2026-11-22 to 2027-02-20, 50/50 split (read 2026-11-23). English frames, shown in every language.**
 
 A second screenshot set for a Partner Center product page experiment. The set on the listing today (`../screenshots/en/`, variant A) opens on the account list and carries no words. Variant B opens on the eight-client wall and puts a headline on every frame.
 
@@ -54,11 +54,15 @@ python scripts/store-graphics/make_listing_variant_b.py
 
 Fonts come from the `626labs-design` skill's folder; pass `--fonts DIR` to point elsewhere.
 
-## Where it stands (2026-11-22)
+## Where it stands (2026-11-23)
 
-**Submitted 2026-11-22, about 11:28 CST, on Este's word ("Submit the experiment as staged").** Application overview reads "Product page experiments: In certification" for the one experiment, "Variant B: wall first, headlines", which holds these nine frames in order. It is not live until certification passes.
+**Live.** Read in Partner Center on 2026-11-23 at 09:10 CST: the one experiment, "Variant B: wall first, headlines", is "In Microsoft Store", running November 22, 2026 to February 20, 2027, with a 50/50 split between the original and the variant. It passed certification in under 22 hours. The report lags two days and held no data yet at that read; first numbers are due about 2026-11-25.
 
-Submitting asked nothing: no confirmation and no field for the share of visitors who see the variant. So the split was not chosen here and is not known; Microsoft's page describes an even split as the usual case.
+**Submitted 2026-11-22, about 11:28 CST, on Este's word ("Submit the experiment as staged").** The experiment holds these nine frames in order.
+
+Submitting asked nothing: no confirmation and no field for the share of visitors who see the variant. The split was not chosen here; it came out even, which Microsoft's page describes as the usual case.
+
+Reading it: Insights, Product page experiments, for product `9NMJCS390KWB`. The application overview's experiment line reads "Unknown" for a few seconds after the page loads; wait for it before trusting it.
 
 **Until this experiment ends, no submission changes the listing's logo or screenshots.**
 
