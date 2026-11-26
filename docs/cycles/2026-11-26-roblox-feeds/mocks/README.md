@@ -32,6 +32,12 @@ Este's reply, 2026-11-26 13:33 CST: "A1, B1, C3, everything else looks good". Re
 layout notes below as well: the contested notice at 380 px keeps the actions to the right of the text as
 drawn (no compact wrap rule), and the list row carries the pulse as a second line under the name.
 
+**Reversed and added, 2026-11-26 afternoon, after item 11 and 12 were built and measured** (Este): at 380 px
+the line's buttons and the "+N more" toggle drop to a row under the sentence (the real sentences wrapped to 3 to
+5 lines beside them; the mock's stand-ins were shorter); the account panel shows the count only, with the date in
+the tooltip and the accessible name (the joined line trimmed on every entry); the Library list row keeps the
+pulse as a second line spanning the columns under the name, as built.
+
 ## What is drawn, against spec §12
 
 - The line in each of its five states at the default width (900) and at 380 px.

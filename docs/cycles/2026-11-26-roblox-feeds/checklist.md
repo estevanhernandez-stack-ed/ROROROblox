@@ -438,22 +438,22 @@ The two contrast pairs measured in four themes. `RobloxLineRenderTests` grows fr
 the built states. Rows 2, 4 and 5 are not touched.
 
 **Acceptance:**
-- [ ] Each of the five notices, when it is the one drawn, has the actions it has today: Close Roblox
+- [x] Each of the five notices, when it is the one drawn, has the actions it has today: Close Roblox
       for me and Retry; the status link; See known issues and Dismiss; none for drift; What changed.
-- [ ] With an outage, a known issue and an update all true, the notice area is exactly as tall as with
+- [x] With an outage, a known issue and an update all true, the notice area is exactly as tall as with
       one, at the default width and at 380 px.
-- [ ] With no notice true, item 1's constants hold unchanged.
-- [ ] A known issue that was hidden shows once when the line is free. Dismissing it from the line or
+- [x] With no notice true, item 1's constants hold unchanged.
+- [x] A known issue that was hidden shows once when the line is free. Dismissing it from the line or
       from the inline list uses it up, and nothing else does.
-- [ ] The toggle speaks "2 more Roblox notices"; the tab order is the text, its buttons, the toggle;
+- [x] The toggle speaks "2 more Roblox notices"; the tab order is the text, its buttons, the toggle;
       nothing is in a tooltip.
-- [ ] Under flatline every state carries the glyph and different words.
-- [ ] Every status and update sentence fits two lines at both widths in seven languages, measured.
-- [ ] Both contrast pairs pass AA in four themes, or the failing state's tone was changed at the pick
+- [x] Under flatline every state carries the glyph and different words.
+- [x] Every status and update sentence fits two lines at both widths in seven languages, measured.
+- [x] Both contrast pairs pass AA in four themes, or the failing state's tone was changed at the pick
       and the change is recorded. A brush is never changed to make a pair pass.
-- [ ] `BannerRecipeTests.cs` and `Rendering/BannerPairRenderTests.cs` are not in the diff and are
+- [x] `BannerRecipeTests.cs` and `Rendering/BannerPairRenderTests.cs` are not in the diff and are
       green. The naming fence's unnamed ceiling is still 1.
-- [ ] The built line is screenshot-compared with the pick in brand and flatline; the pairs are saved
+- [x] The built line is screenshot-compared with the pick in brand and flatline; the pairs are saved
       under `mocks/compare/`.
 
 **Verify:** `dotnet test ROROROblox.slnx -c Release --no-build` → 0 failed, 1 skipped.
@@ -477,19 +477,19 @@ while the panel is expanded and the main window visible. `Rendering/LibraryPulse
 wrap surfaces for the tile, the row and the panel entry.
 
 **Acceptance:**
-- [ ] Grid and list both carry the pulse beside the "last played" line, never in its place.
-- [ ] 100 saved games: one screenful is one request; scrolling asks for the newly visible entries
+- [x] Grid and list both carry the pulse beside the "last played" line, never in its place.
+- [x] 100 saved games: one screenful is one request; scrolling asks for the newly visible entries
       once; switching between grid and list asks for nothing already read.
-- [ ] The same game reads the same numbers in the Library and in every open panel: one reading.
-- [ ] A collapsed panel declares no interest. A panel open at startup asks nothing before the gate.
-- [ ] A private server shows the date and no count. A game Roblox no longer returns shows no line and
+- [x] The same game reads the same numbers in the Library and in every open panel: one reading.
+- [x] A collapsed panel declares no interest. A panel open at startup asks nothing before the gate.
+- [x] A private server shows the date and no count. A game Roblox no longer returns shows no line and
       can still be removed. A "From Roblox" result is unchanged.
-- [ ] The entry's accessible name and tooltip carry name, players, updated. The pulse is text and
+- [x] The entry's accessible name and tooltip carry name, players, updated. The pulse is text and
       starts nothing; the button names are unchanged.
-- [ ] No spinner and no placeholder. The line is absent until an answer arrives.
-- [ ] Minimised or hidden means an empty interest set; restored declares it again.
-- [ ] Seven languages without clipping in the tile, the row and the panel, measured.
-- [ ] The built tile, row and panel entry are screenshot-compared with the pick; pairs under
+- [x] No spinner and no placeholder. The line is absent until an answer arrives.
+- [x] Minimised or hidden means an empty interest set; restored declares it again.
+- [x] Seven languages without clipping in the tile, the row and the panel, measured.
+- [x] The built tile, row and panel entry are screenshot-compared with the pick; pairs under
       `mocks/compare/`.
 
 **Verify:** `dotnet test ROROROblox.slnx -c Release --no-build` → 0 failed, 1 skipped.
