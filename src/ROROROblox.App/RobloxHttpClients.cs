@@ -75,6 +75,20 @@ internal static class RobloxHttpClients
             AllowAutoRedirect = false,
         });
 
+        // Game pulse (games.roblox.com/v1/games): one anonymous batched read per screenful. No account and
+        // no cookie ride it, so the same handler as the status client: no cookie container, no redirects.
+        services.AddHttpClient<ROROROblox.Core.Library.IGamePulseApi, ROROROblox.Core.Library.GamePulseApi>(client =>
+        {
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            UseCookies = false,
+            AllowAutoRedirect = false,
+        });
+
         return services;
     }
 }
