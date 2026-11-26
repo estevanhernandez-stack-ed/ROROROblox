@@ -344,6 +344,166 @@ public class RobloxUpdateProbeTests
         Assert.Empty(stub.Requests);
     }
 
+    // ---- The field strings: comma-spelled local against a dotted endpoint ----
+
+    [Fact]
+    public async Task IsUpdatePendingAsync_False_WhenFieldStringsAreTheSameVersionInTwoSpellings()
+    {
+        // Measured on a live box 2026-11-26 (PRD): handler and install read "0, 748, 0, 7481526", the
+        // endpoint answers "0.748.0.7481526". Text compare called that a difference and held every batch.
+        var stub = new StubHttpHandler();
+        stub.EnqueueResponse(Json(HttpStatusCode.OK, VersionJson("0.748.0.7481526")));
+        var probe = new RobloxUpdateProbe(
+            installerRunning: () => false,
+            installedVersionProvider: () => "0, 748, 0, 7481526",
+            handlerVersionProvider: () => "0, 748, 0, 7481526",
+            httpClient: new HttpClient(stub));
+
+        Assert.False(await probe.IsUpdatePendingAsync());
+    }
+
+    // ---- GetUpdateStateAsync -------------------------------------------------
+
+    private static RobloxUpdateProbe StateProbe(string? handler, string? installed, string? endpoint, out StubHttpHandler stub)
+    {
+        stub = new StubHttpHandler();
+        stub.EnqueueResponse(endpoint is null
+            ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            : Json(HttpStatusCode.OK, VersionJson(endpoint)));
+        return new RobloxUpdateProbe(
+            installerRunning: () => false,
+            installedVersionProvider: () => installed,
+            handlerVersionProvider: () => handler,
+            httpClient: new HttpClient(stub));
+    }
+
+    [Fact]
+    public async Task GetUpdateStateAsync_Current_ForTheFieldStrings()
+    {
+        var probe = StateProbe("0, 748, 0, 7481526", "0, 748, 0, 7481526", "0.748.0.7481526", out _);
+
+        var state = await probe.GetUpdateStateAsync();
+
+        Assert.Equal(RobloxUpdateKind.Current, state.Kind);
+        Assert.Equal(RobloxUpdateDirection.None, state.Direction);
+    }
+
+    [Theory]
+    [InlineData("0, 747, 0, 7471000", "0.748.0.7481526")]    // comma local, dotted endpoint
+    [InlineData("0, 747, 0, 7471000", "0, 748, 0, 7481526")] // comma local, comma endpoint
+    [InlineData("0.747.0.7471000", "0.748.0.7481526")]       // dotted local, dotted endpoint
+    [InlineData("0.747.0.7471000", "0, 748, 0, 7481526")]    // dotted local, comma endpoint
+    public async Task GetUpdateStateAsync_PendingNewer_OneVersionBehind_InAllFourSpellings(string local, string endpoint)
+    {
+        var probe = StateProbe(local, local, endpoint, out _);
+
+        var state = await probe.GetUpdateStateAsync();
+
+        Assert.Equal(RobloxUpdateKind.Pending, state.Kind);
+        Assert.Equal(RobloxUpdateDirection.Newer, state.Direction);
+        Assert.Equal(new Version(0, 748, 0, 7481526), state.Latest);
+    }
+
+    [Fact]
+    public async Task GetUpdateStateAsync_PendingOlder_WhenEndpointIsBelowTheInstall()
+    {
+        var probe = StateProbe("0, 749, 0, 7491000", "0, 749, 0, 7491000", "0.748.0.7481526", out _);
+
+        var state = await probe.GetUpdateStateAsync();
+
+        Assert.Equal(RobloxUpdateKind.Pending, state.Kind);
+        Assert.Equal(RobloxUpdateDirection.Older, state.Direction);
+    }
+
+    [Fact]
+    public async Task GetUpdateStateAsync_DirectionComesFromTheHandler_WhenReadableAndDifferent()
+    {
+        // Handler is stale, newest install is ahead of the endpoint: a launch runs the handler, so Newer.
+        var probe = StateProbe("0, 747, 0, 7471000", "0, 749, 0, 7491000", "0.748.0.7481526", out _);
+
+        var state = await probe.GetUpdateStateAsync();
+
+        Assert.Equal(RobloxUpdateKind.Pending, state.Kind);
+        Assert.Equal(RobloxUpdateDirection.Newer, state.Direction);
+    }
+
+    [Fact]
+    public async Task GetUpdateStateAsync_DirectionComesFromTheInstall_WhenHandlerIsUnreadable()
+    {
+        var probe = StateProbe(null, "0, 749, 0, 7491000", "0.748.0.7481526", out _);
+
+        var state = await probe.GetUpdateStateAsync();
+
+        Assert.Equal(RobloxUpdateKind.Pending, state.Kind);
+        Assert.Equal(RobloxUpdateDirection.Older, state.Direction);
+    }
+
+    [Theory]
+    [InlineData("garbage", "0, 748, 0, 7481526", RobloxUpdateKind.Current)]   // readable side decides
+    [InlineData("garbage", "0, 747, 0, 7471000", RobloxUpdateKind.Pending)]
+    [InlineData("0, 748, 0, 7481526", "garbage", RobloxUpdateKind.Current)]
+    [InlineData("0, 747, 0, 7471000", "garbage", RobloxUpdateKind.Pending)]
+    [InlineData("garbage", "also garbage", RobloxUpdateKind.Unknown)]          // none readable
+    [InlineData("garbage", null, RobloxUpdateKind.Unknown)]
+    public async Task GetUpdateStateAsync_UnreadableLocal_IsUnknownAndNeverADifference(string? handler, string? installed, RobloxUpdateKind expected)
+    {
+        var probe = StateProbe(handler, installed, "0.748.0.7481526", out _);
+
+        var state = await probe.GetUpdateStateAsync();
+
+        Assert.Equal(expected, state.Kind);
+    }
+
+    [Fact]
+    public async Task GetUpdateStateAsync_Unknown_WhenRobloxIsNotInstalled_AndAsksNothing()
+    {
+        var probe = StateProbe(null, null, "0.748.0.7481526", out var stub);
+
+        var state = await probe.GetUpdateStateAsync();
+
+        Assert.Equal(RobloxUpdateKind.Unknown, state.Kind);
+        Assert.Empty(stub.Requests);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not a version")]
+    public async Task GetUpdateStateAsync_Unknown_WhenTheEndpointAnswerIsBlankOrUnparseable(string? endpoint)
+    {
+        var probe = StateProbe("0, 748, 0, 7481526", "0, 748, 0, 7481526", endpoint, out _);
+
+        var state = await probe.GetUpdateStateAsync();
+
+        Assert.Equal(RobloxUpdateKind.Unknown, state.Kind);
+    }
+
+    [Fact]
+    public void CompareInstalledTo_MakesNoRequest_AndAppliesTheSameRules()
+    {
+        var probe = StateProbe("0, 747, 0, 7471000", "0, 747, 0, 7471000", "0.748.0.7481526", out var stub);
+
+        var behind = probe.CompareInstalledTo(new Version(0, 748, 0, 7481526));
+        var level = probe.CompareInstalledTo(new Version(0, 747, 0, 7471000));
+
+        Assert.Equal(RobloxUpdateKind.Pending, behind.Kind);
+        Assert.Equal(RobloxUpdateDirection.Newer, behind.Direction);
+        Assert.Equal(RobloxUpdateKind.Current, level.Kind);
+        Assert.Empty(stub.Requests);
+    }
+
+    [Fact]
+    public void CompareInstalledTo_NeverThrows_WhenAProviderThrows()
+    {
+        var probe = new RobloxUpdateProbe(
+            installerRunning: () => false,
+            installedVersionProvider: () => throw new InvalidOperationException("disk"),
+            handlerVersionProvider: () => throw new InvalidOperationException("registry"),
+            httpClient: new HttpClient(new StubHttpHandler()));
+
+        Assert.Equal(RobloxUpdateKind.Unknown, probe.CompareInstalledTo(new Version(0, 748, 0, 7481526)).Kind);
+    }
+
     // ---- F-104: install churn, counted without touching the network --------
 
     [Theory]

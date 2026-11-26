@@ -524,6 +524,8 @@ internal static class DiscordTestHarness
     {
         public bool IsInstallerRunning() => throw new NotImplementedException();
         public Task<bool> IsUpdatePendingAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<RobloxUpdateState> GetUpdateStateAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public RobloxUpdateState CompareInstalledTo(Version latest) => throw new NotImplementedException();
         public bool IsUpdateChurnActive() => throw new NotImplementedException();
     }
 

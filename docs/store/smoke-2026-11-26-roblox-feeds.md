@@ -36,3 +36,18 @@ and the fake-clock tests, and is read live in item 8.
 (content 887 DIP wide, the 900 px window) and 48 DIP (content 365 DIP wide, compact 380 px window). PNGs for the
 eyes-on compare at C2: `docs/cycles/2026-11-26-roblox-feeds/mocks/baseline/v140-quiet-900.png` and
 `v140-quiet-380.png`, written by `RORORO_CAPTURE_ROBLOX_LINE=1` on the same test class.
+
+## Item 3: the built probe on this machine
+
+Read 2026-11-26 through the real `RobloxUpdateProbe` (real registry, real file versions, real
+`clientsettingscdn` GET) from a throwaway test, deleted afterwards; the app was not started and no RoRoRo or
+Roblox process was touched.
+
+| Read | String |
+|---|---|
+| `roblox-player` handler version | `0, 748, 0, 7481526` |
+| newest install (`RobloxPlayerBeta.exe` FileVersion) | `0, 748, 0, 7481526` |
+| endpoint `version` | `0.748.0.7481526` |
+
+`GetUpdateStateAsync` answered `Current`, direction `None`; `IsUpdatePendingAsync` answered `False`. The
+PRD measured `True` on the same three strings under the text compare.
