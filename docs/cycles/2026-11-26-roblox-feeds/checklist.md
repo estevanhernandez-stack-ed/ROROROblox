@@ -389,16 +389,16 @@ universe-only request is made only while the switch is on and after the pulse's 
 `Library_Pulse_Updated` key through the cumulative script. Nothing is shown yet.
 
 **Acceptance:**
-- [ ] The fill order holds: a saved game's own id; a saved game of the same place; the icon cache;
+- [x] The fill order holds: a saved game's own id; a saved game of the same place; the icon cache;
       otherwise null.
-- [ ] A saved private server with a thumbnail and no known universe costs one request through the
+- [x] A saved private server with a thumbnail and no known universe costs one request through the
       existing icon lane, only with the switch on and only after the gate. The panel's load path still
       asks for nothing, and an entry with no icon is asked about exactly as in v1.40.
-- [ ] The count is the full number grouped by the app's language. Zero reads "0 playing". A private
+- [x] The count is the full number grouped by the app's language. Zero reads "0 playing". A private
       server never has a count.
-- [ ] "Updated" uses the "last played" ladder inside eleven months and a month and year beyond it. With
+- [x] "Updated" uses the "last played" ladder inside eleven months and a month and year beyond it. With
       the app language and the Windows region set apart, the text follows the app language.
-- [ ] Both halves join with the existing joiner, and each drops on its own.
+- [x] Both halves join with the existing joiner, and each drops on its own.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~PulseText|FullyQualifiedName~DisplayDate|FullyQualifiedName~LibraryCatalogTests|FullyQualifiedName~AccountPanelViewModel"`
 → all passed.
