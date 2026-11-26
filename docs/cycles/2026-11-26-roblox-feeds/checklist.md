@@ -329,14 +329,14 @@ gate set from `ReadsAllowedFrom`. `NoFeedInLaunchPathFenceTests`. The feeds defa
 item 9 adds the setting, on the branch only. The window binds nothing new.
 
 **Acceptance:**
-- [ ] The full suite is green and the app starts. Wiring is where a resolve-time crash hides behind a
+- [x] The full suite is green and the app starts. Wiring is where a resolve-time crash hides behind a
       green unit run.
-- [ ] `NoFeedInLaunchPathFenceTests` is green, and fails when an `await` on `RobloxFeeds` is added to a
+- [x] `NoFeedInLaunchPathFenceTests` is green, and fails when an `await` on `RobloxFeeds` is added to a
       launch method (mutation-checked). `Core/RobloxLauncher.cs` references none of the three types.
-- [ ] With the fake probe answering `Current`, the batch gate returns `LaunchAllNow` and the state
+- [x] With the fake probe answering `Current`, the batch gate returns `LaunchAllNow` and the state
       reaches the coordinator. With `Pending` it holds as in v1.7.
-- [ ] The early read is requested for the three connection kinds only, and nothing is awaited.
-- [ ] `StopPeriodicRefresh()` unsubscribes from `Changed`; no test leaks a timer.
+- [x] The early read is requested for the three connection kinds only, and nothing is awaited.
+- [x] `StopPeriodicRefresh()` unsubscribes from `Changed`; no test leaks a timer.
 - [ ] **Live, the agent's, on a test data folder:** no `roblox-status read` line in the first 30 s
       after the window shows, then exactly one, `Ok`; one `client-version check` line ending `Current`;
       twelve minutes hidden in the tray add no line from either lane; showing the window resumes them.
