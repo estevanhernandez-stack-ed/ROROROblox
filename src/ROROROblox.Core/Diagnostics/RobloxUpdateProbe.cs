@@ -9,6 +9,9 @@ using ROROROblox.Core.KnownIssues;
 
 namespace ROROROblox.Core.Diagnostics;
 
+/// <summary>How a local Roblox version string compares with the endpoint's, once both are parsed.</summary>
+internal enum VersionMatch { Unknown, Same, LocalOlder, LocalNewer }
+
 /// <summary>
 /// Default <see cref="IRobloxUpdateProbe"/> implementation — the v1.7.0 install-deferral
 /// foundational signal (spec §"Components > 1. Update-pending detection"). Two posture-clean
@@ -24,16 +27,13 @@ namespace ROROROblox.Core.Diagnostics;
 /// <see cref="HttpClient"/>). Every member is degrade-safe: on ANY failure it returns the
 /// "don't block the launch" answer (<c>false</c>).
 ///
-/// <para><b>Like-for-like comparison.</b> <see cref="RobloxCompatChecker.GetInstalledRobloxVersion"/>
-/// returns the <c>FileVersion</c> dotted-quad of the newest installed <c>RobloxPlayerBeta.exe</c>
-/// (e.g. <c>2.661.0.6610701</c>) — NOT the <c>version-*</c> GUID. The CDN response carries two
-/// fields: <c>version</c> (the matching file-version string) and <c>clientVersionUpload</c> (the
-/// GUID). We therefore compare the installed file version against the CDN's <c>version</c> field —
-/// like-for-like. The slate's mention of <c>clientVersionUpload</c> assumed the installed read
-/// returned the GUID; it doesn't, so <c>version</c> is the correct counterpart.</para>
+/// <para><b>Parsed comparison (since v1.41).</b> The local file version is compared against the
+/// CDN's <c>version</c> field (not <c>clientVersionUpload</c>, the GUID). Both sides go through
+/// <see cref="RobloxVersion.TryParseInstalled"/> first: the file version reads with commas and
+/// spaces (<c>0, 748, 0, 7481526</c>) while the endpoint answers dotted (<c>0.748.0.7481526</c>),
+/// so the string compare this class did through v1.40 reported an update that was never there.
+/// An unreadable string is unknown, never a difference.</para>
 /// </remarks>
-internal enum VersionMatch { Unknown, Same, LocalOlder, LocalNewer }
-
 public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
 {
     private const string InstallerProcessName = "RobloxPlayerInstaller";
