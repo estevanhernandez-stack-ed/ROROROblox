@@ -4,13 +4,15 @@ using ROROROblox.App.Localization;
 namespace ROROROblox.App.Notices;
 
 /// <summary>
-/// One notice as the window's template reads it: its words, its tone and four booleans that pick which
+/// One notice as the window's template reads it: its words, its tone and the booleans that pick which
 /// declared buttons show. Buttons are declared in the template with fixed ranks, so the notice only says
-/// which of them belong to it.
+/// which of them belong to it. The top notice also carries the "+N more" toggle, one more declared slot in the
+/// same template: that is what lets the toggle follow the notice's buttons onto the row under the sentence in
+/// compact mode.
 /// </summary>
 public sealed class RobloxNoticeViewModel
 {
-    internal RobloxNoticeViewModel(RobloxNotice notice)
+    internal RobloxNoticeViewModel(RobloxNotice notice, bool showMoreToggle = false)
     {
         Text = notice.Text;
         Tone = notice.Tone;
@@ -18,6 +20,7 @@ public sealed class RobloxNoticeViewModel
         ShowKnownIssueActions = notice.Kind == RobloxNoticeKind.KnownIssue;
         ShowStatusLink = notice.Kind == RobloxNoticeKind.Outage && notice.WithLink;
         ShowWhatChanged = notice.Kind == RobloxNoticeKind.Update && notice.WithLink;
+        ShowMoreToggle = showMoreToggle;
     }
 
     public string Text { get; }
@@ -31,6 +34,12 @@ public sealed class RobloxNoticeViewModel
     public bool ShowStatusLink { get; }
 
     public bool ShowWhatChanged { get; }
+
+    /// <summary>The "+N more" toggle belongs to this notice: it is the top one and something waits behind it.</summary>
+    public bool ShowMoreToggle { get; }
+
+    /// <summary>Something is drawn beside or, in compact mode, under the sentence.</summary>
+    public bool HasActions => ShowContestedActions || ShowKnownIssueActions || ShowStatusLink || ShowWhatChanged || ShowMoreToggle;
 }
 
 /// <summary>
@@ -76,7 +85,7 @@ public sealed class RobloxLineViewModel : INotifyPropertyChanged
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        Top = state.Top is null ? null : new RobloxNoticeViewModel(state.Top);
+        Top = state.Top is null ? null : new RobloxNoticeViewModel(state.Top, showMoreToggle: state.More.Count > 0);
         More = state.More.Select(n => new RobloxNoticeViewModel(n)).ToList();
         if (More.Count == 0)
         {

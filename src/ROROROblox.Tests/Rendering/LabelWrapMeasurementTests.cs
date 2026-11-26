@@ -796,42 +796,17 @@ public class LabelWrapMeasurementTests
         yield return ("update-rollback", new RobloxLineRenderTests.LineScene { Update = new RobloxUpdateState(RobloxUpdateKind.Pending, RobloxUpdateDirection.Older) });
     }
 
-    /// <summary>
-    /// MEASURED 2026-11-26, and not met: at 380 px a status sentence wraps past two lines in every language. The strip's
-    /// row is the sentence, its action and the "+N more" toggle, each beside the next (ruled as drawn, 2026-11-26: no
-    /// compact wrap rule), and the 365 DIP the window leaves at 380 px gives the text about 220 DIP alone and about
-    /// 140 DIP with the toggle. English already needs three lines with the toggle, and Polish and German five.
-    /// Keyed "culture/group", the value is the most lines any sentence of the group needs; a group not listed holds
-    /// the two-line bound. A ratchet, like <see cref="KnownOpen"/>: the test
-    /// fails when a number rises, and when one stops reproducing so the entry has to be deleted with the fix. The
-    /// default width and both update sentences are held to two lines with no exemption.
-    /// </summary>
-    private static readonly Dictionary<string, int> LineOver2At380 = new()
-    {
-        ["de/status-alone"] = 3,
-        ["de/status-with-more"] = 5,
-        ["en/status-with-more"] = 3,
-        ["es/status-alone"] = 3,
-        ["es/status-with-more"] = 4,
-        ["fr/status-alone"] = 3,
-        ["fr/status-with-more"] = 4,
-        ["pl/status-alone"] = 3,
-        ["pl/status-with-more"] = 5,
-        ["pt-BR/status-alone"] = 3,
-        ["pt-BR/status-with-more"] = 4,
-        ["ru/status-alone"] = 3,
-        ["ru/status-with-more"] = 4,
-    };
-
-    private static string LineGroup(string name, bool compact) =>
+    private static string LineGroup(string name) =>
         name.StartsWith("update", StringComparison.Ordinal) ? "update"
         : name.EndsWith("-with-more", StringComparison.Ordinal) ? "status-with-more"
         : "status-alone";
 
     /// <summary>
     /// Every Roblox status sentence (every level, with the longest row name and the counted suffix) and both update
-    /// sentences, at the default width and at 380 px in seven languages, with nothing clipped. The contested,
-    /// known-issue and drift texts are v1.40's strings and are not drawn here (spec 7.6). See <see cref="LineOver2At380"/>.
+    /// sentences, at the default width and at 380 px in seven languages, at most two lines and nothing clipped. At
+    /// 380 px the buttons and the "+N more" toggle sit on a row under the sentence (Este, 2026-11-26), so the sentence
+    /// has the whole width; before that rule the status sentences needed up to five lines (German, Polish) and were
+    /// ratcheted. The contested, known-issue and drift texts are v1.40's strings and are not drawn here (spec 7.6).
     /// </summary>
     [WindowRenderFact]
     public void TheRobloxLine_StatusAndUpdateSentences_MaxAtTwoLines_AtBothWidths_InEverySupportedLanguage()
@@ -863,15 +838,11 @@ public class LabelWrapMeasurementTests
                         offenders.AddRange(result.Clips.Select(c => c.Line));
                         Assert.True(result.Wrapping >= 1, $"[{surface}/{culture}] the walk saw no wrapping text: the notice is not being measured");
 
-                        var group = LineGroup(name, compact);
-                        if (compact && group != "update")
+                        offenders.AddRange(result.Offenders);
+                        if (compact)
                         {
-                            var key = $"{culture}/{group}";
+                            var key = $"{culture}/{LineGroup(name)}";
                             measured[key] = Math.Max(measured.GetValueOrDefault(key), result.MaxWrapLines);
-                        }
-                        else
-                        {
-                            offenders.AddRange(result.Offenders);
                         }
                     }
                 }
@@ -883,26 +854,10 @@ public class LabelWrapMeasurementTests
         }
 
         _output.WriteLine(report.ToString());
-        _output.WriteLine("---- most lines at 380 px, by culture/group (ratcheted in LineOver2At380) ----");
+        _output.WriteLine("---- most lines at 380 px, by culture/group ----");
         foreach (var (key, lines) in measured) _output.WriteLine($"{key} = {lines}");
 
         Assert.Equal(Cultures.Length * 2 * LineScenes().Count(), states);
-        foreach (var (key, lines) in measured)
-        {
-            if (lines > MaxLines && !LineOver2At380.ContainsKey(key))
-            {
-                offenders.Add($"[roblox-line/380/{key}] {lines} lines, over {MaxLines} and not listed in LineOver2At380");
-            }
-            else if (LineOver2At380.TryGetValue(key, out var recorded) && lines != recorded)
-            {
-                offenders.Add($"[roblox-line/380/{key}] {lines} lines, but LineOver2At380 records {recorded}: {(lines > recorded ? "it got worse" : "it improved, so lower or delete the entry")}");
-            }
-        }
-
-        foreach (var key in LineOver2At380.Keys.Where(k => !measured.ContainsKey(k)))
-        {
-            offenders.Add($"LineOver2At380 lists {key}, which was not measured");
-        }
 
         Assert.True(offenders.Count == 0, $"{offenders.Count} Roblox line problem(s):\n" + string.Join("\n", offenders));
     }

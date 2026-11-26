@@ -28,13 +28,21 @@
              silently resolved to null. -->
         <app:BindingProxy x:Key="VmProxy" Data="{Binding}" />
 
+        <!-- Compact mode picks grid row 1 and the default width picks row 0 (the Roblox line's notice below). -->
+        <app:BoolToIntConverter x:Key="CompactRowConverter" TrueValue="1" FalseValue="0" />
+
         <!-- The Roblox line's one notice (v1.41, spec 7.3). Drawn for the top notice and for each item of the
              inline "more" list. The buttons are DECLARED, each with its fixed rank and a Visibility bound to
              a boolean on the notice: a rank cannot be switched by a trigger (ButtonRankFenceTests), which is
              why this is six slots and not a list of actions. They are direct children of the same Grid as the
              text, each in its own Auto column after it, so declaration order (reading and Tab order) is the
-             text first, then its buttons, and a hidden slot is zero wide (DismissOrderFenceTests wants the
-             Dismiss under a text sibling). Text is on the strip's RowBg: the warning accent for Warning,
+             text first, then its buttons, then the "+N more" toggle, and a hidden slot is zero wide
+             (DismissOrderFenceTests wants the Dismiss under a text sibling).
+             Compact wrap rule (Este, 2026-11-26): at the 380 px width the buttons and the toggle drop to a
+             row under the sentence, which then takes the whole width. Nothing restyles a button: each one
+             binds its own Grid.Row to the window's IsCompact through CompactRowConverter, and the sentence
+             spans every column and keeps a 4 DIP gap above the row only when the row has something in it.
+             Default width: one row, the buttons to the right of the text, as before. Text is on the strip's RowBg: the warning accent for Warning,
              White for Info. Both pairs are measured in all four themes (ContrastPairGateTests). The glyph is
              on every notice so tone is never the only signal, and flatline, which flattens the accent to
              grey, keeps the state through the glyph and the words. Commands live on the window's view model;
@@ -42,6 +50,10 @@
              reached through the Window like the roster's commands are. -->
         <DataTemplate x:Key="RobloxNoticeTemplate" DataType="{x:Type notices:RobloxNoticeViewModel}">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -50,8 +62,9 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0"
+                <TextBlock Grid.Row="0" Grid.Column="0"
                            FontSize="{DynamicResource BodyFontSize}"
                            TextWrapping="Wrap"
                            VerticalAlignment="Center"><Run Text="▲ " /><Run Text="{Binding Text, Mode=OneWay}" />
@@ -62,35 +75,50 @@
                                 <DataTrigger Binding="{Binding Tone}" Value="Warning">
                                     <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
                                 </DataTrigger>
+                                <DataTrigger Binding="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Grid.ColumnSpan" Value="8" />
+                                </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}}" Value="True" />
+                                        <Condition Binding="{Binding HasActions}" Value="True" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Margin" Value="0,0,0,4" />
+                                </MultiDataTrigger>
                             </Style.Triggers>
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
                 <Button Grid.Column="1"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
                         Style="{StaticResource CtaButtonStyle}"
                         Content="{loc:Loc MainWindow_CloseRobloxForMe}"
                         Command="{Binding DataContext.CloseRobloxForMeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                         Visibility="{Binding ShowContestedActions, Converter={StaticResource BoolToVisibilityConverter}}"
                         Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
                 <Button Grid.Column="2"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Content="{loc:Loc MainWindow_Retry}"
                         Command="{Binding DataContext.RetryMutexCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                         Visibility="{Binding ShowContestedActions, Converter={StaticResource BoolToVisibilityConverter}}"
                         Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
                 <Button Grid.Column="3"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Content="{loc:Loc RobloxLine_StatusLink}"
                         Command="{Binding DataContext.OpenRobloxStatusCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                         Visibility="{Binding ShowStatusLink, Converter={StaticResource BoolToVisibilityConverter}}"
                         Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
                 <Button Grid.Column="4"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Content="{loc:Loc MainWindow_SeeKnownIssues}"
                         Command="{Binding DataContext.OpenKnownIssuesCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                         Visibility="{Binding ShowKnownIssueActions, Converter={StaticResource BoolToVisibilityConverter}}"
                         Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
                 <Button Grid.Column="5"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
                         Style="{StaticResource GhostButtonStyle}"
                         Content="{loc:Loc MainWindow_Dismiss}"
                         AutomationProperties.Name="{loc:Loc MainWindow_DismissKnownIssueNotice}"
@@ -98,11 +126,23 @@
                         Visibility="{Binding ShowKnownIssueActions, Converter={StaticResource BoolToVisibilityConverter}}"
                         Padding="10,4" Margin="4,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
                 <Button Grid.Column="6"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Content="{loc:Loc RobloxLine_WhatChanged}"
                         Command="{Binding DataContext.OpenRobloxReleaseNotesCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                         Visibility="{Binding ShowWhatChanged, Converter={StaticResource BoolToVisibilityConverter}}"
                         Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
+                <ToggleButton Grid.Column="7"
+                              Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
+                              Style="{StaticResource PanelExpanderToggleButtonStyle}"
+                              Content="{Binding DataContext.RobloxLine.MoreLabel, RelativeSource={RelativeSource AncestorType=Window}}"
+                              AutomationProperties.Name="{Binding DataContext.RobloxLine.MoreSpokenName, RelativeSource={RelativeSource AncestorType=Window}}"
+                              IsChecked="{Binding DataContext.RobloxLine.IsExpanded, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
+                              Visibility="{Binding ShowMoreToggle, Converter={StaticResource BoolToVisibilityConverter}}"
+                              Padding="10,4" Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              FontSize="{DynamicResource BodyFontSize}"
+                              Cursor="Hand" />
             </Grid>
         </DataTemplate>
 
@@ -2198,8 +2238,9 @@
                      (Roblox holds the multi-instance lock after startup), Roblox's status, the known-issues
                      notice, the drift banner's text and the update notice. The resolver picks the one that is
                      drawn; the rest wait behind the "+N more" toggle, which opens them inline. Collapsed, the
-                     line is one notice tall whatever the count: the toggle sits in its own Auto column, so it
-                     takes width from the text and never adds a row. The toggle is a ToggleButton on the
+                     line is one notice tall whatever the count: the toggle is the last slot of the top notice's
+                     template, in its own Auto column, so it takes width from the text (default) or shares the
+                     button row under it (compact) and never adds a row. It is a ToggleButton on the
                      account panels' expander rank (ruled B1, 2026-11-26): IsChecked two-way, no Click, a bound
                      label and so an explicit spoken name. Nothing here is in a tooltip. Declaration order is
                      reading and Tab order: the top notice's text, its buttons, the toggle, then (open) each
@@ -2210,25 +2251,11 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ContentControl Grid.Row="0" Grid.Column="0"
+                    <ContentControl Grid.Row="0"
                                     Content="{Binding RobloxLine.Top}"
                                     ContentTemplate="{StaticResource RobloxNoticeTemplate}"
                                     IsTabStop="False" />
-                    <ToggleButton Grid.Row="0" Grid.Column="1"
-                                  Style="{StaticResource PanelExpanderToggleButtonStyle}"
-                                  Content="{Binding RobloxLine.MoreLabel}"
-                                  AutomationProperties.Name="{Binding RobloxLine.MoreSpokenName}"
-                                  IsChecked="{Binding RobloxLine.IsExpanded, Mode=TwoWay}"
-                                  Visibility="{Binding RobloxLine.MoreLabel, Converter={StaticResource StringToVisibilityConverter}}"
-                                  Padding="10,4" Margin="8,0,0,0"
-                                  VerticalAlignment="Center"
-                                  FontSize="{DynamicResource BodyFontSize}"
-                                  Cursor="Hand" />
-                    <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                    <ItemsControl Grid.Row="1"
                                   ItemsSource="{Binding RobloxLine.More}"
                                   ItemTemplate="{StaticResource RobloxNoticeTemplate}"
                                   IsTabStop="False"

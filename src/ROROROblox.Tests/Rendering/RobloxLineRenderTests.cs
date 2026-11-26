@@ -450,6 +450,45 @@ public class RobloxLineRenderTests
     }
 
     [WindowRenderFact]
+    public void TheCompactWrapRule_PutsTheButtonsAndTheToggleUnderTheSentence_AndOnlyAt380px()
+    {
+        // Este, 2026-11-26. The default width keeps the buttons to the right of the sentence (one row, tops aligned
+        // to the same band); compact drops them, and the toggle with them, onto a row below it. Tab order is the
+        // declaration order and is the same either way: the text, its buttons, the toggle.
+        var brand = MainWindowOneAccountFitsTests.BuiltIn("brand");
+        foreach (var compact in new[] { false, true })
+        {
+            var read = ThemedWindowRender.Inspect(
+                brand,
+                $"Roblox line compact wrap rule, compact={compact}",
+                () => BuildScene(ThreeTrue, compact),
+                content =>
+                {
+                    var strip = Strip(content);
+                    var text = Visible<TextBlock>(strip).Single(IsNoticeText);
+                    var textRect = new Rect(text.TranslatePoint(new Point(0, 0), strip), new Size(text.ActualWidth, text.ActualHeight));
+                    var below = Visible<ButtonBase>(strip)
+                        .Select(b => (Label: b is ToggleButton ? "toggle" : ButtonLabel(b), Top: b.TranslatePoint(new Point(0, 0), strip).Y))
+                        .ToList();
+                    return (textRect, below);
+                });
+
+            Assert.Equal(["button:" + Loc.Get("RobloxLine_StatusLink"), "toggle"], read.below.Select(b => b.Label is "toggle" ? "toggle" : "button:" + b.Label));
+            foreach (var (label, top) in read.below)
+            {
+                if (compact)
+                {
+                    Assert.True(top >= read.textRect.Bottom - 0.5, $"compact: '{label}' starts at {top:F1}, inside the sentence (bottom {read.textRect.Bottom:F1})");
+                }
+                else
+                {
+                    Assert.True(top < read.textRect.Bottom, $"default width: '{label}' starts at {top:F1}, under the sentence (bottom {read.textRect.Bottom:F1})");
+                }
+            }
+        }
+    }
+
+    [WindowRenderFact]
     public void UnderFlatline_EveryState_CarriesTheGlyph_AndDifferentWords()
     {
         var flatline = MainWindowOneAccountFitsTests.BuiltIn("flatline");
