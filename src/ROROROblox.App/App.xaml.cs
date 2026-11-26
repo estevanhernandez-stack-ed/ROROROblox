@@ -1913,7 +1913,8 @@ public partial class App : Application
             libraryChanged: () => _ = main.ReloadGamesAsync(),
             icons: _services.GetRequiredService<IGameIconCache>(),
             ui: new Threading.WpfUiDispatcher(),
-            pulseReadsOpen: () => main.PulseReadsOpen);
+            pulseReadsOpen: () => main.PulseReadsOpen,
+            pulse: _services.GetRequiredService<ROROROblox.Core.Library.IGamePulseService>());
         return new Games.GamesPage(viewModel, main.Accounts);
     }
 

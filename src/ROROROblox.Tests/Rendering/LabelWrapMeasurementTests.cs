@@ -927,6 +927,118 @@ public class LabelWrapMeasurementTests
         Assert.Contains(result.Offenders, o => o.Contains("LINES"));
     }
 
+    // ==== v1.41 item 12: the pulse surfaces (begin) ====================================================================
+    // Kept apart from the surfaces above so another item's rows merge beside this block, not into it.
+
+    private static LibraryPageFixtures.FakePulse ReadPulse(params long[] places)
+    {
+        var pulse = new LibraryPageFixtures.FakePulse();
+        pulse.ReadEverything(places);
+        return pulse;
+    }
+
+    /// <summary>
+    /// The tile, the list row and the panel entry with a pulse on every saved game, in the three shapes the widest strings
+    /// take: 14,382,901 players and six days (the longest count and the longest day count), 81,827 and 23 hours, and zero
+    /// players with a month and year. A private server rides on the game it lives in and shows the date alone.
+    /// </summary>
+    private static readonly Surface[] PulseSurfaces =
+    [
+        new("pulse-library-tile", () => LibraryPageFixtures.Build(LibraryScene.Showcase, filters: "Recent,Favourites,PrivateServers",
+            pulse: ReadPulse(2001, 2002, 2003, 2004, 2005)).Window, c => c, MinElements: 40),
+        new("pulse-library-row", () => LibraryPageFixtures.Build(LibraryScene.Showcase, view: "list",
+            pulse: ReadPulse(2001, 2002, 2003, 2004, 2005)).Window, c => c, MinElements: 45),
+        new("pulse-panel-entry", () => PanelWindowFixtures.Build(accounts: 1, content: PanelContent.Full, savedGames: true,
+            pulse: ReadPulse(8737899170, 920587237, 126884695634066)), Roster, MinElements: 25),
+    ];
+
+    /// <summary>
+    /// Every pulse-bearing text on a surface, measured the way the walk cannot: a TextBlock with an ellipsis is measured
+    /// down to the room it is given, so the walk sees a text that fits and a cut that nothing clips. Natural width (the
+    /// same font, unconstrained) against the width the layout gave it says whether the words are all there.
+    /// </summary>
+    private static List<(string Text, double Natural, double Room, bool IsPanel)> PulseTexts(Theme theme, Surface surface, string culture)
+    {
+        var previous = TranslationSource.Instance.CurrentCulture;
+        TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
+        try
+        {
+            return ThemedWindowRender.Inspect(theme, $"pulse texts [{surface.Name}/{culture}]", surface.Build, content =>
+            {
+                var found = new List<(string, double, double, bool)>();
+                void Visit(DependencyObject node)
+                {
+                    for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+                    {
+                        var child = VisualTreeHelper.GetChild(node, i);
+                        if (child is TextBlock tb && tb.Text.Length > 0 && PanelWindowFixtures.EffectivelyVisible(tb)
+                            && (tb.Name is "TilePulse" or "RowPulse" || (tb.DataContext is PanelEntry { Pulse: not null } pe && tb.Text == pe.MetaText)))
+                        {
+                            var clone = Clone(tb);
+                            clone.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                            found.Add((tb.Text, clone.DesiredSize.Width, tb.ActualWidth, tb.DataContext is PanelEntry));
+                        }
+
+                        Visit(child);
+                    }
+                }
+
+                Visit(content);
+                return found;
+            });
+        }
+        finally
+        {
+            TranslationSource.Instance.CurrentCulture = previous;
+        }
+    }
+
+    /// <summary>
+    /// Every label the pulse adds, in every language: the tile's count line and the row's joined line must not clip and
+    /// must stay within two lines; nothing may be exempted for them, because a count that reads "81,8…" is a wrong
+    /// number. The panel entry's meta line is the one place a trim is the established behaviour (the full text is the
+    /// tooltip and the accessible name), so its trims are measured and written, and counted, not failed.
+    /// </summary>
+    [WindowRenderFact]
+    public void EveryPulseLabel_FitsItsTileAndRow_InEverySupportedLanguage()
+    {
+        var brand = Brand();
+        var offenders = new List<string>();
+        var trims = new SortedSet<string>(StringComparer.Ordinal);
+        var report = new StringBuilder();
+        report.AppendLine("surface | culture | checked (wrap/nowrap) | max wrapped lines | pulse texts (trimmed)");
+
+        foreach (var surface in PulseSurfaces)
+        {
+            foreach (var culture in Cultures)
+            {
+                var result = Measure(brand, surface, culture);
+                var texts = PulseTexts(brand, surface, culture);
+                var cut = texts.Where(t => t.Natural > t.Room + 0.5).ToList();
+                report.AppendLine($"{surface.Name} | {culture} | {result.Checked} ({result.Wrapping}/{result.NoWrap}) | {result.MaxWrapLines} | {texts.Count} ({cut.Count})");
+                offenders.AddRange(result.Offenders);
+                offenders.AddRange(result.Clips.Select(c => c.Line));
+                Assert.NotEmpty(texts);
+                foreach (var t in cut)
+                {
+                    var line = $"[{surface.Name}/{culture}] '{t.Text}' natural {t.Natural:F0} DIP, room {t.Room:F0} DIP";
+                    if (t.IsPanel) trims.Add(line); else offenders.Add("TRIMMED " + line);
+                }
+
+                foreach (var e in result.Exempted) trims.Add(e);
+                Assert.True(result.Checked >= surface.MinElements,
+                    $"[{surface.Name}/{culture}] the walk saw only {result.Checked} text elements (floor {surface.MinElements}); it is not measuring the surface.");
+            }
+        }
+
+        _output.WriteLine(report.ToString());
+        _output.WriteLine("---- panel entry meta lines that trim (by design: the full text is the tooltip and the accessible name) ----");
+        foreach (var e in trims) _output.WriteLine(e);
+        Assert.True(offenders.Count == 0, $"{offenders.Count} pulse label(s) clip or wrap past {MaxLines} lines:" + Environment.NewLine + string.Join(Environment.NewLine, offenders));
+    }
+
+    // ==== v1.41 item 12: the pulse surfaces (end) ======================================================================
+
     // ---- opt-in German captures -------------------------------------------------------------------------------
 
     private sealed class OptInFactAttribute : FactAttribute

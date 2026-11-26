@@ -4,6 +4,8 @@ using System.Runtime.CompilerServices;
 using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Library;
+using PulseWords = ROROROblox.App.Games.PulseText;
 
 namespace ROROROblox.App.Games;
 
@@ -21,11 +23,15 @@ internal sealed class LibraryItem : INotifyPropertyChanged
 {
     private LibraryEntry _entry;
     private string? _iconUrl;
+    private readonly Func<long, GamePulseView?>? _pulseOf;
 
-    public LibraryItem(LibraryEntry entry)
+    /// <param name="entry">The data this item words.</param>
+    /// <param name="pulseOf">The game pulse's reading for a universe id; null means the item never has a pulse line.</param>
+    public LibraryItem(LibraryEntry entry, Func<long, GamePulseView?>? pulseOf = null)
     {
         _entry = entry ?? throw new ArgumentNullException(nameof(entry));
         _iconUrl = entry.IconUrl;
+        _pulseOf = pulseOf;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -111,8 +117,60 @@ internal sealed class LibraryItem : INotifyPropertyChanged
         ? Loc.Format("Library_Meta_Played", LastPlayedText, TotalText)
         : LastPlayedText;
 
-    /// <summary>The full name over the meta line over the place id: for the day the tile trims the name with an ellipsis.</summary>
-    public string TooltipText => DisplayName + "\n" + MetaText + "\n" + Loc.Format("Library_PlaceId", _entry.PlaceId.ToString(CultureInfo.InvariantCulture));
+    /// <summary>The game's reading right now, or null: no universe id yet, no answer yet, Roblox no longer returns it, or the switch is off.</summary>
+    private GamePulseView? Pulse => _entry.UniverseId is > 0 and var id ? _pulseOf?.Invoke(id) : null;
+
+    /// <summary>"81,827 playing". Empty without a count, and always empty for a private server. The grid tile draws this and nothing more of the pulse.</summary>
+    public string PulseCountText => PulseWords.Count(Pulse, IsPrivate);
+
+    /// <summary>"updated 2 days ago". Empty without a date.</summary>
+    public string PulseUpdatedText => PulseWords.Updated(Pulse);
+
+    /// <summary>Both halves joined ("81,827 playing · updated 2 days ago"), either alone, or empty. The list row's second line.</summary>
+    public string PulseText => PulseWords.Joined(Pulse, IsPrivate);
+
+    public bool HasPulseCount => PulseCountText.Length > 0;
+
+    public bool HasPulse => PulseText.Length > 0;
+
+    /// <summary>
+    /// The full name over the meta line, then the pulse, then the place id: for the day the tile trims the name with an
+    /// ellipsis. The pulse carries what the C3 tile leaves out (the date).
+    /// </summary>
+    public string TooltipText
+    {
+        get
+        {
+            var pulse = PulseText;
+            return DisplayName + "\n" + MetaText + (pulse.Length > 0 ? "\n" + pulse : string.Empty)
+                   + "\n" + Loc.Format("Library_PlaceId", _entry.PlaceId.ToString(CultureInfo.InvariantCulture));
+        }
+    }
+
+    /// <summary>The entry's accessible name: name, players, updated. The pulse halves drop when absent. The buttons inside keep their own names.</summary>
+    public string EntryName
+    {
+        get
+        {
+            var pulse = PulseText;
+            return pulse.Length > 0 ? Loc.Format("Library_Meta_Played", DisplayName, pulse) : DisplayName;
+        }
+    }
+
+    /// <summary>Re-raises everything the pulse words: on the service's change for this game, on a language switch, and on the clock.</summary>
+    public void RaisePulse()
+    {
+        OnChanged(nameof(PulseCountText));
+        OnChanged(nameof(PulseUpdatedText));
+        OnChanged(nameof(PulseText));
+        OnChanged(nameof(HasPulseCount));
+        OnChanged(nameof(HasPulse));
+        OnChanged(nameof(TooltipText));
+        OnChanged(nameof(EntryName));
+    }
+
+    /// <summary>The universe id the pulse is read for, or null while it is unknown.</summary>
+    public long? UniverseId => _entry.UniverseId is > 0 and var id ? id : null;
 
     public string PlayName => Loc.Format("Library_Play_Name", DisplayName);
 

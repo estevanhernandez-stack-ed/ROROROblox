@@ -5146,6 +5146,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // as the header's Library button.
             openLibrary: OpenGames,
             pulseReadsOpen: () => PulseReadsOpen);
+        // A row added after startup picks up the pulse and the window's visibility as they stand now.
+        panel.SetPulse(_gamePulse);
+        panel.SetMainWindowVisible(_mainWindowVisible);
         panel.UserToggled += (_, open) => _ = PersistPanelExpandedAsync(summary.Id, open);
         summary.AttachPanel(panel);
         summary.PropertyChanged += OnAccountSummaryPropertyChanged;
@@ -5907,6 +5910,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _gamePulse = value;
             _pulseGate = null;
             SyncPulseGate();
+            foreach (var account in AccountsSnapshot) account.Panel?.SetPulse(value);
         }
     }
 
@@ -5945,6 +5949,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _mainWindowVisible = visible;
         _robloxFeeds?.SetWindowVisible(visible);
         SyncPulseGate();
+        foreach (var account in AccountsSnapshot) account.Panel?.SetMainWindowVisible(visible);
     }
 
     private void SyncPulseGate()

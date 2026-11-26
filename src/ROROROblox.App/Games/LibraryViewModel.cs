@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Library;
 
 namespace ROROROblox.App.Games;
 
@@ -73,6 +74,10 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
     private readonly IGameIconCache? _icons;
     private readonly IUiDispatcher? _ui;
     private readonly Func<bool>? _pulseReadsOpen;
+    private readonly IGamePulseService? _pulse;
+    private readonly Dictionary<object, LibraryItem> _slots = new(ReferenceEqualityComparer.Instance);
+    private bool _pulseAttached;
+    private bool _windowMinimised;
     private readonly Dictionary<(LibraryEntryKind Kind, long PlaceId, Guid? ServerId), LibraryItem> _itemCache = new();
     private bool _iconsAttached;
     private LibraryItem? _pendingRemoval;
@@ -89,6 +94,7 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
     /// <param name="libraryChanged">Fired after a mutation, so the main window's reload runs.</param>
     /// <param name="icons">The icon cache. A tile that comes on screen asks it for its own place and nothing else; null means no icons are ever requested.</param>
     /// <param name="ui">Marshals the cache's worker-thread <c>IconResolved</c> onto the UI thread; null runs inline (tests).</param>
+    /// <param name="pulse">The game pulse. The page's on-screen entries are declared to it as this view model's interest, and its readings word the tile and the row; null means no pulse line ever.</param>
     /// <param name="pulseReadsOpen">True while the Roblox feeds switch is on and the pulse's startup gate has passed. Only then does an entry that has an icon but no universe id ask the icon cache for it; null means never.</param>
     public LibraryViewModel(
         LibraryCatalog catalog,
@@ -102,9 +108,11 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         Action? libraryChanged = null,
         IGameIconCache? icons = null,
         IUiDispatcher? ui = null,
-        Func<bool>? pulseReadsOpen = null)
+        Func<bool>? pulseReadsOpen = null,
+        IGamePulseService? pulse = null)
     {
         _pulseReadsOpen = pulseReadsOpen;
+        _pulse = pulse;
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _favorites = favorites ?? throw new ArgumentNullException(nameof(favorites));
         _servers = servers ?? throw new ArgumentNullException(nameof(servers));
@@ -281,7 +289,10 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         _entries = await _catalog.ListAsync(ct).ConfigureAwait(true);
         var live = _entries.Select(LibraryItem.KeyOf).ToHashSet();
         foreach (var gone in _itemCache.Keys.Where(k => !live.Contains(k)).ToList()) _itemCache.Remove(gone);
+        foreach (var slot in _slots.Where(kv => !live.Contains(kv.Value.Key)).Select(kv => kv.Key).ToList()) _slots.Remove(slot);
         ApplyFilter();
+        // A reload can hand an on-screen entry a universe id the catalog now knows (or take a removed one away).
+        PushInterest();
     }
 
     public static LibraryView ParseView(string? stored)
@@ -362,7 +373,7 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         {
             var key = LibraryItem.KeyOf(e);
             if (_itemCache.TryGetValue(key, out var item)) item.Update(e);
-            else _itemCache[key] = item = new LibraryItem(e);
+            else _itemCache[key] = item = new LibraryItem(e, _pulse is null ? null : _pulse.TryGet);
             next.Add(item);
         }
 
@@ -381,31 +392,65 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         }
     }
 
-    // ---- icons: a tile that comes on screen asks for its own place, and nothing else is fetched ----
+    // ---- icons and the pulse: a tile that comes on screen asks for its own place, and nothing else is fetched ----
 
     private void AttachIcons()
     {
-        if (_icons is null || _iconsAttached) return;
-        _iconsAttached = true;
-        _icons.IconResolved += OnIconResolved;
+        if (_icons is not null && !_iconsAttached)
+        {
+            _iconsAttached = true;
+            _icons.IconResolved += OnIconResolved;
+        }
+
+        if (_pulse is not null && !_pulseAttached)
+        {
+            _pulseAttached = true;
+            _pulse.Changed += OnPulseChanged;
+            TranslationSource.Instance.CultureChanged += OnCultureChanged;
+        }
     }
 
-    /// <summary>Stops listening to the icon cache. The page calls it when it leaves the screen.</summary>
+    /// <summary>Stops listening to the icon cache and the pulse, and declares no interest. The page calls it when it leaves the screen.</summary>
     public void Detach()
     {
-        if (_icons is null || !_iconsAttached) return;
-        _iconsAttached = false;
-        _icons.IconResolved -= OnIconResolved;
+        if (_icons is not null && _iconsAttached)
+        {
+            _iconsAttached = false;
+            _icons.IconResolved -= OnIconResolved;
+        }
+
+        if (_pulse is not null && _pulseAttached)
+        {
+            _pulseAttached = false;
+            _pulse.Changed -= OnPulseChanged;
+            TranslationSource.Instance.CultureChanged -= OnCultureChanged;
+        }
+
+        _slots.Clear();
+        PushInterest();
     }
 
     /// <summary>
-    /// A tile was realised: if it has no icon, ask the cache for that one place; an entry that has an icon
-    /// but no universe id (a saved private server) asks too, but only while the pulse may read. Does nothing
-    /// for a tile that is not on screen, because only a realised tile calls it.
+    /// A tile or row came on screen (it loaded, was handed another entry, or became visible): it joins the on-screen
+    /// set the pulse is told about, and if it has no icon, asks the cache for that one place. An entry that has an icon
+    /// but no universe id (a saved private server) asks too, but only while the pulse may read. Does nothing for
+    /// a tile that is not on screen, because only a realised, visible one calls it.
+    /// <para>
+    /// <paramref name="slot"/> is the template root that shows the item. The grid and the list are two lists over the same
+    /// items, so one entry can be shown by two roots for an instant while the view switches; the set is by root, and an
+    /// entry stays on screen while any root shows it. A root handed another entry replaces its own row.
+    /// </para>
     /// </summary>
-    public void NoteOnScreen(LibraryItem item)
+    public void NoteOnScreen(LibraryItem item, object? slot = null)
     {
         ArgumentNullException.ThrowIfNull(item);
+        slot ??= item;
+        if (!_slots.TryGetValue(slot, out var held) || !ReferenceEquals(held, item))
+        {
+            _slots[slot] = item;
+            PushInterest();
+        }
+
         if (_icons is null) return;
         if (!string.IsNullOrWhiteSpace(item.IconUrl)
             && !(item.Entry.UniverseId is null && _pulseReadsOpen?.Invoke() == true))
@@ -416,14 +461,76 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         _icons.Request(item.PlaceId);
     }
 
+    /// <summary>A tile or row left the screen: unloaded, handed to something that is not an entry, or hidden (the other layout, a hidden window).</summary>
+    public void NoteOffScreen(object slot)
+    {
+        ArgumentNullException.ThrowIfNull(slot);
+        if (_slots.Remove(slot)) PushInterest();
+    }
+
+    /// <summary>
+    /// The window is minimised (or restored): minimised declares nothing, restored declares the tracked set again. A
+    /// hidden window needs no call, because every realised root raises <c>IsVisibleChanged</c> for it.
+    /// </summary>
+    public void SetWindowMinimised(bool minimised)
+    {
+        if (_windowMinimised == minimised) return;
+        _windowMinimised = minimised;
+        PushInterest();
+    }
+
+    /// <summary>How many entries are on screen right now. For the tests and the page's diagnostics.</summary>
+    internal int OnScreenCount => _slots.Values.Distinct().Count();
+
+    private void PushInterest()
+    {
+        if (_pulse is null) return;
+        var ids = _windowMinimised
+            ? []
+            : _slots.Values.Select(i => i.UniverseId).Where(id => id is not null).Select(id => id!.Value).Distinct().ToList();
+        _pulse.SetInterest(this, ids);
+    }
+
     private void OnIconResolved(object? sender, GameIconResolvedEventArgs e)
+    {
+        void Apply()
+        {
+            var learnedUniverse = false;
+            foreach (var item in _itemCache.Values)
+            {
+                if (item.PlaceId != e.PlaceId) continue;
+                if (string.IsNullOrWhiteSpace(item.IconUrl)) item.IconUrl = e.Info.IconUrl;
+                if (item.Entry.UniverseId is null && e.Info.UniverseId > 0)
+                {
+                    item.Update(item.Entry with { UniverseId = e.Info.UniverseId });
+                    learnedUniverse = true;
+                }
+            }
+
+            if (learnedUniverse) PushInterest();
+        }
+
+        if (_ui is null) Apply(); else _ui.Invoke(Apply);
+    }
+
+    private void OnPulseChanged(object? sender, GamePulseChangedEventArgs e)
     {
         void Apply()
         {
             foreach (var item in _itemCache.Values)
             {
-                if (item.PlaceId == e.PlaceId && string.IsNullOrWhiteSpace(item.IconUrl)) item.IconUrl = e.Info.IconUrl;
+                if (item.UniverseId is { } id && e.UniverseIds.Contains(id)) item.RaisePulse();
             }
+        }
+
+        if (_ui is null) Apply(); else _ui.Invoke(Apply);
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        void Apply()
+        {
+            foreach (var item in _itemCache.Values) item.RaisePulse();
         }
 
         if (_ui is null) Apply(); else _ui.Invoke(Apply);
