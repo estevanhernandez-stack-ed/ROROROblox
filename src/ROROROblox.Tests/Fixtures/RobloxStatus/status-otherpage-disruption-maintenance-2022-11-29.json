@@ -1,0 +1,971 @@
+{
+  "result": {
+    "status_overall": {
+      "updated": "2022-11-29T10:30:39.470Z",
+      "status": "Service Disruption",
+      "status_code": 500
+    },
+    "status": [
+      {
+        "id": "5982de1e383934bd050006ac",
+        "name": "Dedicated Servers and Colocation",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5982d729f6278a3b05000618",
+            "name": "Control panel",
+            "updated": "2022-11-25T09:00:13.475Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982e0bcd0c6743105000677",
+            "name": "SPB-1",
+            "updated": "2022-11-28T23:00:11.651Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982e0c3bb1f0ab205000616",
+            "name": "SPB-2",
+            "updated": "2022-11-24T23:00:21.388Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982e0c9bb1f0ab205000617",
+            "name": "SPB-3",
+            "updated": "2022-11-17T03:00:09.305Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982e0e3e0aa63a8050005f1",
+            "name": "MSK-1",
+            "updated": "2022-11-28T23:00:11.686Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5bb1df87d5a6aa2927308172",
+            "name": "MSK-2",
+            "updated": "2022-11-15T02:00:04.826Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5bb1dfa131ecf15bb649e9f7",
+            "name": "Chipcore (SPB-4)",
+            "updated": "2022-10-27T00:00:05.423Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5c3df9c9e12a924809f4014e",
+            "name": "SPB-5",
+            "updated": "2022-11-25T02:00:04.644Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5c3c71c6482caa471a8577da",
+            "name": "MSK-3",
+            "updated": "2022-11-28T13:30:03.630Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ]
+      },
+      {
+        "id": "5982dc5bd537a2a7050005d4",
+        "name": "Cloud Platform (VPC)",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5982d729f6278a3b05000618",
+            "name": "Control panel",
+            "updated": "2022-11-17T20:48:32.079Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982db0f7865bbad050005d0",
+            "name": "Saint-Petersburg ru-1a",
+            "updated": "2022-11-24T00:00:17.975Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982db2ed0c6743105000674",
+            "name": "Saint-Petersburg ru-1b",
+            "updated": "2022-11-24T00:00:17.976Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982dabbac265d3c05000671",
+            "name": "Moscow ru-2a",
+            "updated": "2022-11-29T10:30:39.463Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5b320d59fc1f0804be9d71d0",
+            "name": "Saint-Petersburg ru-3a",
+            "updated": "2022-11-29T10:30:39.463Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5bdaca58d75ae704af4d055b",
+            "name": "Moscow ru-2b",
+            "updated": "2022-11-29T10:30:39.463Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5dfa2a84b7e7ca1318515cab",
+            "name": "Moscow ru-7a",
+            "updated": "2022-11-29T10:30:39.463Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5dfa2a8d84d7551554a8e6a4",
+            "name": "Novosibirsk ru-8a",
+            "updated": "2022-11-23T20:59:03.902Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5e6236d6144d9304c0e6061c",
+            "name": "Saint-Petersburg ru-1c",
+            "updated": "2022-11-24T00:00:17.974Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "6006c53dddef08053a253c37",
+            "name": "Moscow ru-2c",
+            "updated": "2022-11-29T10:30:39.463Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "6006c54ea861f0053151878e",
+            "name": "Saint-Petersburg ru-9a",
+            "updated": "2022-11-29T10:30:39.463Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "61a74428714e1f053880d1a6",
+            "name": "Tashkent uz-1",
+            "updated": "2022-11-29T10:30:39.463Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "6319ddd8f272cd052d80554e",
+            "name": "Amsterdam nl-1",
+            "updated": "2022-11-29T10:30:39.463Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ]
+      },
+      {
+        "id": "5982dcf2f6278a3b0500061a",
+        "name": "Cloud Storage",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5982d729f6278a3b05000618",
+            "name": "Control panel",
+            "updated": "2022-03-09T17:03:46.326Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982dd5af6278a3b0500061d",
+            "name": "Storage service",
+            "updated": "2022-09-27T10:44:58.889Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982dd40f6278a3b0500061c",
+            "name": "API",
+            "updated": "2022-11-18T05:13:26.819Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982dd7f46ecf12b05000685",
+            "name": "CDN (selcdn.com)",
+            "updated": "2022-09-30T13:42:20.685Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ]
+      },
+      {
+        "id": "5982e291383934bd050006b0",
+        "name": "DNS Hosting",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5982d729f6278a3b05000618",
+            "name": "Control panel",
+            "updated": "2022-11-22T16:22:32.445Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982e304bb1f0ab205000618",
+            "name": "NS-servers",
+            "updated": "2022-10-26T13:00:06.535Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982dd40f6278a3b0500061c",
+            "name": "API",
+            "updated": "2022-04-28T12:30:17.887Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ]
+      },
+      {
+        "id": "59b69ac3331fbea405000743",
+        "name": "Network",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "59b69a93d4c04f860500078d",
+            "name": "Core network",
+            "updated": "2022-11-16T22:00:16.715Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d90fd0c6743105000670",
+            "name": "Tsvetochnaya-1",
+            "updated": "2022-11-28T23:00:11.650Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d91cd0c6743105000671",
+            "name": "Tsvetochnaya-2",
+            "updated": "2022-11-24T23:00:21.387Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d930470c77a20500061a",
+            "name": "Dubrovka-1",
+            "updated": "2022-10-11T03:00:05.330Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d93af6278a3b05000619",
+            "name": "Dubrovka-2",
+            "updated": "2022-11-25T02:00:04.648Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d942383934bd050006ab",
+            "name": "Dubrovka-3",
+            "updated": "2022-10-11T03:00:05.336Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d95bac265d3c05000670",
+            "name": "Berzarina-1",
+            "updated": "2022-11-28T23:00:11.652Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5c3dfd5b36872f474dec3bd1",
+            "name": "SPB-4",
+            "updated": "2022-10-11T03:00:05.357Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5c3dfd62cf431a47ffd3312d",
+            "name": "SPB-5",
+            "updated": "2022-11-25T02:00:04.650Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5cee9cda41adaa138fab5aac",
+            "name": "Berzarina-2",
+            "updated": "2022-11-15T02:00:04.828Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5c3c729458ba4c47357f2386",
+            "name": "MSK-3",
+            "updated": "2022-10-27T02:00:08.372Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5dfa2ac084d7551554a8e6a5",
+            "name": "Ru-7",
+            "updated": "2022-10-31T12:00:18.900Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5dfa2ac88558c01566d58394",
+            "name": "Ru-8 (NSK)",
+            "updated": "2022-11-15T06:25:47.738Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "61a7444c51fec9053d61317d",
+            "name": "Uz-1 (Tashkent)",
+            "updated": "2022-11-14T12:00:31.746Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "6319de63096b3e052e4cf130",
+            "name": "Nl-1 (Amsterdam)",
+            "updated": "2022-11-15T06:25:49.661Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "6319efbcf2a907052e20088d",
+            "name": "AMS-1 (Amsterdam)",
+            "updated": "2022-11-15T06:25:51.115Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ]
+      },
+      {
+        "id": "5982d7b2470c77a205000606",
+        "name": "Datacenter Infrastructure",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Planned Maintenance",
+        "status_code": 200,
+        "containers": [
+          {
+            "id": "5982d90fd0c6743105000670",
+            "name": "Tsvetochnaya-1",
+            "updated": "2022-11-10T02:00:12.090Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d91cd0c6743105000671",
+            "name": "Tsvetochnaya-2",
+            "updated": "2022-11-29T10:30:39.465Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d930470c77a20500061a",
+            "name": "Dubrovka-1",
+            "updated": "2022-03-31T02:00:22.046Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d93af6278a3b05000619",
+            "name": "Dubrovka-2",
+            "updated": "2022-08-09T02:00:04.254Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d942383934bd050006ab",
+            "name": "Dubrovka-3",
+            "updated": "2022-11-25T09:00:13.474Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d95bac265d3c05000670",
+            "name": "Berzarina-1",
+            "updated": "2022-11-26T14:00:06.435Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5cee9dccd92c370920338b4b",
+            "name": "Berzarina-2",
+            "updated": "2022-11-26T14:00:06.433Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5cee9d9341adaa138fab5aad",
+            "name": "MSK-3",
+            "updated": "2022-11-28T13:30:03.628Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5e0218264febf72e6f06f134",
+            "name": "Ru-8 (NSK)",
+            "updated": "2022-05-07T17:22:02.492Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "61a7445f9d4e8505426ec787",
+            "name": "Tashkent",
+            "updated": "2022-11-29T10:30:39.465Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "6319dd9b279eb80538be8703",
+            "name": "Amsterdam",
+            "updated": "2022-11-29T10:30:39.465Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "6384da87dc4010053470e294",
+            "name": "MMTS-9",
+            "updated": "2022-11-28T20:00:04.036Z",
+            "status": "Planned Maintenance",
+            "status_code": 200
+          }
+        ]
+      },
+      {
+        "id": "5980813dd537a2a7050004cd",
+        "name": "Website",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5980813dd537a2a7050004cc",
+            "name": "Website pages",
+            "updated": "2022-10-19T09:43:43.129Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5982d729f6278a3b05000618",
+            "name": "Control panel",
+            "updated": "2022-10-27T13:23:37.822Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "598348a5ac265d3c05000689",
+            "name": "Knowledge base",
+            "updated": "2020-03-16T10:17:37.454Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "598348b6ac265d3c0500068a",
+            "name": "Blog",
+            "updated": "2021-06-28T11:50:20.792Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "637b8581a10770052d296b09",
+            "name": "Speedtest",
+            "updated": "2022-11-29T00:00:05.910Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ]
+      },
+      {
+        "id": "5ab24be6f6eda304dfed7adc",
+        "name": "VMware Cloud",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5982d729f6278a3b05000618",
+            "name": "Control panel",
+            "updated": "2022-11-01T14:00:20.074Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5ab24ba12ab38404d58b1642",
+            "name": "vCloud Director SPB",
+            "updated": "2022-08-03T03:00:37.879Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5ab24bcc92dc2004da66ce0b",
+            "name": "Gold DR SPB",
+            "updated": "2022-10-28T02:00:21.466Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5ab24baffccc4b04d3774713",
+            "name": "Gold SPB",
+            "updated": "2022-10-28T02:00:21.568Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5ab24bc24db85726ecf8f315",
+            "name": "Silver SPB",
+            "updated": "2022-10-28T02:00:21.493Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5ced55b4ff751704ba8b7e1c",
+            "name": "vCloud Director MSK",
+            "updated": "2022-11-25T00:00:34.716Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5ced559eed06a304bd007bca",
+            "name": "Gold MSK",
+            "updated": "2022-10-28T02:00:21.605Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5ced55a68e62641016290f88",
+            "name": "Silver MSK",
+            "updated": "2022-10-28T02:00:21.534Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5da9a5636415780af9fc0879",
+            "name": "Backup SPB",
+            "updated": "2022-11-01T14:00:20.072Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5da9a56abf70a10b156a0851",
+            "name": "Backup MSK",
+            "updated": "2022-11-25T00:00:34.733Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5da9a5713e342f0c4ba0cb38",
+            "name": "Backup Console SPB",
+            "updated": "2022-11-01T14:00:20.071Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5db9860328f0b2284dce33a2",
+            "name": "Backup Console MSK",
+            "updated": "2022-11-25T00:00:34.733Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5dd265e4a2f5de0b05b9602f",
+            "name": "Gold DR MSK",
+            "updated": "2022-11-11T00:00:07.670Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ]
+      },
+      {
+        "id": "5da9a5c9bf70a10b156a0852",
+        "name": "Cloud Connect Backup",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5da9a5b48b8dad0bb1a775d6",
+            "name": "Cloud Connect Repo",
+            "updated": "2022-11-25T09:00:13.476Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5da9a5bc4a876e0ab50bd707",
+            "name": "Availability Console",
+            "updated": "2022-11-01T14:00:20.075Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ]
+      },
+      {
+        "id": "5f9c10907f50b304c1e7c8c8",
+        "name": "CDN",
+        "updated": "2022-11-29T10:30:39.470Z",
+        "status": "Service Disruption",
+        "status_code": 500,
+        "containers": [
+          {
+            "id": "5f9c108618906b04baced440",
+            "name": "CDN",
+            "updated": "2022-11-29T10:02:47.927Z",
+            "status": "Service Disruption",
+            "status_code": 500
+          }
+        ]
+      }
+    ],
+    "incidents": [
+      {
+        "name": "Недоступность CDN-ресурсов",
+        "_id": "6385d55a9caa5566cb42970f",
+        "datetime_open": "2022-11-29T09:48:10.450Z",
+        "messages": [
+          {
+            "details": "Мы наблюдаем некоторые сложности в работе услуги. Сервис может быть недоступен для пользователей. Приносим извинения за доставленные неудобства. Мы обновим данный инцидент как только у нас появятся новости.",
+            "state": 100,
+            "status": 500,
+            "datetime": "2022-11-29T09:48:10.825Z"
+          },
+          {
+            "details": "В конфиурацию сервиса были внесены правки. \r\n\r\nНа теущий момент наблюдаем за работой сервиса. \r\n\r\nКак только инцидент будет полностью разрешён, мы сообщим дополнительно. ",
+            "state": 300,
+            "status": 500,
+            "datetime": "2022-11-29T10:02:47.858Z"
+          }
+        ],
+        "containers_affected": [
+          {
+            "name": "CDN",
+            "_id": "5f9c108618906b04baced440"
+          }
+        ],
+        "components_affected": [
+          {
+            "name": "CDN",
+            "_id": "5f9c10907f50b304c1e7c8c8"
+          }
+        ]
+      }
+    ],
+    "maintenance": {
+      "active": [
+        {
+          "name": "Плановые работы на ММТС-9",
+          "_id": "6384dda393007f053ae71332",
+          "datetime_open": "2022-11-28T16:11:15.719Z",
+          "datetime_planned_start": "2022-11-28T20:00:00.000Z",
+          "datetime_planned_end": "2022-11-29T20:59:00.000Z",
+          "messages": [
+            {
+              "details": "На ММТС-9 будут проводиться плановые работы по переключению нагрузки.\r\n\r\nВ связи с этим будет кратковременное отключение электропитания в нашей стойке.\r\n\r\nНа время переключения нагрузка перейдет на наш ИБП.",
+              "state": 100,
+              "status": 200,
+              "datetime": "2022-11-28T16:11:15.741Z"
+            },
+            {
+              "details": "Работы начаты",
+              "state": 200,
+              "status": 200,
+              "datetime": "2022-11-28T20:00:03.930Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "name": "MMTS-9",
+              "_id": "6384da87dc4010053470e294"
+            }
+          ],
+          "components_affected": [
+            {
+              "name": "Datacenter Infrastructure",
+              "_id": "5982d7b2470c77a205000606"
+            }
+          ]
+        }
+      ],
+      "upcoming": [
+        {
+          "name": "Плановые работы на сети в ДЦ Дубровка-1 (SPB-4), 13.12.2022",
+          "_id": "638437128f4e1b052ef01661",
+          "datetime_open": "2022-11-28T04:20:34.533Z",
+          "datetime_planned_start": "2022-12-12T21:00:00.000Z",
+          "datetime_planned_end": "2022-12-13T02:00:00.000Z",
+          "messages": [
+            {
+              "details": "13.12.2022 c 00:00 до 05:00 по московскому времени (GMT/UTC+3) будут производиться плановые работы на сетевом оборудовании в локации SPB-4.\r\n\r\nОжидается перерыв связи во внешнюю сеть Интернет до 120 минут.\r\n\r\nЕсли ваше оборудование попадает под указанные работы, то вы получите соответствующее уведомление в панели управления (my.selectel.ru).",
+              "state": 100,
+              "status": 200,
+              "datetime": "2022-11-28T04:20:34.577Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "name": "Chipcore (SPB-4)",
+              "_id": "5bb1dfa131ecf15bb649e9f7"
+            }
+          ],
+          "components_affected": [
+            {
+              "name": "Dedicated Servers and Colocation",
+              "_id": "5982de1e383934bd050006ac"
+            }
+          ]
+        },
+        {
+          "name": "Плановые работы Дубровка-1 (SPB-4), 07.12.2022",
+          "_id": "6382368fdc4010053470e25c",
+          "datetime_open": "2022-11-26T15:53:51.140Z",
+          "datetime_planned_start": "2022-12-06T21:00:00.000Z",
+          "datetime_planned_end": "2022-12-07T02:00:00.000Z",
+          "messages": [
+            {
+              "details": "07.12.2022 c 00:00 до 05:00 по московскому времени (GMT/UTC+3) будут производиться плановые работы на сетевом оборудовании в локации SPB-4.\r\n\r\nОжидается перерыв связи во внешнюю сеть до 120 минут.\r\n\r\nЕсли ваше оборудование попадает под указанные работы, то вы получите соответствующее уведомление в панели управления (my.selectel.ru).",
+              "state": 100,
+              "status": 200,
+              "datetime": "2022-11-26T15:53:51.355Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "name": "Chipcore (SPB-4)",
+              "_id": "5bb1dfa131ecf15bb649e9f7"
+            }
+          ],
+          "components_affected": [
+            {
+              "name": "Dedicated Servers and Colocation",
+              "_id": "5982de1e383934bd050006ac"
+            }
+          ]
+        },
+        {
+          "name": "Плановые работы для локальной сети SPB-5, 02.12.2022",
+          "_id": "638476a3a10770052d296ccf",
+          "datetime_open": "2022-11-28T08:51:47.196Z",
+          "datetime_planned_start": "2022-12-01T23:00:00.000Z",
+          "datetime_planned_end": "2022-12-02T00:00:00.000Z",
+          "messages": [
+            {
+              "details": "Уведомляем, что 02.12.2022 состоятся плановые работы для сетевого оборудования локации SPB-5. Работы пройдут в промежутке 02:00-03:00 МСК.\r\n\r\nДаунтайм составит не более 5-10 минут для каждого локального 10GE порта оборудования.\r\n\r\nЗатронутое оборудование будет перечислено в рамках тикет-системы. \r\nОбращаем ваше внимание, что в случае, если работы не затрагивают ваше оборудование тикет-уведомление направляться не будет.",
+              "state": 100,
+              "status": 200,
+              "datetime": "2022-11-28T08:51:47.211Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "name": "SPB-5",
+              "_id": "5c3df9c9e12a924809f4014e"
+            },
+            {
+              "name": "SPB-5",
+              "_id": "5c3dfd62cf431a47ffd3312d"
+            }
+          ],
+          "components_affected": [
+            {
+              "name": "Dedicated Servers and Colocation",
+              "_id": "5982de1e383934bd050006ac"
+            },
+            {
+              "name": "Network",
+              "_id": "59b69ac3331fbea405000743"
+            }
+          ]
+        },
+        {
+          "name": "Плановые работы Дубровка-3 (SPB-3), 2.12.2022",
+          "_id": "63809f789de89366ca23ab5d",
+          "datetime_open": "2022-11-25T10:56:56.381Z",
+          "datetime_planned_start": "2022-12-01T21:00:00.000Z",
+          "datetime_planned_end": "2022-12-02T00:00:00.000Z",
+          "messages": [
+            {
+              "details": "02.12.2022 c 00:00 до 03:00 по московскому времени (GMT/UTC+3) будут производиться плановые работы на сетевом оборудовании в локации SPB-3.\r\n\r\nОжидается перерыв локальной связности в течение 3 минут.\r\n\r\nЕсли под работы попадают услуги, используемые на Вашем аккаунте, Вам будет направлено соответствующее уведомление в рамках центра уведомлений.\r\n",
+              "state": 100,
+              "status": 200,
+              "datetime": "2022-11-25T10:56:56.412Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "name": "SPB-3",
+              "_id": "5982e0c9bb1f0ab205000617"
+            },
+            {
+              "name": "Dubrovka-3",
+              "_id": "5982d942383934bd050006ab"
+            }
+          ],
+          "components_affected": [
+            {
+              "name": "Dedicated Servers and Colocation",
+              "_id": "5982de1e383934bd050006ac"
+            },
+            {
+              "name": "Network",
+              "_id": "59b69ac3331fbea405000743"
+            },
+            {
+              "name": "Datacenter Infrastructure",
+              "_id": "5982d7b2470c77a205000606"
+            }
+          ]
+        },
+        {
+          "name": "Плановые работы Облачная платформа ru-3, 02.12.2022",
+          "_id": "637e8fe7a10770052d296bf2",
+          "datetime_open": "2022-11-23T21:25:59.886Z",
+          "datetime_planned_start": "2022-12-01T21:00:00.000Z",
+          "datetime_planned_end": "2022-12-01T22:00:00.000Z",
+          "messages": [
+            {
+              "details": "В ночь 02.12.2022 c 00:00 до 01:00   по московскому времени будут проводиться работы по обслуживанию сетевой инфраструктуры региона  Санкт-Петербург (ru-3) виртуального приватного облака. \r\nВо время работ ожидается недоступность части виртуальных роутеров и обслуживаемых ими плавающих IP-адресов продолжительностью до 1 минуты. \r\nДоступность публичных сетей /29 прерываться не будет.\r\n",
+              "state": 100,
+              "status": 200,
+              "datetime": "2022-11-23T21:25:59.916Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "name": "Tsvetochnaya-2",
+              "_id": "5982d91cd0c6743105000671"
+            },
+            {
+              "name": "Saint-Petersburg ru-3a",
+              "_id": "5b320d59fc1f0804be9d71d0"
+            }
+          ],
+          "components_affected": [
+            {
+              "name": "Cloud Platform (VPC)",
+              "_id": "5982dc5bd537a2a7050005d4"
+            },
+            {
+              "name": "Network",
+              "_id": "59b69ac3331fbea405000743"
+            }
+          ]
+        },
+        {
+          "name": "Плановые работы для Облачной платформы, ru-3, 01.12.2022",
+          "_id": "637e8f566cc602053a17329e",
+          "datetime_open": "2022-11-23T21:23:34.317Z",
+          "datetime_planned_start": "2022-11-30T21:00:00.000Z",
+          "datetime_planned_end": "2022-11-30T22:00:00.000Z",
+          "messages": [
+            {
+              "details": "В ночь  01.12.2022 c 00:00 до 01:00   по московскому времени будут проводиться работы по обслуживанию сетевой инфраструктуры региона  Санкт-Петербург (ru-3) виртуального приватного облака. \r\nВо время работ ожидается недоступность части виртуальных роутеров и обслуживаемых ими плавающих IP-адресов продолжительностью до 1 минуты. \r\nДоступность публичных сетей /29 прерываться не будет.",
+              "state": 100,
+              "status": 200,
+              "datetime": "2022-11-23T21:23:34.333Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "name": "Tsvetochnaya-2",
+              "_id": "5982d91cd0c6743105000671"
+            },
+            {
+              "name": "Saint-Petersburg ru-3a",
+              "_id": "5b320d59fc1f0804be9d71d0"
+            }
+          ],
+          "components_affected": [
+            {
+              "name": "Cloud Platform (VPC)",
+              "_id": "5982dc5bd537a2a7050005d4"
+            },
+            {
+              "name": "Network",
+              "_id": "59b69ac3331fbea405000743"
+            }
+          ]
+        },
+        {
+          "name": "Плановые работы на сетевой инфраструктуре SPB-5, 30.11.2022",
+          "_id": "637f6aff8f4e1b052ef015bf",
+          "datetime_open": "2022-11-24T13:00:47.936Z",
+          "datetime_planned_start": "2022-11-29T22:00:00.000Z",
+          "datetime_planned_end": "2022-11-29T23:00:00.000Z",
+          "messages": [
+            {
+              "details": "Уведомляем Вас о проведении плановых работ на сетевой инфраструктуре в пуле SPB-5. Работы пройдут 30.11.2022 с 1:00 по 2:00 по московскому времени.\r\n\r\nВ указанный промежуток времени будет недоступно управления серверами посредством консоли. Даунтайма по внешней/локальной сетевой связности или питанию не будет.\r\n\r\nЕсли ваше оборудование попадает под указанные работы, то вы получите соответствующее уведомление в панели управления (my.selectel.ru).\r\n\r\nПриносим извинения за возможные неудобства.",
+              "state": 100,
+              "status": 200,
+              "datetime": "2022-11-24T13:00:48.145Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "name": "SPB-5",
+              "_id": "5c3df9c9e12a924809f4014e"
+            }
+          ],
+          "components_affected": [
+            {
+              "name": "Dedicated Servers and Colocation",
+              "_id": "5982de1e383934bd050006ac"
+            }
+          ]
+        },
+        {
+          "name": "Плановые работы над тикет-системой 30.11.2022",
+          "_id": "6380aa70a3301105343f08eb",
+          "datetime_open": "2022-11-25T11:43:44.769Z",
+          "datetime_planned_start": "2022-11-29T21:00:00.000Z",
+          "datetime_planned_end": "2022-11-29T23:00:00.000Z",
+          "messages": [
+            {
+              "details": "30.11.2022 с 00:00 по 02:00 (UTC +3) в связи с проведением планового обслуживания на инфраструктуре внутренних сервисов, будет отсутствовать доступ к созданию новых тикетов, а также станет недоступна отправка ответов в уже существующие тикеты.\r\n\r\nПри необходимости связаться с технической поддержкой рекомендуется направить обращение уже после окончания работ. В случае экстренной ситуации наши специалисты готовы обработать ваш запрос по телефону 8 800 555 06 75.",
+              "state": 100,
+              "status": 200,
+              "datetime": "2022-11-25T11:43:44.794Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "name": "Control panel",
+              "_id": "5982d729f6278a3b05000618"
+            }
+          ],
+          "components_affected": [
+            {
+              "name": "Website",
+              "_id": "5980813dd537a2a7050004cd"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

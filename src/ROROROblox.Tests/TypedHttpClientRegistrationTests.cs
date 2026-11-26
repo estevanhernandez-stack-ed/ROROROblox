@@ -30,6 +30,7 @@ public class TypedHttpClientRegistrationTests
     [InlineData(typeof(ROROROblox.App.Notify.PushoverSender))]
     [InlineData(typeof(ROROROblox.App.Notify.NtfySender))]
     [InlineData(typeof(ROROROblox.Core.KnownIssues.IKnownIssuesFeed))]
+    [InlineData(typeof(ROROROblox.Core.Feeds.IRobloxStatusApi))]
     public void TypedHttpClient_Resolves_WithExactlyOneApplicableCtor(Type serviceType)
     {
         var services = new ServiceCollection();
@@ -43,6 +44,7 @@ public class TypedHttpClientRegistrationTests
         services.AddHttpClient<ROROROblox.App.Notify.PushoverSender>();
         services.AddHttpClient<ROROROblox.App.Notify.NtfySender>();
         services.AddHttpClient<ROROROblox.Core.KnownIssues.IKnownIssuesFeed, ROROROblox.Core.KnownIssues.KnownIssuesFeed>();
+        services.AddHttpClient<ROROROblox.Core.Feeds.IRobloxStatusApi, ROROROblox.Core.Feeds.RobloxStatusApi>();
         using var provider = services.BuildServiceProvider();
 
         var resolved = provider.GetRequiredService(serviceType);
@@ -110,9 +112,34 @@ public class TypedHttpClientRegistrationTests
         Assert.False(primary.AllowAutoRedirect, $"{clientInterface.Name} follows redirects: the Cookie header would travel with them.");
     }
 
+    /// <summary>
+    /// The anonymous feed clients carry no account, so there is nothing to leak, but a cookie container
+    /// would still collect Set-Cookie from a third party and a followed 3xx would hide a moved page.
+    /// Read from the real graph, like the cookie-carrying pair.
+    /// </summary>
+    [Theory]
+    [InlineData(typeof(ROROROblox.Core.Feeds.IRobloxStatusApi))]
+    public void AnonymousClients_PrimaryHandler_HasUseCookiesFalseAndNoRedirects(Type clientInterface)
+    {
+        var services = new ServiceCollection();
+        global::ROROROblox.App.App.ConfigureServices(services, NullLoggerFactory.Instance);
+        using var provider = services.BuildServiceProvider();
+
+        HttpMessageHandler handler = provider.GetRequiredService<IHttpMessageHandlerFactory>().CreateHandler(clientInterface.Name);
+        while (handler is DelegatingHandler delegating)
+        {
+            handler = delegating.InnerHandler ?? throw new InvalidOperationException("A delegating handler has no inner handler.");
+        }
+
+        var primary = Assert.IsType<SocketsHttpHandler>(handler);
+        Assert.False(primary.UseCookies, $"{clientInterface.Name} keeps cookies.");
+        Assert.False(primary.AllowAutoRedirect, $"{clientInterface.Name} follows redirects.");
+    }
+
     [Theory]
     [InlineData(typeof(IRobloxApi))]
     [InlineData(typeof(IAccountFactsApi))]
+    [InlineData(typeof(ROROROblox.Core.Feeds.IRobloxStatusApi))]
     public void CookieCarryingClients_SendTheRororoUserAgent(Type clientInterface)
     {
         var services = new ServiceCollection();
@@ -132,6 +159,15 @@ public class TypedHttpClientRegistrationTests
         var ctors = typeof(AccountFactsApi).GetConstructors();
         var ctor = Assert.Single(ctors);
         Assert.Equal(new[] { typeof(HttpClient), typeof(ILogger<AccountFactsApi>) }, ctor.GetParameters().Select(p => p.ParameterType));
+    }
+
+    [Fact]
+    public void RobloxStatusApi_HasExactlyOnePublicConstructor()
+    {
+        var ctor = Assert.Single(typeof(ROROROblox.Core.Feeds.RobloxStatusApi).GetConstructors());
+        Assert.Equal(
+            new[] { typeof(HttpClient), typeof(ILogger<ROROROblox.Core.Feeds.RobloxStatusApi>) },
+            ctor.GetParameters().Select(p => p.ParameterType));
     }
 
     /// <summary>

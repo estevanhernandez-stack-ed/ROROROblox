@@ -1,0 +1,332 @@
+{
+  "result": {
+    "status_overall": {
+      "updated": "2026-11-05T19:12:49.600Z",
+      "status": "Degraded Performance",
+      "status_code": 300
+    },
+    "status": [
+      {
+        "id": "5862b0588ff9510105000f1b",
+        "name": "Core IPv6 Network",
+        "status": "Degraded Performance",
+        "status_code": 300,
+        "containers": [
+          {
+            "id": "694af23bf5a1430583c53847",
+            "name": "Salem, OR",
+            "updated": "2026-11-04T19:20:25.247Z",
+            "status": "Degraded Performance",
+            "status_code": 300
+          }
+        ],
+        "updated": "2026-11-04T19:20:25.247Z"
+      },
+      {
+        "id": "52cbb6a6e746d36b130000ef",
+        "name": "Core IPv4 Network",
+        "status": "Degraded Performance",
+        "status_code": 300,
+        "containers": [
+          {
+            "id": "694af23bf5a1430583c53847",
+            "name": "Salem, OR",
+            "updated": "2026-11-04T19:20:25.249Z",
+            "status": "Degraded Performance",
+            "status_code": 300
+          }
+        ],
+        "updated": "2026-11-04T19:20:25.249Z"
+      },
+      {
+        "id": "5855f56e32dde2fc5b00036b",
+        "name": "DNS",
+        "status": "Degraded Performance",
+        "status_code": 300,
+        "containers": [
+          {
+            "id": "5856d43f86414502050000ad",
+            "name": "Madison, WI",
+            "updated": "2026-11-04T19:20:25.247Z",
+            "status": "Degraded Performance",
+            "status_code": 300
+          },
+          {
+            "id": "694af23bf5a1430583c53847",
+            "name": "Salem, OR",
+            "updated": "2026-11-04T19:20:25.248Z",
+            "status": "Degraded Performance",
+            "status_code": 300
+          }
+        ],
+        "updated": "2026-11-04T19:20:25.248Z"
+      },
+      {
+        "id": "52cbb6a6e746d36b130000f0",
+        "name": "Mail Relays",
+        "status": "Degraded Performance",
+        "status_code": 300,
+        "containers": [
+          {
+            "id": "694af23bf5a1430583c53847",
+            "name": "Salem, OR",
+            "updated": "2026-11-04T19:20:25.285Z",
+            "status": "Degraded Performance",
+            "status_code": 300
+          }
+        ],
+        "updated": "2026-11-04T19:20:25.285Z"
+      },
+      {
+        "id": "5855f489e7b36afe5b000041",
+        "name": "FTP Mirrors",
+        "status": "Degraded Performance",
+        "status_code": 300,
+        "containers": [
+          {
+            "id": "5856d4318ff951010500042a",
+            "name": "Chicago, IL",
+            "updated": "2026-11-04T19:20:25.284Z",
+            "status": "Degraded Performance",
+            "status_code": 300
+          },
+          {
+            "id": "5856d43932dde2fc5b0003e4",
+            "name": "New York, NY",
+            "updated": "2026-11-04T19:20:25.282Z",
+            "status": "Degraded Performance",
+            "status_code": 300
+          },
+          {
+            "id": "694af23bf5a1430583c53847",
+            "name": "Salem, OR",
+            "updated": "2026-11-04T19:20:25.285Z",
+            "status": "Degraded Performance",
+            "status_code": 300
+          }
+        ],
+        "updated": "2026-11-04T19:20:25.285Z"
+      },
+      {
+        "id": "52cbb6a6e746d36b130000ee",
+        "name": "Internal Monitoring",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "694af23bf5a1430583c53847",
+            "name": "Salem, OR",
+            "updated": "2026-11-05T19:12:49.598Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ],
+        "updated": "2026-11-05T19:12:49.598Z"
+      }
+    ],
+    "incidents": [
+      {
+        "_id": "6aeb85799d9d7b037f473042",
+        "name": "osuosl.org HTTPS certificate not trusted on Amazon Linux and some Java runtimes",
+        "datetime_open": "2026-11-04T19:20:25.171Z",
+        "current_active": true,
+        "messages": [
+          {
+            "details": "Some clients can no longer verify the HTTPS certificate on most of our osuosl.org sites, including the ftp.osuosl.org mirrors (ftp-nyc, ftp-chi and ftp-osl). Downloads fail with \"unable to get local issuer certificate\" (curl error 60) or a Java \"unable to find valid certification path\" error.\n\nWho is affected:\n- Amazon Linux 2023 and Amazon Linux 2 hosts with the latest ca-certificates package (ALAS2023-2026-3306, ALAS2-2026-4037), which removed every eMudhra root.\n- Java runtimes whose trust store has dropped eMudhra's emSign Root CA - G1.\n- Anything else that has removed all eMudhra roots, such as a corporate trust policy.\n\nNot affected:\nWeb browsers and most Linux distributions still trust this certificate, and the sites themselves are up.\n\nWhat happened:\nThe *.osuosl.org certificate most of our sites use comes from InCommon and chains to eMudhra's emSign Root CA - G1. After last month's eMudhra key compromise, which involved a different eMudhra hierarchy, some vendors removed all eMudhra roots, including this one. The Jenkins project has temporarily taken our mirrors out of its download rotation for this reason.\n\nWhat we're doing:\nWe are moving the ftp.osuosl.org mirrors to Let's Encrypt certificates, which we expect to finish in the next couple of weeks, and will post here when they have switched. Our other osuosl.org certificates will move off eMudhra before the current certificate expires in February.\n\nIf you are affected and need help in the meantime, email support@osuosl.org.",
+            "state": 200,
+            "status": 300,
+            "datetime": "2026-11-04T19:20:25.210Z"
+          }
+        ],
+        "containers_affected": [
+          {
+            "_id": "694af23bf5a1430583c53847",
+            "name": "Salem, OR"
+          },
+          {
+            "_id": "5856d43f86414502050000ad",
+            "name": "Madison, WI"
+          },
+          {
+            "_id": "5856d4318ff951010500042a",
+            "name": "Chicago, IL"
+          },
+          {
+            "_id": "5856d43932dde2fc5b0003e4",
+            "name": "New York, NY"
+          }
+        ],
+        "components_affected": [
+          {
+            "_id": "5862b0588ff9510105000f1b",
+            "name": "Core IPv6 Network"
+          },
+          {
+            "_id": "52cbb6a6e746d36b130000ef",
+            "name": "Core IPv4 Network"
+          },
+          {
+            "_id": "5855f56e32dde2fc5b00036b",
+            "name": "DNS"
+          },
+          {
+            "_id": "52cbb6a6e746d36b130000f0",
+            "name": "Mail Relays"
+          },
+          {
+            "_id": "5855f489e7b36afe5b000041",
+            "name": "FTP Mirrors"
+          },
+          {
+            "_id": "52cbb6a6e746d36b130000ee",
+            "name": "Internal Monitoring"
+          }
+        ]
+      },
+      {
+        "_id": "6ae782f8dec05e269eab1df2",
+        "name": "Critical Linux kernel TCP vulnerability (CVE-2026-98432)",
+        "datetime_open": "2026-11-01T18:20:40.699Z",
+        "current_active": true,
+        "messages": [
+          {
+            "details": "A critical flaw in the Linux kernel's IPv4 TCP code (CVE-2026-98432, CVSS 9.8) lets a remote attacker with no login crash the kernel, and possibly run code, by sending crafted packets to any open TCP port. If your project runs Linux on an OpenStack VM or a server that you manage yourself, please install your distribution's fixed kernel as soon as it is available and reboot into it.\n\nWho needs to act:\n- Projects that manage their own OpenStack VMs or colocated servers running Linux. Every distribution is affected.\n- Hosts that OSL manages for you: we have already applied the interim mitigation below and will reboot them onto fixed kernels in our normal maintenance windows, announced here as usual.\n\nFix status (Nov 1):\n- Debian: fixed. Debian 13 in 6.12.113-1 (DSA-6568-1), Debian 12 in 6.1.190-1 (DLA-4841-1).\n- AlmaLinux 8, 9 and 10: fixed kernels are in the testing repository (4.18.0-553.180.2, 5.14.0-687.61.2, 6.12.0-211.69.2) and not yet in the regular updates.\n- RHEL and Ubuntu: no fixed kernel yet; Red Hat rates the flaw Critical and Ubuntu has fixes in progress. For other distributions, including those built from RHEL, check your vendor's security notices.\n\nInterim mitigation:\nUntil you can reboot onto a fixed kernel, drop incoming IPv4 TCP packets that carry IP options, which normal traffic does not use. Red Hat's bulletin gives this nftables rule (run as root; it lasts until the next reboot):\nnft add table inet cve_2026_98432\n\nnft add chain inet cve_2026_98432 input '{ type filter hook input priority -310 ; policy accept ; }'\n\nnft add rule inet cve_2026_98432 input ip protocol tcp ip hdrlength gt 5 counter drop\n\nIf the VM runs Docker or other containers, add the same chain and rule with \"forward\" in place of \"input\" so container ports are covered too. Remove it after rebooting onto the fixed kernel with: nft delete table inet cve_2026_98432\n\nRed Hat's bulletin: https://access.redhat.com/security/vulnerabilities/RHSB-2026-016\n\nIf you are unsure whether you are affected or need help, email support@osuosl.org.",
+            "state": 200,
+            "status": 600,
+            "datetime": "2026-11-01T18:20:40.719Z"
+          },
+          {
+            "details": "Update (Nov 2): AlmaLinux's fixed kernels for CVE-2026-98432 are now in the regular updates for AlmaLinux 8 (4.18.0-553.182.1), 9 (5.14.0-687.64.1) and 10 (6.12.0-211.72.1). If your VM runs AlmaLinux, run \"dnf update kernel\" and reboot into the new kernel; you can then remove the interim nftables rule. For other distributions, check your vendor's security notices.\n\nOn our side, the OpenStack servers move onto fixed kernels on Tuesday, November 3 (live migrations, no restart) and Thursday, November 5 (VMs restarted once), in the two maintenance notices on this page. Those reboots update our servers only, so VMs still need their own kernel update.\n\nIf you need help, email support@osuosl.org.",
+            "state": 200,
+            "status": 600,
+            "datetime": "2026-11-02T21:47:34.036Z"
+          },
+          {
+            "details": "Update (Nov 4): Our own internet-facing servers move onto fixed kernels in two maintenance windows. On Thursday, November 12, 11:00 AM – 3:00 PM PST (19:00 – 23:00 UTC), we reboot our CI runners and OSL services. On Friday, November 13, 10:00 AM – 1:00 PM PST (18:00 – 21:00 UTC), we reboot the project sites, mailing lists and FTP mirrors we host. The firewall rule on those servers stays in place until then.\n\nThursday: https://status.osuosl.org/pages/maintenance/526712bf10cd4e587b000014/6aeb9bd7f7bb4b038d276f4d\nFriday: https://status.osuosl.org/pages/maintenance/526712bf10cd4e587b000014/6aeb9bf5b435fe0422769f92\n\nThese reboots update our servers only. If your VM runs AlmaLinux, run \"dnf update kernel\" and reboot into the new kernel, as in our Nov 2 update.\n\nIf you need help, email support@osuosl.org.",
+            "state": 200,
+            "status": 600,
+            "datetime": "2026-11-04T21:02:21.305Z"
+          }
+        ],
+        "containers_affected": [
+          {
+            "_id": "694af23bf5a1430583c53847",
+            "name": "Salem, OR"
+          }
+        ],
+        "components_affected": [
+          {
+            "_id": "52cbb6a6e746d36b130000ee",
+            "name": "Internal Monitoring"
+          }
+        ]
+      }
+    ],
+    "maintenance": {
+      "active": [],
+      "upcoming": [
+        {
+          "_id": "6aeb9bd7f7bb4b038d276f4d",
+          "datetime_planned_end": "2026-11-12T23:00:00.000Z",
+          "datetime_planned_start": "2026-11-12T19:00:00.000Z",
+          "name": "Kernel Security Reboots for CVE-2026-98432 – Thursday, Nov 12, 11:00 AM–3:00 PM PST (19:00–23:00 UTC)",
+          "datetime_open": "2026-11-04T20:55:51.442Z",
+          "messages": [
+            {
+              "details": "On Thursday we will reboot our CI runners and some of OSL's own services to fix a new Linux kernel flaw, CVE-2026-98432. This is separate from the October 30 reboots for Fragnesia (CVE-2026-46300). It is a different flaw, and its fix was released on November 2, after those reboots. Each server reboots once during the window.\n\nDate: Thursday, November 12, 2026\nTime: 11:00 AM – 3:00 PM PST (19:00 – 23:00 UTC)\nExpected impact: each CI runner stops taking jobs for about 20 minutes; each other service is down for about 5 minutes\n\nWhat's happening:\nThe update fixes CVE-2026-98432, the critical remote flaw in the Linux kernel's TCP code described in our earlier notice on this page. The kernels we installed for Fragnesia don't include this fix. A firewall rule has blocked it on these servers since November 1, and the fixed kernels are already installed, so a reboot is the only step left.\n\nAffected:\n- Our GitLab CI runners for x86_64, aarch64, ppc64le and s390x, one runner per architecture at a time. Each stops taking new jobs and gives running jobs up to 10 minutes to finish before it reboots; a job still running then is stopped and needs a retry. s390x has a single runner, so s390x jobs wait in the queue for about 20 minutes.\n- PowerCI and IBM Z CI Jenkins: builds running when their server reboots need to be restarted.\n- git.osuosl.org, jenkins.osuosl.org and supermarket.osuosl.org\n- OSL's chat server (chat.osuosl.org)\n- Our support ticket system (support.osuosl.org). Email to support@osuosl.org sent during the reboot is held and delivered afterwards.\n- OSL shell accounts, and a few other OSL VMs\n- Sites behind our load balancers, including osuosl.org and phpBB, may see a few seconds of dropped connections twice, as each load balancer hands over to its partner and back.\n\nNot affected:\n- OSL's mail relays and DNS servers are rebooted one at a time with their partners still serving, so mail and name service stay up.\n- Project sites, mailing lists and our FTP mirrors reboot the next day, Friday, November 13 (separate notice).\n\nIf a service doesn't come back after its reboot, or you notice any issues after the work is complete, please email support@osuosl.org to open a ticket so we can resolve them. Questions or concerns before then can go to the same address.\n\nWe apologize for the interruption.",
+              "state": 100,
+              "status": 200,
+              "datetime": "2026-11-04T20:55:51.452Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "_id": "694af23bf5a1430583c53847",
+              "name": "Salem, OR"
+            }
+          ],
+          "components_affected": [
+            {
+              "_id": "52cbb6a6e746d36b130000ee",
+              "name": "Internal Monitoring"
+            }
+          ]
+        },
+        {
+          "_id": "6aeb9bf5b435fe0422769f92",
+          "datetime_planned_end": "2026-11-13T21:00:00.000Z",
+          "datetime_planned_start": "2026-11-13T18:00:00.000Z",
+          "name": "Kernel Security Reboots for CVE-2026-98432 – Friday, Nov 13, 10:00 AM–1:00 PM PST (18:00–21:00 UTC)",
+          "datetime_open": "2026-11-04T20:56:21.640Z",
+          "messages": [
+            {
+              "details": "On Friday we will reboot the servers behind the OSL-hosted services listed below to fix a new Linux kernel flaw, CVE-2026-98432. Many of these services were also rebooted on October 30 for Fragnesia (CVE-2026-46300). This is a different flaw, and its fix was released on November 2, after those reboots, so they need one more. Each service will be down for a few minutes, once, during the window.\n\nDate: Friday, November 13, 2026\nTime: 10:00 AM – 1:00 PM PST (18:00 – 21:00 UTC)\nExpected impact: about 5 minutes of downtime per service while its server reboots; the two GitLab instances can take longer to come back\n\nWhat's happening:\nThe update fixes CVE-2026-98432, the critical remote flaw in the Linux kernel's TCP code described in our earlier notice on this page. The kernels we installed for Fragnesia don't include this fix. A firewall rule has blocked it on these servers since November 1, and the fixed kernels are already installed, so a reboot is the only step left.\n\nAffected:\n- phpBB websites and services\n- Linux Foundation sites we host, including their mailing lists, archives, bug tracker and FOSSology\n- Mailing lists on lists.osuosl.org\n- OSRF / ROS websites, including the ROS wiki, docs and answers sites\n- Snowdrift.coop, including CiviCRM and its mail\n- OpenPOWER Foundation websites and services\n- Nura's GitLab and U-Boot's GitLab\n- Deluge, OpenMRS, Mozillazine, Apereo and OGRE websites\n- Buildroot's source mirror\n- Inkscape's Matrix server, GFortran's Mattermost and SeaGL's Nextcloud\n- Cinc project services\n- Websites on our shared web hosting, WebDAV, and projects hosted for CASS Software Development Group (SDG)\n- OpenID Foundation, Replicant, Mulgara and StreamWebs sites, and our Etherpad and container registry\n- Our FTP mirrors, one at a time, so ftp.osuosl.org keeps serving throughout\n\nNot affected:\n- OSL's mail relays, DNS servers and load balancers are rebooted one at a time with their partners still serving, so mail, name service and web traffic stay up.\n- VMs that projects manage themselves are not restarted. Please update and reboot those yourselves (see our earlier notice).\n- Our CI runners and some OSL services reboot the day before, on Thursday, November 12 (separate notice).\n\nYou don't need to do anything. If a service doesn't come back after its reboot, or you notice any issues after the work is complete, please email support@osuosl.org to open a ticket so we can resolve them. Questions or concerns before then can go to the same address.\n\nWe apologize for the interruption.",
+              "state": 100,
+              "status": 200,
+              "datetime": "2026-11-04T20:56:21.653Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "_id": "5856d4318ff951010500042a",
+              "name": "Chicago, IL"
+            },
+            {
+              "_id": "5856d43932dde2fc5b0003e4",
+              "name": "New York, NY"
+            },
+            {
+              "_id": "694af23bf5a1430583c53847",
+              "name": "Salem, OR"
+            }
+          ],
+          "components_affected": [
+            {
+              "_id": "5855f489e7b36afe5b000041",
+              "name": "FTP Mirrors"
+            },
+            {
+              "_id": "52cbb6a6e746d36b130000ee",
+              "name": "Internal Monitoring"
+            }
+          ]
+        },
+        {
+          "_id": "6acfbd516dc9507055795a69",
+          "datetime_planned_end": "2026-12-15T18:00:00.000Z",
+          "datetime_planned_start": "2026-12-15T17:00:00.000Z",
+          "name": "FTP Protocol Retirement – Tuesday, Dec 15, 9:00–10:00 AM PST (17:00–18:00 UTC)",
+          "datetime_open": "2026-10-14T17:35:13.018Z",
+          "messages": [
+            {
+              "details": "On Tuesday, December 15, 2026, we will permanently turn off FTP (ftp://) access to ftp.osuosl.org and the other OSU Open Source Lab mirror hostnames. The files themselves are not going anywhere: everything stays available over HTTP and HTTPS, and most of it over rsync.\n\nDate: Tuesday, December 15, 2026\nTime: 9:00 AM – 10:00 AM PST (17:00 – 18:00 UTC)\nExpected impact: from this time on, FTP connections to the mirrors will be refused. HTTP, HTTPS and rsync keep working throughout.\n\nWhat you need to do:\nIf you or your users download from our mirrors with an ftp:// URL, switch it to HTTPS before December 15. The paths are the same, so ftp://ftp.osuosl.org/pub/<project>/ becomes https://ftp.osuosl.org/pub/<project>/. If you reach us through a project name on another domain, such as ftp.<project>.org, use https://ftp.osuosl.org/ for HTTPS for now: those names don't have their own certificates yet, and we're working on adding them. If you run a mirror that syncs from us over FTP, switch to rsync://rsync.osuosl.org/<module>/ instead. Not every project we mirror has an rsync module; if the one you need is missing, email support@osuosl.org to request it.\n\nAffected:\nFTP on ftp.osuosl.org, ftp-osl.osuosl.org, ftp-chi.osuosl.org and ftp-nyc.osuosl.org, and on any other name that points at our mirrors, through a CNAME to ftp.osuosl.org or our IP addresses (for example ftp.<project>.org or <project>.osuosl.org).\n\nNot affected:\nHTTP and HTTPS at https://ftp.osuosl.org/, rsync at rsync://rsync.osuosl.org/, and every hostname above over HTTP and rsync (HTTPS on ftp.osuosl.org and <project>.osuosl.org names). The names stay; only the FTP protocol goes away.\n\nWhy:\nFTP is an old protocol that most major projects have moved away from. Anonymous FTP has no practical way to encrypt a download or confirm that a file wasn't altered on the way to you; HTTPS does both, which is why we point you there. FTP also opens a separate connection on a negotiated port for every transfer, which makes it hard to run reliably behind today's firewalls, NAT and load balancers, and it can't be cached or accelerated the way HTTP can. For reasons like these, Chrome 88 and Firefox 90 removed FTP support in 2021, and Debian and kernel.org retired their own FTP services in 2017. Every file we mirror is already available over HTTP and HTTPS, and most of it over rsync.\n\nMore background: https://osuosl.org/blog/ftp-protocol-retirement/\n\nIf you notice any issues after the change, or have questions or concerns before then, please email support@osuosl.org.",
+              "state": 100,
+              "status": 200,
+              "datetime": "2026-10-14T17:35:13.034Z"
+            }
+          ],
+          "containers_affected": [
+            {
+              "_id": "5856d4318ff951010500042a",
+              "name": "Chicago, IL"
+            },
+            {
+              "_id": "5856d43932dde2fc5b0003e4",
+              "name": "New York, NY"
+            },
+            {
+              "_id": "694af23bf5a1430583c53847",
+              "name": "Salem, OR"
+            }
+          ],
+          "components_affected": [
+            {
+              "_id": "5855f489e7b36afe5b000041",
+              "name": "FTP Mirrors"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

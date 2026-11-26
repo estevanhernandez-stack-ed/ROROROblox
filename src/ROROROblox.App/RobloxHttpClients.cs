@@ -61,6 +61,20 @@ internal static class RobloxHttpClients
             AllowAutoRedirect = false,
         });
 
+        // Roblox's public status answer (api.status.io): anonymous, so no cookie container and no
+        // redirects. Nothing here ever carries an account; a followed 3xx would only hide a moved page.
+        services.AddHttpClient<ROROROblox.Core.Feeds.IRobloxStatusApi, ROROROblox.Core.Feeds.RobloxStatusApi>(client =>
+        {
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            UseCookies = false,
+            AllowAutoRedirect = false,
+        });
+
         return services;
     }
 }

@@ -1,0 +1,190 @@
+{
+  "result": {
+    "status_overall": {
+      "updated": "2026-11-10T06:00:03.539Z",
+      "status": "Operational",
+      "status_code": 100
+    },
+    "status": [
+      {
+        "id": "5f31ce906e9c9104c05543d1",
+        "name": "User",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5f31cdef5f2c7c04bbdc4fbf",
+            "name": "Website",
+            "updated": "2026-10-05T23:13:06.354Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31cdfd6b26fa04c666a661",
+            "name": "Mobile App",
+            "updated": "2026-10-05T23:13:06.351Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31ce1830ca5f04bcd3ee2b",
+            "name": "Xbox App",
+            "updated": "2026-10-05T23:13:06.352Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "60047c5629a6230534c2300a",
+            "name": "Avatar",
+            "updated": "2026-10-05T23:13:06.354Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ],
+        "updated": "2026-10-05T23:13:06.354Z"
+      },
+      {
+        "id": "5f31ce9f6f386704befc1f81",
+        "name": "Player",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5f31cdef5f2c7c04bbdc4fbf",
+            "name": "Website",
+            "updated": "2026-10-05T23:13:06.353Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31cdfd6b26fa04c666a661",
+            "name": "Mobile App",
+            "updated": "2026-10-05T23:13:06.388Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31ce1830ca5f04bcd3ee2b",
+            "name": "Xbox App",
+            "updated": "2026-10-05T23:13:06.388Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31ce3530ca5f04bcd3ee2c",
+            "name": "Games",
+            "updated": "2026-10-05T23:13:06.387Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "60047c5629a6230534c2300a",
+            "name": "Avatar",
+            "updated": "2026-10-05T23:13:06.389Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ],
+        "updated": "2026-10-05T23:13:06.389Z"
+      },
+      {
+        "id": "5f31cebe1bc3b004bb012c2e",
+        "name": "Creator",
+        "status": "Operational",
+        "status_code": 100,
+        "containers": [
+          {
+            "id": "5f31cdef5f2c7c04bbdc4fbf",
+            "name": "Website",
+            "updated": "2026-10-05T23:13:06.386Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31ce3530ca5f04bcd3ee2c",
+            "name": "Games",
+            "updated": "2026-10-05T23:13:06.432Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31ce3c4da05e04c23bb431",
+            "name": "Studio",
+            "updated": "2026-10-05T23:13:06.429Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31ce4630ca5f04bcd3ee2d",
+            "name": "Asset Delivery",
+            "updated": "2026-10-05T23:13:06.430Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31ce4f30ca5f04bcd3ee2e",
+            "name": "Data Store",
+            "updated": "2026-10-05T23:13:06.431Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "5f31ce5767272804b51e8046",
+            "name": "Game Join",
+            "updated": "2026-10-05T23:13:06.431Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "60047c5629a6230534c2300a",
+            "name": "Avatar",
+            "updated": "2026-10-05T23:13:06.467Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "632e11966366bf053fa300f3",
+            "name": "Dashboard",
+            "updated": "2026-10-05T23:13:06.465Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "633340fedc4010053470c46e",
+            "name": "Talent",
+            "updated": "2026-10-05T23:13:06.466Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "63334105a10770052d2951b4",
+            "name": "Documentation",
+            "updated": "2026-10-05T23:13:06.468Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "633341106cc602053a1712c6",
+            "name": "Forum",
+            "updated": "2026-11-10T06:00:03.538Z",
+            "status": "Operational",
+            "status_code": 100
+          },
+          {
+            "id": "633345954452a10533410ac7",
+            "name": "Marketplace",
+            "updated": "2026-10-05T23:13:06.500Z",
+            "status": "Operational",
+            "status_code": 100
+          }
+        ],
+        "updated": "2026-11-10T06:00:03.538Z"
+      }
+    ],
+    "incidents": [],
+    "maintenance": {
+      "active": [],
+      "upcoming": []
+    }
+  }
+}
