@@ -537,18 +537,18 @@ quit-before-updating line and the false-hold fix worded by the Neb result.
 privacy page (#300). Nothing is written to Partner Center, and no image changes.
 
 **Acceptance:**
-- [ ] `PRIVACY.md` no longer says the client version is checked only before a batch launch. It has a
+- [x] `PRIVACY.md` no longer says the client version is checked only before a batch launch. It has a
       row for the status host that says what it is, that it is not Roblox, GitHub or Microsoft, what is
       sent, what is never sent, when it runs, and which switch stops it.
-- [ ] Every sentence in `PRIVACY.md` that lists hosts or says there are no other connections is true
+- [x] Every sentence in `PRIVACY.md` that lists hosts or says there are no other connections is true
       of the build. The three measured rows from 2026-10-11 are untouched.
 - [ ] The listing sentence exists in English and in six languages with dated provenance, and the
       listing verifier has reviewed the six.
-- [ ] The audit table in the packet maps every claim on the short description, the long description
+- [x] The audit table in the packet maps every claim on the short description, the long description
       and the features list to where it is in the tree. Verified against the tree, never a changelog.
-- [ ] The reviewer letter names the new host, what it is asked, that nothing about the person is sent,
+- [x] The reviewer letter names the new host, what it is asked, that nothing about the person is sent,
       and that it is on by default with a switch.
-- [ ] `ListingSheetParityFenceTests` is green. No image under `docs/store/` is in the diff.
+- [x] `ListingSheetParityFenceTests` is green. No image under `docs/store/` is in the diff.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~ListingSheetParityFenceTests|FullyQualifiedName~ContrastPairGateTests"`
 → all passed (the second because a docs edit can fail the suite).
