@@ -1324,3 +1324,71 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **What would revisit it:** Roblox documenting a public read for game events; Status.io changing or closing the public status API for Roblox's page; a user objection to a third-party call on by default.
 
 **Evidence:** probes on 2026-11-26 (`clientsettingscdn` returned `0.748.0.7481526`; `api.status.io/1.0/status/59db90dbcdeb2f04dadcf16d` returned 200 Operational; the v3 events path returned 403); `src/ROROROblox.Core/Diagnostics/RobloxUpdateProbe.cs`; `src/ROROROblox.Core/RobloxApi.cs` (`GamesListItem`).
+
+### 2026-11-26 — The update check answers "pending" on a current client; v1.41 fixes it first and leaves the drift banner alone
+
+**Context:** The v1.41 scope's first goal reuses `RobloxUpdateProbe` to show a Roblox update notice before a launch. Writing the requirements, the shipped Release assembly was run against this machine. The installed client reports its version as `0, 748, 0, 7481526` on both the handler read and the newest-install read; Roblox's client-version endpoint answers `0.748.0.7481526`. The probe compares them as text, so `IsUpdatePendingAsync` returned True with the client fully current, the installer not running and no churn. The probe's tests feed the comma form to both sides (`RobloxUpdateProbeTests.cs`, the F-104 cases of 2026-08-12) and pass. `Core/KnownIssues/RobloxVersion.TryParseInstalled` already reads the comma form; neither the probe nor the compat check uses it.
+
+**Decision:** The v1.41 requirements (`docs/cycles/2026-11-26-roblox-feeds/prd.md`) make a truthful version comparison their first epic and gate the update notice on it, with a test fed the two strings from the field that fails on today's code. The drift banner's version read is deliberately not changed by that work: it stays as it is until the owner rules on repair, retire or leave.
+
+**Consequences:** On a machine that reports the comma form, every batch of two or more accounts with no strap has been taking the hold path on a current client: "Roblox is updating" on screen and the rest held until the first client attaches. After the fix a batch on a current client launches at normal speed, which is the one behaviour change the six-alt user gets from this cycle. The drift banner cannot fire today (`Version.TryParse` rejects the comma form, on record since 2026-09-23) and the live feed's ceiling is still `0.729.24.7290838`; sharing one parser with it would show "We've tested up to 0.729.24" to every user on every start and, under the scope's notice order, bury the new update notice.
+
+**What would revisit it:** a search of the clan machines' logs for "Pre-warm: holding the batch" (this machine's thirty logs hold no batch launch, so the false hold is read from the code and the probe run, not seen); Roblox changing either spelling; the owner's ruling on the drift banner; a decision to ship the comparison fix ahead of v1.41.
+
+**Evidence:** probe run of 2026-11-26 against `src/ROROROblox.Core/bin/Release/net10.0-windows/ROROROblox.Core.dll` (installed `[0, 748, 0, 7481526]`, endpoint `[0.748.0.7481526]`, pending True); `src/ROROROblox.Core/Diagnostics/RobloxUpdateProbe.cs` (`DiffersFromLatest`); `src/ROROROblox.Core/RobloxCompatChecker.cs` (`CheckAsync`); `roblox-compat.json` from the v1.40.0.0 release; all eighteen client installs on this machine, back to 0.728 from 2026-07-07, report the comma form.
+
+### 2026-11-26 — v1.41 spec: status rows by id pair with no text kept, one coordinator, one resolver, real fixtures from another page
+
+**Context:** Writing the v1.41 technical spec (`docs/cycles/2026-11-26-roblox-feeds/spec.md`), the open questions the requirements left for it were probed live. Roblox's status page reuses one row under several groups, and a real archived answer from another Status.io page shows the same row id at 400 under one group and 300 under another in one read. An archived answer also has two open incidents with every row at 100. No recorded incident answer for Roblox's own page exists: the Wayback Machine holds two captures, both Operational. The Games endpoint answers 50 universe ids and refuses 51. Roblox's per-version release notes were posted one to three days after the first client build for builds 741 to 748. `IRobloxApi` has 15 private fakes in 13 test files. `IAppSettings` raises no change event and there is no settings export. `MainViewModel.PeriodicTick` cannot be fired from a test. An independent review of the draft then found that an account panel is open at startup (so the pulse needed its own startup gate), that a saved private server may never have had its universe resolved, and that moving the drift banner into the line would rewrite three pinned tests for a banner that cannot fire.
+
+**Decision:**
+- A watched status row is a (group id, row id) pair matched by id. The status client's DTOs have no text property, the incident and maintenance arrays are never parsed, and a reflection test pins both. The service picks one of the app's sentences and never supplies one.
+- The status fixtures are real, unmodified incident answers from other Status.io pages, recorded from the Wayback Machine, with the evaluator taking its watch table as a parameter. Roblox's live Operational answer proves the id mapping. `scripts/capture-roblox-status.ps1` records the first real Roblox incident when one happens.
+- Status.io's terms were read. Nothing forbids reading a public status answer and no rate limit is stated, so the status goal proceeds: one read per ten minutes per install, only while the main window is visible, 60 minutes after a 403 or 429.
+- The game pulse gets its own typed client (`IGamePulseApi`, at most 50 ids per request) and an in-memory singleton service driven by on-screen interest sets. Nothing is written to disk. A private server and a Recent entry get their universe id from the icon cache's existing map.
+- One coordinator (`RobloxFeeds`) with its own `TimeProvider` timer and a pure schedule function decides every idle read. The batch gate keeps its own probe call and reports what it saw. No launch path awaits a feed, and a source fence pins that.
+- One pure resolver decides which Roblox-side sentence is drawn. The drift banner stays in its own row, untouched, with its version read fenced, until the owner rules; only a "repair" ruling moves it into the line. The known-issues notice is no longer suppressed under a contested name; it is counted in the "more" list.
+- After a client attaches, the update notice clears from a local re-read of the installed version against the endpoint answer already held. No request is made, so it works while the window is hidden.
+- The pulse service asks nothing until thirty seconds after the window is first visible, and nothing at all if that gate was never set.
+- "What changed" opens Roblox's release-notes index, never a per-version page.
+- The off switch persists in `settings.json` and takes effect because the Settings page pushes the value to the coordinator and the pulse service. The requirement that it export with the settings is void: no such export exists.
+
+**Consequences:** If Roblox rebuilds its status page the ids stop matching and the line goes silent, with one Warning in the log, until a release updates them. Until the drift ruling, "one Roblox line" holds because the drift banner cannot fire, not because the layout forbids two. A private server or Recent entry whose place no saved game shares costs one request through the existing icon lane the first time it is on screen. The process gains one 30-second timer. The first real Roblox incident answer is still unseen. A reader of the update notice gets the release-notes index and one more click.
+
+**What would revisit it:** a real Roblox incident capture that the parser reads wrongly; a 403 or 429 pattern from the status host, or a change to its terms; two releases in a row where the per-version notes page is live before the endpoint reports the version; the owner's ruling on the drift banner (retire deletes one resolver input, repair edits the checker and deletes the fence); a user report of the update notice blinking on a flaky connection.
+
+**Evidence:** `docs/cycles/2026-11-26-roblox-feeds/probes/README.md` and the four recorded answers beside it; `kb.status.io/developers/public-status-api/`, `kb.status.io/developers/status-codes/`, `status.io/tos` (effective 2016-03-10), read 2026-11-26; `games.roblox.com/v1/games?universeIds=` with 50 and 51 ids; `setup.rbxcdn.com/DeployHistory.txt` against the DevForum release-notes feed; `src/ROROROblox.App/Updates/UpdateAvailability.cs` (the timer pattern); `src/ROROROblox.Tests/IdleSettingsTests.cs:107`.
+
+### 2026-11-26 — Owner rulings on the v1.41 spec: the drift banner is left alone, the false-hold fix rides with v1.41, no note to Status.io
+
+**Context:** The v1.41 spec was handed over with five calls. The owner answered three the same day: "1 leave, 2 ride with it, 5 skip."
+
+**Decision:**
+- The version-drift banner is left exactly as it is. It cannot fire (`Version.TryParse` rejects the installed client's comma form), the compat feed's ceiling is still `0.729.24.7290838`, and nothing in v1.41 touches the banner, its row, its string or `RobloxCompatChecker`. The source fence that stops a repair by side effect stays.
+- The update-check comparison fix ships in v1.41, not ahead of it. It stays its own commit.
+- No courtesy note is sent to Status.io about reading Roblox's public status answer.
+
+**Consequences:** Clan machines that report the comma form keep seeing "Roblox is updating" on a current client, and keep holding batches behind the first account, until v1.41 is out. The drift banner stays a dead surface with a stale feed behind it; "one Roblox line" holds because that banner cannot fire, not because the layout forbids two.
+
+**What would revisit it:** the Neb log search showing the false hold on every clan batch (a reason to ship the fix sooner); a Roblox change that makes multi-instance break across versions, which is the case the drift banner was built to warn about; a 403 or 429 pattern from the status host.
+
+**Evidence:** the owner's reply of 2026-11-26; `docs/cycles/2026-11-26-roblox-feeds/spec.md` §7.8 and §22.
+
+### 2026-11-26 — v1.41 build order: mocks first, wired before drawn, and the tag waits for a real Roblox update
+
+**Context:** The v1.41 spec was turned into a build plan (`docs/cycles/2026-11-26-roblox-feeds/checklist.md`): sixteen items, two halts. Sequencing it against the tree changed the spec's own order in three places and dropped one of its baselines.
+
+**Decision:**
+- The mock options are rendered as item 2, at the start of the build. They need nothing from the code, and the owner's pick blocks only the XAML (items 11 and 12). A pick not made at the first halt holds those two items and nothing else; the build does not draw to the defaults.
+- Everything is wired before anything is drawn. The coordinator, the batch gate's hand-off and the off switch land ahead of the first halt with no pixel changed, so the timing rules and the truthful update check are read from a real log before any XAML exists.
+- The off switch lands with its Settings control in one commit, before the line and the pulse are drawn, so `SettingsReachabilityTests` never gains an exemption.
+- Strings land with the item that adds them, through one cumulative `scripts/add-v141-translations.py`. The translation item is the verifier run and the wrap measurement. `SetSuppressed` is deleted in the same commit as the line's XAML, not with the resolver.
+- The spec's baseline "the request log of a session left in the tray" is dropped. The app's log overrides the `System` category to Warning (`Logging/AppLogging.cs:46`), which drops `HttpClient`'s request lines, so no list of v1.40's calls can be read. The rule is carried by each new lane's own Debug line per read and the fake-clock tests.
+- The v1.41 tag waits for one real Roblox client update after the line is built. Three live runs gate it: no false hold on a current client, the notice before a launch and gone after one, and a real held batch. The build under test for the real-account runs is the Release build of merged `main` run without `RORORO_DATA_DIR`.
+- A live run during the build waits when a RoRoRo or a Roblox client is running. It never closes one.
+
+**Consequences:** Between the wiring item and the switch item the new reads are on with no switch, on the branch only. If Roblox ships before the line is drawn, the log half of the update-day runs is still taken and the drawn half waits for the next client build, about a week. "Hidden in the tray, RoRoRo makes exactly the calls v1.40 makes" is proved by construction and by the new lanes' own logging, not by comparing two request lists.
+
+**What would revisit it:** the owner ruling in session to ship without one of the three update-day runs; the clan's logs showing the false hold on every batch, which argues for shipping the fix without waiting; a support case that needs a real per-session request log; the translation verifier gaining inline ingest, which would let each item verify its own keys.
+
+**Evidence:** `docs/cycles/2026-11-26-roblox-feeds/checklist.md`; `src/ROROROblox.App/Logging/AppLogging.cs:46`; `docs/cycles/2026-11-01-account-library/checklist.md` (assumption 26, overturned 2026-11-01); `docs/cycles/2026-11-26-roblox-feeds/probes/README.md` (0.748 live since 2026-11-16, still live 2026-11-26). Dashboard decisions `ubKI5UHjN00pvZa2wFv2`, `Z8gBZU846Pmq840Opmd6`, `UWDZKIrQHH0Mejt7SjZ8`, `ZcBycwhp3zhyhgvF35N1`.
