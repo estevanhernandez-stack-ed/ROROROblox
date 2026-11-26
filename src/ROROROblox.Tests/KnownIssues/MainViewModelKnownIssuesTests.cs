@@ -1,6 +1,7 @@
 using ROROROblox.App.KnownIssues;
 using ROROROblox.App.Localization;
 using ROROROblox.App.Shell;
+using ROROROblox.App.ViewModels;
 using ROROROblox.Core.KnownIssues;
 using static ROROROblox.Tests.KnownIssues.KnownIssueBuilder;
 
@@ -43,28 +44,54 @@ public sealed class MainViewModelKnownIssuesTests : IDisposable
     }
 
     [Fact]
-    public void TheNoticeFollowsTheModel_AndStepsAsideForTheContestedWarning()
+    public void TheNoticeFollowsTheModel_AndWaitsInMoreBehindTheContestedWarning()
     {
         var vm = Vm();
         vm.KnownIssuesNotice = ModelWith(Issue("a"));
-        Assert.Equal(Loc.Format("MainWindow_KnownIssueNoticeOne", "Title of a"), vm.KnownIssueNoticeText);
+        var text = Loc.Format("MainWindow_KnownIssueNoticeOne", "Title of a");
+        Assert.Equal(text, vm.KnownIssueNoticeText);
+        Assert.Equal(text, vm.RobloxLine.Top!.Text);
 
         vm.SetContested(true);
-        Assert.Equal(string.Empty, vm.KnownIssueNoticeText);
+        Assert.Equal(text, vm.KnownIssueNoticeText);
+        Assert.Equal(MultiInstanceCopy.ContestedBanner, vm.RobloxLine.Top!.Text);
+        Assert.Equal(text, Assert.Single(vm.RobloxLine.More).Text);
 
         vm.SetContested(false);
-        Assert.NotEqual(string.Empty, vm.KnownIssueNoticeText);
+        Assert.Equal(text, vm.RobloxLine.Top!.Text);
+        Assert.Empty(vm.RobloxLine.More);
     }
 
     [Fact]
-    public void AModelAttachedWhileContestedStartsSuppressed()
+    public void AModelAttachedWhileContestedIsInMore_NotHidden()
     {
         var vm = Vm();
         vm.SetContested(true);
 
         vm.KnownIssuesNotice = ModelWith(Issue("a"));
 
-        Assert.Equal(string.Empty, vm.KnownIssueNoticeText);
+        var text = Loc.Format("MainWindow_KnownIssueNoticeOne", "Title of a");
+        Assert.Equal(text, vm.KnownIssueNoticeText);
+        Assert.Equal(text, Assert.Single(vm.RobloxLine.More).Text);
+    }
+
+    [Fact]
+    public void ANoticeBehindAHigherOneIsNotUsedUp_AndDismissingItFromMoreUsesItUp()
+    {
+        var vm = Vm();
+        vm.SetContested(true);
+        vm.KnownIssuesNotice = ModelWith(Issue("a"));
+        Assert.True(Assert.Single(vm.RobloxLine.More).ShowKnownIssueActions);
+
+        vm.SetContested(false);
+        Assert.True(vm.RobloxLine.Top!.ShowKnownIssueActions);
+
+        vm.SetContested(true);
+        vm.DismissKnownIssueNoticeCommand.Execute(null);
+
+        Assert.Empty(vm.RobloxLine.More);
+        vm.SetContested(false);
+        Assert.Null(vm.RobloxLine.Top);
     }
 
     [Fact]

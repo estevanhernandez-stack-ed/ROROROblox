@@ -10,8 +10,9 @@ namespace ROROROblox.App.KnownIssues;
 /// <see cref="KnownIssuesSnapshot"/> from any thread and marshals through <see cref="IUiDispatcher"/>;
 /// everything it raises, it raises on the UI thread.
 /// <para>
-/// Suppressed while the contested-singleton warning shows: that warning is about RoRoRo working at
-/// all and must not compete for attention (spec §3, corrected while planning).
+/// Never suppressed: the Roblox line ranks this notice against the others and counts it in "more" when
+/// something higher is drawn, so a notice behind a higher one is not used up. It is used up only when
+/// someone dismisses it, from the line or from the inline list.
 /// </para>
 /// </summary>
 internal sealed class KnownIssuesNoticeModel : INotifyPropertyChanged
@@ -26,7 +27,6 @@ internal sealed class KnownIssuesNoticeModel : INotifyPropertyChanged
     private KnownIssuesSource _source = KnownIssuesSource.None;
     private DateTimeOffset? _checkedAt;
     private KnownIssuesRefreshKind? _lastOutcome;
-    private bool _suppressed;
     private KnownIssueNoticeSelection _selection = KnownIssueNoticeSelection.None;
 
     public KnownIssuesNoticeModel(KnownIssuesDismissals dismissals, Func<Version?> readRunningVersion, IUiDispatcher ui)
@@ -54,16 +54,10 @@ internal sealed class KnownIssuesNoticeModel : INotifyPropertyChanged
 
     public int ApplicableCount => KnownIssueNotice.CountApplicable(_issues, _running);
 
-    public bool HasNotice => !_suppressed && !_selection.IsEmpty;
+    public bool HasNotice => !_selection.IsEmpty;
 
+    /// <summary>The notice's words. Empty only when there is nothing to show or everything shown was dismissed.</summary>
     public string NoticeText => HasNotice ? SelectionText : string.Empty;
-
-    /// <summary>
-    /// The notice's words with the contested suppression ignored: what the Roblox line ranks, so a known
-    /// issue behind a higher notice is counted in "more" rather than missing. Empty only when there is
-    /// nothing to show or everything shown was dismissed.
-    /// </summary>
-    public string LineNoticeText => _selection.IsEmpty ? string.Empty : SelectionText;
 
     private string SelectionText => _selection.Issues.Count == 1
         ? Loc.Format("MainWindow_KnownIssueNoticeOne", _selection.Issues[0].Title)
@@ -91,17 +85,6 @@ internal sealed class KnownIssuesNoticeModel : INotifyPropertyChanged
             Recompute();
         });
     }
-
-    public void SetSuppressed(bool suppressed) => _ui.Invoke(() =>
-    {
-        if (_suppressed == suppressed)
-        {
-            return;
-        }
-
-        _suppressed = suppressed;
-        Recompute();
-    });
 
     /// <summary>Closes every entry the notice was showing. Only an id not seen before brings it back.</summary>
     public void Dismiss() => _ui.Invoke(() =>

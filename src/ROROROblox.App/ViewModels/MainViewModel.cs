@@ -5761,7 +5761,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private string _contestedBannerText = string.Empty;
 
     /// <summary>Runtime banner text — non-empty only when Roblox holds the multi-instance lock
-    /// and RoRoRo doesn't. Empty collapses the strip (mirrors StatusBanner/IdleSummaryText).</summary>
+    /// and RoRoRo doesn't. The Roblox line reads it; the window no longer binds it.</summary>
     public string ContestedBannerText
     {
         get => _contestedBannerText;
@@ -5774,7 +5774,6 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         _isContested = contested;
         ContestedBannerText = contested ? MultiInstanceCopy.ContestedBanner : string.Empty;
-        _knownIssuesNotice?.SetSuppressed(contested);
         RecomputeRobloxLine();
     }
 
@@ -5782,8 +5781,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// Known Roblox issues' notice and menu count (spec 2026-09-23). Set by the composition root, like
-    /// <see cref="ShellPageOpener"/>; null in tests that do not exercise it. Attaching one while the
-    /// contested warning shows starts it suppressed.
+    /// <see cref="ShellPageOpener"/>; null in tests that do not exercise it.
     /// </summary>
     internal ROROROblox.App.KnownIssues.KnownIssuesNoticeModel? KnownIssuesNotice
     {
@@ -5804,14 +5802,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (_knownIssuesNotice is not null)
             {
                 _knownIssuesNotice.PropertyChanged += OnKnownIssuesNoticeChanged;
-                _knownIssuesNotice.SetSuppressed(_isContested);
             }
 
             OnKnownIssuesNoticeChanged(this, new PropertyChangedEventArgs(string.Empty));
         }
     }
 
-    /// <summary>The notice row's text; empty collapses the row, like the other rows of the strip.</summary>
+    /// <summary>The known-issues notice's words; empty when there is nothing to show. The Roblox line reads it.</summary>
     public string KnownIssueNoticeText => _knownIssuesNotice?.NoticeText ?? string.Empty;
 
     public string KnownIssuesMenuHeader => _knownIssuesNotice?.MenuHeader ?? Loc.Get("MainWindow_KnownRobloxIssues");
@@ -5826,8 +5823,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     // === The Roblox line (v1.41) ===
     //
     // One resolver picks the one Roblox sentence from the contested warning, Roblox's status, the known
-    // issues, the drift banner and the update check. The window still binds the older texts until the
-    // line is drawn; this is the state it will draw, kept current on every input that moves it.
+    // issues, the drift banner and the update check. The window draws RobloxLine in the row 3 strip,
+    // kept current on every input that moves it.
 
     private RobloxUpdateState _robloxUpdateState = RobloxUpdateState.Unknown;
     private RobloxStatusReading _robloxStatus = RobloxStatusReading.None;
@@ -5967,7 +5964,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RobloxLine.Apply(RobloxNoticeResolver.Resolve(new RobloxLineInputs(
             ContestedText: _contestedBannerText,
             Status: _robloxStatus,
-            KnownIssueText: _knownIssuesNotice?.LineNoticeText ?? string.Empty,
+            KnownIssueText: _knownIssuesNotice?.NoticeText ?? string.Empty,
             DriftText: string.Empty,
             Update: _robloxUpdateState,
             HoldBannerShowing: _robloxUpdating,

@@ -1,10 +1,19 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using ROROROblox.App.KnownIssues;
+using ROROROblox.App.Localization;
+using ROROROblox.App.Notices;
 using ROROROblox.App.ViewModels;
+using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Feeds;
+using ROROROblox.Core.KnownIssues;
 using ROROROblox.Core.Theming;
+using ROROROblox.Tests.KnownIssues;
 using Xunit;
 
 namespace ROROROblox.Tests.Rendering;
@@ -162,6 +171,386 @@ public class RobloxLineRenderTests
             File.WriteAllBytes(path, png);
             _output.WriteLine($"{path} ({png.Length} bytes)");
         }
+    }
+
+    // ---- v1.41 item 11: the line, drawn ------------------------------------------------------------------------
+    //
+    // Everything above this comment is item 1's quiet-state bar and is unchanged. What follows draws the five notices
+    // through the real MainWindow, the way the window draws them: a scene sets the view model's inputs (or hands the
+    // line a hand-built state, which is how a drift notice is drawn while the app feeds the drift banner nothing),
+    // the window is arranged under a built-in theme, and the tests read the arranged tree.
+
+    private static readonly RobloxStatusReading PartialJoin = new(RobloxStatusRow.GameJoin, RobloxStatusLevel.PartialOutage, 0);
+
+    private static readonly RobloxUpdateState NewerUpdate = new(RobloxUpdateKind.Pending, RobloxUpdateDirection.Newer);
+
+    private static readonly RobloxUpdateState Rollback = new(RobloxUpdateKind.Pending, RobloxUpdateDirection.Older);
+
+    internal static readonly LineScene Contested = new() { Contested = true };
+
+    internal static readonly LineScene Outage = new() { Status = PartialJoin };
+
+    internal static readonly LineScene KnownIssueOnly = new() { KnownIssue = true };
+
+    /// <summary>The drift banner feeds the line nothing in the app (ruled "leave", 2026-11-26), so this notice is handed over whole. The words are a stand-in.</summary>
+    internal static readonly LineScene Drift = new()
+    {
+        Synthetic = new RobloxLineState(
+            new RobloxNotice(RobloxNoticeKind.Drift, "Roblox changed something RoRoRo checks. Launching may not work until RoRoRo catches up.", RobloxNoticeTone.Warning, WithLink: false),
+            []),
+    };
+
+    internal static readonly LineScene UpdateNewer = new() { Update = NewerUpdate };
+
+    internal static readonly LineScene UpdateRollback = new() { Update = Rollback };
+
+    /// <summary>An outage on top, a known issue and an update behind it: "+2 more".</summary>
+    internal static readonly LineScene ThreeTrue = new() { Status = PartialJoin, KnownIssue = true, Update = NewerUpdate };
+
+    internal sealed record LineScene
+    {
+        public bool Contested { get; init; }
+
+        public RobloxStatusReading Status { get; init; } = RobloxStatusReading.None;
+
+        public bool KnownIssue { get; init; }
+
+        public RobloxUpdateState Update { get; init; } = RobloxUpdateState.Unknown;
+
+        public int Accounts { get; init; } = 2;
+
+        public bool Expanded { get; init; }
+
+        public RobloxLineState? Synthetic { get; init; }
+    }
+
+    /// <summary>
+    /// The real window with <paramref name="scene"/> applied after it exists and after compact is set, so every
+    /// recompute the window itself triggers has already happened and a hand-built state is not overwritten.
+    /// </summary>
+    internal static Window BuildScene(LineScene scene, bool compact)
+    {
+        MainViewModel? vm = null;
+        var window = PanelWindowFixtures.Build(
+            accounts: scene.Accounts, expanded: false, configureVm: v => vm = v, uiDispatcher: new KnownIssuesNoticeModelTests.InlineDispatcher());
+        if (compact)
+        {
+            vm!.IsCompact = true;
+        }
+
+        // The harness arranges the content at its DESIRED width, and wrapping text desires all it is offered, so a state with a
+        // long sentence would be arranged up to the window's 380 or 900 and not the 365 or 887 the real window leaves it
+        // (V140ContentWidth*). Pin the content to the real width so wraps are measured where they happen.
+        ((FrameworkElement)window.Content).MaxWidth = compact ? V140ContentWidthCompact : V140ContentWidthDefault;
+
+        if (scene.Contested)
+        {
+            vm!.SetContested(true);
+        }
+
+        if (scene.KnownIssue)
+        {
+            var model = new KnownIssuesNoticeModel(
+                new KnownIssuesDismissals(Path.Combine(Path.GetTempPath(), "rororo-line-" + Guid.NewGuid().ToString("N") + ".json")),
+                () => null,
+                new KnownIssuesNoticeModelTests.InlineDispatcher());
+            model.Apply(new KnownIssuesSnapshot([KnownIssueBuilder.Issue("a")], KnownIssuesSource.Release, DateTimeOffset.UnixEpoch));
+            vm!.KnownIssuesNotice = model;
+        }
+
+        vm!.SetRobloxFeedReadings(scene.Update, scene.Status);
+        if (scene.Synthetic is not null)
+        {
+            vm.RobloxLine.Apply(scene.Synthetic);
+        }
+
+        vm.RobloxLine.IsExpanded = scene.Expanded;
+        return window;
+    }
+
+    /// <summary>The row 3 strip: the one Border in the window's eight-row grid that holds the status rows.</summary>
+    internal static FrameworkElement Strip(FrameworkElement content) =>
+        ThemedWindowRender.Find(
+            content, fe => fe is Border b && Grid.GetRow(b) == 3 && b.Parent is Grid { RowDefinitions.Count: 8 }, "the row 3 strip");
+
+    private static List<T> Visible<T>(FrameworkElement root) where T : FrameworkElement
+    {
+        var found = new List<T>();
+        void Walk(DependencyObject node)
+        {
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+            {
+                var child = VisualTreeHelper.GetChild(node, i);
+                if (child is T t && PanelWindowFixtures.EffectivelyVisible(t)) found.Add(t);
+                Walk(child);
+            }
+        }
+
+        Walk(root);
+        return found;
+    }
+
+    private static double StripHeight(Theme theme, LineScene scene, bool compact) =>
+        ThemedWindowRender.Inspect(theme, $"Roblox line strip height, compact={compact}", () => BuildScene(scene, compact), content => Strip(content).ActualHeight);
+
+    private static string ButtonLabel(ButtonBase b) => b.Content as string ?? throw new InvalidOperationException($"a {b.GetType().Name} in the line has no text label");
+
+    /// <summary>
+    /// A notice's words as drawn. The text is a glyph Run and a bound Run, so <c>TextBlock.Text</c> reads empty on it
+    /// (it only reflects a Text property, not Inlines).
+    /// </summary>
+    internal static string TextOf(TextBlock t) => string.Concat(t.Inlines.OfType<System.Windows.Documents.Run>().Select(r => r.Text));
+
+    private static bool IsNoticeText(TextBlock t) => TextOf(t).StartsWith('▲');
+
+    [WindowRenderFact]
+    public void EachNotice_WhenDrawn_HasTheActionsItHasToday()
+    {
+        var cases = new (string Name, LineScene Scene, string[] Buttons)[]
+        {
+            ("contested", Contested, [Loc.Get("MainWindow_CloseRobloxForMe"), Loc.Get("MainWindow_Retry")]),
+            ("outage", Outage, [Loc.Get("RobloxLine_StatusLink")]),
+            ("known issue", KnownIssueOnly, [Loc.Get("MainWindow_SeeKnownIssues"), Loc.Get("MainWindow_Dismiss")]),
+            ("drift", Drift, []),
+            ("update", UpdateNewer, [Loc.Get("RobloxLine_WhatChanged")]),
+            ("update, a rollback", UpdateRollback, []),
+        };
+
+        foreach (var (name, scene, expected) in cases)
+        {
+            var drawn = ThemedWindowRender.Inspect(
+                MainWindowOneAccountFitsTests.BuiltIn("brand"),
+                $"Roblox line, {name}",
+                () => BuildScene(scene, compact: false),
+                content => Visible<ButtonBase>(Strip(content))
+                    .Where(b => b is not ToggleButton)
+                    .OrderBy(b => b.TransformToAncestor(content).Transform(new Point(0, 0)).X)
+                    .Select(ButtonLabel)
+                    .ToArray());
+            Assert.True(expected.SequenceEqual(drawn), $"{name}: expected buttons [{string.Join(", ", expected)}], drawn [{string.Join(", ", drawn)}]");
+        }
+    }
+
+    [WindowRenderFact]
+    public void EveryButtonOfTheLine_IsWiredToACommandOfTheViewModel()
+    {
+        var wired = ThemedWindowRender.Inspect(
+            MainWindowOneAccountFitsTests.BuiltIn("brand"),
+            "Roblox line, every button",
+            () => BuildScene(new LineScene { Contested = true, Status = PartialJoin, KnownIssue = true, Update = NewerUpdate, Expanded = true }, compact: false),
+            content => Visible<ButtonBase>(Strip(content))
+                .Where(b => b is not ToggleButton)
+                .Select(b => (Label: ButtonLabel(b), Wired: b.Command is not null && b.IsEnabled))
+                .ToArray());
+
+        string[] expected =
+        [
+            Loc.Get("MainWindow_CloseRobloxForMe"), Loc.Get("MainWindow_Retry"), Loc.Get("RobloxLine_StatusLink"),
+            Loc.Get("MainWindow_SeeKnownIssues"), Loc.Get("MainWindow_Dismiss"), Loc.Get("RobloxLine_WhatChanged"),
+        ];
+        Assert.Equal(expected.Order(), wired.Select(w => w.Label).Order());
+        Assert.All(wired, w => Assert.True(w.Wired, $"'{w.Label}' has no live command"));
+    }
+
+    [WindowRenderFact]
+    public void TheNoticeArea_IsExactlyAsTallWithThreeNoticesTrueAsWithOne_AtBothWidths()
+    {
+        // Strings short enough not to wrap at either width, so this measures the rule (the toggle takes width, never a
+        // row) and not a wrap. The real sentences are held to two lines by LabelWrapMeasurementTests.
+        static LineScene Short(bool more) => new()
+        {
+            Synthetic = new RobloxLineState(
+                new RobloxNotice(RobloxNoticeKind.Outage, "Roblox is slow", RobloxNoticeTone.Warning, WithLink: true),
+                more
+                    ? [new RobloxNotice(RobloxNoticeKind.KnownIssue, "A known issue", RobloxNoticeTone.Info, WithLink: false),
+                       new RobloxNotice(RobloxNoticeKind.Update, "An update", RobloxNoticeTone.Info, WithLink: true)]
+                    : []),
+        };
+
+        var brand = MainWindowOneAccountFitsTests.BuiltIn("brand");
+        foreach (var compact in new[] { false, true })
+        {
+            var one = StripHeight(brand, Short(more: false), compact);
+            var three = StripHeight(brand, Short(more: true), compact);
+            _output.WriteLine($"compact={compact}: strip {one:F2} DIP with one notice, {three:F2} with three true");
+            Assert.True(one > 0, $"compact={compact}: the strip with one notice is zero tall");
+            Assert.True(Math.Abs(one - three) < 0.01, $"compact={compact}: the strip is {one:F2} DIP with one notice and {three:F2} with three true");
+
+            var open = StripHeight(brand, Short(more: true) with { Expanded = true }, compact);
+            Assert.True(open > one + 1, $"compact={compact}: opening \"+2 more\" added nothing ({one:F2} to {open:F2})");
+        }
+    }
+
+    [WindowRenderFact]
+    public void TheNoticeArea_WithTheRealSentences_AtTheDefaultWidth_IsAsTallWithThreeTrueAsWithOne()
+    {
+        var brand = MainWindowOneAccountFitsTests.BuiltIn("brand");
+        var one = StripHeight(brand, Outage, compact: false);
+        var three = StripHeight(brand, ThreeTrue, compact: false);
+        _output.WriteLine($"default width, real sentences: strip {one:F2} DIP with the outage alone, {three:F2} with three true");
+        Assert.True(Math.Abs(one - three) < 0.01, $"the strip is {one:F2} DIP with one notice and {three:F2} with three true");
+    }
+
+    [WindowRenderFact]
+    public void TheToggleSpeaksItsCount_AndTabOrderIsTheTextThenItsButtonsThenTheToggle_WithNothingInATooltip()
+    {
+        var read = ThemedWindowRender.Inspect(
+            MainWindowOneAccountFitsTests.BuiltIn("brand"),
+            "Roblox line, three true, open",
+            () => BuildScene(new LineScene { Status = PartialJoin, KnownIssue = true, Update = NewerUpdate, Expanded = true }, compact: false),
+            content =>
+            {
+                var order = new List<string>();
+                var tooltips = new List<string>();
+                var toggleName = "";
+                var toggleLabel = "";
+                void Walk(DependencyObject node)
+                {
+                    for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+                    {
+                        var child = VisualTreeHelper.GetChild(node, i);
+                        if (child is FrameworkElement fe && PanelWindowFixtures.EffectivelyVisible(fe))
+                        {
+                            if (fe.ToolTip is not null) tooltips.Add(fe.GetType().Name);
+                            switch (fe)
+                            {
+                                case ToggleButton t:
+                                    toggleName = AutomationProperties.GetName(t);
+                                    toggleLabel = ButtonLabel(t);
+                                    order.Add("toggle");
+                                    break;
+                                case ButtonBase b:
+                                    order.Add("button:" + ButtonLabel(b));
+                                    break;
+                                case TextBlock tb when IsNoticeText(tb):
+                                    order.Add("text");
+                                    break;
+                            }
+                        }
+
+                        Walk(child);
+                    }
+                }
+
+                Walk(Strip(content));
+                return (order, tooltips, toggleName, toggleLabel);
+            });
+
+        // The top notice (the outage): its text, its one button, the toggle; then the two notices behind it, text then buttons.
+        Assert.Equal(
+            [
+                "text", "button:" + Loc.Get("RobloxLine_StatusLink"), "toggle",
+                "text", "button:" + Loc.Get("MainWindow_SeeKnownIssues"), "button:" + Loc.Get("MainWindow_Dismiss"),
+                "text", "button:" + Loc.Get("RobloxLine_WhatChanged"),
+            ],
+            read.order);
+        Assert.Equal("2 more Roblox notices", read.toggleName);
+        Assert.Equal("+2 more", read.toggleLabel);
+        Assert.Empty(read.tooltips);
+    }
+
+    [WindowRenderFact]
+    public void UnderFlatline_EveryState_CarriesTheGlyph_AndDifferentWords()
+    {
+        var flatline = MainWindowOneAccountFitsTests.BuiltIn("flatline");
+        var texts = new List<string>();
+        foreach (var (name, scene) in new[] { ("contested", Contested), ("outage", Outage), ("known issue", KnownIssueOnly), ("drift", Drift), ("update", UpdateNewer) })
+        {
+            var text = ThemedWindowRender.Inspect(
+                flatline,
+                $"Roblox line under flatline, {name}",
+                () => BuildScene(scene, compact: false),
+                content => TextOf(Visible<TextBlock>(Strip(content)).Single(IsNoticeText)));
+            Assert.StartsWith("▲ ", text);
+            Assert.True(text.Length > 4, $"{name}: the glyph is alone");
+            texts.Add(text);
+        }
+
+        Assert.Equal(5, texts.Distinct().Count());
+    }
+
+    // ---- opt-in captures for the screenshot compare against the C1 pick --------------------------------------------
+
+    private sealed class OptInCompareFactAttribute : FactAttribute
+    {
+        public OptInCompareFactAttribute()
+        {
+            if (Environment.GetEnvironmentVariable("RORORO_CAPTURE_ROBLOX_LINE") != "1")
+            {
+                Skip = "Opt-in capture: set RORORO_CAPTURE_ROBLOX_LINE=1 to write line-<state>-<width>-<theme>.png under docs/cycles/2026-11-26-roblox-feeds/mocks/compare/.";
+            }
+        }
+    }
+
+    [OptInCompareFact]
+    public void WriteTheBuiltLineCaptures_BrandAndFlatline_AtTheDefaultWidthAnd380px()
+    {
+        var dir = CompareDir();
+        var states = new (string Name, LineScene Scene)[]
+        {
+            ("contested", Contested),
+            ("outage", Outage),
+            ("known", KnownIssueOnly),
+            ("drift", Drift),
+            ("update", UpdateNewer),
+            ("more-collapsed", ThreeTrue),
+            ("more-expanded", ThreeTrue with { Expanded = true }),
+        };
+
+        foreach (var theme in new[] { "brand", "flatline" })
+        {
+            foreach (var compact in new[] { false, true })
+            {
+                foreach (var (name, scene) in states)
+                {
+                    var png = ThemedWindowRender.Inspect(
+                        MainWindowOneAccountFitsTests.BuiltIn(theme),
+                        $"Roblox line capture {name} {theme} compact={compact}",
+                        () => BuildScene(scene, compact),
+                        content =>
+                        {
+                            var strip = Strip(content);
+                            var w = (int)Math.Round(strip.ActualWidth);
+                            var h = (int)Math.Round(strip.ActualHeight);
+                            var visual = new DrawingVisual();
+                            using (var dc = visual.RenderOpen())
+                            {
+                                dc.DrawRectangle(
+                                    content.TryFindResource("BgBrush") as Brush ?? throw new InvalidOperationException("BgBrush did not resolve."),
+                                    null, new Rect(0, 0, w, h));
+                                dc.DrawRectangle(
+                                    new VisualBrush(strip) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top },
+                                    null, new Rect(0, 0, strip.ActualWidth, strip.ActualHeight));
+                            }
+
+                            var bitmap = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+                            bitmap.Render(visual);
+                            var encoder = new PngBitmapEncoder();
+                            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                            using var stream = new MemoryStream();
+                            encoder.Save(stream);
+                            return stream.ToArray();
+                        });
+                    var file = $"line-{name}-{(compact ? "380" : "900")}-{theme}.png";
+                    File.WriteAllBytes(Path.Combine(dir, file), png);
+                    _output.WriteLine($"{file} ({png.Length} bytes)");
+                }
+            }
+        }
+    }
+
+    private static string CompareDir()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (dir is not null && !Directory.GetFiles(dir, "ROROROblox.slnx").Any())
+        {
+            dir = Path.GetDirectoryName(dir);
+        }
+
+        Assert.NotNull(dir);
+        var target = Path.Combine(dir!, "docs", "cycles", "2026-11-26-roblox-feeds", "mocks", "compare");
+        Directory.CreateDirectory(target);
+        return target;
     }
 
     private static string BaselineDir()

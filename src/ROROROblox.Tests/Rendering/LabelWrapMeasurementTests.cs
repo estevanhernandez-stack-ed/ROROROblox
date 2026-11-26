@@ -10,8 +10,11 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ROROROblox.App.Localization;
+using ROROROblox.App.Notices;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Feeds;
 using ROROROblox.Core.Theming;
 using Xunit;
 
@@ -163,7 +166,11 @@ public class LabelWrapMeasurementTests
 
     private sealed record Result(int Checked, int Wrapping, int NoWrap, int MaxWrapLines, List<string> Offenders, List<string> Exempted, List<Clip> Clips);
 
-    private static Result Walk(string surface, string culture, FrameworkElement content, FrameworkElement walkRoot)
+    /// <param name="runText">
+    /// Read a TextBlock built from Runs (empty <c>Text</c>) by its Runs. Off for the older surfaces, whose results it would change;
+    /// on for the Roblox line, whose notice is a glyph Run and a bound Run.
+    /// </param>
+    private static Result Walk(string surface, string culture, FrameworkElement content, FrameworkElement walkRoot, bool runText = false)
     {
         var offenders = new List<string>();
         var exempted = new List<string>();
@@ -190,7 +197,7 @@ public class LabelWrapMeasurementTests
             if (fe is TextBlock tb)
             {
                 if (VisualTreeHelper.GetParent(tb) is AccessText) return; // counted via its AccessText
-                text = tb.Text;
+                text = runText && tb.Text.Length == 0 ? RobloxLineRenderTests.TextOf(tb) : tb.Text;
                 wrap = tb.TextWrapping;
                 trim = tb.TextTrimming;
                 var bindPath = BindingOperations.GetBinding(tb, TextBlock.TextProperty)?.Path?.Path;
@@ -749,6 +756,175 @@ public class LabelWrapMeasurementTests
         Assert.Contains("CLIPPED", result.Clips[0].Line);
         Assert.Single(result.Offenders);
         Assert.Contains("LINES", result.Offenders[0]);
+    }
+
+    // ---- the Roblox line (v1.41 item 11) ---------------------------------------------------------------------------
+
+    private static readonly RobloxStatusLevel[] StatusLevels =
+    [
+        RobloxStatusLevel.Outage, RobloxStatusLevel.SecurityEvent, RobloxStatusLevel.PartialOutage,
+        RobloxStatusLevel.Degraded, RobloxStatusLevel.Maintenance, RobloxStatusLevel.Unrecognised,
+    ];
+
+    /// <summary>
+    /// The status sentence that resolves longest in the current culture for <paramref name="level"/>: each of the four
+    /// row names with the counted suffix ("{0} and 2 more"), so the longest row name and the suffix are both in it.
+    /// </summary>
+    private static RobloxStatusReading LongestStatus(RobloxStatusLevel level) =>
+        Enum.GetValues<RobloxStatusRow>()
+            .Select(row => new RobloxStatusReading(row, level, OtherRows: 2))
+            .MaxBy(reading => RobloxNoticeResolver.Resolve(new RobloxLineInputs(
+                "", reading, "", "", RobloxUpdateState.Unknown, HoldBannerShowing: false, HasMultipleAccounts: false, Compact: false)).Top!.Text.Length)!;
+
+    private static readonly RobloxUpdateState PendingNewer = new(RobloxUpdateKind.Pending, RobloxUpdateDirection.Newer);
+
+    /// <summary>
+    /// Every status and update sentence the line can draw, in the current culture, with the notices behind it that put
+    /// the "+N more" toggle beside it (the narrowest the text ever gets) and, for the status sentences, alone as well.
+    /// </summary>
+    private static IEnumerable<(string Name, RobloxLineRenderTests.LineScene Scene)> LineScenes()
+    {
+        foreach (var level in StatusLevels)
+        {
+            var reading = LongestStatus(level);
+            yield return ($"status-{level}-{reading.Worst}", new RobloxLineRenderTests.LineScene { Status = reading });
+            yield return ($"status-{level}-{reading.Worst}-with-more", new RobloxLineRenderTests.LineScene { Status = reading, KnownIssue = true, Update = PendingNewer });
+        }
+
+        yield return ("update-several-accounts", new RobloxLineRenderTests.LineScene { Update = PendingNewer, Accounts = 2 });
+        yield return ("update-one-account", new RobloxLineRenderTests.LineScene { Update = PendingNewer, Accounts = 1 });
+        yield return ("update-rollback", new RobloxLineRenderTests.LineScene { Update = new RobloxUpdateState(RobloxUpdateKind.Pending, RobloxUpdateDirection.Older) });
+    }
+
+    /// <summary>
+    /// MEASURED 2026-11-26, and not met: at 380 px a status sentence wraps past two lines in every language. The strip's
+    /// row is the sentence, its action and the "+N more" toggle, each beside the next (ruled as drawn, 2026-11-26: no
+    /// compact wrap rule), and the 365 DIP the window leaves at 380 px gives the text about 220 DIP alone and about
+    /// 140 DIP with the toggle. English already needs three lines with the toggle, and Polish and German five.
+    /// Keyed "culture/group", the value is the most lines any sentence of the group needs; a group not listed holds
+    /// the two-line bound. A ratchet, like <see cref="KnownOpen"/>: the test
+    /// fails when a number rises, and when one stops reproducing so the entry has to be deleted with the fix. The
+    /// default width and both update sentences are held to two lines with no exemption.
+    /// </summary>
+    private static readonly Dictionary<string, int> LineOver2At380 = new()
+    {
+        ["de/status-alone"] = 3,
+        ["de/status-with-more"] = 5,
+        ["en/status-with-more"] = 3,
+        ["es/status-alone"] = 3,
+        ["es/status-with-more"] = 4,
+        ["fr/status-alone"] = 3,
+        ["fr/status-with-more"] = 4,
+        ["pl/status-alone"] = 3,
+        ["pl/status-with-more"] = 5,
+        ["pt-BR/status-alone"] = 3,
+        ["pt-BR/status-with-more"] = 4,
+        ["ru/status-alone"] = 3,
+        ["ru/status-with-more"] = 4,
+    };
+
+    private static string LineGroup(string name, bool compact) =>
+        name.StartsWith("update", StringComparison.Ordinal) ? "update"
+        : name.EndsWith("-with-more", StringComparison.Ordinal) ? "status-with-more"
+        : "status-alone";
+
+    /// <summary>
+    /// Every Roblox status sentence (every level, with the longest row name and the counted suffix) and both update
+    /// sentences, at the default width and at 380 px in seven languages, with nothing clipped. The contested,
+    /// known-issue and drift texts are v1.40's strings and are not drawn here (spec 7.6). See <see cref="LineOver2At380"/>.
+    /// </summary>
+    [WindowRenderFact]
+    public void TheRobloxLine_StatusAndUpdateSentences_MaxAtTwoLines_AtBothWidths_InEverySupportedLanguage()
+    {
+        var brand = Brand();
+        var offenders = new List<string>();
+        var measured = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        var report = new StringBuilder();
+        var states = 0;
+
+        foreach (var culture in Cultures)
+        {
+            var previous = TranslationSource.Instance.CurrentCulture;
+            TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
+            try
+            {
+                foreach (var compact in new[] { false, true })
+                {
+                    foreach (var (name, scene) in LineScenes())
+                    {
+                        var surface = $"roblox-line/{name}/{(compact ? "380" : "900")}";
+                        var result = ThemedWindowRender.Inspect(
+                            brand,
+                            $"label wrap [{surface}/{culture}]",
+                            () => RobloxLineRenderTests.BuildScene(scene, compact),
+                            content => Walk(surface, culture, content, RobloxLineRenderTests.Strip(content), runText: true));
+                        states++;
+                        report.AppendLine($"{surface} | {culture} | {result.Checked} ({result.Wrapping}/{result.NoWrap}) | {result.MaxWrapLines}");
+                        offenders.AddRange(result.Clips.Select(c => c.Line));
+                        Assert.True(result.Wrapping >= 1, $"[{surface}/{culture}] the walk saw no wrapping text: the notice is not being measured");
+
+                        var group = LineGroup(name, compact);
+                        if (compact && group != "update")
+                        {
+                            var key = $"{culture}/{group}";
+                            measured[key] = Math.Max(measured.GetValueOrDefault(key), result.MaxWrapLines);
+                        }
+                        else
+                        {
+                            offenders.AddRange(result.Offenders);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                TranslationSource.Instance.CurrentCulture = previous;
+            }
+        }
+
+        _output.WriteLine(report.ToString());
+        _output.WriteLine("---- most lines at 380 px, by culture/group (ratcheted in LineOver2At380) ----");
+        foreach (var (key, lines) in measured) _output.WriteLine($"{key} = {lines}");
+
+        Assert.Equal(Cultures.Length * 2 * LineScenes().Count(), states);
+        foreach (var (key, lines) in measured)
+        {
+            if (lines > MaxLines && !LineOver2At380.ContainsKey(key))
+            {
+                offenders.Add($"[roblox-line/380/{key}] {lines} lines, over {MaxLines} and not listed in LineOver2At380");
+            }
+            else if (LineOver2At380.TryGetValue(key, out var recorded) && lines != recorded)
+            {
+                offenders.Add($"[roblox-line/380/{key}] {lines} lines, but LineOver2At380 records {recorded}: {(lines > recorded ? "it got worse" : "it improved, so lower or delete the entry")}");
+            }
+        }
+
+        foreach (var key in LineOver2At380.Keys.Where(k => !measured.ContainsKey(k)))
+        {
+            offenders.Add($"LineOver2At380 lists {key}, which was not measured");
+        }
+
+        Assert.True(offenders.Count == 0, $"{offenders.Count} Roblox line problem(s):\n" + string.Join("\n", offenders));
+    }
+
+    /// <summary>The walk must see a notice drawn from Runs: <c>TextBlock.Text</c> is empty on it, and a walk that skipped it would pass any width.</summary>
+    [WindowRenderFact]
+    public void TheRobloxLineWalk_SeesTheNoticeText_AndCountsItsLines()
+    {
+        var result = ThemedWindowRender.Inspect(
+            Brand(),
+            "label wrap, roblox line self-check",
+            () => RobloxLineRenderTests.BuildScene(
+                new RobloxLineRenderTests.LineScene
+                {
+                    Synthetic = new RobloxLineState(
+                        new RobloxNotice(RobloxNoticeKind.Outage, string.Join(' ', Enumerable.Repeat("a sentence far too long for a compact strip", 6)), RobloxNoticeTone.Warning, WithLink: true),
+                        []),
+                },
+                compact: true),
+            content => Walk("self-check", "en", content, RobloxLineRenderTests.Strip(content), runText: true));
+
+        Assert.Contains(result.Offenders, o => o.Contains("LINES"));
     }
 
     // ---- opt-in German captures -------------------------------------------------------------------------------

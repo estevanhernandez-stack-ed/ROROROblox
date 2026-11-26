@@ -236,6 +236,36 @@ public class ExpiredRowRedundancyTests
         Assert.Contains("BloxstrapWarningVisible", banner[0].Attribute("Visibility")?.Value ?? "");
     }
 
+    /// <summary>
+    /// The Roblox line (v1.41 item 11) draws all five of its notices through one template, and tone is never the only
+    /// signal: under flatline the warning accent is grey, so the glyph and the words are what carry the state. The
+    /// glyph is therefore structural here, the same shape as the compat banner's clause: a literal Run in front of
+    /// the bound text, in the template and nowhere else.
+    /// </summary>
+    [Fact]
+    public void TheRobloxLineTemplatePrefixesTheSameWarnGlyph()
+    {
+        var doc = MainWindow();
+
+        var template = doc.Descendants()
+            .Where(e => e.Name.LocalName == "DataTemplate")
+            .Where(t => t.Attributes().Any(a => a.Name.LocalName == "Key" && a.Value == "RobloxNoticeTemplate"))
+            .ToList();
+        Assert.True(template.Count == 1, $"Expected exactly one RobloxNoticeTemplate, found {template.Count}.");
+
+        var bound = template[0].Descendants()
+            .Where(e => e.Name.LocalName == "Run")
+            .Where(r => r.Attribute("Text")?.Value.StartsWith("{Binding Text", StringComparison.Ordinal) == true)
+            .ToList();
+        Assert.True(bound.Count == 1, $"Expected the notice's text to be one bound Run, found {bound.Count}.");
+
+        var prefix = bound[0].ElementsBeforeSelf().LastOrDefault();
+        Assert.True(prefix is not null && prefix.Name.LocalName == "Run",
+            "The Roblox line's bound text has no Run in front of it: the warn glyph is gone, and under flatline "
+            + "that glyph is half of what says a notice is a notice.");
+        Assert.Equal(WarnGlyph + " ", prefix!.Attribute("Text")?.Value);
+    }
+
     [Fact]
     public void TheWarnGlyphIsTheOneTheRegisterExempts()
     {

@@ -79,19 +79,6 @@ public sealed class KnownIssuesNoticeModelTests : IDisposable
     }
 
     [Fact]
-    public void TheContestedWarningSuppressesTheNotice_AndItComesBack()
-    {
-        var model = Model();
-        model.Apply(Snapshot(Issue("a")));
-
-        model.SetSuppressed(true);
-        Assert.Equal(string.Empty, model.NoticeText);
-
-        model.SetSuppressed(false);
-        Assert.NotEqual(string.Empty, model.NoticeText);
-    }
-
-    [Fact]
     public void ClosingTheNoticeKeepsItClosed_UntilANewEntryArrives()
     {
         var model = Model();
