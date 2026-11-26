@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en" data-theme="brand">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoRoRo v1.41 C1 mocks: Roblox at a glance</title>
+<style>
+  /* Theme slots: the ten RoRoRo palette slots (ThemeStore.cs built-ins) plus the derived interactive edge.
+     Brand, Midnight, Magenta Heat and Flatline values are copied from src/ROROROblox.Core/Theming/ThemeStore.cs.
+     --edge is DERIVED at runtime by ContrastGuard; brand's #707B8B is the App.xaml value, the other three are
+     close estimates that clear 3:1 and are not the measured derivation. */
+  :root, :root[data-theme="brand"] {
+    --bg:#0F1F31; --cyan:#17D4FA; --magenta:#F22F89; --white:#FFFFFF; --muted:#9AA8B8; --divider:#1F3149;
+    --rowbg:#15263A; --expbg:#3A2D14; --accent:#F1B232; --navy:#0F1F31; --edge:#707B8B;
+  }
+  :root[data-theme="midnight"] {
+    --bg:#0A1320; --cyan:#3FB8D9; --magenta:#C0407E; --white:#E6EDF5; --muted:#768598; --divider:#162232;
+    --rowbg:#0F1B2B; --expbg:#241B0E; --accent:#C99A2D; --navy:#0A1320; --edge:#667689;
+  }
+  :root[data-theme="magenta-heat"] {
+    --bg:#1A0F1F; --cyan:#F22F89; --magenta:#F22F89; --white:#FFE9F4; --muted:#B091A2; --divider:#2D1832;
+    --rowbg:#241432; --expbg:#3A2D14; --accent:#F1B232; --navy:#1A0F1F; --edge:#85748C;
+  }
+  :root[data-theme="flatline"] {
+    --bg:#101010; --cyan:#D4D4D4; --magenta:#6E6E6E; --white:#F5F5F5; --muted:#989898; --divider:#333333;
+    --rowbg:#2A2A2A; --expbg:#3D3D3D; --accent:#D4D4D4; --navy:#101010; --edge:#808080;
+  }
+
+  /* Page chrome: fixed, so the surrounding page does not change with the theme being judged. */
+  * { box-sizing: border-box; }
+  html { background:#070d16; }
+  body { margin:0; padding:24px 32px 64px; background:#070d16; color:#dfe7f1;
+         font:14px/1.5 "Segoe UI", system-ui, sans-serif; }
+  .mono { font-family: "JetBrains Mono", Consolas, "Cascadia Mono", monospace; }
+  h1 { font-size:22px; margin:0 0 4px; font-weight:600; }
+  h2 { font-size:17px; margin:44px 0 4px; font-weight:600; padding-top:18px; border-top:1px solid #1d2b3d; }
+  h3 { font-size:13px; margin:22px 0 8px; font-weight:600; color:#9fb2c8; text-transform:uppercase; letter-spacing:.1em; font-family:Consolas,monospace; }
+  p.lede { margin:0 0 10px; color:#9fb2c8; max-width:980px; }
+  .bar { position:sticky; top:0; z-index:5; background:#070d16; padding:10px 0; margin:0 0 6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-bottom:1px solid #1d2b3d; }
+  .bar button { font:600 12px "Segoe UI",sans-serif; padding:6px 12px; border-radius:4px; border:1px solid #3a4b61; background:#0d1828; color:#dfe7f1; cursor:pointer; }
+  .bar button[aria-pressed="true"] { border-color:#17d4fa; color:#17d4fa; }
+  .bar .sw { width:10px; height:10px; display:inline-block; border-radius:2px; margin-right:6px; vertical-align:-1px; }
+  .opt { margin:14px 0 4px; display:flex; align-items:baseline; gap:10px; }
+  .opt .id { font:700 12px Consolas,monospace; background:#17d4fa; color:#071019; padding:1px 7px; border-radius:3px; }
+  .opt .def { font:700 11px Consolas,monospace; border:1px solid #f22f89; color:#f22f89; padding:0 6px; border-radius:3px; }
+  .opt .what { color:#c9d6e5; }
+  .cap { color:#7f93aa; font-size:12px; margin:6px 0 0; max-width:980px; }
+  .cols { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col { min-width:0; }
+  table.pairs { border-collapse:collapse; font:12px Consolas,monospace; margin:10px 0; }
+  table.pairs td, table.pairs th { border:1px solid #1d2b3d; padding:3px 10px; text-align:left; color:#c9d6e5; }
+  table.pairs .ok { color:#46d39a; } table.pairs .no { color:#ff7a7a; }
+
+  /* ---------- The mock window ---------- */
+  .win { border:1px solid var(--divider); background:var(--bg); color:var(--white);
+         font:12px/1.35 "Segoe UI", system-ui, sans-serif; }
+  .win .caption { height:26px; background:var(--bg); border-bottom:1px solid var(--divider); display:flex; align-items:center; padding:0 12px; color:var(--muted); font-size:11px; }
+  .win .head { height:34px; padding:0 24px; display:flex; align-items:center; gap:12px; color:var(--white); font-weight:600; font-size:14px; }
+  .win .head .m { color:var(--muted); font-weight:400; font-size:11px; }
+  .strip { background:var(--rowbg); padding:8px 24px; }
+  .nrow { display:grid; grid-template-columns:minmax(0,1fr) auto auto; column-gap:8px; align-items:center; }
+  .nrow + .nrow { margin-top:4px; }
+  .ntext { font-size:12px; overflow-wrap:anywhere; }
+  .ntext.warn { color:var(--accent); } .ntext.info { color:var(--white); }
+  .nbtns { display:flex; align-items:center; gap:8px; }
+  .acct { margin:6px 24px 0; padding:8px 12px; background:var(--rowbg); border-radius:6px; display:flex; align-items:center; gap:10px; }
+  .acct:last-child { margin-bottom:12px; }
+  .av { width:26px; height:26px; border-radius:50%; background:var(--navy); border:1px solid var(--divider); flex:none; }
+  .acct .nm { font-weight:600; } .acct .mt { color:var(--muted); font-size:11px; }
+  .win.w380 .acct { flex-wrap:nowrap; }
+
+  /* Button ranks, from ControlStyles.xaml */
+  .b { font:12px "Segoe UI",sans-serif; padding:4px 10px; border:1px solid transparent; cursor:default; white-space:nowrap; line-height:16px; display:inline-block; }
+  .b.cta { background:var(--cyan); color:var(--navy); font-weight:600; border-width:0; padding:5px 11px; }
+  .b.sec { background:var(--navy); color:var(--white); border-color:var(--edge); }
+  .b.ghost { background:transparent; color:var(--white); border-width:0; padding:5px 11px; }
+  .b.sm { font-size:11px; }
+  /* Toggles: B1 = PanelExpanderToggleButtonStyle (open = cyan outline, cyan glyph, no fill);
+     B2 = SecondaryToggleButtonStyle (open = the grey press sheen fill). */
+  .tg { font:12px "Segoe UI",sans-serif; padding:4px 10px; background:var(--navy); color:var(--white); border:1px solid var(--edge); white-space:nowrap; line-height:16px; display:inline-block; position:relative; }
+  .tg.b1.open { border-color:var(--cyan); color:var(--cyan); }
+  .tg.b2.open::after { content:""; position:absolute; inset:-1px; background:#fff; opacity:.38; border:1px solid #fff; }
+  .tg.b2.open { color:var(--white); }
+  .tg.hover::after { content:""; position:absolute; inset:-1px; background:#fff; opacity:.22; border:1px solid #fff; }
+
+  /* Tiles, rows, panel entries */
+  .tile { width:144px; padding:8px; border-radius:8px; background:var(--rowbg); display:flex; flex-direction:column; flex:none; color:var(--white); }
+  .tile .ic, .ric, .pic { background:var(--navy); color:var(--muted); font-weight:700; display:flex; align-items:center; justify-content:center; flex:none; }
+  .tile .ic { width:128px; height:128px; border-radius:8px; font-size:22px; }
+  .tile .nm { margin-top:6px; font-weight:600; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile .body { flex:1; margin-top:2px; font-size:11px; color:var(--muted); min-height:0; }
+  .tile .btns { display:flex; gap:4px; margin-top:6px; }
+  .tile .btns .b.sec { flex:1; text-align:center; padding:4px 5px; }
+  .tile .btns .b.cta { padding:4px 8px; }
+  .tag { display:inline-block; border:1px solid var(--muted); border-radius:3px; padding:0 5px; font-size:11px; font-weight:700; color:var(--white); margin:1px 4px 2px 0; }
+  .pulse { color:var(--muted); }
+  .tiles { display:flex; gap:8px; align-items:flex-start; }
+  .tip { margin-top:8px; display:inline-block; background:var(--navy); border:1px solid var(--edge); color:var(--white); padding:5px 8px; font:12px "Segoe UI",sans-serif; max-width:260px; }
+  .tipwrap .lbl { font:11px Consolas,monospace; color:#7f93aa; margin-top:8px; }
+
+  .listbox { background:var(--bg); padding:12px; width:900px; }
+  .lhead, .lrow { display:grid; grid-template-columns:32px minmax(0,1fr) 116px 108px 56px 216px; align-items:center; }
+  .lhead { padding:0 12px 6px; font-size:11px; color:var(--muted); }
+  .lrow { margin-bottom:6px; padding:8px 12px; border-radius:6px; background:var(--rowbg); color:var(--white); }
+  .lrow .ric { width:28px; height:28px; border-radius:5px; font-size:11px; }
+  .lrow .nmcell { min-width:0; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .lrow .nmcell .stack { min-width:0; }
+  .lrow .nm { font-weight:600; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lrow .sub { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lrow .meta { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:8px; }
+  .lrow .acts { display:flex; justify-content:flex-end; gap:6px; align-items:center; }
+  .lrow .more { width:28px; height:26px; border:1px solid var(--edge); background:var(--navy); text-align:center; line-height:24px; font-size:12px; }
+
+  .panelcard { background:var(--rowbg); padding:8px 10px; border-radius:6px; }
+  .pent { display:flex; align-items:center; gap:8px; min-height:36px; padding:4px 6px; color:var(--white); }
+  .pent .pic { width:28px; height:28px; border-radius:5px; font-size:11px; }
+  .pent .txt { min-width:0; flex:1; }
+  .pent .nm { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pent .mt { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pent .tags { flex:none; }
+  .plabel { font:11px Consolas,monospace; color:#7f93aa; margin:0 0 6px; }
+</style>
+</head>
+<body>
+
+<h1>RoRoRo v1.41: Roblox at a glance. C1 mocks</h1>
+<p class="lede">Every account, game and sentence of notice detail on this page is made up. The five notice sentences that are RoRoRo's own strings (spec §7.4) are exact; the contested, known-issue and drift texts are stand-ins for v1.40's strings and the feed's text. Colours are the app's own theme slots (the four built-ins and Flatline); use the switcher or <span class="mono">?theme=brand|midnight|magenta-heat|flatline</span>.</p>
+
+<div class="bar" id="bar"></div>
+<p class="cap">Button ranks, the strip's fill, the glyph run and the type sizes (body 12, meta 11) are read from <span class="mono">MainWindow.xaml</span>, <span class="mono">ControlStyles.xaml</span> and <span class="mono">GamesPage.xaml</span>. The interactive edge is derived at runtime in the app; brand's value is exact, the other themes' are close estimates.</p>
+
+<!-- =============== 1. The line =============== -->
+<h2>1. The line, five states</h2>
+<p class="lede">One strip (row 3), one notice tall. Order when several are true: contested, outage, known issue, drift, update. Below, each state alone as it is drawn when it is the top notice, at the default width (900) and at 380 px (compact). Tone split A1 is used here.</p>
+<div id="states"></div>
+
+<h3>Variants of the same states</h3>
+<div id="variants"></div>
+
+<h3>Outage wording, the six levels</h3>
+<p class="cap">One sentence per level, the row name after the colon. Default width, A1.</p>
+<div id="levels"></div>
+
+<!-- =============== 2. More =============== -->
+<h2>2. "+2 more", collapsed and expanded</h2>
+<p class="lede">Collapsed, the area is one notice tall whatever the count. Expanded, each hidden notice is drawn with the same template, under the top one, with its own actions. Drawn with B1 (the plan default toggle). Here the top notice is the outage, with the known issue and the update behind it.</p>
+<div id="more"></div>
+
+<!-- =============== Decisions =============== -->
+<h2>Decision A. Tone of the line</h2>
+<p class="lede">A1 splits by weight: contested, outage and drift in the warning colour, known issue and update in white. A2 puts all five in the warning colour. The glyph is the same on all five either way, so colour is never the only signal.</p>
+<div id="decA"></div>
+<h3>The two pairs this decision rides on, measured here</h3>
+<p class="cap">Text on the strip's own fill (RowBg), WCAG 2.x ratio against AA 4.5. These are the two named pairs spec §7.7 asks the build to measure; this table is the mock's own arithmetic from the theme values above, not the test's.</p>
+<div id="contrast"></div>
+
+<h2>Decision B. The "+N more" control</h2>
+<p class="lede">B1 is the account panels' expander rank: open is a cyan outline and cyan text, never a fill. B2 is the shared secondary toggle: open is the grey press-sheen fill. Rest, hover and open of each, then each in place on the strip (collapsed and expanded).</p>
+<div id="decB"></div>
+
+<h2>Decisions C, D, E. The pulse in the Library and the panel</h2>
+<p class="lede">The count is "81,827 playing" (the existing <span class="mono">Library_Playing</span> string), the date "updated 2 days ago", joined by the existing <span class="mono">{0} · {1}</span>. It sits beside the "last played" line and never in its place. Games and servers here are made up.</p>
+
+<h3>C. The grid tile, three options</h3>
+<p class="cap">The current tile is 144 px wide with 8 px of padding, 128 px of text. Heights drawn: C1 276 (two meta lines added to the 246 tile), C2 276 (the joined line wraps to two lines), C3 261 (one added line). The build measures the real sizes; these are the spec's estimate of a 15 px meta line.</p>
+<div id="decC"></div>
+
+<h3>Pulse states, drawn in C1</h3>
+<div id="pstates"></div>
+
+<h3>D. The list row: the joined line</h3>
+<p class="cap">Drawn as a second line under the name, in the name column, at meta size. The row grows by one meta line. The columns to its right are v1.40's widths.</p>
+<div id="decD"></div>
+
+<h3>D. The panel entry: the joined line</h3>
+<p class="cap">The pulse is one more part of the entry's meta line, joined with the same " · ". At 400 px it fits; at 320 px it trims with an ellipsis and the full text lives in the tooltip and the accessible name, as the panel entry already works today.</p>
+<div id="decP"></div>
+
+<h3>E. A private server: the date, no count</h3>
+<p class="cap">Never a count, because the universe's number is not this server's. Shown in the tile (C1), the row and the panel entry above; here the three side by side.</p>
+<div id="decE"></div>
+
+<h2>Decision F. The update notice at 380 px</h2>
+<p class="lede">F is drawn as proposed: at compact the resolver always picks the short sentence and drops the batch clause. The long sentence at 380 px is drawn beneath for comparison only; it is not an option on the table.</p>
+<div id="decF"></div>
+
+<script>
+(function(){
+  /* ---------- theme switching ---------- */
+  var THEMES = {
+    "brand":        {n:"Brand",        bg:"#0F1F31", cyan:"#17D4FA", white:"#FFFFFF", rowbg:"#15263A", accent:"#F1B232"},
+    "midnight":     {n:"Midnight",     bg:"#0A1320", cyan:"#3FB8D9", white:"#E6EDF5", rowbg:"#0F1B2B", accent:"#C99A2D"},
+    "magenta-heat": {n:"Magenta Heat", bg:"#1A0F1F", cyan:"#F22F89", white:"#FFE9F4", rowbg:"#241432", accent:"#F1B232"},
+    "flatline":     {n:"Flatline",     bg:"#101010", cyan:"#D4D4D4", white:"#F5F5F5", rowbg:"#2A2A2A", accent:"#D4D4D4"}
+  };
+  var q = new URLSearchParams(location.search).get("theme");
+  var cur = THEMES[q] ? q : "brand";
+  function setTheme(t){
+    cur = t;
+    document.documentElement.setAttribute("data-theme", t);
+    var bs = document.querySelectorAll("#bar button");
+    for (var i=0;i<bs.length;i++) bs[i].setAttribute("aria-pressed", bs[i].dataset.t===t ? "true":"false");
+  }
+  var bar = document.getElementById("bar");
+  bar.innerHTML = '<span class="mono" style="font-size:12px;color:#7f93aa;margin-right:6px">THEME</span>';
+  Object.keys(THEMES).forEach(function(k){
+    var b = document.createElement("button");
+    b.dataset.t = k;
+    b.innerHTML = '<span class="sw" style="background:'+THEMES[k].cyan+';outline:1px solid #3a4b61"></span>'+THEMES[k].n+(k==="flatline"?" (accessibility)":"");
+    b.onclick = function(){ setTheme(k); };
+    bar.appendChild(b);
+  });
+  setTheme(cur);
+
+  /* ---------- strings (spec §7.4, exact) ---------- */
+  var S = {
+    updMany: "Roblox has an update. The next launch installs it, and Launch all holds your other accounts until it is done.",
+    updOne:  "Roblox has an update. The next launch installs it.",
+    what:    "What changed",
+    outage:  "Roblox reports an outage: {0}",
+    partial: "Roblox reports a partial outage: {0}",
+    degraded:"Roblox reports degraded performance: {0}",
+    security:"Roblox reports a security issue: {0}",
+    maint:   "Roblox reports maintenance under way: {0}",
+    problem: "Roblox reports a problem: {0}",
+    andMore: "{0} and {1} more",
+    link:    "Roblox status",
+    more:    "+{0} more",
+    moreName:"{0} more Roblox notices",
+    playing: "{0} playing",
+    updated: "updated {0}",
+    joiner:  "{0} · {1}",
+    contested: "Roblox has the multi-instance lock — it's probably running in your system tray.",
+    /* stand-ins, invented for the mock */
+    known: "Some laptops with two graphics chips stutter in full screen.",
+    drift: "Roblox is newer than the version this build was last checked against."
+  };
+  function f(s){ var a=[].slice.call(arguments,1); return s.replace(/\{(\d)\}/g,function(_,i){return a[i];}); }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+  /* ---------- notices ---------- */
+  var BTN = {
+    close:  '<span class="b cta">Close Roblox for me</span><span class="b sec">Retry</span>',
+    status: '<span class="b sec">'+S.link+'</span>',
+    known:  '<span class="b sec">See known issues</span><span class="b ghost">Dismiss</span>',
+    none:   '',
+    what:   '<span class="b sec">'+S.what+'</span>'
+  };
+  function N(kind, text, btns, tone){ return {kind:kind, text:text, btns:btns, tone:tone}; }
+  var NT = {
+    contested: function(){ return N("contested", S.contested, BTN.close, "warn"); },
+    outage:    function(t){ return N("outage", f(S.partial, t||"Joining games"), BTN.status, "warn"); },
+    known:     function(){ return N("known", S.known, BTN.known, "info"); },
+    drift:     function(){ return N("drift", S.drift, BTN.none, "warn"); },
+    update:    function(c, link){ return N("update", c?S.updOne:S.updMany, link===false?"":BTN.what, "info"); }
+  };
+  function tone(n, A){ return A==="A2" ? "warn" : n.tone; }
+  function toggleHTML(style, count, open, hover){
+    return '<span class="tg '+style+(open?' open':'')+(hover?' hover':'')+'">'+f(S.more,count)+'</span>';
+  }
+  function row(n, A, tgl){
+    return '<div class="nrow"><div class="ntext '+tone(n,A)+'">▲ '+esc(n.text)+'</div>'+
+      '<div class="nbtns">'+n.btns+'</div>'+(tgl||'<span></span>')+'</div>';
+  }
+  var ACCTS = [["Sample Alt A","Playing · 2 min"],["Sample Alt B","Ready"]];
+  function win(w, strip, label){
+    var cls = w===380 ? "win w380" : "win";
+    var acc = ACCTS.map(function(a){return '<div class="acct"><span class="av"></span><div><div class="nm">'+a[0]+'</div><div class="mt">'+a[1]+'</div></div></div>';}).join("");
+    return '<div class="col"><div class="mono" style="font-size:11px;color:#7f93aa;margin:0 0 4px">'+label+'</div>'+
+      '<div class="'+cls+'" style="width:'+w+'px"><div class="caption">RoRoRo</div><div class="head">Accounts <span class="m">2 saved</span></div>'+
+      '<div class="strip">'+strip+'</div>'+acc+'</div></div>';
+  }
+  function line(notices, o){
+    o = o||{};
+    var A = o.A||"A1", st = o.toggle||"b1", w=o.w||900;
+    var top = notices[0], rest = notices.slice(1);
+    var t = rest.length ? toggleHTML(st, rest.length, !!o.open) : null;
+    var html = row(top, A, t);
+    if (o.open) rest.forEach(function(n){ html += row(n, A, null); });
+    return win(w, html, o.label||"");
+  }
+  function put(id, html){ document.getElementById(id).innerHTML = html; }
+  function opt(id, what, def){ return '<div class="opt"><span class="id">'+id+'</span>'+(def?'<span class="def">PLAN DEFAULT</span>':'')+'<span class="what">'+what+'</span></div>'; }
+
+  /* ---------- 1. five states, both widths ---------- */
+  var five = [
+    ["Contested", NT.contested(), NT.contested()],
+    ["Outage", NT.outage(), NT.outage()],
+    ["Known issue", NT.known(), NT.known()],
+    ["Drift", NT.drift(), NT.drift()],
+    ["Update", NT.update(false), NT.update(true)]
+  ];
+  var h = '';
+  five.forEach(function(s){
+    h += '<h3>'+s[0]+'</h3><div class="cols">'+
+      line([s[1]], {w:900, label:'default width (900)'})+
+      line([s[2]], {w:380, label:'compact (380)'})+'</div>';
+  });
+  put("states", h);
+
+  /* ---------- variants ---------- */
+  h = '<div class="cols">'+
+    line([NT.outage("Games and 2 more")], {label:'outage, counted suffix: "{0} and {1} more" with Games, 2'})+
+    line([NT.outage("Games and 2 more")], {w:380,label:'same at 380'})+
+    '</div><div class="cols" style="margin-top:14px">'+
+    line([NT.update(true)], {label:'update, one saved account (short sentence)'})+
+    line([NT.update(true,false)], {w:380,label:'rollback at 380: the sentence, no link'})+
+    '</div><div class="cols" style="margin-top:14px">'+
+    line([NT.update(false,false)], {label:'rollback, several accounts: sentence, no link'})+
+    '</div>';
+  put("variants", h);
+
+  var lv = [["outage","Website"],["partial","Games"],["degraded","Avatars"],["security","Joining games"],["maint","Website"],["problem","Games"]];
+  h = '<div class="cols">';
+  lv.forEach(function(l){ h += line([N("outage", f(S[l[0]], l[1]), BTN.status, "warn")], {label:l[0]}); });
+  put("levels", h + '</div>');
+
+  /* ---------- 2. more ---------- */
+  var three = [NT.outage(), NT.known(), NT.update(false)];
+  var three380 = [NT.outage(), NT.known(), NT.update(true)];
+  h = '<div class="cols">'+
+    line(three, {label:'collapsed, default width: area is one notice tall'})+
+    line(three, {open:true,label:'expanded, default width'})+
+    '</div><div class="cols" style="margin-top:14px">'+
+    line(three380, {w:380,label:'collapsed, 380'})+
+    line(three380, {w:380,open:true,label:'expanded, 380'})+
+    '</div><p class="cap">Spoken name of the toggle: "'+f(S.moreName,2)+'". Tab order: the top notice’s text, its buttons, the toggle, then (expanded) each shown notice in turn.</p>';
+  put("more", h);
+
+  /* ---------- A ---------- */
+  var allFive = [NT.contested(), NT.outage(), NT.known(), NT.drift(), NT.update(false)];
+  function stack(A, w){
+    var out='';
+    allFive.forEach(function(n){ out += '<div style="margin-bottom:10px">'+line([n],{A:A,w:w,label:n.kind}) +'</div>'; });
+    return out;
+  }
+  h = opt("A1","contested, outage and drift in the warning colour; known issue and update in white", true)+
+      '<div class="cols">'+ (function(){var o='';allFive.forEach(function(n){o+=line([n],{A:"A1",w:900,label:'A1 · '+n.kind});});return o;})() +'</div>'+
+      opt("A2","all five in the warning colour")+
+      '<div class="cols">'+ (function(){var o='';allFive.forEach(function(n){o+=line([n],{A:"A2",w:900,label:'A2 · '+n.kind});});return o;})() +'</div>';
+  put("decA", h);
+
+  /* ---------- contrast table ---------- */
+  function lum(hex){
+    var c=[1,3,5].map(function(i){var v=parseInt(hex.substr(i,2),16)/255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
+    return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
+  }
+  function ratio(a,b){var x=lum(a),y=lum(b),hi=Math.max(x,y),lo=Math.min(x,y);return (hi+0.05)/(lo+0.05);}
+  var ct = '<table class="pairs"><tr><th>theme</th><th>warning text on strip (RowExpiredAccent on RowBg)</th><th>white text on strip (White on RowBg)</th></tr>';
+  Object.keys(THEMES).forEach(function(k){
+    var t=THEMES[k], r1=ratio(t.accent,t.rowbg), r2=ratio(t.white,t.rowbg);
+    ct += '<tr><td>'+t.n+'</td><td class="'+(r1>=4.5?'ok':'no')+'">'+r1.toFixed(2)+(r1>=4.5?' pass':' FAIL')+'</td><td class="'+(r2>=4.5?'ok':'no')+'">'+r2.toFixed(2)+(r2>=4.5?' pass':' FAIL')+'</td></tr>';
+  });
+  put("contrast", ct+'</table>');
+
+  /* ---------- B ---------- */
+  h = '<div class="cols">';
+  [["b1","B1 · panel-expander toggle"],["b2","B2 · secondary toggle"]].forEach(function(p){
+    h += '<div class="col"><div class="mono" style="font-size:11px;color:#7f93aa;margin-bottom:6px">'+p[1]+': rest, hover, open</div>'+
+      '<div style="background:var(--rowbg);padding:12px 16px;display:flex;gap:14px;align-items:center" class="win">'+
+      toggleHTML(p[0],2,false)+toggleHTML(p[0],2,false,true)+toggleHTML(p[0],2,true)+'</div></div>';
+  });
+  h += '</div>';
+  h += opt("B1","panel-expander toggle: open is a cyan outline and cyan text", true)+
+       '<div class="cols">'+line(three,{toggle:"b1",label:'B1 collapsed'})+line(three,{toggle:"b1",open:true,label:'B1 expanded'})+'</div>'+
+       opt("B2","secondary toggle: open is the grey press-sheen fill")+
+       '<div class="cols">'+line(three,{toggle:"b2",label:'B2 collapsed'})+line(three,{toggle:"b2",open:true,label:'B2 expanded'})+'</div>';
+  put("decB", h);
+
+  /* ---------- pulse pieces ---------- */
+  function ini(s){ return s.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase(); }
+  var G = {
+    harbor: {name:"Block Harbor Tycoon", count:"81,827", upd:"2 days ago", last:"3 days ago", total:"4h 20m", kind:"Favourite"},
+    kitchen:{name:"Orbit Kitchen", count:"0", upd:"6 hours ago", last:"yesterday", total:"1h 05m", kind:"Favourite"},
+    dune:   {name:"Dune Runners", count:"1,204", upd:"Mar 2023", last:"Nov 2", total:"38m", kind:"Favourite"},
+    priv:   {name:"Sunday Build Room", count:null, upd:"9 days ago", last:"5 days ago", total:"2h 40m", kind:"Private server", priv:true},
+    none:   {name:"Tower Sprint", count:null, upd:null, last:"2 weeks ago", total:"12m", kind:"Favourite"}
+  };
+  function pulseParts(g){
+    var c = g.count!==null && !g.priv ? f(S.playing,g.count) : "";
+    var u = g.upd ? f(S.updated,g.upd) : "";
+    return {c:c,u:u,j:(c&&u)?f(S.joiner,c,u):(c||u)};
+  }
+  function tile(g, opt){
+    var p = pulseParts(g), base = f(S.joiner,g.last,g.total), body='';
+    var tag = g.priv ? '<div><span class="tag">Private</span></div>' : '';
+    body += tag + '<div>'+esc(base)+'</div>';
+    var hgt = 246;
+    if (opt==="C1"){ hgt=276; if(p.c) body+='<div class="pulse">'+esc(p.c)+'</div>'; if(p.u) body+='<div class="pulse">'+esc(p.u)+'</div>'; }
+    else if (opt==="C2"){ hgt=276; if(p.j) body+='<div class="pulse">'+esc(p.j)+'</div>'; }
+    else if (opt==="C3"){ hgt=261; if(p.c) body+='<div class="pulse">'+esc(p.c)+'</div>'; }
+    else { hgt=246; }
+    return '<div class="tile" style="height:'+hgt+'px"><div class="ic">'+ini(g.name)+'</div><div class="nm">'+esc(g.name)+'</div>'+
+      '<div class="body">'+body+'</div><div class="btns"><span class="b cta sm">Play</span><span class="b sec sm">Play as</span></div></div>';
+  }
+  function tileTip(g){ var p=pulseParts(g); return '<div class="tipwrap"><div class="tip">'+esc(g.name)+(p.j?' · '+esc(p.j):'')+'</div></div>'; }
+
+  /* ---------- C ---------- */
+  h = '<div class="cols">';
+  [["C1","two more meta lines, the tile grows (the count, then the date)",true],
+   ["C2","one line that wraps: the joined line breaks where it must",false],
+   ["C3","the count alone in the tile; the date is kept for the tooltip and the list",false]].forEach(function(o){
+    h += '<div class="col">'+opt(o[0],o[1],o[2])+'<div class="tiles">'+tile(G.harbor,o[0])+tile(G.priv,o[0])+'</div>'+
+      (o[0]==="C3" ? '<div class="tipwrap"><div class="lbl">tooltip on hover, first tile:</div>'+tileTip(G.harbor)+'</div>' : '')+
+      '</div>';
+  });
+  h += '</div><div style="margin-top:12px" class="col">'+
+    '<div class="mono" style="font-size:11px;color:#7f93aa;margin-bottom:6px">for reference: today’s tile (v1.40), no pulse</div><div class="tiles">'+tile(G.harbor,"none")+'</div></div>';
+  put("decC", h);
+
+  h = '<div class="tiles">'+
+    '<div class="col" style="width:144px"><div class="mono" style="font-size:11px;color:#7f93aa;margin-bottom:6px">zero: "0 playing"</div>'+tile(G.kitchen,"C1")+'</div>'+
+    '<div class="col" style="width:144px"><div class="mono" style="font-size:11px;color:#7f93aa;margin-bottom:6px">older than eleven months: month and year</div>'+tile(G.dune,"C1")+'</div>'+
+    '<div class="col" style="width:144px"><div class="mono" style="font-size:11px;color:#7f93aa;margin-bottom:6px">count expired (15 min): date alone</div>'+tile({name:"Block Harbor Tycoon",count:null,upd:"2 days ago",last:"3 days ago",total:"4h 20m"},"C1")+'</div>'+
+    '<div class="col" style="width:144px"><div class="mono" style="font-size:11px;color:#7f93aa;margin-bottom:6px">no answer yet / game gone: no line</div>'+tile(G.none,"C1")+'</div>'+
+    '</div><p class="cap">No spinner and no placeholder: the line is absent until an answer arrives. Each half drops on its own.</p>';
+  put("pstates", h);
+
+  /* ---------- D list ---------- */
+  function lrow(g){
+    var p = pulseParts(g), tag = g.priv ? '<span class="tag">Private</span>' : '';
+    return '<div class="lrow"><span class="ric">'+ini(g.name)+'</span>'+
+      '<div class="nmcell"><div class="stack"><div class="nm">'+esc(g.name)+'</div>'+(p.j?'<div class="sub">'+esc(p.j)+'</div>':'')+'</div>'+tag+'</div>'+
+      '<div class="meta">'+g.kind+'</div><div class="meta">'+esc(g.last)+'</div><div class="meta">'+esc(g.total)+'</div>'+
+      '<div class="acts"><span class="b cta sm" style="padding:5px 11px">Play</span><span class="b sec sm">Play as</span><span class="more">⋯</span></div></div>';
+  }
+  h = '<div class="listbox win"><div class="lhead"><span></span><span>Name</span><span>Kind</span><span>Last played</span><span>Total</span><span></span></div>'+
+    [G.harbor,G.kitchen,G.dune,G.priv,G.none].map(lrow).join("")+'</div>'+
+    '<p class="cap">Rows in order: a game with count and date, zero players, a date past eleven months, a private server (date only), and a game with no answer (no second line).</p>';
+  put("decD", h);
+
+  /* ---------- D panel ---------- */
+  function pent(g, w, note){
+    var p = pulseParts(g), meta = f(S.joiner, g.last, g.total);
+    if (p.j) meta = f(S.joiner, meta, p.j);
+    var tags = g.priv ? '<span class="tags"><span class="tag">Private</span></span>' : '';
+    return '<div class="pent"><span class="pic">'+ini(g.name)+'</span><div class="txt"><div class="nm">'+esc(g.name)+'</div><div class="mt">'+esc(meta)+'</div></div>'+tags+'</div>';
+  }
+  function panel(w, label){
+    return '<div class="col"><div class="plabel">'+label+'</div><div class="win" style="width:'+w+'px;padding:10px"><div class="panelcard">'+
+      pent(G.harbor)+pent(G.dune)+pent(G.priv)+'</div></div></div>';
+  }
+  put("decP", '<div class="cols">'+panel(400,'400 px panel column: fits')+panel(320,'320 px: the meta line trims with an ellipsis')+'</div>');
+
+  /* ---------- E ---------- */
+  h = '<div class="cols"><div class="col"><div class="plabel">tile (C1)</div>'+tile(G.priv,"C1")+'</div>'+
+    '<div class="col" style="flex:1;min-width:460px"><div class="plabel">list row</div><div class="win" style="padding:10px 12px;width:560px"><div class="lrow" style="grid-template-columns:32px minmax(0,1fr) 96px;margin:0"><span class="ric">'+ini(G.priv.name)+'</span><div class="nmcell"><div class="stack"><div class="nm">'+G.priv.name+'</div><div class="sub">'+f(S.updated,G.priv.upd)+'</div></div><span class="tag">Private</span></div><div class="meta">Private server</div></div></div>'+
+    '<div class="plabel" style="margin-top:14px">panel entry</div><div class="win" style="width:400px;padding:10px"><div class="panelcard">'+pent(G.priv)+'</div></div></div></div>';
+  put("decE", h);
+
+  /* ---------- F ---------- */
+  h = '<div class="cols">'+
+    line([NT.update(true)],{w:380,label:'F as drawn: short sentence at 380, with the link'})+
+    line([N("update",S.updMany,BTN.what,"info")],{w:380,label:'for comparison only: the long sentence at 380 (not proposed)'})+'</div>';
+  put("decF", h);
+
+  /* page height for the capture harness */
+  window.addEventListener("load", function(){
+    document.documentElement.setAttribute("data-h", String(document.documentElement.scrollHeight));
+    document.title = "RoRoRo v1.41 C1 mocks: Roblox at a glance";
+  });
+})();
+</script>
+</body>
+</html>
