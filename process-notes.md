@@ -1906,3 +1906,53 @@ with Sonnet workers, per the era map.
 **Handoff:** `/build`, naming `docs/cycles/2026-11-01-account-library/checklist.md` (the top-level
 `docs/checklist.md` is the retired snapshot). Autonomous, halting at C1 (after item 5), C2 (after item 7)
 and C3 (after item 9).
+
+## /scope — Roblox at a glance (opened 2026-11-26)
+
+Cart cycle #7. Written to `docs/cycles/2026-11-26-roblox-feeds/scope.md`, same convention as the
+last two cycles: `docs/scope.md` is the retired snapshot and stays untouched.
+
+**How it started.** Este asked one question in the middle of a growth session ("Are there any sort
+of roblox feeds we can present to our users?"), got a probed list back with a recommendation (an
+update notice and a line per saved game), and answered "scope it with Cart."
+
+**Zero interview questions before the doc, and that is recorded as a choice, not a habit.** The
+profile says fully autonomous, and Este had already accepted a concrete proposal. The one fork the
+record could not answer (woven into the header and the Library, or a feed page of its own) is
+carried as a marked assumption and put to him as the first of four calls at the foot of the doc.
+The alternative was to stop and ask before writing anything; the doc is cheap to revise and he
+rules faster from something he can read.
+
+**Recon that reshaped the scope before a word was written:**
+- The client-version check already exists (`RobloxUpdateProbe`, v1.7). It runs only inside a batch
+  launch. Item 1 stopped being "add a feed" and became "show what the app already knows, earlier."
+- The game record is already fetched on add and everything but the name is dropped. Players-now and
+  last-updated need no new host.
+- Roblox's status page has no feed, but Status.io's public API answers for its page id. That put
+  status back in scope, at the cost of one third-party host.
+- Game events fail the endpoint rule: the path that answers without a login is undocumented, and
+  the documented v3 path returned 403 without a key. Cut, with the evidence, and named as Este's
+  ruling to overturn.
+- My own first answer to Este listed the events feed as usable. The scope corrects that.
+
+**Research beat.** Bloxstrap and Fishstrap show server location once, as a notification, and keep
+it findable afterwards. The lesson taken is the v1.40 update button's rule: appear only when there
+is something to say.
+
+**Anchor carried as an assumption:** "Know before you launch." One sentence to overturn.
+
+**Backlog:** 15 open dashboard tasks and 10 open issues read and mapped by surface. Three ride
+(the version-gate spike rescope, the hosted privacy page, the two support-contact listing fixes).
+"Join a server by player count" is named as the natural next step and left out.
+
+**Active shaping:** none yet inside this command; Este's shaping was the ask itself and the go.
+The four calls at the foot of the doc are where he steers. Deepening rounds: zero.
+
+**Handoff:** `/prd`, against `docs/cycles/2026-11-26-roblox-feeds/scope.md`, after Este's read of
+the four calls.
+
+**Rulings, same day (2026-11-26).** Este answered all four calls in one line: "1 woven in, 2 keep it
+cut, 3 fine, 4 default on." The shape assumption held, the events cut held, the third-party status
+host is accepted, and the reads are on by default. The off switch rode in on the wording of option 4
+and stays marked as a default. No pushback on any of the four; the doc's "Your calls" section became
+"Rulings" with his words quoted. Active shaping: he ruled, briefly, and changed nothing.

@@ -1312,3 +1312,15 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **What would revisit it:** the next Store release. A machine still on 1.40 should show **Update available** once that release is live; if it does not, the probe is wrong and the fix ships in the release after.
 
 **Evidence:** `docs/store/submission-packet-1.40.0.0.md` section 8; `release.yml` run 44419788454; the public catalog read 1.39.0.0 at 17:05:43 and 1.40.0.0 at 17:09:44 CST.
+
+### 2026-11-26 — v1.41 scope: Roblox at a glance; the first third-party host called by default
+
+**Context:** The owner asked whether any Roblox feeds could be shown to users. Probing on 2026-11-26 found three worth showing and one that could not be used. The client-version check has been in the app since v1.7 (`RobloxUpdateProbe`) but runs only inside a batch launch. `games.roblox.com/v1/games` is already called on add and returns players-now and last-updated, of which the app keeps only the name. `status.roblox.com` has no feed, but Status.io's public status API answers for Roblox's page id. Game events answer without a login only on a path that is not in Roblox's reference; the documented v3 path returned 403 without a key.
+
+**Decision:** Scope a v1.41 cycle (`docs/cycles/2026-11-26-roblox-feeds/scope.md`) with three goals: the Roblox update notice shown before a launch, Roblox's status shown only when it is not operational, and players-now plus last-updated on saved games. The owner ruled four calls the same day: woven into the header and the Library with no feed page; game events stay cut under the documented-public-endpoints rule; `api.status.io` is accepted; the new reads are on by default.
+
+**Consequences:** `api.status.io` becomes the first host outside Roblox, GitHub and Microsoft that RoRoRo calls without the person opting in. It carries no cookie and no account data, and it needs its own row in `docs/PRIVACY.md` and its own line in the reviewer letter in the release that ships it. The privacy page's client-version wording ("before a batch launch") stops being true once the check runs at idle and is corrected in the same PR. Nothing is built yet.
+
+**What would revisit it:** Roblox documenting a public read for game events; Status.io changing or closing the public status API for Roblox's page; a user objection to a third-party call on by default.
+
+**Evidence:** probes on 2026-11-26 (`clientsettingscdn` returned `0.748.0.7481526`; `api.status.io/1.0/status/59db90dbcdeb2f04dadcf16d` returned 200 Operational; the v3 events path returned 403); `src/ROROROblox.Core/Diagnostics/RobloxUpdateProbe.cs`; `src/ROROROblox.Core/RobloxApi.cs` (`GamesListItem`).
