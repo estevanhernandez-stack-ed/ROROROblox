@@ -10,6 +10,7 @@ using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
 using ROROROblox.App.Discord;
 using ROROROblox.App.Discord.Internal;
+using ROROROblox.App.Feeds;
 using ROROROblox.App.Localization;
 using ROROROblox.App.Logging;
 using ROROROblox.App.Startup;
@@ -816,6 +817,7 @@ public partial class App : Application
         _services.GetRequiredService<MainViewModel>().UpdateAvailability =
             _services.GetRequiredService<UpdateAvailability>();
         _services.GetRequiredService<MainViewModel>().QuitApplication = RequestShutdown;
+        WireRobloxFeeds();
         // How the previous session ended. A recorded crash opens this start with a notice that
         // points at Diagnostics; set before the rating ask, though either order gives the same result.
         _services.GetRequiredService<MainViewModel>().PreviousExit = _lastExit?.Previous;
@@ -958,6 +960,17 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "Update availability could not start; no update button this session.");
+        }
+
+        // The Roblox feeds coordinator: creates its timer and reads nothing. The first read is no sooner
+        // than 30 s after the window is first shown, whenever this ran.
+        try
+        {
+            _services.GetRequiredService<RobloxFeeds>().Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "The Roblox feeds could not start; no update or status line this session.");
         }
 
         try
@@ -1306,6 +1319,15 @@ public partial class App : Application
             sp.GetRequiredService<IStoreUpdateProbe>(),
             TimeProvider.System,
             sp.GetRequiredService<ILogger<UpdateAvailability>>()));
+        // Roblox's client-version and status feeds (v1.41). The one place that decides when either is
+        // asked; both typed clients come through factories so every attempt gets a fresh one, as the
+        // known-issues refresh does. Nothing in a launch path awaits it.
+        services.AddSingleton(sp => new RobloxFeeds(
+            () => sp.GetRequiredService<IRobloxUpdateProbe>(),
+            () => sp.GetRequiredService<ROROROblox.Core.Feeds.IRobloxStatusApi>(),
+            sp.GetRequiredService<IBloxstrapDetector>(),
+            TimeProvider.System,
+            sp.GetRequiredService<ILogger<RobloxFeeds>>()));
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
         services.AddSingleton<RobloxWindowDecorator>();
@@ -1413,6 +1435,15 @@ public partial class App : Application
             sp.GetRequiredService<IRobloxApi>(),
             log: sp.GetService<ILogger<GameIconCache>>()));
         services.AddSingleton<LibraryCatalog>();
+        // What the Library and the account panels read for a saved game's player count and last update.
+        // In memory only, typed client behind a factory; asks nothing until the gate is set from the
+        // feeds' first-visible instant (MainViewModel.SetMainWindowVisible).
+        services.AddSingleton<ROROROblox.Core.Library.GamePulseService>(sp => new ROROROblox.Core.Library.GamePulseService(
+            () => sp.GetRequiredService<ROROROblox.Core.Library.IGamePulseApi>(),
+            TimeProvider.System,
+            sp.GetRequiredService<ILogger<ROROROblox.Core.Library.GamePulseService>>()));
+        services.AddSingleton<ROROROblox.Core.Library.IGamePulseService>(sp =>
+            sp.GetRequiredService<ROROROblox.Core.Library.GamePulseService>());
 
         // Tray avatar painter — owns its own HttpClient (default UA fine for public Roblox CDN
         // avatar URLs). TrayService is registered as ITrayService elsewhere; the painter takes
@@ -2011,6 +2042,31 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "WireIdleTrayClientSweeper failed; idle tray clients are only cleared before a launch.");
+        }
+    }
+
+    /// <summary>
+    /// Hands the feeds coordinator and the game-pulse service to the view model (as properties, so no
+    /// constructor changes) and routes the tracker's attach to the coordinator's local re-read. Both
+    /// resolve here, at startup, so a resolve-time failure is logged where it happens. A passenger: a
+    /// failure leaves the app without the new readings and never blocks startup. Start() is in
+    /// RunStartupChecksAsync; the window's visibility is pushed from MainWindow.
+    /// </summary>
+    private void WireRobloxFeeds()
+    {
+        if (_services is null) return;
+        try
+        {
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var feeds = _services.GetRequiredService<RobloxFeeds>();
+            vm.RobloxFeeds = feeds;
+            vm.GamePulse = _services.GetRequiredService<ROROROblox.Core.Library.IGamePulseService>();
+            // The event fires off the UI thread; the call is two local file-version reads and a lock.
+            _services.GetRequiredService<IRobloxProcessTracker>().ProcessAttached += (_, _) => feeds.NoteClientAttached();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "The Roblox feeds could not be wired; no update or status line this session.");
         }
     }
 
@@ -3722,6 +3778,17 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "Update availability dispose threw on exit; ignoring.");
+            }
+
+            // The feeds coordinator and the pulse service own timers too; stopped before the provider goes.
+            try
+            {
+                _services.GetService<RobloxFeeds>()?.Dispose();
+                _services.GetService<ROROROblox.Core.Library.GamePulseService>()?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "Roblox feeds dispose threw on exit; ignoring.");
             }
 
             // Stop the activity-monitor sample timer before the provider disposes (same shape

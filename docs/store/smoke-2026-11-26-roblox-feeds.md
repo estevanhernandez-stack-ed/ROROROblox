@@ -51,3 +51,22 @@ Roblox process was touched.
 
 `GetUpdateStateAsync` answered `Current`, direction `None`; `IsUpdatePendingAsync` answered `False`. The
 PRD measured `True` on the same three strings under the text compare.
+
+## Item 8: the live read waits
+
+Not made. Checked 2026-11-26 14:03 with `Get-Process ROROROblox.App, RobloxPlayerBeta`: the Store RoRoRo
+(`626LabsLLC.RoRoRoBlox_1.40.0.0_x64`, pid 23280) and a Roblox client (pid 57116) were both still running, and the
+cycle's rules forbid starting a dev build beside them or closing either.
+
+The run moves to C1/C2, on a build with the line drawn, with `RORORO_DATA_DIR` set to an absolute temp folder. What it
+has to show, read from `$env:RORORO_DATA_DIR\logs\*.log` against the start banner:
+
+| Row | Expected |
+|---|---|
+| first 30 s after the window shows | no `roblox-status read` line |
+| after the settle | exactly one `roblox-status read: Ok`, and one `client-version check` line ending `Current` |
+| twelve minutes hidden in the tray | no line from either lane (the twelve-minute wait is part of the run) |
+| window shown again | both lanes resume |
+
+Until then the same rules are carried by the fake-clock tests (`RobloxFeedsTests`, `RobloxFeedsWiringTests`) and the
+construction of both services from the real composition root (`RobloxFeedsWiringTests.ProductionDi_...`).

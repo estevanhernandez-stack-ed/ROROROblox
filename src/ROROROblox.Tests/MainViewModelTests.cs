@@ -44,7 +44,8 @@ public class MainViewModelTests
         AccountFactsService? factsService = null,
         AccountUserIdBackfillService? userIdBackfill = null,
         string? accountStorePath = null,
-        IGameIconCache? gameIcons = null)
+        IGameIconCache? gameIcons = null,
+        IRobloxUpdateProbe? updateProbe = null)
     {
         var path = accountStorePath ?? Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -71,7 +72,7 @@ public class MainViewModelTests
             themeService: new ThemeService(new FakeThemeStore(), new FakeAppSettings()),
             windowDecorator: windowDecorator,
             bloxstrapDetector: bloxstrapDetector ?? new FakeBloxstrapDetector(),
-            updateProbe: new FakeRobloxUpdateProbe(),
+            updateProbe: updateProbe ?? new FakeRobloxUpdateProbe(),
             accountTransport: new FakeAccountTransport(),
             activityMonitor: activityMonitor ?? new FakeActivityMonitor(),
             memoryWatchdog: memoryWatchdog ?? new FakeMemoryWatchdog(),

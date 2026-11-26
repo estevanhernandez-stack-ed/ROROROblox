@@ -583,6 +583,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _ticker.Stop();
         TranslationSource.Instance.CultureChanged -= OnUiCultureChanged;
         if (_updateAvailability is not null) { _updateAvailability.Changed -= OnUpdateAvailabilityChanged; }
+        if (_robloxFeeds is not null) { _robloxFeeds.Changed -= OnRobloxFeedsChanged; }
     }
 
     /// <summary>
@@ -2220,6 +2221,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 case LaunchResult.Failed failed:
                     _log.LogWarning("Launch failed for account {AccountId}: {Kind} {Detail}", summary.Id, failed.Kind, failed.Detail);
                     summary.StatusText = CoreMessageCatalog.For(failed);
+                    if (failed.Kind is LaunchFailureKind.NoConnection or LaunchFailureKind.TimedOut or LaunchFailureKind.RobloxUnavailable)
+                    {
+                        // Roblox may be down: allow one status read ahead of the schedule. A flag only, never awaited.
+                        _robloxFeeds?.RequestEarlyStatusRead();
+                    }
+
                     return 0;
                 default:
                     return 0;
@@ -2772,7 +2779,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// answer), and we additionally swallow here so a probe surprise never stalls a batch — on any
     /// throw we fall back to <see cref="PreWarmDecision.LaunchAllNow"/> (today's behavior).
     /// </summary>
-    private async Task<PreWarmDecision> DecidePreWarmAsync()
+    internal async Task<PreWarmDecision> DecidePreWarmAsync()
     {
         try
         {
@@ -2791,8 +2798,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 return PreWarmGate.Decide(strapHandling: false, updatePending: false, updateChurn: true);
             }
 
-            var updatePending = await _updateProbe.IsUpdatePendingAsync().ConfigureAwait(true);
-            return PreWarmGate.Decide(strapHandling: false, updatePending, updateChurn: false);
+            // The gate asks for itself, with the probe's own timeout. The coordinator is told what the
+            // gate saw (a plain call, not awaited), never asked.
+            var state = await _updateProbe.GetUpdateStateAsync().ConfigureAwait(true);
+            _robloxFeeds?.ReportUpdateState(state);
+            return PreWarmGate.Decide(strapHandling: false, state.Kind == RobloxUpdateKind.Pending, updateChurn: false);
         }
         catch (Exception ex)
         {
@@ -5838,6 +5848,89 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _robloxStatus = status;
             RecomputeRobloxLine();
         });
+    }
+
+    private Feeds.RobloxFeeds? _robloxFeeds;
+    private ROROROblox.Core.Library.IGamePulseService? _gamePulse;
+    private bool _mainWindowVisible;
+    private DateTimeOffset? _pulseGate;
+
+    /// <summary>
+    /// Set once by the App at startup, like <see cref="UpdateAvailability"/>; null in tests that do not
+    /// exercise it. The coordinator raises Changed on any thread, so the handler pushes through
+    /// <see cref="SetRobloxFeedReadings"/>, which marshals. Nothing in a launch path awaits it.
+    /// </summary>
+    internal Feeds.RobloxFeeds? RobloxFeeds
+    {
+        get => _robloxFeeds;
+        set
+        {
+            if (ReferenceEquals(_robloxFeeds, value))
+            {
+                return;
+            }
+
+            if (_robloxFeeds is not null)
+            {
+                _robloxFeeds.Changed -= OnRobloxFeedsChanged;
+            }
+
+            _robloxFeeds = value;
+            if (_robloxFeeds is not null)
+            {
+                _robloxFeeds.Changed += OnRobloxFeedsChanged;
+                if (_mainWindowVisible)
+                {
+                    _robloxFeeds.SetWindowVisible(true);
+                }
+
+                SetRobloxFeedReadings(_robloxFeeds.Update, _robloxFeeds.Status);
+            }
+
+            SyncPulseGate();
+        }
+    }
+
+    /// <summary>Set once by the App at startup. Its read gate follows <see cref="RobloxFeeds"/>' first-visible instant.</summary>
+    internal ROROROblox.Core.Library.IGamePulseService? GamePulse
+    {
+        get => _gamePulse;
+        set
+        {
+            _gamePulse = value;
+            _pulseGate = null;
+            SyncPulseGate();
+        }
+    }
+
+    private void OnRobloxFeedsChanged(object? sender, EventArgs e)
+    {
+        if (sender is Feeds.RobloxFeeds feeds)
+        {
+            SetRobloxFeedReadings(feeds.Update, feeds.Status);
+        }
+    }
+
+    /// <summary>
+    /// The main window is shown and not minimised. Pushed from the window on every visibility or state
+    /// change; the coordinator needs it to stay quiet in the tray, and it opens the pulse's startup gate.
+    /// </summary>
+    internal void SetMainWindowVisible(bool visible)
+    {
+        _mainWindowVisible = visible;
+        _robloxFeeds?.SetWindowVisible(visible);
+        SyncPulseGate();
+    }
+
+    private void SyncPulseGate()
+    {
+        if (_gamePulse is null || _robloxFeeds?.ReadsAllowedFrom is not { } from || _pulseGate == from)
+        {
+            return;
+        }
+
+        _pulseGate = from;
+        _gamePulse.AllowReadsFrom(from);
     }
 
     /// <summary>UI thread. Runs on every input of the line: contested, known issues, hold banner, accounts, compact, feeds, culture.</summary>
