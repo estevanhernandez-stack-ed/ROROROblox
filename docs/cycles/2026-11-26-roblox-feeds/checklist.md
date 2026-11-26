@@ -262,19 +262,19 @@ lines, the once-per-run Warning for a missing row. `Feeds/FeedScheduleTests.cs` 
 `Feeds/RobloxFeedsTests.cs` on a fake clock. No registration and no caller yet: that is item 8.
 
 **Acceptance:**
-- [ ] Nothing is due until 30 s after the window is first visible, and nothing while it is not visible.
-- [ ] Update: every 30 minutes while visible; never under a strap, and a pass that sees a strap sets
+- [x] Nothing is due until 30 s after the window is first visible, and nothing while it is not visible.
+- [x] Update: every 30 minutes while visible; never under a strap, and a pass that sees a strap sets
       the state to `Unknown`.
-- [ ] Status: every 10 minutes; 60 minutes after a 403 or 429; an early read is honoured once, no
+- [x] Status: every 10 minutes; 60 minutes after a 403 or 429; an early read is honoured once, no
       sooner than 60 s after the last attempt.
-- [ ] Becoming visible runs `Decide` at once.
-- [ ] Pending, window not visible, a client attaches, the local versions now match: the state is
+- [x] Becoming visible runs `Decide` at once.
+- [x] Pending, window not visible, a client attaches, the local versions now match: the state is
       `Current` and zero requests were made. An attach while nothing is pending reads nothing.
-- [ ] A failed update read gives `Unknown`. A failed status read keeps the reading until it is 30
+- [x] A failed update read gives `Unknown`. A failed status read keeps the reading until it is 30
       minutes old, then `None`, and the expiry is evaluated while hidden.
-- [ ] `Start()` reads nothing. With status disabled, two hours of fake clock with the window visible
+- [x] `Start()` reads nothing. With status disabled, two hours of fake clock with the window visible
       make zero status requests.
-- [ ] `Changed` never throws into the timer, and a second tick during a read starts no second read.
+- [x] `Changed` never throws into the timer, and a second tick during a read starts no second read.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~FeedScheduleTests|FullyQualifiedName~RobloxFeedsTests"`
 → all passed.

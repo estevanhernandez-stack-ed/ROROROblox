@@ -46,8 +46,9 @@ Read this whole file before you start. It applies to every checklist item.
 - One commit per item (an item may say "its own commit"), conventional commits, e.g.
   `feat(feeds): ...`, `test(render): ...`, `fix(update-probe): ...`.
 - The pre-commit hooks run a secret scan and a local-path guard; they must pass. Never `--no-verify`.
-- End every commit message with this trailer line exactly:
-  `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
+- End every commit message with a `Co-Authored-By:` trailer naming the model you actually run as, e.g.
+  `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`. (Items 1 to 7 used an Opus line by an
+  error in this brief; corrected 2026-11-26.)
 - Do not stage `.claude/worktrees/` or anything outside your item.
 - Do not check boxes in `checklist.md`; the orchestrator does that.
 
