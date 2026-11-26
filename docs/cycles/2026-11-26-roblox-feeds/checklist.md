@@ -199,20 +199,20 @@ compares each fixture with its probe file byte for byte. `Feeds/RobloxStatusApiT
 `Feeds/RobloxStatusEvaluatorTests.cs`. `scripts/capture-roblox-status.ps1`.
 
 **Acceptance:**
-- [ ] Roblox's own answer: all five watched pairs are found and the reading is `None`.
-- [ ] The 2022-03-28 answer, with that page's own watch table: one row id reads 400 under one group and
+- [x] Roblox's own answer: all five watched pairs are found and the reading is `None`.
+- [x] The 2022-03-28 answer, with that page's own watch table: one row id reads 400 under one group and
       300 under another; two open incidents and eleven scheduled maintenances change nothing.
-- [ ] The 2022-11-29 answer: 500 outranks 200, and maintenance under way reads `Maintenance`.
-- [ ] The 2026-11-06 answer: a field the parser has never seen is ignored.
-- [ ] Two pairs of one row count as one row. A watched pair missing from the answer is unknown, and
+- [x] The 2022-11-29 answer: 500 outranks 200, and maintenance under way reads `Maintenance`.
+- [x] The 2026-11-06 answer: a field the parser has never seen is ignored.
+- [x] Two pairs of one row count as one row. A watched pair missing from the answer is unknown, and
       `onMissing` is called for that row.
-- [ ] No DTO has a `string` other than `Id`; the snapshot and the reading hold no `string`. Adding a
+- [x] No DTO has a `string` other than `Id`; the snapshot and the reading hold no `string`. Adding a
       `Name` property fails the reflection test (mutation-checked).
-- [ ] No network, timeout, 403, 429, 500, empty body, not JSON, wrong shape and an oversized body each
+- [x] No network, timeout, 403, 429, 500, empty body, not JSON, wrong shape and an oversized body each
       map to their `FeedOutcome`. The method never throws.
-- [ ] No fixture is edited. Anything written by hand is named `synthetic-*` and exists only for a
+- [x] No fixture is edited. Anything written by hand is named `synthetic-*` and exists only for a
       missing code, an oversized body or a non-hex id.
-- [ ] From the real `ConfigureServices` graph: no cookies, no redirects, `RORORO/<version>`, one
+- [x] From the real `ConfigureServices` graph: no cookies, no redirects, `RORORO/<version>`, one
       constructor.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~RobloxStatus|FullyQualifiedName~TypedHttpClientRegistrationTests"`
