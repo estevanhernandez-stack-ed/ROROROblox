@@ -1283,5 +1283,7 @@
   "RobloxLine_More_Name_one": "{0} weitere Roblox-Meldung",
   "RobloxLine_More_Name_other": "{0} weitere Roblox-Meldungen",
   "RobloxLine_More_Name_few": "{0} weitere Roblox-Meldungen",
-  "RobloxLine_More_Name_many": "{0} weitere Roblox-Meldungen"
+  "RobloxLine_More_Name_many": "{0} weitere Roblox-Meldungen",
+  "SettingsPage_RobloxFeeds": "Roblox-Status und Spielaktivität anzeigen.",
+  "SettingsPage_RobloxFeeds_Description": "Prüft die Statusseite von Roblox und liest, wie viele Leute in deinen gespeicherten Spielen sind. Die Statusprüfung geht an Status.io, einen Drittanbieter, der die Seite für Roblox hostet. Es werden keine Informationen über dich oder deine Konten gesendet."
 }

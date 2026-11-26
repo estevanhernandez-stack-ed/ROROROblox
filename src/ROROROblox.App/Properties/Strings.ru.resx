@@ -3882,4 +3882,10 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="RobloxLine_More_Name_many" xml:space="preserve">
     <value>Ещё {0} уведомлений Roblox</value>
   </data>
+  <data name="SettingsPage_RobloxFeeds" xml:space="preserve">
+    <value>Показывать статус Roblox и активность в играх.</value>
+  </data>
+  <data name="SettingsPage_RobloxFeeds_Description" xml:space="preserve">
+    <value>Проверяет страницу статуса Roblox и считывает, сколько людей в твоих сохранённых играх. Проверка статуса идёт на Status.io, стороннему сервису, который размещает эту страницу для Roblox. Ничего о тебе или твоих аккаунтах не отправляется.</value>
+  </data>
 </root>

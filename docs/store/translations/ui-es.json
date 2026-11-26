@@ -1283,5 +1283,7 @@
   "RobloxLine_More_Name_one": "{0} aviso más de Roblox",
   "RobloxLine_More_Name_other": "{0} avisos más de Roblox",
   "RobloxLine_More_Name_few": "{0} avisos más de Roblox",
-  "RobloxLine_More_Name_many": "{0} avisos más de Roblox"
+  "RobloxLine_More_Name_many": "{0} avisos más de Roblox",
+  "SettingsPage_RobloxFeeds": "Mostrar el estado de Roblox y la actividad de los juegos.",
+  "SettingsPage_RobloxFeeds_Description": "Consulta la página de estado de Roblox y lee cuánta gente hay en tus juegos guardados. La consulta del estado va a Status.io, un tercero que aloja la página para Roblox. No se envía nada sobre ti ni sobre tus cuentas."
 }

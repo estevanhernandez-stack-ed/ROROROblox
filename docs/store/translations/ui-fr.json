@@ -1283,5 +1283,7 @@
   "RobloxLine_More_Name_one": "{0} autre avis Roblox",
   "RobloxLine_More_Name_other": "{0} autres avis Roblox",
   "RobloxLine_More_Name_few": "{0} autres avis Roblox",
-  "RobloxLine_More_Name_many": "{0} autres avis Roblox"
+  "RobloxLine_More_Name_many": "{0} autres avis Roblox",
+  "SettingsPage_RobloxFeeds": "Afficher l'état de Roblox et l'activité des jeux.",
+  "SettingsPage_RobloxFeeds_Description": "Consulte la page d'état de Roblox et lit combien de personnes sont dans tes jeux enregistrés. La vérification de l'état passe par Status.io, un tiers qui héberge la page pour Roblox. Rien sur toi ni sur tes comptes n'est envoyé."
 }

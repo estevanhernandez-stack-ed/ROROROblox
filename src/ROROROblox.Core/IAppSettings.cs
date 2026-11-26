@@ -108,6 +108,13 @@ public interface IAppSettings
     Task SetAlwaysShowRecycleAsync(bool always);
 
     /// <summary>
+    /// True when the Roblox feeds (the status line and the game pulse) may read. Defaults to true: on for
+    /// new installs and, because a v1.40 file has no such key, for upgrades. The update check is not behind it.
+    /// </summary>
+    Task<bool> GetRobloxFeedsEnabledAsync();
+    Task SetRobloxFeedsEnabledAsync(bool enabled);
+
+    /// <summary>
     /// True when streamer mode is on — the account manager shows fake identities instead of real
     /// names/avatars. Sticky across launches (a streamer wants it reliably on). Defaults to false.
     /// </summary>

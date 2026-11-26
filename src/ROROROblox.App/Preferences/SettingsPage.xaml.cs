@@ -395,6 +395,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             SetToggle(CarefulSquadLaunchToggle, await _settings.GetCarefulSquadLaunchAsync());
 
             SetToggle(AlwaysShowRecycleToggle, await _settings.GetAlwaysShowRecycleAsync());
+            SetToggle(RobloxFeedsEnabledToggle, await _settings.GetRobloxFeedsEnabledAsync());
             SetToggle(AutoForceStopToggle, await _settings.GetAutoForceStopAsync());
 
             // The metric-alert opt-in, painted HERE with the other settings.json-backed toggles
@@ -886,6 +887,27 @@ internal partial class SettingsPage : UserControl, IDisposable
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             SetToggle(AlwaysShowRecycleToggle, await _settings.GetAlwaysShowRecycleAsync());
+        }
+    }
+
+    private async void OnRobloxFeedsEnabledToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers || PaintingToggles) return;
+        var wanted = RobloxFeedsEnabledToggle.IsChecked == true;
+        try
+        {
+            await _settings.SetRobloxFeedsEnabledAsync(wanted);
+            // Off clears the status line and every pulse now, without a restart.
+            _mainViewModel.SetRobloxFeedsEnabled(wanted);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this),
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            SetToggle(RobloxFeedsEnabledToggle, await _settings.GetRobloxFeedsEnabledAsync());
         }
     }
 

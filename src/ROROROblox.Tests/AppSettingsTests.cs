@@ -387,6 +387,35 @@ public class AppSettingsTests : IDisposable
     }
 
     [Fact]
+    public async Task RobloxFeedsEnabled_NoFile_ReadsTrue_AndRoundTripsOffAcrossInstances()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.True(await first.GetRobloxFeedsEnabledAsync());
+
+            await first.SetRobloxFeedsEnabledAsync(false);
+            Assert.False(await first.GetRobloxFeedsEnabledAsync());
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.False(await second.GetRobloxFeedsEnabledAsync());
+    }
+
+    [Fact]
+    public async Task RobloxFeedsEnabled_AV140SettingsFileWithNoSuchKey_ReadsTrue()
+    {
+        // On for upgrades: a v1.40 file never wrote the key, and the new reads must not start off for
+        // everyone who already has a settings.json.
+        File.WriteAllText(_filePath, """
+            { "version": 1, "launchMainOnStartup": true, "activeThemeId": "midnight" }
+            """);
+
+        using var settings = new AppSettings(_filePath);
+
+        Assert.True(await settings.GetRobloxFeedsEnabledAsync());
+    }
+
+    [Fact]
     public async Task StreamerMode_DefaultsFalse_ThenPersists()
     {
         {

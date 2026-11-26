@@ -5903,6 +5903,23 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// The off switch for the new reads. Turns the status lane and the game pulse off or on together. Off
+    /// clears the status reading and every pulse at once and raises both change events; on restarts the
+    /// status settle and lets the pulse ask at its next pass. The update check is not behind it.
+    /// </summary>
+    internal void SetRobloxFeedsEnabled(bool enabled)
+    {
+        _robloxFeeds?.SetStatusEnabled(enabled);
+        _gamePulse?.SetEnabled(enabled);
+        if (!enabled)
+        {
+            // The coordinator raises Changed on the way off; pushing None here as well keeps the line
+            // right when no coordinator is attached.
+            SetRobloxFeedReadings(_robloxFeeds?.Update ?? _robloxUpdateState, RobloxStatusReading.None);
+        }
+    }
+
     private void OnRobloxFeedsChanged(object? sender, EventArgs e)
     {
         if (sender is Feeds.RobloxFeeds feeds)

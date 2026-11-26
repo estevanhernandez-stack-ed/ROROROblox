@@ -966,6 +966,9 @@ public partial class App : Application
         // than 30 s after the window is first shown, whenever this ran.
         try
         {
+            // The switch is read before Start(), so a session begun with it off never asks.
+            var feedsOn = await _services.GetRequiredService<IAppSettings>().GetRobloxFeedsEnabledAsync();
+            _services.GetRequiredService<MainViewModel>().SetRobloxFeedsEnabled(feedsOn);
             _services.GetRequiredService<RobloxFeeds>().Start();
         }
         catch (Exception ex)

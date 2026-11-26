@@ -228,6 +228,24 @@ T: dict[str, dict[str, str]] = {
         "pt-BR": "Mais {0} avisos do Roblox",
         "ru": "Ещё {0} уведомлений Roblox",
     },
+    # ---- item 9: the off switch ---------------------------------------------------------------
+    # The description names Status.io as the third party; the name stays as written in every language.
+    "SettingsPage_RobloxFeeds": {
+        "de": "Roblox-Status und Spielaktivität anzeigen.",
+        "es": "Mostrar el estado de Roblox y la actividad de los juegos.",
+        "fr": "Afficher l'état de Roblox et l'activité des jeux.",
+        "pl": "Pokazuj status Roblox i aktywność w grach.",
+        "pt-BR": "Mostrar o status do Roblox e a atividade dos jogos.",
+        "ru": "Показывать статус Roblox и активность в играх.",
+    },
+    "SettingsPage_RobloxFeeds_Description": {
+        "de": "Prüft die Statusseite von Roblox und liest, wie viele Leute in deinen gespeicherten Spielen sind. Die Statusprüfung geht an Status.io, einen Drittanbieter, der die Seite für Roblox hostet. Es werden keine Informationen über dich oder deine Konten gesendet.",
+        "es": "Consulta la página de estado de Roblox y lee cuánta gente hay en tus juegos guardados. La consulta del estado va a Status.io, un tercero que aloja la página para Roblox. No se envía nada sobre ti ni sobre tus cuentas.",
+        "fr": "Consulte la page d'état de Roblox et lit combien de personnes sont dans tes jeux enregistrés. La vérification de l'état passe par Status.io, un tiers qui héberge la page pour Roblox. Rien sur toi ni sur tes comptes n'est envoyé.",
+        "pl": "Sprawdza stronę statusu Roblox i odczytuje, ile osób jest w twoich zapisanych grach. Sprawdzenie statusu trafia do Status.io, podmiotu trzeciego, który hostuje tę stronę dla Roblox. Nic o tobie ani o twoich kontach nie jest wysyłane.",
+        "pt-BR": "Consulta a página de status do Roblox e lê quantas pessoas estão nos seus jogos salvos. A consulta de status vai para o Status.io, um terceiro que hospeda a página para o Roblox. Nada sobre você ou suas contas é enviado.",
+        "ru": "Проверяет страницу статуса Roblox и считывает, сколько людей в твоих сохранённых играх. Проверка статуса идёт на Status.io, стороннему сервису, который размещает эту страницу для Roblox. Ничего о тебе или твоих аккаунтах не отправляется.",
+    },
 }
 
 # Neutral keys this cycle retired from the translation files. None yet.

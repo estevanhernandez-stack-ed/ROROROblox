@@ -3882,4 +3882,10 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   <data name="RobloxLine_More_Name_many" xml:space="preserve">
     <value>Jeszcze {0} powiadomień Roblox</value>
   </data>
+  <data name="SettingsPage_RobloxFeeds" xml:space="preserve">
+    <value>Pokazuj status Roblox i aktywność w grach.</value>
+  </data>
+  <data name="SettingsPage_RobloxFeeds_Description" xml:space="preserve">
+    <value>Sprawdza stronę statusu Roblox i odczytuje, ile osób jest w twoich zapisanych grach. Sprawdzenie statusu trafia do Status.io, podmiotu trzeciego, który hostuje tę stronę dla Roblox. Nic o tobie ani o twoich kontach nie jest wysyłane.</value>
+  </data>
 </root>

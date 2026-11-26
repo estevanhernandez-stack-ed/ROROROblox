@@ -3281,4 +3281,6 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="RobloxLine_More_Name_other" xml:space="preserve"><value>{0} more Roblox notices</value><comment>The Roblox line (v1.41 item 7): Spoken name of the +N more toggle via Loc.Plural.</comment></data>
   <data name="RobloxLine_More_Name_few" xml:space="preserve"><value>{0} more Roblox notices</value><comment>The Roblox line (v1.41 item 7): few-form (ru/pl) mirrors other in English.</comment></data>
   <data name="RobloxLine_More_Name_many" xml:space="preserve"><value>{0} more Roblox notices</value><comment>The Roblox line (v1.41 item 7): many-form (ru/pl) mirrors other in English.</comment></data>
+  <data name="SettingsPage_RobloxFeeds" xml:space="preserve"><value>Show Roblox's status and game activity.</value><comment>Roblox feeds switch (v1.41 item 9): label of the Settings checkbox.</comment></data>
+  <data name="SettingsPage_RobloxFeeds_Description" xml:space="preserve"><value>Checks Roblox's status page and reads how many people are in your saved games. The status check goes to Status.io, a third party that hosts the page for Roblox. Nothing about you or your accounts is sent.</value><comment>Roblox feeds switch (v1.41 item 9): description under the checkbox; names Status.io as a third party.</comment></data>
 </root>

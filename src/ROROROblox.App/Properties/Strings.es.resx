@@ -3882,4 +3882,10 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
   <data name="RobloxLine_More_Name_many" xml:space="preserve">
     <value>{0} avisos más de Roblox</value>
   </data>
+  <data name="SettingsPage_RobloxFeeds" xml:space="preserve">
+    <value>Mostrar el estado de Roblox y la actividad de los juegos.</value>
+  </data>
+  <data name="SettingsPage_RobloxFeeds_Description" xml:space="preserve">
+    <value>Consulta la página de estado de Roblox y lee cuánta gente hay en tus juegos guardados. La consulta del estado va a Status.io, un tercero que aloja la página para Roblox. No se envía nada sobre ti ni sobre tus cuentas.</value>
+  </data>
 </root>

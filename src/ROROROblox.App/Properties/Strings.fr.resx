@@ -3882,4 +3882,10 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   <data name="RobloxLine_More_Name_many" xml:space="preserve">
     <value>{0} autres avis Roblox</value>
   </data>
+  <data name="SettingsPage_RobloxFeeds" xml:space="preserve">
+    <value>Afficher l'état de Roblox et l'activité des jeux.</value>
+  </data>
+  <data name="SettingsPage_RobloxFeeds_Description" xml:space="preserve">
+    <value>Consulte la page d'état de Roblox et lit combien de personnes sont dans tes jeux enregistrés. La vérification de l'état passe par Status.io, un tiers qui héberge la page pour Roblox. Rien sur toi ni sur tes comptes n'est envoyé.</value>
+  </data>
 </root>

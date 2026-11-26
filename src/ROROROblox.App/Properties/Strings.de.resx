@@ -3882,4 +3882,10 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="RobloxLine_More_Name_many" xml:space="preserve">
     <value>{0} weitere Roblox-Meldungen</value>
   </data>
+  <data name="SettingsPage_RobloxFeeds" xml:space="preserve">
+    <value>Roblox-Status und Spielaktivität anzeigen.</value>
+  </data>
+  <data name="SettingsPage_RobloxFeeds_Description" xml:space="preserve">
+    <value>Prüft die Statusseite von Roblox und liest, wie viele Leute in deinen gespeicherten Spielen sind. Die Statusprüfung geht an Status.io, einen Drittanbieter, der die Seite für Roblox hostet. Es werden keine Informationen über dich oder deine Konten gesendet.</value>
+  </data>
 </root>

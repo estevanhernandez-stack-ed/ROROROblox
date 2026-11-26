@@ -1923,6 +1923,8 @@ public class MainViewModelTests
         public Task<bool> GetCarefulSquadLaunchAsync() => Task.FromResult(false);
         public Task<bool> GetAlwaysShowRecycleAsync() => Task.FromResult(false);
         public Task SetAlwaysShowRecycleAsync(bool always) => throw new NotImplementedException();
+        public Task<bool> GetRobloxFeedsEnabledAsync() => Task.FromResult(true);
+        public Task SetRobloxFeedsEnabledAsync(bool enabled) => throw new NotImplementedException();
         public Task SetCarefulSquadLaunchAsync(bool careful) => throw new NotImplementedException();
         public Task<bool> GetStreamerModeAsync() => throw new NotImplementedException();
         public Task SetStreamerModeAsync(bool enabled) => throw new NotImplementedException();
