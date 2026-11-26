@@ -232,20 +232,20 @@ client. `Library/GamePulseApiTests.cs`, and `Library/GamePulseServiceTests.cs` o
 with a counting fake.
 
 **Acceptance:**
-- [ ] 50 ids are one request; 51 throws `ArgumentException`; 120 ids are three requests one after
+- [x] 50 ids are one request; 51 throws `ArgumentException`; 120 ids are three requests one after
       another, never in parallel.
-- [ ] Nothing is asked before the `AllowReadsFrom` instant, and nothing ever when it was never called.
-- [ ] Ten interest changes inside 250 ms are one request.
-- [ ] A game is not asked about again within 5 minutes of its last attempt, good or failed. `Refused`
+- [x] Nothing is asked before the `AllowReadsFrom` instant, and nothing ever when it was never called.
+- [x] Ten interest changes inside 250 ms are one request.
+- [x] A game is not asked about again within 5 minutes of its last attempt, good or failed. `Refused`
       holds every read for 5 minutes.
-- [ ] At 15 minutes the count reads null, the date stays, and `Changed` is raised for that game.
-- [ ] A game absent from a good answer has no view. A 200 without `data` is `Shape`, not "every game is
+- [x] At 15 minutes the count reads null, the date stays, and `Changed` is raised for that game.
+- [x] A game absent from a good answer has no view. A 200 without `data` is `Shape`, not "every game is
       gone". An out-of-range count or date is dropped for that game alone.
-- [ ] Interest is the union across owners; an empty set removes the owner; with no interest there is no
+- [x] Interest is the union across owners; an empty set removes the owner; with no interest there is no
       timer.
-- [ ] `SetEnabled(false)` clears every reading, raises `Changed`, asks nothing and keeps the interest;
+- [x] `SetEnabled(false)` clears every reading, raises `Changed`, asks nothing and keeps the interest;
       turning it back on asks at the next pass, once.
-- [ ] From the real graph: the pulse client carries no cookie and follows no redirect.
+- [x] From the real graph: the pulse client carries no cookie and follows no redirect.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~GamePulse|FullyQualifiedName~TypedHttpClientRegistrationTests"`
 → all passed.
