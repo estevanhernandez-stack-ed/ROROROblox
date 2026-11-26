@@ -358,17 +358,17 @@ in one commit, so `SettingsReachabilityTests` never needs an allow-list entry. I
 row with no option to pick, which is why it does not wait for C1.
 
 **Acceptance:**
-- [ ] A `settings.json` with no such key reads true: on for new installs and for upgrades.
-- [ ] Off takes effect at once: the status reading is `None`, every pulse is cleared, and both change
+- [x] A `settings.json` with no such key reads true: on for new installs and for upgrades.
+- [x] Off takes effect at once: the status reading is `None`, every pulse is cleared, and both change
       events are raised.
-- [ ] A session started with the switch off: two hours of fake clock, window visible, interest
+- [x] A session started with the switch off: two hours of fake clock, window visible, interest
       declared, zero requests to the status host and zero pulse requests.
-- [ ] Back on: the first status read comes after the 30 s settle and the pulse asks at its next pass,
+- [x] Back on: the first status read comes after the 30 s settle and the pulse asks at its next pass,
       one request each.
-- [ ] With the switch off and an update pending, the update notice is still the top notice.
-- [ ] `SettingsReachabilityTests` and `ToggleWiringFenceTests` are green, and the fence's `Exemptions`
+- [x] With the switch off and an update pending, the update notice is still the top notice.
+- [x] `SettingsReachabilityTests` and `ToggleWiringFenceTests` are green, and the fence's `Exemptions`
       table gains no entry (it finds the setting by reflection; a floor moving is fine).
-- [ ] The label and the description exist in seven languages, and the description names Status.io as a
+- [x] The label and the description exist in seven languages, and the description names Status.io as a
       third party.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~SettingsReachabilityTests|FullyQualifiedName~ToggleWiringFenceTests|FullyQualifiedName~RobloxFeedsTests|FullyQualifiedName~GamePulseServiceTests"`
