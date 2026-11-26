@@ -295,20 +295,20 @@ deleting the suppression first would draw the contested banner and the known-iss
 Nothing visible changes in this item.
 
 **Acceptance:**
-- [ ] The order is contested, outage, known issue, drift, update. `Top` is the first that is true and
+- [x] The order is contested, outage, known issue, drift, update. `Top` is the first that is true and
       `More` is the rest in order. The drift input is always empty in the app, and the order is still
       tested with a drift text present.
-- [ ] The update notice is present only when the state is pending and the hold banner is not showing.
+- [x] The update notice is present only when the state is pending and the hold banner is not showing.
       The link is present for `Newer` only; a rollback has the sentence and no link.
-- [ ] One saved account reads the short sentence, several read the long one, and compact always reads
+- [x] One saved account reads the short sentence, several read the long one, and compact always reads
       the short one.
-- [ ] An outage names the worst row after a colon, in that level's own sentence, with the counted
+- [x] An outage names the worst row after a colon, in that level's own sentence, with the counted
       suffix when other rows are affected.
-- [ ] A known issue behind a higher notice is in `More` and is not dismissed by being hidden.
-- [ ] No English sentence contains "ban", "captcha", "verification", "session", "account" or "RoRoRo"
+- [x] A known issue behind a higher notice is in `More` and is not dismissed by being hidden.
+- [x] No English sentence contains "ban", "captcha", "verification", "session", "account" or "RoRoRo"
       (a test over the seventeen values).
-- [ ] `IsExpanded` resets when the count reaches zero.
-- [ ] All seven resx hold the same keys; the script is committed and a second run changes nothing.
+- [x] `IsExpanded` resets when the count reaches zero.
+- [x] All seven resx hold the same keys; the script is committed and a second run changes nothing.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~RobloxNoticeResolverTests|FullyQualifiedName~CultureKeyParityFenceTests|FullyQualifiedName~LocKeyParityFenceTests"`
 → all passed. `python -I scripts/add-v141-translations.py` twice → the second run reports no change.
