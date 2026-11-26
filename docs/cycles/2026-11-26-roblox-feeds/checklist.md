@@ -171,14 +171,14 @@ comma form, and the source fence over `RobloxCompatChecker.cs`. `MainViewModel` 
 the gate becomes truthful through `IsUpdatePendingAsync`, and its hand-off to the coordinator is item 8.
 
 **Acceptance:**
-- [ ] The two field strings answer "no update", and that test was seen failing before the fix.
-- [ ] One version behind answers pending and `Newer` in all four spellings (comma or dotted local
+- [x] The two field strings answer "no update", and that test was seen failing before the fix.
+- [x] One version behind answers pending and `Newer` in all four spellings (comma or dotted local
       against dotted or comma endpoint). An endpoint lower than the install answers pending and `Older`.
-- [ ] An unreadable local string is unknown and never a difference: with one readable side the readable
+- [x] An unreadable local string is unknown and never a difference: with one readable side the readable
       side decides; with none the state is `Unknown`. Roblox not installed is `Unknown`.
-- [ ] `RobloxCompatChecker.cs` and `PreWarmGate` are not in the diff. The drift fence fails when a
+- [x] `RobloxCompatChecker.cs` and `PreWarmGate` are not in the diff. The drift fence fails when a
       `RobloxVersion.` reference is added to the checker (mutation-checked).
-- [ ] On this machine the built probe now answers `Current` where the PRD measured `True`; the three
+- [x] On this machine the built probe now answers `Current` where the PRD measured `True`; the three
       strings and the answer are in the smoke doc.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~RobloxUpdateProbeTests|FullyQualifiedName~RobloxCompatDriftPinTests|FullyQualifiedName~PreWarmGate"`
