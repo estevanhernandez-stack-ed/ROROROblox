@@ -138,20 +138,28 @@ public class PulseSurfacesTests
         panel.Expand();
         var before = panel.Favourites.ToList();
         Assert.All(before, e => Assert.Null(e.Pulse));
-        Assert.Equal(string.Empty, before[0].PulseText);
+        Assert.Equal(string.Empty, before[0].PulseCountText);
+        Assert.Equal(string.Empty, before[0].PulseUpdatedText);
 
         rig.Settle();
         var after = panel.Favourites.ToList();
 
         Assert.Equal(2, after.Count);
         Assert.Equal(81_827, after[0].Pulse!.Value.Playing);
-        Assert.Equal("81,827 playing · updated 2 days ago", after[0].PulseText);
-        Assert.EndsWith("81,827 playing · updated 2 days ago", after[0].MetaText);
-        Assert.Contains("81,827 playing · updated 2 days ago", after[0].TooltipText);
-        Assert.Contains("81,827 playing · updated 2 days ago", after[0].AccessibleName);
+        Assert.Equal("81,827 playing", after[0].PulseCountText);
+        Assert.Equal("updated 2 days ago", after[0].PulseUpdatedText);
+        // The meta line carries the count only (Este, 2026-11-26); the date is the tooltip's and the accessible name's.
+        Assert.EndsWith("81,827 playing", after[0].MetaText);
+        Assert.DoesNotContain("updated", after[0].MetaText);
+        Assert.Equal(["Alpha Fake", after[0].MetaText, "updated 2 days ago"], after[0].TooltipText.Split("\n"));
+        Assert.Contains("Alpha Fake", after[0].AccessibleName);
+        Assert.Contains("81,827 playing", after[0].AccessibleName);
+        Assert.EndsWith("updated 2 days ago", after[0].AccessibleName);
         Assert.Same(before[1], after[1]);   // Beta Fake is a game Roblox no longer returns: untouched, no line
         Assert.Null(after[1].Pulse);
-        Assert.Equal(string.Empty, after[1].PulseText);
+        Assert.Equal(string.Empty, after[1].PulseCountText);
+        Assert.Equal(string.Empty, after[1].PulseUpdatedText);
+        Assert.Equal(["Beta Fake", after[1].MetaText], after[1].TooltipText.Split("\n"));
     }
 
     [Fact]
@@ -172,9 +180,13 @@ public class PulseSurfacesTests
         rig.Settle();
 
         var entry = Assert.Single(panel.PrivateServers);
-        Assert.Equal("updated 2 days ago", entry.PulseText);
+        Assert.Equal(string.Empty, entry.PulseCountText);
+        Assert.Equal("updated 2 days ago", entry.PulseUpdatedText);
+        // No pulse on the meta line at all; the date is in the tooltip and the accessible name.
         Assert.DoesNotContain("playing", entry.MetaText);
-        Assert.EndsWith("updated 2 days ago", entry.MetaText);
+        Assert.DoesNotContain("updated", entry.MetaText);
+        Assert.EndsWith("updated 2 days ago", entry.TooltipText);
+        Assert.EndsWith("updated 2 days ago", entry.AccessibleName);
     }
 
     [Fact]
@@ -185,12 +197,14 @@ public class PulseSurfacesTests
         var panel = Panel([Game(1, "Alpha Fake", 10)], rig.Service);
         panel.Expand();
         rig.Settle();
-        Assert.NotEqual(string.Empty, panel.Favourites[0].PulseText);
+        Assert.NotEqual(string.Empty, panel.Favourites[0].PulseCountText);
+        Assert.NotEqual(string.Empty, panel.Favourites[0].PulseUpdatedText);
 
         rig.Service.SetEnabled(false);
 
         Assert.Single(panel.Favourites);
-        Assert.Equal(string.Empty, panel.Favourites[0].PulseText);
+        Assert.Equal(string.Empty, panel.Favourites[0].PulseCountText);
+        Assert.Equal(string.Empty, panel.Favourites[0].PulseUpdatedText);
     }
 
     [Fact]
@@ -231,7 +245,9 @@ public class PulseSurfacesTests
         rig.Settle();
 
         Assert.Single(rig.Api.Requests);   // two surfaces, one game, one question
-        Assert.Equal(item.PulseText, Assert.Single(panel.Favourites).PulseText);
+        var entry = Assert.Single(panel.Favourites);
+        Assert.Equal(item.PulseCountText, entry.PulseCountText);
+        Assert.Equal(item.PulseUpdatedText, entry.PulseUpdatedText);
         Assert.Equal("81,827 playing · updated 2 days ago", item.PulseText);
     }
 

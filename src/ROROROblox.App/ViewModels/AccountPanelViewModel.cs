@@ -78,14 +78,17 @@ public sealed record PanelEntry(
     /// <summary>The inline Save affordance: an unsaved Recent entry that can be launched (so it has a public place to save).</summary>
     public bool ShowSave => !IsSaved && CanLaunch;
 
-    /// <summary>The pulse's words ("81,827 playing · updated 2 days ago"), a private server's date alone, or empty until an answer arrives.</summary>
-    public string PulseText => PulseWords.Joined(Pulse, IsPrivate);
+    /// <summary>"81,827 playing". The only part of the pulse on the meta line: the panel column is narrow, and the date goes to the tooltip and the accessible name (Este, 2026-11-26, as the grid tile does). Empty without a count and for a private server.</summary>
+    public string PulseCountText => PulseWords.Count(Pulse, IsPrivate);
+
+    /// <summary>"updated 2 days ago", or empty without a date. Tooltip and accessible name only.</summary>
+    public string PulseUpdatedText => PulseWords.Updated(Pulse);
 
     /// <summary>
     /// The second line: how long ago THIS account last played it, then (Recent only) the time it spent
     /// there "in recent sessions" (the window is 100 history rows, not all time); a saved entry this
     /// account never launched says so. A private server leads with its game when the icon cache knows it.
-    /// The game's pulse is one more part, last, joined the same way.
+    /// The game's player count is one more part, last, joined the same way; the date is not on this line.
     /// </summary>
     public string MetaText
     {
@@ -96,16 +99,22 @@ public sealed record PanelEntry(
             parts.Add(LastPlayedUtc is { } at ? ROROROblox.App.ViewModels.AccountSummary.RelativeAgo(at) : Loc.Get("Shell_Panel_Meta_NotPlayed"));
             if (Entry.Kind == LibraryEntryKind.Recent && TotalPlayed is { } total && total > TimeSpan.Zero)
                 parts.Add(Loc.Format("Shell_Panel_Meta_InRecent", FormatDuration(total)));
-            if (PulseText is { Length: > 0 } pulse) parts.Add(pulse);
+            if (PulseCountText is { Length: > 0 } count) parts.Add(count);
             return string.Join(" · ", parts);
         }
     }
 
-    /// <summary>Tooltip: the full name over the full meta line, for the day the column trims either with an ellipsis; a disabled entry adds why.</summary>
-    public string TooltipText => DisplayName + "\n" + MetaText + (CanLaunch ? string.Empty : "\n" + DisabledHint);
+    /// <summary>The meta line and then the game's last update: what the tooltip and the accessible name say, since the date is not drawn.</summary>
+    private string FullMetaText => PulseUpdatedText is { Length: > 0 } updated ? MetaText + " · " + updated : MetaText;
 
-    /// <summary>Accessible name of the entry's launch button: the full name and meta, never the trimmed text.</summary>
-    public string AccessibleName => Loc.Format("Shell_Panel_Entry_Name", DisplayName, MetaText);
+    /// <summary>Tooltip: the full name over the full meta line, then the date the game was updated; a disabled entry adds why.</summary>
+    public string TooltipText
+        => DisplayName + "\n" + MetaText
+           + (PulseUpdatedText is { Length: > 0 } updated ? "\n" + updated : string.Empty)
+           + (CanLaunch ? string.Empty : "\n" + DisabledHint);
+
+    /// <summary>Accessible name of the entry's launch button: the full name, meta, players and updated, never the trimmed text.</summary>
+    public string AccessibleName => Loc.Format("Shell_Panel_Entry_Name", DisplayName, FullMetaText);
 
     /// <summary>Accessible name of the inline Save button.</summary>
     public string SaveAccessibleName => Loc.Format("Shell_Panel_Save_Name", DisplayName);

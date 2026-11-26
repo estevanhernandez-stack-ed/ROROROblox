@@ -927,7 +927,7 @@ public class LabelWrapMeasurementTests
                     {
                         var child = VisualTreeHelper.GetChild(node, i);
                         if (child is TextBlock tb && tb.Text.Length > 0 && PanelWindowFixtures.EffectivelyVisible(tb)
-                            && (tb.Name is "TilePulse" or "RowPulse" || (tb.DataContext is PanelEntry { Pulse: not null } pe && tb.Text == pe.MetaText)))
+                            && (tb.Name is "TilePulse" or "RowPulse" || (tb.DataContext is PanelEntry { PulseCountText.Length: > 0 } pe && tb.Text == pe.MetaText)))
                         {
                             var clone = Clone(tb);
                             clone.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
@@ -951,7 +951,7 @@ public class LabelWrapMeasurementTests
     /// <summary>
     /// Every label the pulse adds, in every language: the tile's count line and the row's joined line must not clip and
     /// must stay within two lines; nothing may be exempted for them, because a count that reads "81,8…" is a wrong
-    /// number. The panel entry's meta line is the one place a trim is the established behaviour (the full text is the
+    /// number. The panel entry's meta line (the count only, since 2026-11-26; the date is the tooltip's) is the one place a trim is the established behaviour (the full text is the
     /// tooltip and the accessible name), so its trims are measured and written, and counted, not failed.
     /// </summary>
     [WindowRenderFact]
