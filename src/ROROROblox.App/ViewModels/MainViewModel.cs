@@ -21,6 +21,8 @@ using ROROROblox.App.SquadLaunch;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
 using ROROROblox.Core.Discord;
+using ROROROblox.Core.Feeds;
+using ROROROblox.App.Notices;
 
 namespace ROROROblox.App.ViewModels;
 
@@ -314,7 +316,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // resolve this VM — the ctor runs on the UI thread, so wiring it here is race-free.
         _accountsMirror = new ObservableCollectionMirror<AccountSummary>(Accounts);
         // The one-account window (spec 3.8): the batch surfaces appear when a second account does.
-        Accounts.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasMultipleAccounts));
+        Accounts.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasMultipleAccounts));
+            RecomputeRobloxLine();
+        };
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
@@ -347,6 +353,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
         OpenKnownIssuesCommand = new RelayCommand(() => OpenShellPage(Shell.ShellPage.KnownRobloxIssues));
         DismissKnownIssueNoticeCommand = new RelayCommand(() => _knownIssuesNotice?.Dismiss());
+        OpenRobloxStatusCommand = new RelayCommand(() => _shellOpener.Open(RobloxLinks.StatusPage));
+        OpenRobloxReleaseNotesCommand = new RelayCommand(() => _shellOpener.Open(RobloxLinks.ReleaseNotes));
         OpenDiagnosticsFromCrashNoticeCommand = new RelayCommand(() =>
         {
             CrashNoticeText = string.Empty;
@@ -591,6 +599,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RefreshFpsCapWarning();
         IdleSummaryText = IdleSummary.Format(Accounts.Count(a => a.IdleWarn), _idleWarnThresholdMinutes);
         if (_isContested) { ContestedBannerText = MultiInstanceCopy.ContestedBanner; }
+        RecomputeRobloxLine();
         RefreshMemoryChips();
         foreach (var a in Accounts) { a.NotifyCultureChanged(); }
         OnPropertyChanged(string.Empty); // all bindings — re-pull every computed getter
@@ -863,6 +872,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     public ICommand DismissKnownIssueNoticeCommand { get; }
 
+    /// <summary>The outage notice's link. The address is a constant; nothing remote contributes to it.</summary>
+    public ICommand OpenRobloxStatusCommand { get; }
+
+    /// <summary>The update notice's link, shown for a newer client only.</summary>
+    public ICommand OpenRobloxReleaseNotesCommand { get; }
+
     /// <summary>The crash notice's action: opens Diagnostics, where Save support bundle lives.</summary>
     public ICommand OpenDiagnosticsFromCrashNoticeCommand { get; }
 
@@ -1111,6 +1126,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasCompactRows));
         OnPropertyChanged(nameof(MainAccount));
         OnPropertyChanged(nameof(CompactEmptyKind));
+        RecomputeRobloxLine();
         return true;
     }
 
@@ -1304,7 +1320,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public bool RobloxUpdating
     {
         get => _robloxUpdating;
-        private set => SetField(ref _robloxUpdating, value);
+        private set
+        {
+            if (SetField(ref _robloxUpdating, value))
+            {
+                RecomputeRobloxLine();
+            }
+        }
     }
 
     private bool _alwaysShowRecycle;
@@ -5742,6 +5764,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _isContested = contested;
         ContestedBannerText = contested ? MultiInstanceCopy.ContestedBanner : string.Empty;
         _knownIssuesNotice?.SetSuppressed(contested);
+        RecomputeRobloxLine();
     }
 
     private ROROROblox.App.KnownIssues.KnownIssuesNoticeModel? _knownIssuesNotice;
@@ -5786,6 +5809,49 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(KnownIssueNoticeText));
         OnPropertyChanged(nameof(KnownIssuesMenuHeader));
+        RecomputeRobloxLine();
+    }
+
+    // === The Roblox line (v1.41) ===
+    //
+    // One resolver picks the one Roblox sentence from the contested warning, Roblox's status, the known
+    // issues, the drift banner and the update check. The window still binds the older texts until the
+    // line is drawn; this is the state it will draw, kept current on every input that moves it.
+
+    private RobloxUpdateState _robloxUpdateState = RobloxUpdateState.Unknown;
+    private RobloxStatusReading _robloxStatus = RobloxStatusReading.None;
+
+    /// <summary>The line the window draws: the top notice, and the rest behind "+N more".</summary>
+    public RobloxLineViewModel RobloxLine { get; } = new();
+
+    /// <summary>
+    /// The feeds' two readings, from any thread. Whoever owns the feeds pushes here on every change, and
+    /// pushes <see cref="RobloxStatusReading.None"/> when the switch turns the status off.
+    /// </summary>
+    internal void SetRobloxFeedReadings(RobloxUpdateState update, RobloxStatusReading status)
+    {
+        ArgumentNullException.ThrowIfNull(update);
+        ArgumentNullException.ThrowIfNull(status);
+        _ui.Invoke(() =>
+        {
+            _robloxUpdateState = update;
+            _robloxStatus = status;
+            RecomputeRobloxLine();
+        });
+    }
+
+    /// <summary>UI thread. Runs on every input of the line: contested, known issues, hold banner, accounts, compact, feeds, culture.</summary>
+    private void RecomputeRobloxLine()
+    {
+        RobloxLine.Apply(RobloxNoticeResolver.Resolve(new RobloxLineInputs(
+            ContestedText: _contestedBannerText,
+            Status: _robloxStatus,
+            KnownIssueText: _knownIssuesNotice?.LineNoticeText ?? string.Empty,
+            DriftText: string.Empty,
+            Update: _robloxUpdateState,
+            HoldBannerShowing: _robloxUpdating,
+            HasMultipleAccounts: HasMultipleAccounts,
+            Compact: _isCompact)));
     }
 
     // === The header's update button (2026-11-17) ===

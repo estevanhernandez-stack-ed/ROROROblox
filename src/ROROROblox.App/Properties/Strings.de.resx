@@ -3813,4 +3813,73 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="MainWindow_UpdateStagedTooltipNoVersion" xml:space="preserve">
     <value>Die neue Version ist heruntergeladen. Beende RoRoRo und öffne es erneut, um das Update abzuschließen. Klicke, um jetzt zu beenden.</value>
   </data>
+  <data name="RobloxLine_Update_Many" xml:space="preserve">
+    <value>Roblox hat ein Update. Der nächste Start installiert es, und „Mehrere starten“ hält die übrigen zurück, bis es fertig ist.</value>
+  </data>
+  <data name="RobloxLine_Update_One" xml:space="preserve">
+    <value>Roblox hat ein Update. Der nächste Start installiert es.</value>
+  </data>
+  <data name="RobloxLine_WhatChanged" xml:space="preserve">
+    <value>Was sich geändert hat</value>
+  </data>
+  <data name="RobloxLine_Status_Outage" xml:space="preserve">
+    <value>Roblox meldet eine Störung: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Partial" xml:space="preserve">
+    <value>Roblox meldet eine teilweise Störung: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Degraded" xml:space="preserve">
+    <value>Roblox meldet eingeschränkte Leistung: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Security" xml:space="preserve">
+    <value>Roblox meldet ein Sicherheitsproblem: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Maintenance" xml:space="preserve">
+    <value>Roblox meldet laufende Wartungsarbeiten: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Problem" xml:space="preserve">
+    <value>Roblox meldet ein Problem: {0}</value>
+  </data>
+  <data name="RobloxLine_Row_Website" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="RobloxLine_Row_Games" xml:space="preserve">
+    <value>Spiele</value>
+  </data>
+  <data name="RobloxLine_Row_Avatar" xml:space="preserve">
+    <value>Avatare</value>
+  </data>
+  <data name="RobloxLine_Row_GameJoin" xml:space="preserve">
+    <value>Spielbeitritt</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_one" xml:space="preserve">
+    <value>{0} und {1} weitere</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_other" xml:space="preserve">
+    <value>{0} und {1} weitere</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_few" xml:space="preserve">
+    <value>{0} und {1} weitere</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_many" xml:space="preserve">
+    <value>{0} und {1} weitere</value>
+  </data>
+  <data name="RobloxLine_StatusLink" xml:space="preserve">
+    <value>Roblox-Status</value>
+  </data>
+  <data name="RobloxLine_More" xml:space="preserve">
+    <value>+{0} weitere</value>
+  </data>
+  <data name="RobloxLine_More_Name_one" xml:space="preserve">
+    <value>{0} weitere Roblox-Meldung</value>
+  </data>
+  <data name="RobloxLine_More_Name_other" xml:space="preserve">
+    <value>{0} weitere Roblox-Meldungen</value>
+  </data>
+  <data name="RobloxLine_More_Name_few" xml:space="preserve">
+    <value>{0} weitere Roblox-Meldungen</value>
+  </data>
+  <data name="RobloxLine_More_Name_many" xml:space="preserve">
+    <value>{0} weitere Roblox-Meldungen</value>
+  </data>
 </root>

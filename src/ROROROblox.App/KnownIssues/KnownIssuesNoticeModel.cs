@@ -56,11 +56,18 @@ internal sealed class KnownIssuesNoticeModel : INotifyPropertyChanged
 
     public bool HasNotice => !_suppressed && !_selection.IsEmpty;
 
-    public string NoticeText => !HasNotice
-        ? string.Empty
-        : _selection.Issues.Count == 1
-            ? Loc.Format("MainWindow_KnownIssueNoticeOne", _selection.Issues[0].Title)
-            : Loc.Format("MainWindow_KnownIssueNoticeMany", _selection.Issues.Count);
+    public string NoticeText => HasNotice ? SelectionText : string.Empty;
+
+    /// <summary>
+    /// The notice's words with the contested suppression ignored: what the Roblox line ranks, so a known
+    /// issue behind a higher notice is counted in "more" rather than missing. Empty only when there is
+    /// nothing to show or everything shown was dismissed.
+    /// </summary>
+    public string LineNoticeText => _selection.IsEmpty ? string.Empty : SelectionText;
+
+    private string SelectionText => _selection.Issues.Count == 1
+        ? Loc.Format("MainWindow_KnownIssueNoticeOne", _selection.Issues[0].Title)
+        : Loc.Format("MainWindow_KnownIssueNoticeMany", _selection.Issues.Count);
 
     public string MenuHeader => ApplicableCount == 0
         ? Loc.Get("MainWindow_KnownRobloxIssues")
