@@ -109,13 +109,13 @@ can be taken afterwards. A third the spec asked for cannot be taken at all, and 
    line (items 5 and 6) and the fake-clock tests, and is read live in item 8.
 
 **Acceptance:**
-- [ ] `RobloxLineRenderTests` passes on the untouched tree at both widths, and fails when a constant is
+- [x] `RobloxLineRenderTests` passes on the untouched tree at both widths, and fails when a constant is
       changed by one pixel (mutation-checked, the red recorded in the commit message).
-- [ ] The smoke doc exists with five startup timings, their median, the machine and the folder shape.
+- [x] The smoke doc exists with five startup timings, their median, the machine and the folder shape.
       If a live start could not be made (a RoRoRo or a Roblox client was running), it says exactly that
       and the timings move to C2's A/B.
-- [ ] The smoke doc records the tray-baseline correction with the file and line.
-- [ ] No file under `src/ROROROblox.App` or `src/ROROROblox.Core` is changed by this item.
+- [x] The smoke doc records the tray-baseline correction with the file and line.
+- [x] No file under `src/ROROROblox.App` or `src/ROROROblox.Core` is changed by this item.
 
 **Verify:** `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~RobloxLineRenderTests"`
 → passed. `git diff --name-only main...HEAD -- src/ROROROblox.App src/ROROROblox.Core` → empty.
@@ -143,12 +143,12 @@ Also drawn, with no decision attached: the line in each of its five states at th
 380 px, and "+2 more" collapsed and expanded.
 
 **Acceptance:**
-- [ ] The page shows every state in spec §12's list, switchable across the four built-in themes, with
+- [x] The page shows every state in spec §12's list, switchable across the four built-in themes, with
       flatline captured.
-- [ ] `mocks/README.md` names each decision, its options and the plan default, and says a reply in any
+- [x] `mocks/README.md` names each decision, its options and the plan default, and says a reply in any
       shape works ("A1, B1, C3, rest as drawn").
-- [ ] Nothing in `mocks/` names a real account, and nothing under `docs/store/` changes.
-- [ ] When Este rules, the pick and its date are written into the README. A ruling can arrive at any
+- [x] Nothing in `mocks/` names a real account, and nothing under `docs/store/` changes.
+- [x] When Este rules, the pick and its date are written into the README. A ruling can arrive at any
       time before C1.
 
 **Verify:** `ls docs/cycles/2026-11-26-roblox-feeds/mocks/` → `README.md`, `c1-mocks.html`,

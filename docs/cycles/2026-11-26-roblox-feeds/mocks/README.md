@@ -21,12 +21,16 @@ Reply in any shape. "A1, B1, C3, rest as drawn" works, so does "all defaults" or
 
 | # | Ruling | Date |
 |---|---|---|
-| A | | |
-| B | | |
-| C | | |
-| D | | |
-| E | | |
-| F | | |
+| A | A1: contested, outage and drift in the warning colour; known issue and update in white | 2026-11-26 |
+| B | B1: panel-expander toggle | 2026-11-26 |
+| C | C3: count in the tile, date in the tooltip and the list | 2026-11-26 |
+| D | As drawn | 2026-11-26 |
+| E | As drawn | 2026-11-26 |
+| F | As drawn | 2026-11-26 |
+
+Este's reply, 2026-11-26 13:33 CST: "A1, B1, C3, everything else looks good". Read as covering the two
+layout notes below as well: the contested notice at 380 px keeps the actions to the right of the text as
+drawn (no compact wrap rule), and the list row carries the pulse as a second line under the name.
 
 ## What is drawn, against spec §12
 
