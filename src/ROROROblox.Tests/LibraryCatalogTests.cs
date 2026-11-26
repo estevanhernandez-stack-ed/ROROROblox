@@ -136,6 +136,30 @@ public class LibraryCatalogTests : IDisposable
         Assert.Equal(24, list.Count(e => e.IconUrl is null)); // a miss is null, not a fetch
     }
 
+    [Fact]
+    public async Task UniverseId_FollowsTheFillOrder_OwnId_SavedGameOfThePlace_IconCache_ElseNull()
+    {
+        await _favorites.AddAsync(100, 1000, "Fav Game", "https://example.invalid/fav.png");
+        _icons.Known[100] = new GameIconInfo("Fav Game", 7777, "https://example.invalid/x.png", T0); // loses to the saved game's own id
+        await _servers.AddAsync(100, "FAKE-LINK-CODE", PrivateServerCodeKind.LinkCode, "Same Place", "Fav Game", "https://example.invalid/ps1.png");
+        await _servers.AddAsync(200, "FAKE-LINK-CODE-2", PrivateServerCodeKind.LinkCode, "Cached Place", "Other", "https://example.invalid/ps2.png");
+        await _servers.AddAsync(250, "FAKE-LINK-CODE-3", PrivateServerCodeKind.LinkCode, "Unknown Place", "Third", "https://example.invalid/ps3.png");
+        _icons.Known[200] = new GameIconInfo("Other", 2000, "https://example.invalid/o.png", T0);
+        await Played(300, "Recent Cached", T0);
+        await Played(400, "Recent Unknown", T0.AddMinutes(-1));
+        _icons.Known[300] = new GameIconInfo("Recent Cached", 3000, "https://example.invalid/r.png", T0);
+
+        var list = await Catalog().ListAsync();
+
+        Assert.Equal(1000, list.Single(e => e.Kind == LibraryEntryKind.Favourite).UniverseId);
+        Assert.Equal(1000, list.Single(e => e.PlaceId == 100 && e.Kind == LibraryEntryKind.PrivateServer).UniverseId);
+        Assert.Equal(2000, list.Single(e => e.PlaceId == 200).UniverseId);
+        Assert.Null(list.Single(e => e.PlaceId == 250).UniverseId);
+        Assert.Equal(3000, list.Single(e => e.PlaceId == 300).UniverseId);
+        Assert.Null(list.Single(e => e.PlaceId == 400).UniverseId);
+        Assert.Equal(0, _icons.RequestCalls); // the join still never asks
+    }
+
     private static LaunchSession Row(Guid serverId, DateTimeOffset at, TimeSpan length) => new(
         Guid.NewGuid(), Alt, "Alt", null, "Clan Server", 200, true, at, at + length, null, PrivateServerId: serverId);
 

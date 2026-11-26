@@ -1912,7 +1912,8 @@ public partial class App : Application
             // The refresh the modal did on close, now done when the data changes.
             libraryChanged: () => _ = main.ReloadGamesAsync(),
             icons: _services.GetRequiredService<IGameIconCache>(),
-            ui: new Threading.WpfUiDispatcher());
+            ui: new Threading.WpfUiDispatcher(),
+            pulseReadsOpen: () => main.PulseReadsOpen);
         return new Games.GamesPage(viewModel, main.Accounts);
     }
 

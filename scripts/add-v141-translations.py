@@ -246,6 +246,16 @@ T: dict[str, dict[str, str]] = {
         "pt-BR": "Consulta a página de status do Roblox e lê quantas pessoas estão nos seus jogos salvos. A consulta de status vai para o Status.io, um terceiro que hospeda a página para o Roblox. Nada sobre você ou suas contas é enviado.",
         "ru": "Проверяет страницу статуса Roblox и считывает, сколько людей в твоих сохранённых играх. Проверка статуса идёт на Status.io, стороннему сервису, который размещает эту страницу для Roblox. Ничего о тебе или твоих аккаунтах не отправляется.",
     },
+    # ---- item 10: the pulse's words ------------------------------------------------------------
+    # {0} is already a phrase ("2 days ago", "Mar 2023"), so the lead-in is a bare participle.
+    "Library_Pulse_Updated": {
+        "de": "aktualisiert {0}",
+        "es": "actualizado {0}",
+        "fr": "mis à jour {0}",
+        "pl": "zaktualizowano {0}",
+        "pt-BR": "atualizado {0}",
+        "ru": "обновлено {0}",
+    },
 }
 
 # Neutral keys this cycle retired from the translation files. None yet.

@@ -72,6 +72,7 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
     private readonly Action? _libraryChanged;
     private readonly IGameIconCache? _icons;
     private readonly IUiDispatcher? _ui;
+    private readonly Func<bool>? _pulseReadsOpen;
     private readonly Dictionary<(LibraryEntryKind Kind, long PlaceId, Guid? ServerId), LibraryItem> _itemCache = new();
     private bool _iconsAttached;
     private LibraryItem? _pendingRemoval;
@@ -88,6 +89,7 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
     /// <param name="libraryChanged">Fired after a mutation, so the main window's reload runs.</param>
     /// <param name="icons">The icon cache. A tile that comes on screen asks it for its own place and nothing else; null means no icons are ever requested.</param>
     /// <param name="ui">Marshals the cache's worker-thread <c>IconResolved</c> onto the UI thread; null runs inline (tests).</param>
+    /// <param name="pulseReadsOpen">True while the Roblox feeds switch is on and the pulse's startup gate has passed. Only then does an entry that has an icon but no universe id ask the icon cache for it; null means never.</param>
     public LibraryViewModel(
         LibraryCatalog catalog,
         IFavoriteGameStore favorites,
@@ -99,8 +101,10 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         Func<Guid, LaunchTarget, Task> launch,
         Action? libraryChanged = null,
         IGameIconCache? icons = null,
-        IUiDispatcher? ui = null)
+        IUiDispatcher? ui = null,
+        Func<bool>? pulseReadsOpen = null)
     {
+        _pulseReadsOpen = pulseReadsOpen;
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _favorites = favorites ?? throw new ArgumentNullException(nameof(favorites));
         _servers = servers ?? throw new ArgumentNullException(nameof(servers));
@@ -394,11 +398,21 @@ internal sealed class LibraryViewModel : INotifyPropertyChanged
         _icons.IconResolved -= OnIconResolved;
     }
 
-    /// <summary>A tile was realised: if it has no icon, ask the cache for that one place. Does nothing for a tile that is not on screen, because only a realised tile calls it.</summary>
+    /// <summary>
+    /// A tile was realised: if it has no icon, ask the cache for that one place; an entry that has an icon
+    /// but no universe id (a saved private server) asks too, but only while the pulse may read. Does nothing
+    /// for a tile that is not on screen, because only a realised tile calls it.
+    /// </summary>
     public void NoteOnScreen(LibraryItem item)
     {
         ArgumentNullException.ThrowIfNull(item);
-        if (_icons is null || !string.IsNullOrWhiteSpace(item.IconUrl)) return;
+        if (_icons is null) return;
+        if (!string.IsNullOrWhiteSpace(item.IconUrl)
+            && !(item.Entry.UniverseId is null && _pulseReadsOpen?.Invoke() == true))
+        {
+            return;
+        }
+
         _icons.Request(item.PlaceId);
     }
 

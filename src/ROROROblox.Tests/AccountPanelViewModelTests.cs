@@ -26,6 +26,7 @@ public class AccountPanelViewModelTests
         public int LibraryOpened;
         public FakeIcons Icons = new();
         public FakeFavorites Favorites = new();
+        public Func<bool>? PulseOpen;
 
         public AccountPanelViewModel Panel(AccountSummary owner, bool withIcons = true, bool withOpenLibrary = true) => new(
             owner,
@@ -36,7 +37,8 @@ public class AccountPanelViewModelTests
             withIcons ? Icons : null,
             Favorites,
             new InlineUi(),
-            withOpenLibrary ? () => LibraryOpened++ : null);
+            withOpenLibrary ? () => LibraryOpened++ : null,
+            PulseOpen);
     }
 
     private static LibraryEntry Fav(long place, string name, DateTimeOffset? last = null) =>
@@ -566,6 +568,93 @@ public class AccountPanelViewModelTests
         p.IsExpanded = false;
 
         Assert.Equal(new[] { true, false }, seen);
+    }
+
+    // ------------------------------------------------------------------ v1.41 item 10: universe ids and the universe-only request
+
+    private static LibraryEntry ServerWithThumb(Guid id, long place) =>
+        new(LibraryEntryKind.PrivateServer, place, id, "Clan", null, "https://example.invalid/t.png", false, null, null,
+            new LaunchTarget.PrivateServer(place, "FAKE-CODE", PrivateServerCodeKind.AccessCode));
+
+    [Fact]
+    public async Task ARecentPlace_TakesItsUniverse_FromASavedGameOfThePlace_ThenFromTheIconCache_ElseNull()
+    {
+        var h = new Harness();
+        var o = Owner();
+        // 10: a legacy private row (no saved server matches it) whose place is also a saved game; 20: cache only; 30: nothing known.
+        h.History.Add(Row(o.Id, 10, "Saved game place", Now.AddHours(-1), isPrivate: true));
+        h.History.Add(Row(o.Id, 20, "Cached", Now.AddHours(-2)));
+        h.History.Add(Row(o.Id, 30, "Unknown", Now.AddHours(-3)));
+        h.Library.Add(Fav(10, "Saved") with { UniverseId = 111 });
+        h.Icons.Known[10] = new GameIconInfo("Saved", 999, "https://example.invalid/i.png", Now); // loses to the saved game
+        h.Icons.Known[20] = new GameIconInfo("Cached", 222, "https://example.invalid/c.png", Now);
+        var p = h.Panel(o);
+
+        await p.RefreshAsync();
+
+        Assert.Equal(111, p.Recent.Single(e => e.Entry.PlaceId == 10).Entry.UniverseId);
+        Assert.Equal(222, p.Recent.Single(e => e.Entry.PlaceId == 20).Entry.UniverseId);
+        Assert.Null(p.Recent.Single(e => e.Entry.PlaceId == 30).Entry.UniverseId);
+    }
+
+    [Fact]
+    public async Task ASavedPrivateServer_WithAThumbnailAndNoUniverse_CostsOneRequest_OnlyWhenThePulseMayRead()
+    {
+        var h = new Harness();
+        var o = Owner(persisted: true);
+        var sid = Guid.NewGuid();
+        h.Library.Add(ServerWithThumb(sid, 200));
+        h.History.Add(Row(o.Id, 200, "Clan", Now.AddHours(-1), server: sid));
+        var open = false;
+        h.PulseOpen = () => open;
+        var p = h.Panel(o);
+        p.ResolveExpanded(defaultExpanded: true);
+        await p.RefreshAsync();
+
+        Assert.DoesNotContain(200L, h.Icons.Requested); // switch off or gate not passed: nothing
+
+        open = true;
+        h.Icons.Requested.Clear();
+        p.RequestVisibleIcons();
+
+        // One place, however many lists carry the entry: the cache de-duplicates, the panel asks per entry.
+        Assert.All(h.Icons.Requested, id => Assert.Equal(200L, id));
+        Assert.NotEmpty(h.Icons.Requested);
+    }
+
+    [Fact]
+    public async Task ThePanelsLoadPath_StillAsksForNothing_EvenWhenThePulseMayRead()
+    {
+        var h = new Harness();
+        var o = Owner(persisted: true);
+        var sid = Guid.NewGuid();
+        h.Library.Add(ServerWithThumb(sid, 200));
+        h.History.Add(Row(o.Id, 200, "Clan", Now.AddHours(-1), server: sid));
+        h.History.Add(Row(o.Id, 300, "No icon", Now.AddHours(-2)));
+        h.PulseOpen = () => true;
+        var p = h.Panel(o);
+
+        p.ResolveExpanded(defaultExpanded: true);
+        await Task.Delay(100);
+
+        Assert.Empty(h.Icons.Requested);
+    }
+
+    [Fact]
+    public async Task AnEntryWithNoIcon_IsAskedAboutExactlyAsInV140_WhateverThePulseGateSays()
+    {
+        var h = new Harness();
+        var o = Owner(persisted: true);
+        h.History.Add(Row(o.Id, 300, "No icon", Now.AddHours(-2)));
+        h.PulseOpen = () => false;
+        var p = h.Panel(o);
+        p.ResolveExpanded(defaultExpanded: true);
+        await p.RefreshAsync();
+        h.Icons.Requested.Clear();
+
+        p.RequestVisibleIcons();
+
+        Assert.Equal(new long[] { 300 }, h.Icons.Requested.ToArray());
     }
 
     // ------------------------------------------------------------------ fakes

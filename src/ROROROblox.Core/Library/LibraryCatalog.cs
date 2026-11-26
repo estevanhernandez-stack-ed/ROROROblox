@@ -50,13 +50,26 @@ public sealed class LibraryCatalog
 
         var result = new List<LibraryEntry>();
 
+        // Step 2 of the universe fill order: any saved game of the same place, a join that costs nothing.
+        var savedUniverse = new Dictionary<long, long>();
+        foreach (var f in favorites)
+        {
+            if (f.UniverseId > 0) savedUniverse.TryAdd(f.PlaceId, f.UniverseId);
+        }
+
+        long? UniverseFor(long placeId)
+            => savedUniverse.TryGetValue(placeId, out var u) ? u
+             : _icons.TryGet(placeId) is { UniverseId: > 0 } info ? info.UniverseId
+             : null;
+
         result.AddRange(Order(favorites.Select(f =>
         {
             stats.Games.TryGetValue(f.PlaceId, out var stat);
             return new LibraryEntry(
                 LibraryEntryKind.Favourite, f.PlaceId, PrivateServerId: null, f.Name, f.LocalName,
                 IconFor(f.PlaceId, f.ThumbnailUrl), f.IsDefault,
-                stat?.LastPlayedUtc, stat?.Uptime, new LaunchTarget.Place(f.PlaceId));
+                stat?.LastPlayedUtc, stat?.Uptime, new LaunchTarget.Place(f.PlaceId),
+                f.UniverseId > 0 ? f.UniverseId : UniverseFor(f.PlaceId));
         })));
 
         result.AddRange(Order(servers.Select(s =>
@@ -74,7 +87,8 @@ public sealed class LibraryCatalog
             return new LibraryEntry(
                 LibraryEntryKind.PrivateServer, s.PlaceId, s.Id, s.Name, s.LocalName,
                 IconFor(s.PlaceId, s.ThumbnailUrl), s.IsDefault,
-                last, total, new LaunchTarget.PrivateServer(s.PlaceId, s.Code, s.CodeKind));
+                last, total, new LaunchTarget.PrivateServer(s.PlaceId, s.Code, s.CodeKind),
+                UniverseFor(s.PlaceId));
         })));
 
         var saved = favorites.Select(f => f.PlaceId).ToHashSet();
@@ -89,7 +103,8 @@ public sealed class LibraryCatalog
                 return new LibraryEntry(
                     LibraryEntryKind.Recent, kv.Key, PrivateServerId: null, name, LocalName: null,
                     cached?.IconUrl, IsDefault: false,
-                    kv.Value.LastPlayedUtc, kv.Value.Uptime, new LaunchTarget.Place(kv.Key));
+                    kv.Value.LastPlayedUtc, kv.Value.Uptime, new LaunchTarget.Place(kv.Key),
+                    UniverseFor(kv.Key));
             })));
 
         return result;

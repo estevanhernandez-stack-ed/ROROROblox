@@ -1285,5 +1285,6 @@
   "RobloxLine_More_Name_few": "Mais {0} avisos do Roblox",
   "RobloxLine_More_Name_many": "Mais {0} avisos do Roblox",
   "SettingsPage_RobloxFeeds": "Mostrar o status do Roblox e a atividade dos jogos.",
-  "SettingsPage_RobloxFeeds_Description": "Consulta a página de status do Roblox e lê quantas pessoas estão nos seus jogos salvos. A consulta de status vai para o Status.io, um terceiro que hospeda a página para o Roblox. Nada sobre você ou suas contas é enviado."
+  "SettingsPage_RobloxFeeds_Description": "Consulta a página de status do Roblox e lê quantas pessoas estão nos seus jogos salvos. A consulta de status vai para o Status.io, um terceiro que hospeda a página para o Roblox. Nada sobre você ou suas contas é enviado.",
+  "Library_Pulse_Updated": "atualizado {0}"
 }

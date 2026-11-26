@@ -5144,7 +5144,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _gameIcons, _favorites, _ui,
             // The Favourites / Private servers headers' "See all" link opens the Library page, the same call
             // as the header's Library button.
-            openLibrary: OpenGames);
+            openLibrary: OpenGames,
+            pulseReadsOpen: () => PulseReadsOpen);
         panel.UserToggled += (_, open) => _ = PersistPanelExpandedAsync(summary.Id, open);
         summary.AttachPanel(panel);
         summary.PropertyChanged += OnAccountSummaryPropertyChanged;
@@ -5854,6 +5855,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private ROROROblox.Core.Library.IGamePulseService? _gamePulse;
     private bool _mainWindowVisible;
     private DateTimeOffset? _pulseGate;
+    private volatile bool _robloxFeedsEnabled;
+
+    /// <summary>
+    /// True while the switch is on and the pulse's startup gate has passed. The only caller that asks the
+    /// icon cache for a universe id on an entry that already has an icon reads this. Fails closed: false
+    /// until startup has pushed the setting, and until the window has been shown and settled.
+    /// </summary>
+    internal bool PulseReadsOpen
+        => _robloxFeedsEnabled && _robloxFeeds?.ReadsAllowedFrom is { } from && DateTimeOffset.UtcNow >= from;
 
     /// <summary>
     /// Set once by the App at startup, like <see cref="UpdateAvailability"/>; null in tests that do not
@@ -5910,6 +5920,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     internal void SetRobloxFeedsEnabled(bool enabled)
     {
+        _robloxFeedsEnabled = enabled;
         _robloxFeeds?.SetStatusEnabled(enabled);
         _gamePulse?.SetEnabled(enabled);
         if (!enabled)

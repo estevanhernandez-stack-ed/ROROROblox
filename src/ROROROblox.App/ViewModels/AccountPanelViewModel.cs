@@ -157,6 +157,7 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
     private readonly IFavoriteGameStore? _favorites;
     private readonly IUiDispatcher? _ui;
     private readonly Action? _openLibrary;
+    private readonly Func<bool>? _pulseReadsOpen;
     private readonly HashSet<long> _savedHere = new();
     private bool _isExpanded;
     private bool _iconsAttached;
@@ -174,8 +175,10 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         IGameIconCache? icons = null,
         IFavoriteGameStore? favorites = null,
         IUiDispatcher? ui = null,
-        Action? openLibrary = null)
+        Action? openLibrary = null,
+        Func<bool>? pulseReadsOpen = null)
     {
+        _pulseReadsOpen = pulseReadsOpen;
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         _history = history ?? throw new ArgumentNullException(nameof(history));
         _library = library ?? throw new ArgumentNullException(nameof(library));
@@ -321,8 +324,9 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
     public Task RefreshAsync() => RefreshCoreAsync(requestIcons: true);
 
     /// <summary>
-    /// Ask the icon cache for the unsaved Recent places on screen that have no cached icon. Does
-    /// nothing while the panel is collapsed.
+    /// Ask the icon cache for the unsaved Recent places on screen that have no cached icon. While the
+    /// pulse may read (switch on, startup gate passed), an entry that has an icon and no universe id asks
+    /// too, so a saved private server learns its game. Does nothing while the panel is collapsed.
     /// </summary>
     public void RequestVisibleIcons()
     {
@@ -330,6 +334,12 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         foreach (var e in Recent)
         {
             if (!e.IsSaved && e.Entry.IconUrl is null) _icons.Request(e.Entry.PlaceId);
+        }
+
+        if (_pulseReadsOpen?.Invoke() != true) return;
+        foreach (var e in Recent.Concat(Favourites).Concat(PrivateServers))
+        {
+            if (e.Entry.UniverseId is null && e.Entry.IconUrl is not null) _icons.Request(e.Entry.PlaceId);
         }
     }
 
@@ -448,7 +458,7 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
             var latest = g.First();
             var placeId = latest.PlaceId!.Value;
             var saved = SavedFor(latest);
-            var entry = saved ?? Synthesize(latest, placeId);
+            var entry = saved ?? Synthesize(latest, placeId, favs);
             var unsavedPrivate = saved is null && latest.IsPrivateServer; // Favourites cannot hold a private server
             recent.Add(new PanelEntry(entry, latest.LaunchedAtUtc, TotalOf(g),
                 IsSaved: saved is not null || (!unsavedPrivate && _savedHere.Contains(placeId)), CanLaunch: !unsavedPrivate,
@@ -488,15 +498,19 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         => rows.Select(r => r.GameName)
                .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n) && !string.Equals(n, server.RenderName, StringComparison.OrdinalIgnoreCase));
 
-    private LibraryEntry Synthesize(LaunchSession latest, long placeId)
+    private LibraryEntry Synthesize(LaunchSession latest, long placeId, IReadOnlyList<LibraryEntry> favs)
     {
         var cached = _icons?.TryGet(placeId);
+        // The same fill order as LibraryCatalog: a saved game of this place, then the icon cache, else none.
+        var universeId = favs.FirstOrDefault(f => f.PlaceId == placeId && f.UniverseId is > 0)?.UniverseId
+                         ?? (cached is { UniverseId: > 0 } ? cached.UniverseId : (long?)null);
         var name = !string.IsNullOrWhiteSpace(latest.GameName)
             ? latest.GameName!
             : cached?.Name ?? placeId.ToString(CultureInfo.InvariantCulture);
         return new LibraryEntry(
             LibraryEntryKind.Recent, placeId, latest.PrivateServerId, name, LocalName: null,
-            cached?.IconUrl, IsDefault: false, latest.LaunchedAtUtc, TotalPlayed: null, new LaunchTarget.Place(placeId));
+            cached?.IconUrl, IsDefault: false, latest.LaunchedAtUtc, TotalPlayed: null, new LaunchTarget.Place(placeId),
+            universeId);
     }
 
     private static TimeSpan? TotalOf(IEnumerable<LaunchSession> rows)

@@ -68,6 +68,50 @@ public class DisplayDateTests
     }
 
     [Fact]
+    public void MonthYear_English_IsAbbreviatedMonthAndYear()
+    {
+        var when = new DateTimeOffset(new DateTime(2023, 3, 9, 12, 0, 0, DateTimeKind.Local));
+        Assert.Equal("Mar 2023", DisplayDate.MonthYear(when, CultureInfo.GetCultureInfo("en-US")));
+    }
+
+    [Theory]
+    [InlineData("de")]
+    [InlineData("es")]
+    [InlineData("fr")]
+    [InlineData("pl")]
+    [InlineData("pt-BR")]
+    [InlineData("ru")]
+    public void MonthYear_EveryShippedLanguage_CarriesTheYear_AndIsNotEnglish(string name)
+    {
+        var when = new DateTimeOffset(new DateTime(2023, 3, 9, 12, 0, 0, DateTimeKind.Local));
+        var text = DisplayDate.MonthYear(when, CultureInfo.GetCultureInfo(name));
+
+        Assert.Contains("2023", text);
+        Assert.DoesNotContain("Mar ", text);
+    }
+
+    [Fact]
+    public void MonthYear_FollowsTheUiLanguage_NotTheRegionalCulture()
+    {
+        var originalUi = TranslationSource.Instance.CurrentCulture;
+        var originalFormat = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+            TranslationSource.Instance.CurrentCulture = CultureInfo.GetCultureInfo("fr");
+            var when = new DateTimeOffset(new DateTime(2023, 3, 9, 12, 0, 0, DateTimeKind.Local));
+
+            Assert.Equal(DisplayDate.MonthYear(when, CultureInfo.GetCultureInfo("fr")), DisplayDate.MonthYear(when));
+            Assert.NotEqual("Mar 2023", DisplayDate.MonthYear(when));
+        }
+        finally
+        {
+            TranslationSource.Instance.CurrentCulture = originalUi;
+            CultureInfo.CurrentCulture = originalFormat;
+        }
+    }
+
+    [Fact]
     public void RelativeAgo_PastAWeek_UsesTheUiLanguage()
     {
         var originalUi = TranslationSource.Instance.CurrentCulture;

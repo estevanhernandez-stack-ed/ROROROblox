@@ -1285,5 +1285,6 @@
   "RobloxLine_More_Name_few": "Jeszcze {0} powiadomienia Roblox",
   "RobloxLine_More_Name_many": "Jeszcze {0} powiadomień Roblox",
   "SettingsPage_RobloxFeeds": "Pokazuj status Roblox i aktywność w grach.",
-  "SettingsPage_RobloxFeeds_Description": "Sprawdza stronę statusu Roblox i odczytuje, ile osób jest w twoich zapisanych grach. Sprawdzenie statusu trafia do Status.io, podmiotu trzeciego, który hostuje tę stronę dla Roblox. Nic o tobie ani o twoich kontach nie jest wysyłane."
+  "SettingsPage_RobloxFeeds_Description": "Sprawdza stronę statusu Roblox i odczytuje, ile osób jest w twoich zapisanych grach. Sprawdzenie statusu trafia do Status.io, podmiotu trzeciego, który hostuje tę stronę dla Roblox. Nic o tobie ani o twoich kontach nie jest wysyłane.",
+  "Library_Pulse_Updated": "zaktualizowano {0}"
 }
