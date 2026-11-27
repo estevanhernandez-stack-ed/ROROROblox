@@ -42,12 +42,20 @@ public class PulseSurfacesTests
 
         public Rig(bool allow = true)
         {
+            // The relative wording ("updated 2 days ago") reads AccountSummary's clock, not the service's. Without
+            // this the fixed Start-minus-two-days date read "3 days ago" against the real clock from 2026-11-27 on.
+            AccountSummary.ClockOverride.Value = () => Start;
             Service = new GamePulseService(() => Api, Clock);
             if (allow) Service.AllowReadsFrom(Start);
         }
 
         public void Settle() => Clock.Advance(GamePulseService.Debounce);
-        public void Dispose() => Service.Dispose();
+
+        public void Dispose()
+        {
+            Service.Dispose();
+            AccountSummary.ClockOverride.Value = null;
+        }
     }
 
     private static LibraryEntry Game(long place, string name, long? universe, bool isDefault = false) =>
