@@ -17,6 +17,8 @@ Um só lugar para abrir o Roblox no Windows: seus jogos, limites de FPS, alertas
 
 ## Long description
 
+> **Amended 2026-11-27 (v1.41.0.0):** the clause "the Roblox-side calls during launch" now says "the Roblox-side calls RoRoRo makes for you", matching the English sheet. Translated by hand, register as this sheet. Rest of the block unchanged.
+
 > **Refreshed 2026-11-26 (v1.41.0.0):** one sentence added at the end of the privacy paragraph, matching the English sheet: RoRoRo reads Roblox's public status page, hosted by a third party (Status.io), sends nothing about you, and has a switch in Settings. Translated by hand from the English sentence, register as this sheet; the Settings name is this culture's shipped `Shell_Title_Settings`. Verifier run recorded in `submission-packet-1.41.0.0.md`. Rest of the block unchanged.
 
 > **Rewritten 2026-11-05 (v1.36.0.0)**, same edits as the English sheet: the one-account story first,
@@ -51,7 +53,7 @@ O que você leva:
 • Fala o seu idioma. O app inteiro — cada menu, configuração, dica e janela, e as mensagens que o RoRoRo escreve enquanto você usa — é traduzido para francês, alemão, russo, português (Brasil), polonês e espanhol, seguindo o idioma do seu Windows ou sua escolha nas Configurações. A troca é imediata, e a lista só oferece idiomas totalmente traduzidos, para você nunca cair numa tela pela metade em inglês.
 
 Privacidade e segurança:
-Sua senha do Roblox nunca é vista pelo RoRoRo. O login acontece inteiramente na página do próprio Roblox, embutida num quadro Microsoft Edge WebView2 — mesmo HTML, mesma conexão HTTPS do seu navegador. O RoRoRo captura apenas o cookie de sessão que o Roblox define após o login, e o criptografa antes de gravar em disco. Os dados da conta (Robux, Plus, amigos online) são lidos do Roblox com a própria sessão daquela conta e guardados só no mesmo cofre criptografado. Sem telemetria. Sem analytics. Nada sobre você sai da sua máquina além das chamadas ao Roblox durante o lançamento — as mesmas que o Roblox.com faz do seu navegador — e, somente se você mesmo configurar, alertas para o seu webhook do Discord ou o serviço de push escolhido (Pushover ou ntfy). O RoRoRo também baixa os próprios arquivos assinados das suas versões publicadas no GitHub — atualizações, as configurações de compatibilidade com o Roblox e a lista de problemas conhecidos do Roblox — e não envia nada sobre você para obtê-los. Em uma instalação da Store, o RoRoRo também pergunta à Microsoft Store, pelo Windows, se há uma atualização, e não envia nada por conta própria. O RoRoRo também consulta a página de status pública do Roblox, que um terceiro (Status.io) hospeda para o Roblox, não envia nada sobre você para isso e tem um interruptor em Configurações para desligar essa consulta.
+Sua senha do Roblox nunca é vista pelo RoRoRo. O login acontece inteiramente na página do próprio Roblox, embutida num quadro Microsoft Edge WebView2 — mesmo HTML, mesma conexão HTTPS do seu navegador. O RoRoRo captura apenas o cookie de sessão que o Roblox define após o login, e o criptografa antes de gravar em disco. Os dados da conta (Robux, Plus, amigos online) são lidos do Roblox com a própria sessão daquela conta e guardados só no mesmo cofre criptografado. Sem telemetria. Sem analytics. Nada sobre você sai da sua máquina além das chamadas ao Roblox que o RoRoRo faz por você — as mesmas que o Roblox.com faz do seu navegador — e, somente se você mesmo configurar, alertas para o seu webhook do Discord ou o serviço de push escolhido (Pushover ou ntfy). O RoRoRo também baixa os próprios arquivos assinados das suas versões publicadas no GitHub — atualizações, as configurações de compatibilidade com o Roblox e a lista de problemas conhecidos do Roblox — e não envia nada sobre você para obtê-los. Em uma instalação da Store, o RoRoRo também pergunta à Microsoft Store, pelo Windows, se há uma atualização, e não envia nada por conta própria. O RoRoRo também consulta a página de status pública do Roblox, que um terceiro (Status.io) hospeda para o Roblox, não envia nada sobre você para isso e tem um interruptor em Configurações para desligar essa consulta.
 
 Importante: aviso de marcas e afiliação.
 "Roblox" e o logotipo Roblox são marcas da Roblox Corporation. O RoRoRo é uma ferramenta independente de terceiros, não afiliada, endossada ou patrocinada pela Roblox Corporation. O termo registrado é usado apenas para descrever compatibilidade com a plataforma Roblox. O RoRoRo inicia o cliente oficial do Roblox sem modificá-lo — sem injeção, sem hooks, sem alterar o processo do Roblox; ele apenas segura um mutex nomeado do Windows antes do lançamento, para que as instâncias seguintes do cliente vejam a checagem de singleton como já ocupada.
@@ -88,34 +90,37 @@ Problemas conhecidos do Roblox — problemas do lado do Roblox, o que fazer e o 
 Entrar de novo se cair — um alt expulso ou preso fora do jogo é fechado e entra de novo sozinho, nunca a sua conta principal
 ```
 
-## What's new in this version (v1.40.0.0, ≤1500 chars)
+## What's new in this version (v1.41.0.0, ≤1500 chars)
+
+> **Synced 2026-11-27** from `whats-new-1.41.0.0.md`, which held the 1.41 translations; the sheet still carried v1.40's block, and the console and the export read the sheet. Caught by the verifier.
 
 ```
-v1.40.0.0
+v1.41.0.0
 
-Um botão de atualização e um RoRoRo mais estável
+Saiba o que o Roblox está fazendo antes de iniciar
 
-• Novo: o botão “Atualização disponível” na janela principal.
-  Ele aparece quando sai um RoRoRo mais novo, e um clique abre a
-  página do RoRoRo na Microsoft Store. Para saber, o RoRoRo
-  pergunta à Store pelo Windows, depois de iniciar e a cada seis
-  horas, e não envia nada por conta própria. Ele começa a
-  funcionar a partir da próxima atualização.
-• Um arquivo danificado de jogos salvos, servidores privados,
-  histórico ou estatísticas não impede mais o RoRoRo de iniciar:
-  o que dá para ler é mantido. Um arquivo de contas danificado é
-  restaurado a partir da cópia de segurança e nunca é lido como
-  vazio. “Começar do zero” agora confere de novo antes e só
-  coloca o arquivo de lado, sem nunca apagá-lo.
-• O RoRoRo fecha mais rápido, e o pedido de outro programa para
-  fechá-lo agora também funciona durante a inicialização.
-• Uma conta com o login expirado agora gera um alerta quando sai
-  do jogo. Um início que falha aparece na linha da conta.
-• A lista de atalhos da página “Sobre” e as datas em todo o
-  RoRoRo seguem o seu idioma.
+• Novo: o RoRoRo avisa quando o Roblox tem uma atualização
+  esperando, antes de você iniciar. O próximo início a instala,
+  e “Iniciar vários” segura as outras contas até terminar. O
+  aviso some sozinho quando a atualização termina.
+• Novo: quando o Roblox informa um problema no site, nos jogos,
+  nos avatares ou na entrada em jogos, uma linha avisa e leva à
+  página de status do Roblox. Quando não há problema, nada
+  aparece.
+• Novo: seus jogos salvos mostram quantas pessoas estão jogando
+  agora e quando o jogo mudou pela última vez.
+• Corrigido: “Iniciar vários” podia mostrar “O Roblox está
+  atualizando” e segurar as outras contas mesmo com o Roblox já
+  atualizado.
+• Para ler a página de status do Roblox, o RoRoRo consulta o
+  Status.io, um terceiro que a hospeda, e não envia nada sobre
+  você. Um interruptor em Configurações desliga a linha de
+  status e as contagens de jogadores.
 
 Saia do RoRoRo antes de atualizar pela Store: clique com o
-botão direito no ícone da bandeja e escolha “Sair”.
+botão direito no ícone da bandeja e escolha “Sair”. Uma
+atualização que chega com o RoRoRo aberto pode falhar ao
+instalar.
 
 Nada mais mudou. Contas, temas, plugins, histórico e todas as
 outras configurações continuam como estavam.

@@ -96,7 +96,7 @@ Wissen, was Roblox gerade macht, bevor du startest
   starten“ hält deine übrigen Konten zurück, bis es fertig ist.
   Der Hinweis verschwindet von selbst, sobald das Update drin ist.
 • Neu: Meldet Roblox ein Problem mit seiner Website, Spielen,
-  Avataren oder dem Spielbeitritt, sagt es eine Zeile und
+  Avataren oder dem Spielbeitritt, weist eine Zeile darauf hin und
   verlinkt auf Roblox' Statusseite. Ist alles in Ordnung, zeigt
   sich nichts.
 • Neu: Deine gespeicherten Spiele zeigen, wie viele gerade
@@ -261,7 +261,7 @@ wszystkie inne ustawienia zostają bez zmian.
 ```
 v1.41.0.0
 
-Sabe qué hace Roblox antes de iniciar
+Entérate de qué hace Roblox antes de iniciar
 
 • Nuevo: RoRoRo te avisa cuando Roblox tiene una actualización
   esperando, antes de iniciar. El próximo inicio la instalará, y
@@ -278,7 +278,7 @@ Sabe qué hace Roblox antes de iniciar
   estuviera al día.
 • Para leer la página de estado de Roblox, RoRoRo consulta a
   Status.io, un tercero que la aloja, y no envía nada sobre ti.
-  Un interruptor en Ajustes apaga la línea de estado y los
+  Un interruptor en Configuración apaga la línea de estado y los
   recuentos de jugadores.
 
 Sal de RoRoRo antes de actualizar desde la Store: haz clic
