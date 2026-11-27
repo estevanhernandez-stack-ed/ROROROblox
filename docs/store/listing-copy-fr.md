@@ -90,36 +90,39 @@ Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonc
 Rejoindre à nouveau s'il décroche — un alt expulsé ou coincé hors du jeu est fermé et rejoint à nouveau tout seul, jamais votre compte principal
 ```
 
-## What's new in this version (v1.40.0.0, ≤1500 chars)
+## What's new in this version (v1.41.0.0, ≤1500 chars)
+
+> **Synced 2026-11-27** from `whats-new-1.41.0.0.md`, which held the 1.41 translations; the sheet still carried v1.40's block, and the console and the export read the sheet. Caught by the verifier.
 
 ```
-v1.40.0.0
+v1.41.0.0
 
-Un bouton de mise à jour, un RoRoRo plus stable
+Sachez ce que fait Roblox avant de lancer
 
-• Nouveau : le bouton « Mise à jour disponible » dans la fenêtre
-  principale. Il apparaît dès qu'un RoRoRo plus récent est
-  disponible, et un clic ouvre la page de RoRoRo dans le
-  Microsoft Store. Pour le savoir, RoRoRo interroge le Store via
-  Windows, après son démarrage puis toutes les six heures, sans
-  rien envoyer de lui-même. Il fonctionnera à partir de la mise
-  à jour suivante.
-• Un fichier endommagé de jeux enregistrés, de serveurs privés,
-  d'historique ou de statistiques n'empêche plus RoRoRo de
-  démarrer : ce qui est lisible est conservé. Un fichier de
-  comptes endommagé est restauré depuis sa sauvegarde et n'est
-  jamais lu comme vide. « Repartir de zéro » revérifie d'abord
-  et ne fait que mettre le fichier de côté, sans le supprimer.
-• RoRoRo se ferme plus vite, et un autre programme peut aussi le
-  fermer pendant le démarrage.
-• Un compte dont la connexion a expiré déclenche une alerte en
-  quittant sa partie. Un lancement qui échoue s'affiche sur sa
-  ligne.
-• La liste des raccourcis de « À propos » et les dates dans tout
-  RoRoRo suivent votre langue.
+• Nouveau : RoRoRo vous prévient quand une mise à jour de Roblox
+  vous attend, avant le lancement. Le prochain lancement
+  l'installe, et « Lancer plusieurs » retient vos autres comptes
+  jusqu'à la fin. L'avis disparaît tout seul une fois la mise à
+  jour installée.
+• Nouveau : quand Roblox signale un problème sur son site, ses
+  jeux, ses avatars ou la connexion aux jeux, une ligne le dit
+  et renvoie vers la page d'état de Roblox. Quand tout va bien,
+  rien ne s'affiche.
+• Nouveau : vos jeux enregistrés indiquent combien de personnes
+  y jouent en ce moment et quand le jeu a changé pour la
+  dernière fois.
+• Corrigé : « Lancer plusieurs » pouvait afficher « Roblox se
+  met à jour » et retenir vos autres comptes alors que Roblox
+  était déjà à jour.
+• Pour lire la page d'état de Roblox, RoRoRo interroge
+  Status.io, un tiers qui l'héberge, sans rien envoyer à votre
+  sujet. Un réglage dans Paramètres désactive la ligne d'état et
+  les nombres de joueurs.
 
 Quittez RoRoRo avant de mettre à jour depuis le Store : clic
 droit sur l'icône de la zone de notification, puis « Quitter ».
+Une mise à jour qui arrive pendant que RoRoRo tourne peut
+échouer à s'installer.
 
 Rien d'autre n'a changé. Comptes, thèmes, plugins, historique et
 tous les autres réglages sont conservés tels quels.

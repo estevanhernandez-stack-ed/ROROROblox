@@ -17,7 +17,7 @@ Ein Ort, um Roblox unter Windows zu starten: deine Spiele, FPS-Limits, Alarme au
 
 ## Long description
 
-> **Amended 2026-11-27 (v1.41.0.0):** the clause "the Roblox-side calls during launch" now says "the Roblox-side calls RoRoRo makes for you", matching the English sheet. Translated by hand, register as this sheet. Rest of the block unchanged.
+> **Amended 2026-11-27 (v1.41.0.0):** the clause "the Roblox-side calls during launch" now says "the Roblox-side calls RoRoRo makes for you", matching the English sheet. Translated by hand, register as this sheet. Same day, on the verifier's read: the memory watchdog line says "bevor der RAM knapp wird" (it read as the client switching off), and the plugin line keeps "by name" as "namentlich". Rest of the block unchanged.
 
 > **Refreshed 2026-11-26 (v1.41.0.0):** one sentence added at the end of the privacy paragraph, matching the English sheet: RoRoRo reads Roblox's public status page, hosted by a third party (Status.io), sends nothing about you, and has a switch in Settings. Translated by hand from the English sentence, register as this sheet; the Settings name is this culture's shipped `Shell_Title_Settings`. Verifier run recorded in `submission-packet-1.41.0.0.md`. Rest of the block unchanged.
 
@@ -41,13 +41,13 @@ Was du bekommst:
 • Weiß, wann ein Konto dich braucht. Sitzung abgelaufen, Verifizierung nötig, Von Roblox eingeschränkt: Jeder Fall hat sein eigenes Badge, und ein Klick startet die Lösung.
 • Eine Bibliothek für jedes Spiel. Alles, was du gespielt, favorisiert oder als privaten Server gespeichert hast, als Raster oder Liste. Durchsuche sie, filtere sie, füge einen Spiellink ein und wähle, welches Konto spielt.
 • Squad Launch + Friend Follow. Schicke alle ausgewählten Konten in denselben privaten Server, folge einem Freund in seinen, oder lande mit deinen Konten gemeinsam auf einem öffentlichen Server.
-• RAM-Wächter + Recycle. RoRoRo lernt, was ein Roblox-Client auf deiner Maschine wirklich an RAM kostet, und warnt, bevor er ausgeht. Ein Klick schließt einen schweren Client und bringt ihn zurück in denselben Server.
+• RAM-Wächter + Recycle. RoRoRo lernt, was ein Roblox-Client auf deiner Maschine wirklich an RAM kostet, und warnt, bevor der RAM knapp wird. Ein Klick schließt einen schweren Client und bringt ihn zurück in denselben Server.
 • Erneut beitreten, wenn es ausfällt. Schalte es je Konto ein, und ein Alt, dessen Roblox-Fenster noch offen ist, der aber aus dem Spiel gefallen ist (ein Kick wegen Inaktivität, ein fehlgeschlagener Beitritt), wird geschlossen und tritt von selbst erneut bei. Höchstens dreimal pro Stunde, nie dein Hauptkonto, und dein eigenes „Stoppen“ hat immer Vorrang.
 • Ein Werkzeugfenster. Bibliothek, Einstellungen, Verlauf, Diagnose, Plugins, Bekannte Roblox-Probleme und Über sind Seiten eines Fensters neben deinen Konten — mit Tastenkürzeln überall; F1 zeigt die Liste.
 • Themes. Vier eingebaute, darunter eines, das Bedeutung nie allein über Farbe transportiert, plus ein Editor für eigene Themes aus zehn Farben, teilbar als Datei.
 • Optionale Alarme — Desktop, Discord oder Handy. Leite jeden Alarm an jede Kombination: Desktop-Benachrichtigungen, einen selbst erstellten Discord-Webhook oder dein Handy über Pushover oder ntfy. Verbindungsabbrüche, RAM-Warnungen, inaktive Konten, Recycle-Abschlüsse und ein „Alles gut“-Zeichen alle zwei Stunden, während deine Konten laufen. Wähle, wie oft jeder Alarm höchstens wiederholt wird und wie er klingt. Eine frische Installation macht keinerlei Alarm-Aufrufe — nichts sendet, bevor du etwas einrichtest.
 • Infobereich mit statusfarbenem Symbol — der Multi-Instanz-Status auf einen Blick; Doppelklick startet dein Hauptkonto.
-• Plugin-System. Optionale Plugins laufen als getrennte Prozesse und haben keine Berechtigungen, bis du sie einzeln erteilst.
+• Plugin-System. Optionale Plugins laufen als getrennte Prozesse und haben keine Berechtigungen, bis du sie einzeln und namentlich erteilst.
 • Auto-Update über Velopack. Eine entfernte Konfiguration verfolgt die bekannte Roblox-Version und den Mutex-Namen, damit eine Umbenennung auf Roblox-Seite dich nicht lange ausbremst.
 • Barrierefreiheit, gemessen. Jedes Steuerelement meldet seinen Namen an Hilfstechnologien, und der Kontrast wird in jedem Theme an gerenderten Pixeln geprüft.
 • Spricht deine Sprache. Die gesamte App — jedes Menü, jede Einstellung, jeder Tooltip und jedes Fenster sowie die Meldungen, die RoRoRo während der Nutzung schreibt — ist auf Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch und Spanisch übersetzt, je nach Windows-Sprache oder deiner Wahl in den Einstellungen. Der Wechsel wirkt sofort, und die Auswahl bietet nur vollständig übersetzte Sprachen an, damit du nie auf einem halb englischen Bildschirm landest.
@@ -90,35 +90,36 @@ Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welch
 Erneut beitreten, wenn es ausfällt — ein Alt, der gekickt wurde oder außerhalb des Spiels hängt, wird geschlossen und tritt von selbst erneut bei, nie dein Hauptkonto
 ```
 
-## What's new in this version (v1.40.0.0, ≤1500 chars)
+## What's new in this version (v1.41.0.0, ≤1500 chars)
+
+> **Synced 2026-11-27** from `whats-new-1.41.0.0.md`, which held the 1.41 translations; the sheet still carried v1.40's block, and the console and the export read the sheet. Caught by the verifier.
 
 ```
-v1.40.0.0
+v1.41.0.0
 
-Eine Update-Schaltfläche und ein stabileres RoRoRo
+Wissen, was Roblox gerade macht, bevor du startest
 
-• Neu: die Schaltfläche „Update verfügbar“ im Hauptfenster. Sie
-  erscheint, sobald ein neueres RoRoRo bereitsteht, und ein
-  Klick öffnet die Seite von RoRoRo im Microsoft Store. Dafür
-  fragt RoRoRo den Store über Windows, nach dem Start und dann
-  alle sechs Stunden, und sendet dabei nichts Eigenes. Sie
-  funktioniert ab dem Update nach diesem.
-• Eine beschädigte Datei mit gespeicherten Spielen, privaten
-  Servern, Verlauf oder Statistik hält RoRoRo nicht mehr vom
-  Start ab: Lesbares bleibt erhalten. Eine beschädigte
-  Kontodatei wird aus der Sicherung wiederhergestellt und nie
-  als leer gelesen. „Neu beginnen“ prüft jetzt erst noch einmal
-  und legt die Datei nur beiseite, ohne sie je zu löschen.
-• RoRoRo beendet sich schneller, und wenn ein anderes Programm
-  es zum Schließen auffordert, klappt das jetzt auch beim Start.
-• Ein Konto mit abgelaufener Anmeldung löst jetzt eine Meldung
-  aus, wenn es herausfällt. Ein fehlgeschlagener Start erscheint
-  in seiner Zeile.
-• Die Kürzel-Liste auf der Seite „Info“ und Datumsangaben in
-  ganz RoRoRo folgen deiner Sprache.
+• Neu: RoRoRo sagt dir vor dem Start, wenn bei Roblox ein Update
+  bereitliegt. Der nächste Start installiert es, und „Mehrere
+  starten“ hält deine übrigen Konten zurück, bis es fertig ist.
+  Der Hinweis verschwindet von selbst, sobald das Update drin ist.
+• Neu: Meldet Roblox ein Problem mit seiner Website, Spielen,
+  Avataren oder dem Spielbeitritt, sagt es eine Zeile und
+  verlinkt auf Roblox' Statusseite. Ist alles in Ordnung, zeigt
+  sich nichts.
+• Neu: Deine gespeicherten Spiele zeigen, wie viele gerade
+  spielen und wann sich das Spiel zuletzt geändert hat.
+• Behoben: „Mehrere starten“ konnte „Roblox wird aktualisiert“
+  anzeigen und deine übrigen Konten zurückhalten, obwohl Roblox
+  schon aktuell war.
+• Für die Statusseite fragt RoRoRo Status.io an, einen
+  Drittanbieter, der sie hostet, und sendet nichts über dich.
+  Ein Schalter in den Einstellungen schaltet die Statuszeile und
+  die Spielerzahlen ab.
 
 Beende RoRoRo, bevor du aus dem Store aktualisierst: Rechtsklick
-auf das Symbol im Infobereich, dann „Beenden“.
+auf das Symbol im Infobereich, dann „Beenden“. Ein Update, das
+bei laufendem RoRoRo eintrifft, kann sich nicht installieren.
 
 Sonst hat sich nichts geändert. Konten, Designs, Plugins,
 Verlauf und alle anderen Einstellungen bleiben, wie sie sind.

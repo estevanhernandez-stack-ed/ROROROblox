@@ -89,34 +89,38 @@ Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja
 Dołącz ponownie, jeśli wypadnie — alt wyrzucony albo taki, który utknął poza grą, jest zamykany i sam dołącza ponownie, nigdy twoje główne konto
 ```
 
-## What's new in this version (v1.40.0.0, ≤1500 chars)
+## What's new in this version (v1.41.0.0, ≤1500 chars)
+
+> **Synced 2026-11-27** from `whats-new-1.41.0.0.md`, which held the 1.41 translations; the sheet still carried v1.40's block, and the console and the export read the sheet. Caught by the verifier.
 
 ```
-v1.40.0.0
+v1.41.0.0
 
-Przycisk aktualizacji i stabilniejszy RoRoRo
+Wiedz, co robi Roblox, zanim uruchomisz
 
-• Nowość: przycisk „Dostępna aktualizacja” w głównym oknie.
-  Pojawia się, gdy wyjdzie nowszy RoRoRo, a jedno kliknięcie
-  otwiera stronę RoRoRo w Microsoft Store. Żeby to wiedzieć,
-  RoRoRo pyta Store za pośrednictwem Windows, po uruchomieniu i
-  potem co sześć godzin, i sam niczego nie wysyła. Zacznie
-  działać od następnej aktualizacji.
-• Uszkodzony plik zapisanych gier, prywatnych serwerów, historii
-  lub statystyk nie blokuje już uruchomienia RoRoRo: to, co da
-  się odczytać, zostaje. Uszkodzony plik kont jest odtwarzany z
-  kopii zapasowej i nigdy nie jest odczytywany jako pusty.
-  „Zacznij od nowa” najpierw sprawdza jeszcze raz i tylko
-  odkłada plik na bok, nigdy go nie usuwa.
-• RoRoRo zamyka się szybciej, a prośba innego programu o
-  zamknięcie działa teraz także podczas uruchamiania.
-• Konto z wygasłym logowaniem wywołuje teraz alert, gdy wypada z
-  gry. Nieudane uruchomienie pojawia się w jego wierszu.
-• Lista skrótów na stronie „O programie” i daty w całym RoRoRo
-  zależą od twojego języka.
+• Nowość: RoRoRo mówi, że na Roblox czeka aktualizacja, jeszcze
+  przed uruchomieniem. Następne uruchomienie ją zainstaluje, a
+  „Uruchom wiele” wstrzyma pozostałe konta do jej zakończenia.
+  Powiadomienie znika samo, gdy aktualizacja jest już
+  zainstalowana.
+• Nowość: gdy Roblox zgłasza problem ze swoją stroną, grami,
+  awatarami lub dołączaniem do gier, mówi o tym jedna linia z
+  odnośnikiem do strony statusu Roblox. Gdy wszystko gra,
+  nic się nie pokazuje.
+• Nowość: zapisane gry pokazują, ile osób gra teraz i kiedy
+  gra ostatnio się zmieniła.
+• Naprawiono: „Uruchom wiele” mogło pokazać „Roblox się
+  aktualizuje” i wstrzymać pozostałe konta, choć Roblox był już
+  aktualny.
+• Żeby odczytać stronę statusu Roblox, RoRoRo pyta Status.io,
+  podmiot trzeci, który ją hostuje, i nie wysyła nic o tobie.
+  Jeden przełącznik w Ustawieniach wyłącza linię statusu i
+  liczby graczy.
 
 Zakończ RoRoRo przed aktualizacją ze Store: kliknij prawym
-przyciskiem ikonę w zasobniku i wybierz „Zakończ”.
+przyciskiem ikonę w zasobniku i wybierz „Zakończ”. Aktualizacja,
+która nadejdzie przy uruchomionym RoRoRo, może się nie
+zainstalować.
 
 Nic więcej się nie zmieniło. Konta, motywy, pluginy, historia i
 wszystkie inne ustawienia zostają bez zmian.
