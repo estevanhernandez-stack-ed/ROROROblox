@@ -10,6 +10,7 @@ using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
 using ROROROblox.App.Discord;
 using ROROROblox.App.Discord.Internal;
+using ROROROblox.App.Feeds;
 using ROROROblox.App.Localization;
 using ROROROblox.App.Logging;
 using ROROROblox.App.Startup;
@@ -816,6 +817,7 @@ public partial class App : Application
         _services.GetRequiredService<MainViewModel>().UpdateAvailability =
             _services.GetRequiredService<UpdateAvailability>();
         _services.GetRequiredService<MainViewModel>().QuitApplication = RequestShutdown;
+        WireRobloxFeeds();
         // How the previous session ended. A recorded crash opens this start with a notice that
         // points at Diagnostics; set before the rating ask, though either order gives the same result.
         _services.GetRequiredService<MainViewModel>().PreviousExit = _lastExit?.Previous;
@@ -932,6 +934,25 @@ public partial class App : Application
         if (_services is null)
         {
             return;
+        }
+
+        // The Roblox feeds coordinator: creates its timer and reads nothing. The first read is no sooner
+        // than 30 s after the window is first shown, whenever this ran. First in this method (moved
+        // 2026-11-27): the pulse's gate opens 30 s after Show() on its own, and the pulse service starts
+        // enabled, so the switch's off value has to land before anything here can stall (the WebView2 sweep
+        // below is disk work of unbounded size). If the switch cannot be read, the pulse is turned off.
+        try
+        {
+            // The switch is read before Start(), so a session begun with it off never asks.
+            var feedsOn = await _services.GetRequiredService<IAppSettings>().GetRobloxFeedsEnabledAsync();
+            _services.GetRequiredService<MainViewModel>().SetRobloxFeedsEnabled(feedsOn);
+            _services.GetRequiredService<RobloxFeeds>().Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "The Roblox feeds could not start; no update or status line this session.");
+            try { _services.GetRequiredService<MainViewModel>().SetRobloxFeedsEnabled(false); }
+            catch (Exception inner) { _log?.LogDebug(inner, "The Roblox feeds could not be turned off either."); }
         }
 
         try
@@ -1239,11 +1260,19 @@ public partial class App : Application
         // clientsettingscdn.roblox.com carries the ROROROblox UA (never a browser spoof). The probe
         // resolves its other two seams itself (live installer process scan + GetInstalledRobloxVersion).
         // Same IHttpClientFactory pattern as RobloxApi; both members degrade-safe to "no update".
+        // Anonymous, so the feed clients' handler since v1.41 (2026-11-27): no cookie container and no
+        // redirects. The CDN answers 200 directly and sets no cookie; a 3xx now lands in the probe's
+        // existing non-success path (no update) instead of being followed somewhere else.
         services.AddHttpClient<IRobloxUpdateProbe, RobloxUpdateProbe>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
             var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            UseCookies = false,
+            AllowAutoRedirect = false,
         });
 
         services.AddSingleton<IClientAppSettingsWriter, ClientAppSettingsWriter>();
@@ -1306,6 +1335,15 @@ public partial class App : Application
             sp.GetRequiredService<IStoreUpdateProbe>(),
             TimeProvider.System,
             sp.GetRequiredService<ILogger<UpdateAvailability>>()));
+        // Roblox's client-version and status feeds (v1.41). The one place that decides when either is
+        // asked; both typed clients come through factories so every attempt gets a fresh one, as the
+        // known-issues refresh does. Nothing in a launch path awaits it.
+        services.AddSingleton(sp => new RobloxFeeds(
+            () => sp.GetRequiredService<IRobloxUpdateProbe>(),
+            () => sp.GetRequiredService<ROROROblox.Core.Feeds.IRobloxStatusApi>(),
+            sp.GetRequiredService<IBloxstrapDetector>(),
+            TimeProvider.System,
+            sp.GetRequiredService<ILogger<RobloxFeeds>>()));
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
         services.AddSingleton<RobloxWindowDecorator>();
@@ -1413,6 +1451,15 @@ public partial class App : Application
             sp.GetRequiredService<IRobloxApi>(),
             log: sp.GetService<ILogger<GameIconCache>>()));
         services.AddSingleton<LibraryCatalog>();
+        // What the Library and the account panels read for a saved game's player count and last update.
+        // In memory only, typed client behind a factory; asks nothing until the gate is set from the
+        // feeds' first-visible instant (MainViewModel.SetMainWindowVisible).
+        services.AddSingleton<ROROROblox.Core.Library.GamePulseService>(sp => new ROROROblox.Core.Library.GamePulseService(
+            () => sp.GetRequiredService<ROROROblox.Core.Library.IGamePulseApi>(),
+            TimeProvider.System,
+            sp.GetRequiredService<ILogger<ROROROblox.Core.Library.GamePulseService>>()));
+        services.AddSingleton<ROROROblox.Core.Library.IGamePulseService>(sp =>
+            sp.GetRequiredService<ROROROblox.Core.Library.GamePulseService>());
 
         // Tray avatar painter — owns its own HttpClient (default UA fine for public Roblox CDN
         // avatar URLs). TrayService is registered as ITrayService elsewhere; the painter takes
@@ -1878,7 +1925,9 @@ public partial class App : Application
             // The refresh the modal did on close, now done when the data changes.
             libraryChanged: () => _ = main.ReloadGamesAsync(),
             icons: _services.GetRequiredService<IGameIconCache>(),
-            ui: new Threading.WpfUiDispatcher());
+            ui: new Threading.WpfUiDispatcher(),
+            pulseReadsOpen: () => main.PulseReadsOpen,
+            pulse: _services.GetRequiredService<ROROROblox.Core.Library.IGamePulseService>());
         return new Games.GamesPage(viewModel, main.Accounts);
     }
 
@@ -2011,6 +2060,31 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "WireIdleTrayClientSweeper failed; idle tray clients are only cleared before a launch.");
+        }
+    }
+
+    /// <summary>
+    /// Hands the feeds coordinator and the game-pulse service to the view model (as properties, so no
+    /// constructor changes) and routes the tracker's attach to the coordinator's local re-read. Both
+    /// resolve here, at startup, so a resolve-time failure is logged where it happens. A passenger: a
+    /// failure leaves the app without the new readings and never blocks startup. Start() is in
+    /// RunStartupChecksAsync; the window's visibility is pushed from MainWindow.
+    /// </summary>
+    private void WireRobloxFeeds()
+    {
+        if (_services is null) return;
+        try
+        {
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var feeds = _services.GetRequiredService<RobloxFeeds>();
+            vm.RobloxFeeds = feeds;
+            vm.GamePulse = _services.GetRequiredService<ROROROblox.Core.Library.IGamePulseService>();
+            // The event fires off the UI thread; the call is two local file-version reads and a lock.
+            _services.GetRequiredService<IRobloxProcessTracker>().ProcessAttached += (_, _) => feeds.NoteClientAttached();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "The Roblox feeds could not be wired; no update or status line this session.");
         }
     }
 
@@ -3722,6 +3796,17 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "Update availability dispose threw on exit; ignoring.");
+            }
+
+            // The feeds coordinator and the pulse service own timers too; stopped before the provider goes.
+            try
+            {
+                _services.GetService<RobloxFeeds>()?.Dispose();
+                _services.GetService<ROROROblox.Core.Library.GamePulseService>()?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "Roblox feeds dispose threw on exit; ignoring.");
             }
 
             // Stop the activity-monitor sample timer before the provider disposes (same shape

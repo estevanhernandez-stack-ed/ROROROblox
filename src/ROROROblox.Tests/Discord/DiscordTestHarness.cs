@@ -349,6 +349,8 @@ internal static class DiscordTestHarness
         public Task<bool> GetCarefulSquadLaunchAsync() => Task.FromResult(false);
         public Task<bool> GetAlwaysShowRecycleAsync() => Task.FromResult(false);
         public Task SetAlwaysShowRecycleAsync(bool always) => throw new NotImplementedException();
+        public Task<bool> GetRobloxFeedsEnabledAsync() => Task.FromResult(true);
+        public Task SetRobloxFeedsEnabledAsync(bool enabled) => throw new NotImplementedException();
         public Task SetCarefulSquadLaunchAsync(bool careful) => throw new NotImplementedException();
         public Task<bool> GetStreamerModeAsync() => throw new NotImplementedException();
         public Task SetStreamerModeAsync(bool enabled) => throw new NotImplementedException();
@@ -524,6 +526,8 @@ internal static class DiscordTestHarness
     {
         public bool IsInstallerRunning() => throw new NotImplementedException();
         public Task<bool> IsUpdatePendingAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<RobloxUpdateState> GetUpdateStateAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public RobloxUpdateState CompareInstalledTo(Version latest) => throw new NotImplementedException();
         public bool IsUpdateChurnActive() => throw new NotImplementedException();
     }
 

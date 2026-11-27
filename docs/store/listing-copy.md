@@ -54,6 +54,8 @@ One place to launch Roblox on Windows: your games, FPS caps, alerts to your phon
 
 ## Long description
 
+> **Refreshed 2026-11-26 (v1.41.0.0), owner-approval pending (`submission-packet-1.41.0.0.md`, open item 1).** The privacy paragraph gains one sentence: RoRoRo reads Roblox's public status page, hosted by a third party (Status.io), sends nothing about you, and has a switch in Settings. A default-on call to a new host would otherwise make the paragraph wrong in seven languages. Same edit in all six sheets, each translated by hand from this sentence (translation verifier run recorded in the packet). Short description and product features audited against the tree the same day and unchanged. No image changes: variant B runs to 2027-02-20.
+
 > **Rewritten 2026-11-05 (v1.36.0.0).** The first paragraph is the one-account story; the multi-account
 > paragraph that used to open the listing follows it with every claim intact. Three bullets added
 > (accounts at a glance, health badges, the Library); the tools-window bullet says Library, not Games;
@@ -129,7 +131,7 @@ What you get:
 • Speaks your language. The whole interface — every menu, setting, tooltip and window, and the messages RoRoRo writes as you use it — is translated into French, German, Russian, Portuguese (Brazil), Polish, and Spanish, following your Windows language or your pick in Settings. Switching takes effect instantly, and the picker only offers a language that's fully translated, so you never land on a half-English screen.
 
 Privacy & security:
-Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. Account facts (Robux, Plus, friends online) are read from Roblox with that account's own session and kept only in the same encrypted vault. No telemetry. No analytics. Nothing about you leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy). RoRoRo also downloads its own signed files from its GitHub releases — updates, the Roblox compatibility settings, and the known Roblox issues list — and sends nothing about you to get them. On a Store install, RoRoRo also asks the Microsoft Store, through Windows, whether an update is waiting, and sends nothing of its own.
+Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. Account facts (Robux, Plus, friends online) are read from Roblox with that account's own session and kept only in the same encrypted vault. No telemetry. No analytics. Nothing about you leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy). RoRoRo also downloads its own signed files from its GitHub releases — updates, the Roblox compatibility settings, and the known Roblox issues list — and sends nothing about you to get them. On a Store install, RoRoRo also asks the Microsoft Store, through Windows, whether an update is waiting, and sends nothing of its own. RoRoRo also checks Roblox's public status page, which a third party (Status.io) hosts for Roblox, sends nothing about you to do it, and has a switch in Settings to turn it off.
 
 Important: trademark and affiliation notice.
 "Roblox" and the Roblox logo are trademarks of Roblox Corporation. RoRoRo is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform. RoRoRo launches the official Roblox client unmodified — it does not inject into, hook into, or alter the Roblox process in any way; it only holds a Windows named-mutex before launch so that subsequent client instances see the singleton check as already-claimed.
@@ -257,8 +259,8 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 > **This section moved.** Since v1.21 the paste-ready What's-new block lives in a per-version
 > file, `docs/store/whats-new-<version>.md`, written next to that release's reviewer letter so
 > the two are drafted against the same facts. Current:
-> [`whats-new-1.40.0.0.md`](whats-new-1.40.0.0.md) (published 2026-11-18). Previous:
-> [`whats-new-1.39.0.0.md`](whats-new-1.39.0.0.md). (This pointer had gone six versions stale,
+> [`whats-new-1.41.0.0.md`](whats-new-1.41.0.0.md) (prepared 2026-11-26, not shipped). Previous:
+> [`whats-new-1.40.0.0.md`](whats-new-1.40.0.0.md) (published 2026-11-18). (This pointer had gone six versions stale,
 > still naming v1.22 as current at the v1.28 cut, and four more by the v1.32.1.0 cut — worth
 > knowing that it is hand-maintained and nothing fails when it rots.) The v1.14 and v1.12 blocks that used to sit
 > here are preserved in git history and in their `release-notes-*.md` files.

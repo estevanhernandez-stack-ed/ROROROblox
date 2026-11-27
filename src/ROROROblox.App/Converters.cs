@@ -22,6 +22,27 @@ internal sealed class BoolToVisibilityConverter : IValueConverter
     }
 }
 
+/// <summary>
+/// A bool picks one of two integers, for a Grid row or span that has to follow a flag (compact mode) without a
+/// trigger on the element: a button's style does not move buttons.
+/// </summary>
+internal sealed class BoolToIntConverter : IValueConverter
+{
+    public int TrueValue { get; set; } = 1;
+
+    public int FalseValue { get; set; }
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is true ? TrueValue : FalseValue;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException();
+    }
+}
+
 internal sealed class InverseBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

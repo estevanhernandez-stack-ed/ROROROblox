@@ -56,4 +56,9 @@
     <None Include="Fixtures\session-history-sample.json" Link="Fixtures\session-history-sample.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Recorded Status.io answers, byte for byte (Fixtures\RobloxStatus\PROVENANCE.md). Never edited. -->
+    <None Include="Fixtures\RobloxStatus\*.json" Link="Fixtures\RobloxStatus\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

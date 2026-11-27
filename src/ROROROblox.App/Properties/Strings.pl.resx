@@ -3756,6 +3756,9 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   <data name="Library_Playing" xml:space="preserve">
     <value>grają: {0}</value>
   </data>
+  <data name="Library_Pulse_Updated" xml:space="preserve">
+    <value>zaktualizowano {0}</value>
+  </data>
   <data name="Library_PlaceId" xml:space="preserve">
     <value>ID miejsca {0}</value>
   </data>
@@ -3812,5 +3815,80 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   </data>
   <data name="MainWindow_UpdateStagedTooltipNoVersion" xml:space="preserve">
     <value>Nowa wersja jest pobrana. Zakończ RoRoRo i otwórz go ponownie, aby dokończyć aktualizację. Kliknij, aby zakończyć teraz.</value>
+  </data>
+  <data name="RobloxLine_Update_Many" xml:space="preserve">
+    <value>Roblox ma aktualizację. Następne uruchomienie ją zainstaluje, a „Uruchom wiele” wstrzyma pozostałe do jej zakończenia.</value>
+  </data>
+  <data name="RobloxLine_Update_One" xml:space="preserve">
+    <value>Roblox ma aktualizację. Następne uruchomienie ją zainstaluje.</value>
+  </data>
+  <data name="RobloxLine_WhatChanged" xml:space="preserve">
+    <value>Co się zmieniło</value>
+  </data>
+  <data name="RobloxLine_Status_Outage" xml:space="preserve">
+    <value>Roblox zgłasza awarię: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Partial" xml:space="preserve">
+    <value>Roblox zgłasza częściową awarię: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Degraded" xml:space="preserve">
+    <value>Roblox zgłasza obniżoną wydajność: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Security" xml:space="preserve">
+    <value>Roblox zgłasza problem z bezpieczeństwem: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Maintenance" xml:space="preserve">
+    <value>Roblox zgłasza trwające prace serwisowe: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Problem" xml:space="preserve">
+    <value>Roblox zgłasza problem: {0}</value>
+  </data>
+  <data name="RobloxLine_Row_Website" xml:space="preserve">
+    <value>Strona</value>
+  </data>
+  <data name="RobloxLine_Row_Games" xml:space="preserve">
+    <value>Gry</value>
+  </data>
+  <data name="RobloxLine_Row_Avatar" xml:space="preserve">
+    <value>Awatary</value>
+  </data>
+  <data name="RobloxLine_Row_GameJoin" xml:space="preserve">
+    <value>Dołączanie do gier</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_one" xml:space="preserve">
+    <value>{0} i jeszcze {1}</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_other" xml:space="preserve">
+    <value>{0} i jeszcze {1}</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_few" xml:space="preserve">
+    <value>{0} i jeszcze {1}</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_many" xml:space="preserve">
+    <value>{0} i jeszcze {1}</value>
+  </data>
+  <data name="RobloxLine_StatusLink" xml:space="preserve">
+    <value>Status Roblox</value>
+  </data>
+  <data name="RobloxLine_More" xml:space="preserve">
+    <value>+{0} więcej</value>
+  </data>
+  <data name="RobloxLine_More_Name_one" xml:space="preserve">
+    <value>Jeszcze {0} powiadomienie Roblox</value>
+  </data>
+  <data name="RobloxLine_More_Name_other" xml:space="preserve">
+    <value>Jeszcze {0} powiadomień Roblox</value>
+  </data>
+  <data name="RobloxLine_More_Name_few" xml:space="preserve">
+    <value>Jeszcze {0} powiadomienia Roblox</value>
+  </data>
+  <data name="RobloxLine_More_Name_many" xml:space="preserve">
+    <value>Jeszcze {0} powiadomień Roblox</value>
+  </data>
+  <data name="SettingsPage_RobloxFeeds" xml:space="preserve">
+    <value>Pokazuj status Roblox i aktywność w grach.</value>
+  </data>
+  <data name="SettingsPage_RobloxFeeds_Description" xml:space="preserve">
+    <value>Sprawdza stronę statusu Roblox i odczytuje, ile osób jest w twoich zapisanych grach. Sprawdzenie statusu trafia do Status.io, podmiotu trzeciego, który hostuje tę stronę dla Roblox. Nic o tobie ani o twoich kontach nie jest wysyłane.</value>
   </data>
 </root>

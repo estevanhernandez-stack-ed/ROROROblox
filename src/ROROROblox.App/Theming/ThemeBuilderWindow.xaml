@@ -82,33 +82,45 @@
                    Margin="0,12,0,0"
                    TextWrapping="Wrap" />
 
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <Button x:Name="OpenFolderButton"
-                    Content="{loc:Loc ThemeBuilderWindow_OpenThemesFolder}"
-                    Padding="12,8" Margin="0,0,8,0"
-                    Style="{StaticResource SecondaryButtonStyle}"
-                    Click="OnOpenFolderClick" />
-            <Button x:Name="ShareThemeButton"
-                    Content="{loc:Loc ThemeShare_ShareButton}"
-                    AutomationProperties.Name="{loc:Loc ThemeShare_ShareButtonAccessible}"
-                    Padding="12,8" Margin="0,0,8,0"
-                    Style="{StaticResource SecondaryButtonStyle}"
-                    Click="OnShareThemeClick" />
-            <Button x:Name="ImportThemeButton"
-                    Content="{loc:Loc ThemeShare_ImportButton}"
-                    AutomationProperties.Name="{loc:Loc ThemeShare_ImportButtonAccessible}"
-                    Padding="12,8" Margin="0,0,8,0"
-                    Style="{StaticResource SecondaryButtonStyle}"
-                    Click="OnImportThemeClick" />
-            <Button Content="{loc:Loc ThemeBuilderWindow_Cancel}" Padding="14,8" Margin="0,0,8,0"
-                    Style="{StaticResource SecondaryStrongButtonStyle}"
-                    IsCancel="True"
-                    Click="OnCancelClick" />
-            <Button Style="{StaticResource CtaButtonStyle}" x:Name="SaveButton"
-                    Content="{loc:Loc ThemeBuilderWindow_SaveAndApply}"
-                    Padding="18,8"
-                    IsDefault="True"
-                    Click="OnSaveClick" />
-        </StackPanel>
+        <!-- Two rows (task kw9psaaah, 2026-11-26): the five buttons on one right-aligned row ran past the left edge
+             in every language, English included, and French needs more than the minimum width for the three
+             folder/share/import buttons alone. Those wrap on their own row; Cancel and Save sit right, beneath.
+             ThemeBuilderButtonRowFitTests holds every button inside the window at 640 and 540 in seven languages. -->
+        <Grid Grid.Row="4" x:Name="ButtonRow" Margin="0,12,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <WrapPanel Grid.Row="0" HorizontalAlignment="Left">
+                <Button x:Name="OpenFolderButton"
+                        Content="{loc:Loc ThemeBuilderWindow_OpenThemesFolder}"
+                        Padding="12,8" Margin="0,0,8,8"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Click="OnOpenFolderClick" />
+                <Button x:Name="ShareThemeButton"
+                        Content="{loc:Loc ThemeShare_ShareButton}"
+                        AutomationProperties.Name="{loc:Loc ThemeShare_ShareButtonAccessible}"
+                        Padding="12,8" Margin="0,0,8,8"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Click="OnShareThemeClick" />
+                <Button x:Name="ImportThemeButton"
+                        Content="{loc:Loc ThemeShare_ImportButton}"
+                        AutomationProperties.Name="{loc:Loc ThemeShare_ImportButtonAccessible}"
+                        Padding="12,8" Margin="0,0,8,8"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Click="OnImportThemeClick" />
+            </WrapPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                <Button Content="{loc:Loc ThemeBuilderWindow_Cancel}" Padding="14,8" Margin="0,0,8,0"
+                        Style="{StaticResource SecondaryStrongButtonStyle}"
+                        IsCancel="True"
+                        Click="OnCancelClick" />
+                <Button Style="{StaticResource CtaButtonStyle}" x:Name="SaveButton"
+                        Content="{loc:Loc ThemeBuilderWindow_SaveAndApply}"
+                        Padding="18,8"
+                        IsDefault="True"
+                        Click="OnSaveClick" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

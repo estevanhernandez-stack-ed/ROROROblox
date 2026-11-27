@@ -223,6 +223,23 @@
                                            Text="{loc:Loc SettingsPage_RecycleClosesAClientAnd}" />
                             </StackPanel>
 
+                            <!-- v1.41 - the one switch for the new Roblox reads (status line, game pulse). On by
+                                 default; same row shape. The update check is not behind it. -->
+                            <StackPanel Margin="0,14,0,0">
+                                <CheckBox x:Name="RobloxFeedsEnabledToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="{DynamicResource HeadingFontSize}"
+                                          FontWeight="SemiBold"
+                                          Checked="OnRobloxFeedsEnabledToggle" Unchecked="OnRobloxFeedsEnabledToggle">
+                                    <TextBlock Text="{loc:Loc SettingsPage_RobloxFeeds}" TextWrapping="Wrap" />
+                                </CheckBox>
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="{loc:Loc SettingsPage_RobloxFeeds_Description}" />
+                            </StackPanel>
+
                             <!-- F-111 / F-109. Stop now asks the client to close the way its own X does,
                                  then waits ten seconds before forcing. An in-game Roblox answers by
                                  raising its own confirm INSIDE the game, which RoRoRo cannot see or

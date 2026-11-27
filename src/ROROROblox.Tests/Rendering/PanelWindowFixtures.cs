@@ -46,9 +46,11 @@ internal static class PanelWindowFixtures
         Func<AccountSummary, AccountPanelViewModel, Task>? beforeOpen = null,
         bool plus = false,
         Action? openLibrary = null,
-        Action<MainViewModel>? configureVm = null)
+        Action<MainViewModel>? configureVm = null,
+        IUiDispatcher? uiDispatcher = null,
+        ROROROblox.Core.Library.IGamePulseService? pulse = null)
     {
-        var built = MainViewModelTests.Build();
+        var built = MainViewModelTests.Build(uiDispatcher: uiDispatcher);
         configureVm?.Invoke(built.Vm);
         var now = DateTimeOffset.UtcNow;
         if (savedGames)
@@ -70,11 +72,17 @@ internal static class PanelWindowFixtures
             var panel = new AccountPanelViewModel(
                 row,
                 () => Task.FromResult<IReadOnlyList<LaunchSession>>(i == 0 ? History(id, now, content) : []),
-                () => Task.FromResult<IReadOnlyList<LibraryEntry>>(i == 0 ? Library(content) : []),
+                () => Task.FromResult<IReadOnlyList<LibraryEntry>>(i == 0 ? WithUniverse(Library(content), pulse) : []),
                 _ => Task.CompletedTask,
                 () => Task.CompletedTask,
                 openLibrary: openLibrary ?? (() => { }));
             row.AttachPanel(panel);
+            if (pulse is not null)
+            {
+                panel.SetPulse(pulse);
+                panel.SetMainWindowVisible(true);
+            }
+
             if (i == 0)
             {
                 beforeOpen?.Invoke(row, panel).GetAwaiter().GetResult();
@@ -128,6 +136,10 @@ internal static class PanelWindowFixtures
             _ => [],
         };
     }
+
+    /// <summary>With a pulse service in play, every entry knows its game: the universe id is the place times ten, as in the Library fixtures.</summary>
+    private static IReadOnlyList<LibraryEntry> WithUniverse(IReadOnlyList<LibraryEntry> entries, ROROROblox.Core.Library.IGamePulseService? pulse)
+        => pulse is null ? entries : entries.Select(e => e with { UniverseId = e.PlaceId * 10 }).ToList();
 
     internal static readonly Guid ClanBaseId = Guid.Parse("00000000-0000-0000-0000-0000000000c1");
 

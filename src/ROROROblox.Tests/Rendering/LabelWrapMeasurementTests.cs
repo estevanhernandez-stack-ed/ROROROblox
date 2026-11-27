@@ -10,8 +10,11 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ROROROblox.App.Localization;
+using ROROROblox.App.Notices;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Feeds;
 using ROROROblox.Core.Theming;
 using Xunit;
 
@@ -163,7 +166,11 @@ public class LabelWrapMeasurementTests
 
     private sealed record Result(int Checked, int Wrapping, int NoWrap, int MaxWrapLines, List<string> Offenders, List<string> Exempted, List<Clip> Clips);
 
-    private static Result Walk(string surface, string culture, FrameworkElement content, FrameworkElement walkRoot)
+    /// <param name="runText">
+    /// Read a TextBlock built from Runs (empty <c>Text</c>) by its Runs. Off for the older surfaces, whose results it would change;
+    /// on for the Roblox line, whose notice is a glyph Run and a bound Run.
+    /// </param>
+    private static Result Walk(string surface, string culture, FrameworkElement content, FrameworkElement walkRoot, bool runText = false)
     {
         var offenders = new List<string>();
         var exempted = new List<string>();
@@ -190,7 +197,7 @@ public class LabelWrapMeasurementTests
             if (fe is TextBlock tb)
             {
                 if (VisualTreeHelper.GetParent(tb) is AccessText) return; // counted via its AccessText
-                text = tb.Text;
+                text = runText && tb.Text.Length == 0 ? RobloxLineRenderTests.TextOf(tb) : tb.Text;
                 wrap = tb.TextWrapping;
                 trim = tb.TextTrimming;
                 var bindPath = BindingOperations.GetBinding(tb, TextBlock.TextProperty)?.Path?.Path;
@@ -750,6 +757,242 @@ public class LabelWrapMeasurementTests
         Assert.Single(result.Offenders);
         Assert.Contains("LINES", result.Offenders[0]);
     }
+
+    // ---- the Roblox line (v1.41 item 11) ---------------------------------------------------------------------------
+
+    private static readonly RobloxStatusLevel[] StatusLevels =
+    [
+        RobloxStatusLevel.Outage, RobloxStatusLevel.SecurityEvent, RobloxStatusLevel.PartialOutage,
+        RobloxStatusLevel.Degraded, RobloxStatusLevel.Maintenance, RobloxStatusLevel.Unrecognised,
+    ];
+
+    /// <summary>
+    /// The status sentence that resolves longest in the current culture for <paramref name="level"/>: each of the four
+    /// row names with the counted suffix ("{0} and 2 more"), so the longest row name and the suffix are both in it.
+    /// </summary>
+    private static RobloxStatusReading LongestStatus(RobloxStatusLevel level) =>
+        Enum.GetValues<RobloxStatusRow>()
+            .Select(row => new RobloxStatusReading(row, level, OtherRows: 2))
+            .MaxBy(reading => RobloxNoticeResolver.Resolve(new RobloxLineInputs(
+                "", reading, "", "", RobloxUpdateState.Unknown, HoldBannerShowing: false, HasMultipleAccounts: false, Compact: false)).Top!.Text.Length)!;
+
+    private static readonly RobloxUpdateState PendingNewer = new(RobloxUpdateKind.Pending, RobloxUpdateDirection.Newer);
+
+    /// <summary>
+    /// Every status and update sentence the line can draw, in the current culture, with the notices behind it that put
+    /// the "+N more" toggle beside it (the narrowest the text ever gets) and, for the status sentences, alone as well.
+    /// </summary>
+    private static IEnumerable<(string Name, RobloxLineRenderTests.LineScene Scene)> LineScenes()
+    {
+        foreach (var level in StatusLevels)
+        {
+            var reading = LongestStatus(level);
+            yield return ($"status-{level}-{reading.Worst}", new RobloxLineRenderTests.LineScene { Status = reading });
+            yield return ($"status-{level}-{reading.Worst}-with-more", new RobloxLineRenderTests.LineScene { Status = reading, KnownIssue = true, Update = PendingNewer });
+        }
+
+        yield return ("update-several-accounts", new RobloxLineRenderTests.LineScene { Update = PendingNewer, Accounts = 2 });
+        yield return ("update-one-account", new RobloxLineRenderTests.LineScene { Update = PendingNewer, Accounts = 1 });
+        yield return ("update-rollback", new RobloxLineRenderTests.LineScene { Update = new RobloxUpdateState(RobloxUpdateKind.Pending, RobloxUpdateDirection.Older) });
+    }
+
+    private static string LineGroup(string name) =>
+        name.StartsWith("update", StringComparison.Ordinal) ? "update"
+        : name.EndsWith("-with-more", StringComparison.Ordinal) ? "status-with-more"
+        : "status-alone";
+
+    /// <summary>
+    /// Every Roblox status sentence (every level, with the longest row name and the counted suffix) and both update
+    /// sentences, at the default width and at 380 px in seven languages, at most two lines and nothing clipped. At
+    /// 380 px the buttons and the "+N more" toggle sit on a row under the sentence (Este, 2026-11-26), so the sentence
+    /// has the whole width; before that rule the status sentences needed up to five lines (German, Polish) and were
+    /// ratcheted. The contested, known-issue and drift texts are v1.40's strings and are not drawn here (spec 7.6).
+    /// </summary>
+    [WindowRenderFact]
+    public void TheRobloxLine_StatusAndUpdateSentences_MaxAtTwoLines_AtBothWidths_InEverySupportedLanguage()
+    {
+        var brand = Brand();
+        var offenders = new List<string>();
+        var measured = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        var report = new StringBuilder();
+        var states = 0;
+
+        foreach (var culture in Cultures)
+        {
+            var previous = TranslationSource.Instance.CurrentCulture;
+            TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
+            try
+            {
+                foreach (var compact in new[] { false, true })
+                {
+                    foreach (var (name, scene) in LineScenes())
+                    {
+                        var surface = $"roblox-line/{name}/{(compact ? "380" : "900")}";
+                        var result = ThemedWindowRender.Inspect(
+                            brand,
+                            $"label wrap [{surface}/{culture}]",
+                            () => RobloxLineRenderTests.BuildScene(scene, compact),
+                            content => Walk(surface, culture, content, RobloxLineRenderTests.Strip(content), runText: true));
+                        states++;
+                        report.AppendLine($"{surface} | {culture} | {result.Checked} ({result.Wrapping}/{result.NoWrap}) | {result.MaxWrapLines}");
+                        offenders.AddRange(result.Clips.Select(c => c.Line));
+                        Assert.True(result.Wrapping >= 1, $"[{surface}/{culture}] the walk saw no wrapping text: the notice is not being measured");
+
+                        offenders.AddRange(result.Offenders);
+                        if (compact)
+                        {
+                            var key = $"{culture}/{LineGroup(name)}";
+                            measured[key] = Math.Max(measured.GetValueOrDefault(key), result.MaxWrapLines);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                TranslationSource.Instance.CurrentCulture = previous;
+            }
+        }
+
+        _output.WriteLine(report.ToString());
+        _output.WriteLine("---- most lines at 380 px, by culture/group ----");
+        foreach (var (key, lines) in measured) _output.WriteLine($"{key} = {lines}");
+
+        Assert.Equal(Cultures.Length * 2 * LineScenes().Count(), states);
+
+        Assert.True(offenders.Count == 0, $"{offenders.Count} Roblox line problem(s):\n" + string.Join("\n", offenders));
+    }
+
+    /// <summary>The walk must see a notice drawn from Runs: <c>TextBlock.Text</c> is empty on it, and a walk that skipped it would pass any width.</summary>
+    [WindowRenderFact]
+    public void TheRobloxLineWalk_SeesTheNoticeText_AndCountsItsLines()
+    {
+        var result = ThemedWindowRender.Inspect(
+            Brand(),
+            "label wrap, roblox line self-check",
+            () => RobloxLineRenderTests.BuildScene(
+                new RobloxLineRenderTests.LineScene
+                {
+                    Synthetic = new RobloxLineState(
+                        new RobloxNotice(RobloxNoticeKind.Outage, string.Join(' ', Enumerable.Repeat("a sentence far too long for a compact strip", 6)), RobloxNoticeTone.Warning, WithLink: true),
+                        []),
+                },
+                compact: true),
+            content => Walk("self-check", "en", content, RobloxLineRenderTests.Strip(content), runText: true));
+
+        Assert.Contains(result.Offenders, o => o.Contains("LINES"));
+    }
+
+    // ==== v1.41 item 12: the pulse surfaces (begin) ====================================================================
+    // Kept apart from the surfaces above so another item's rows merge beside this block, not into it.
+
+    private static LibraryPageFixtures.FakePulse ReadPulse(params long[] places)
+    {
+        var pulse = new LibraryPageFixtures.FakePulse();
+        pulse.ReadEverything(places);
+        return pulse;
+    }
+
+    /// <summary>
+    /// The tile, the list row and the panel entry with a pulse on every saved game, in the three shapes the widest strings
+    /// take: 14,382,901 players and six days (the longest count and the longest day count), 81,827 and 23 hours, and zero
+    /// players with a month and year. A private server rides on the game it lives in and shows the date alone.
+    /// </summary>
+    private static readonly Surface[] PulseSurfaces =
+    [
+        new("pulse-library-tile", () => LibraryPageFixtures.Build(LibraryScene.Showcase, filters: "Recent,Favourites,PrivateServers",
+            pulse: ReadPulse(2001, 2002, 2003, 2004, 2005)).Window, c => c, MinElements: 40),
+        new("pulse-library-row", () => LibraryPageFixtures.Build(LibraryScene.Showcase, view: "list",
+            pulse: ReadPulse(2001, 2002, 2003, 2004, 2005)).Window, c => c, MinElements: 45),
+        new("pulse-panel-entry", () => PanelWindowFixtures.Build(accounts: 1, content: PanelContent.Full, savedGames: true,
+            pulse: ReadPulse(8737899170, 920587237, 126884695634066)), Roster, MinElements: 25),
+    ];
+
+    /// <summary>
+    /// Every pulse-bearing text on a surface, measured the way the walk cannot: a TextBlock with an ellipsis is measured
+    /// down to the room it is given, so the walk sees a text that fits and a cut that nothing clips. Natural width (the
+    /// same font, unconstrained) against the width the layout gave it says whether the words are all there.
+    /// </summary>
+    private static List<(string Text, double Natural, double Room, bool IsPanel)> PulseTexts(Theme theme, Surface surface, string culture)
+    {
+        var previous = TranslationSource.Instance.CurrentCulture;
+        TranslationSource.Instance.CurrentCulture = new CultureInfo(culture);
+        try
+        {
+            return ThemedWindowRender.Inspect(theme, $"pulse texts [{surface.Name}/{culture}]", surface.Build, content =>
+            {
+                var found = new List<(string, double, double, bool)>();
+                void Visit(DependencyObject node)
+                {
+                    for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+                    {
+                        var child = VisualTreeHelper.GetChild(node, i);
+                        if (child is TextBlock tb && tb.Text.Length > 0 && PanelWindowFixtures.EffectivelyVisible(tb)
+                            && (tb.Name is "TilePulse" or "RowPulse" || (tb.DataContext is PanelEntry { PulseCountText.Length: > 0 } pe && tb.Text == pe.MetaText)))
+                        {
+                            var clone = Clone(tb);
+                            clone.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                            found.Add((tb.Text, clone.DesiredSize.Width, tb.ActualWidth, tb.DataContext is PanelEntry));
+                        }
+
+                        Visit(child);
+                    }
+                }
+
+                Visit(content);
+                return found;
+            });
+        }
+        finally
+        {
+            TranslationSource.Instance.CurrentCulture = previous;
+        }
+    }
+
+    /// <summary>
+    /// Every label the pulse adds, in every language: the tile's count line and the row's joined line must not clip and
+    /// must stay within two lines; nothing may be exempted for them, because a count that reads "81,8…" is a wrong
+    /// number. The panel entry's meta line (the count only, since 2026-11-26; the date is the tooltip's) is the one place a trim is the established behaviour (the full text is the
+    /// tooltip and the accessible name), so its trims are measured and written, and counted, not failed.
+    /// </summary>
+    [WindowRenderFact]
+    public void EveryPulseLabel_FitsItsTileAndRow_InEverySupportedLanguage()
+    {
+        var brand = Brand();
+        var offenders = new List<string>();
+        var trims = new SortedSet<string>(StringComparer.Ordinal);
+        var report = new StringBuilder();
+        report.AppendLine("surface | culture | checked (wrap/nowrap) | max wrapped lines | pulse texts (trimmed)");
+
+        foreach (var surface in PulseSurfaces)
+        {
+            foreach (var culture in Cultures)
+            {
+                var result = Measure(brand, surface, culture);
+                var texts = PulseTexts(brand, surface, culture);
+                var cut = texts.Where(t => t.Natural > t.Room + 0.5).ToList();
+                report.AppendLine($"{surface.Name} | {culture} | {result.Checked} ({result.Wrapping}/{result.NoWrap}) | {result.MaxWrapLines} | {texts.Count} ({cut.Count})");
+                offenders.AddRange(result.Offenders);
+                offenders.AddRange(result.Clips.Select(c => c.Line));
+                Assert.NotEmpty(texts);
+                foreach (var t in cut)
+                {
+                    var line = $"[{surface.Name}/{culture}] '{t.Text}' natural {t.Natural:F0} DIP, room {t.Room:F0} DIP";
+                    if (t.IsPanel) trims.Add(line); else offenders.Add("TRIMMED " + line);
+                }
+
+                foreach (var e in result.Exempted) trims.Add(e);
+                Assert.True(result.Checked >= surface.MinElements,
+                    $"[{surface.Name}/{culture}] the walk saw only {result.Checked} text elements (floor {surface.MinElements}); it is not measuring the surface.");
+            }
+        }
+
+        _output.WriteLine(report.ToString());
+        _output.WriteLine("---- panel entry meta lines that trim (by design: the full text is the tooltip and the accessible name) ----");
+        foreach (var e in trims) _output.WriteLine(e);
+        Assert.True(offenders.Count == 0, $"{offenders.Count} pulse label(s) clip or wrap past {MaxLines} lines:" + Environment.NewLine + string.Join(Environment.NewLine, offenders));
+    }
+
+    // ==== v1.41 item 12: the pulse surfaces (end) ======================================================================
 
     // ---- opt-in German captures -------------------------------------------------------------------------------
 

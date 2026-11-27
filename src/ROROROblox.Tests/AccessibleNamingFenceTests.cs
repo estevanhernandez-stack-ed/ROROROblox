@@ -64,8 +64,13 @@ public class AccessibleNamingFenceTests
     /// "See all" links in the Favourites and Private servers panel headers, both named ("See all favourites", "See all
     /// private servers"). The expander moved from the actions column to the name column and is still one control, so it
     /// does not move the count; the unnamed ceiling stays 1.</para>
+    /// <para>219 to 222 with v1.41 item 11 (2026-11-26), up. The measured count went 225 to 228 and the unnamed ceiling
+    /// stays 1. The Roblox line's template replaced the contested warning's two buttons and the known-issues row's two
+    /// with six declared button slots (Close Roblox for me, Retry, Roblox status, See known issues, Dismiss, What changed:
+    /// every one a {loc:Loc} key, so named) and the "+N more" toggle, which takes its name from a bound
+    /// AutomationProperties.Name.</para>
     /// </summary>
-    private const int ScannedFloor = 219;
+    private const int ScannedFloor = 222;
 
     /// <summary>
     /// A Content/Text value names its control when it is a literal with letters OR an

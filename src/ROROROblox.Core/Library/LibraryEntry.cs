@@ -27,6 +27,7 @@ public enum LibraryEntryKind
 /// <param name="LastPlayedUtc">When RoRoRo last launched it, any account. Null if never recorded.</param>
 /// <param name="TotalPlayed">All-time uptime for a game; for a private server, the sum over the surviving history rows. Null if none.</param>
 /// <param name="Target">What launching this entry launches.</param>
+/// <param name="UniverseId">The game's universe, for the pulse. A saved game's own id, else a saved game of the same place, else the icon cache's map, else null (no pulse yet). Never fetched by the join.</param>
 public sealed record LibraryEntry(
     LibraryEntryKind Kind,
     long PlaceId,
@@ -37,7 +38,8 @@ public sealed record LibraryEntry(
     bool IsDefault,
     DateTimeOffset? LastPlayedUtc,
     TimeSpan? TotalPlayed,
-    LaunchTarget Target)
+    LaunchTarget Target,
+    long? UniverseId = null)
 {
     /// <summary>The name to show: the rename when there is one.</summary>
     public string RenderName => string.IsNullOrEmpty(LocalName) ? Name : LocalName;

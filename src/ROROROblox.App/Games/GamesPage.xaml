@@ -45,6 +45,7 @@
             <Setter Property="Focusable" Value="False" />
             <Setter Property="IsTabStop" Value="False" />
             <Setter Property="Padding" Value="0" />
+            <Setter Property="AutomationProperties.Name" Value="{Binding EntryName}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
@@ -164,13 +165,16 @@
             </StackPanel>
         </DataTemplate>
 
-        <!-- C1: a square icon tile. Fixed size, because the grid virtualises on a known item size. -->
+        <!-- C1: a square icon tile. Fixed size, because the grid virtualises on a known item size. 261 DIP tall since v1.41 (C3, Este,
+             2026-11-26: the pulse's count line, 15 DIP): the widest tile needs 244 DIP in all seven languages, so the old 246 held with
+             2 DIP to spare, which is too thin to trust at 125%. Height here and ItemSize on the grid change together. -->
         <DataTemplate x:Key="LibraryTileTemplate" DataType="{x:Type games:LibraryItem}">
-            <Border Width="144" Height="246" Padding="8" CornerRadius="8"
+            <Border Width="144" Height="261" Padding="8" CornerRadius="8"
                     Background="{DynamicResource RowBgBrush}"
                     ToolTip="{Binding TooltipText}"
                     ContextMenu="{StaticResource LibraryEntryMenu}"
-                    Loaded="OnTileLoaded">
+                    Loaded="OnTileLoaded" Unloaded="OnTileUnloaded"
+                    DataContextChanged="OnTileDataContextChanged" IsVisibleChanged="OnTileVisibleChanged">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -212,6 +216,13 @@
                                    FontSize="{DynamicResource MetaFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
+                        <!-- C3 (Este, 2026-11-26): the tile carries the player count only; the date lives in the tooltip and the
+                             list row. Beside the "last played" line, never in its place, and absent until an answer arrives. -->
+                        <TextBlock x:Name="TilePulse" Text="{Binding PulseCountText}"
+                                   FontSize="{DynamicResource MetaFontSize}"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding HasPulseCount, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </StackPanel>
 
                     <Grid Grid.Row="3" Margin="0,6,0,0">
@@ -245,8 +256,13 @@
                     Background="{DynamicResource RowBgBrush}"
                     ToolTip="{Binding TooltipText}"
                     ContextMenu="{StaticResource LibraryEntryMenu}"
-                    Loaded="OnTileLoaded">
+                    Loaded="OnTileLoaded" Unloaded="OnTileUnloaded"
+                    DataContextChanged="OnTileDataContextChanged" IsVisibleChanged="OnTileVisibleChanged">
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="32" />
                         <ColumnDefinition Width="*" />
@@ -255,6 +271,18 @@
                         <ColumnDefinition Width="{StaticResource ListTotalWidth}" />
                         <ColumnDefinition Width="{StaticResource ListActionsWidth}" />
                     </Grid.ColumnDefinitions>
+
+                    <!-- D (Este, 2026-11-26): the joined pulse line is a second line under the name. Measured at the shell's
+                         684 DIP content width, the name column is 112 DIP wide and "81,827 playing · updated 2 days ago" is 195
+                         DIP in English (more in de, ru), so the line starts at the name's left edge and runs on under the Kind,
+                         Last played and Total columns (392 DIP) instead of trimming in the name column. A private server shows
+                         the date and no count; the line is absent until an answer arrives, so a row with none is the v1.40
+                         row, to the pixel (the second grid row is empty and Auto). -->
+                    <TextBlock x:Name="RowPulse" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Text="{Binding PulseText}"
+                               FontSize="{DynamicResource MetaFontSize}"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextTrimming="CharacterEllipsis" Margin="0,-3,8,0"
+                               Visibility="{Binding HasPulse, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <Border Grid.Column="0" Width="28" Height="28" CornerRadius="5" ClipToBounds="True"
                             Background="{DynamicResource NavyBrush}" HorizontalAlignment="Left" VerticalAlignment="Center">
@@ -500,7 +528,7 @@
                      Visibility="{Binding IsGridView, Converter={StaticResource BoolToVisibilityConverter}}">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <ui:VirtualizingWrapPanel Orientation="Vertical" ItemSize="144,246" SpacingMode="BetweenItemsOnly" />
+                        <ui:VirtualizingWrapPanel Orientation="Vertical" ItemSize="144,261" SpacingMode="BetweenItemsOnly" />
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>

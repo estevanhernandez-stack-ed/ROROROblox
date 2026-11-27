@@ -1906,3 +1906,283 @@ with Sonnet workers, per the era map.
 **Handoff:** `/build`, naming `docs/cycles/2026-11-01-account-library/checklist.md` (the top-level
 `docs/checklist.md` is the retired snapshot). Autonomous, halting at C1 (after item 5), C2 (after item 7)
 and C3 (after item 9).
+
+## /scope — Roblox at a glance (opened 2026-11-26)
+
+Cart cycle #7. Written to `docs/cycles/2026-11-26-roblox-feeds/scope.md`, same convention as the
+last two cycles: `docs/scope.md` is the retired snapshot and stays untouched.
+
+**How it started.** Este asked one question in the middle of a growth session ("Are there any sort
+of roblox feeds we can present to our users?"), got a probed list back with a recommendation (an
+update notice and a line per saved game), and answered "scope it with Cart."
+
+**Zero interview questions before the doc, and that is recorded as a choice, not a habit.** The
+profile says fully autonomous, and Este had already accepted a concrete proposal. The one fork the
+record could not answer (woven into the header and the Library, or a feed page of its own) is
+carried as a marked assumption and put to him as the first of four calls at the foot of the doc.
+The alternative was to stop and ask before writing anything; the doc is cheap to revise and he
+rules faster from something he can read.
+
+**Recon that reshaped the scope before a word was written:**
+- The client-version check already exists (`RobloxUpdateProbe`, v1.7). It runs only inside a batch
+  launch. Item 1 stopped being "add a feed" and became "show what the app already knows, earlier."
+- The game record is already fetched on add and everything but the name is dropped. Players-now and
+  last-updated need no new host.
+- Roblox's status page has no feed, but Status.io's public API answers for its page id. That put
+  status back in scope, at the cost of one third-party host.
+- Game events fail the endpoint rule: the path that answers without a login is undocumented, and
+  the documented v3 path returned 403 without a key. Cut, with the evidence, and named as Este's
+  ruling to overturn.
+- My own first answer to Este listed the events feed as usable. The scope corrects that.
+
+**Research beat.** Bloxstrap and Fishstrap show server location once, as a notification, and keep
+it findable afterwards. The lesson taken is the v1.40 update button's rule: appear only when there
+is something to say.
+
+**Anchor carried as an assumption:** "Know before you launch." One sentence to overturn.
+
+**Backlog:** 15 open dashboard tasks and 10 open issues read and mapped by surface. Three ride
+(the version-gate spike rescope, the hosted privacy page, the two support-contact listing fixes).
+"Join a server by player count" is named as the natural next step and left out.
+
+**Active shaping:** none yet inside this command; Este's shaping was the ask itself and the go.
+The four calls at the foot of the doc are where he steers. Deepening rounds: zero.
+
+**Handoff:** `/prd`, against `docs/cycles/2026-11-26-roblox-feeds/scope.md`, after Este's read of
+the four calls.
+
+**Rulings, same day (2026-11-26).** Este answered all four calls in one line: "1 woven in, 2 keep it
+cut, 3 fine, 4 default on." The shape assumption held, the events cut held, the third-party status
+host is accepted, and the reads are on by default. The off switch rode in on the wording of option 4
+and stays marked as a default. No pushback on any of the four; the doc's "Your calls" section became
+"Rulings" with his words quoted. Active shaping: he ruled, briefly, and changed nothing.
+
+## /prd — Roblox at a glance (2026-11-26)
+
+Cart cycle #7, step 3. Written to `docs/cycles/2026-11-26-roblox-feeds/prd.md`, beside the scope.
+Autonomous run under the fully-autonomous contract: every mandatory beat was answered from the scope,
+the feature map, the tree, the dashboard tasks and live probes; the sixteen beats the record did not
+answer are marked `(default — confirm on next interactive run)` inline and collected in a closing
+section. No question was put to Este. Zero deepening rounds, by habit; one self-run freshness pass
+instead, the same move as cycle #6, and for the same reason: the scope had just been ruled, which is
+exactly when its claims get trusted without being re-read.
+
+**The freshness pass changed the build order.** The scope's first goal is "show what the app already
+knows, earlier", a second caller of `RobloxUpdateProbe`. Running the shipped probe against this
+machine: client current on both reads (`0, 748, 0, 7481526`), endpoint `0.748.0.7481526`, and
+`IsUpdatePendingAsync` answers True. The comparison is text against text and the two sides punctuate
+the same number differently. The tests pass because they feed the comma form to both sides (F-104,
+2026-08-12): a fixture shaped so the invariant cannot fail, the pattern already in memory from
+2026-09-20. Two consequences. A notice built on that check would never clear. And on any machine with
+the comma form, every batch of two or more shows "Roblox is updating" and holds behind the first
+client, on a current client. The PRD makes the truthful check its own first epic and gates the notice
+on it.
+
+**What was not observed, said plainly.** This machine's thirty logs contain no batch launch, so the
+false hold is read from the code and the probe run, not seen in a log. One search on Neb settles it.
+That is an open question in the PRD, not a claim.
+
+**Five more corrections from the tree.** (1) The drift banner cannot fire (known since 2026-09-23),
+but the live feed's ceiling is still 0.729.24 against a 0.748 client: share a parser with it and the
+banner lights for every user and buries the new notice under the scope's own priority order. The PRD
+forbids repairing it by side effect and puts its fate to Este. (2) The notices are not in the header;
+there are five Roblox-side lines across three rows, and the scope's order left out the known-issues
+notice and the Bloxstrap warning. (3) Game Join sits under Creator on Roblox's page and row names
+repeat across groups, so watched rows are named by group. (4) The listing's long description
+enumerates every host, so a default-on third-party call makes it wrong in seven sheets; the scope
+named only the privacy page and the reviewer letter. (5) The support-email typo is already fixed on
+the live catalog and the README already carries the quit line, so two riders close on evidence
+instead of riding; the version-gate task's "like-for-like" premise is wrong and gets rewritten.
+
+**What the PRD added over the scope:** no text from the status service is ever drawn (the
+known-issues list is signed for that reason and this feed is not); no read while hidden in the tray;
+a status answer expires rather than going stale; a failed launch of connection kind asks for one
+early status read, which is the scope's own user need ("is it Roblox or my PC"); a hidden notice is
+counted and readable, which is how the scope's "the notice was already showing" survives a
+one-line rule; a private server shows no player count because the number is the game's, not the
+server's; the notice drops its batch clause with one saved account; a rollback shows the notice
+without the link; and four live acceptances, the first of which ("absent when current") fails today.
+
+**Scope guard.** Three things were pushed to "more time" rather than grown into the cycle: an Update
+Roblox action (what remains of task `8pm4lzbdv`), "updated since you last played", and more watched
+rows per person. The status goal carries a stop condition: if the service's terms forbid the call at
+this install count, the goal comes back to Este instead of being worked around.
+
+**Active shaping:** none this run; Este's four rulings were carried as constraints. The two beats
+most likely to move on his next pass are the drift banner's fate and the watched-row list. The one
+that needs him before `/build` is the drift banner.
+
+**Handoff:** `/spec`, against `docs/cycles/2026-11-26-roblox-feeds/prd.md`.
+
+## /spec — Roblox at a glance (2026-11-26)
+
+Cart cycle #7, step 4. Written to `docs/cycles/2026-11-26-roblox-feeds/spec.md`, beside the scope and
+PRD. Autonomous run under the fully-autonomous contract; no question put to Este. The tech-preferences
+interview and the deployment drill were answered from the record (fixed stack, identities in
+`CLAUDE.md`). Three read-only recon sweeps against HEAD `3a1e042` ran in parallel (the update-check
+lane; the notice area and settings; the Library and the typed clients) while the PRD's seven "`/spec`
+probes it" questions were measured live. Recorded answers and measurements are kept in
+`docs/cycles/2026-11-26-roblox-feeds/probes/`.
+
+**The spec's argument:** three readings, one line, one text line per game. One coordinator decides when
+anything is asked, one pure resolver decides which Roblox sentence is drawn, two small typed clients
+carry no cookie and keep no text, and no launch path awaits any of it.
+
+**What the probes settled.**
+- A status row is a (group id, row id) pair. Roblox reuses Website under three groups, and a real
+  archived answer from another Status.io page has one row id at 400 under one group and 300 under
+  another in the same read. Matching by id also means a rename no longer silences the line.
+- The line reads row codes only. An archived answer has two open incidents with every row at 100;
+  scheduled maintenance changes no code. So the incident and maintenance arrays are never parsed, and
+  the DTOs have no text property at all, which is how "no third-party text" becomes structural.
+- No recorded Roblox incident answer exists (two Wayback captures, both Operational; no payload in
+  thirty public repos). Fixtures are real incident answers from other pages, unedited, with the
+  evaluator taking its watch table as a parameter. The PRD's fallback was the documented sample; a real
+  answer from another page is better than a sample and was available.
+- Status.io's terms do not forbid the read and state no limit. The PRD's stop condition is not met.
+- One pulse request carries 50 games (51 answers 400, code 9).
+- "What changed" goes to the release-notes index: notes trailed the client build by one to three days
+  for builds 741 to 748, eight of eight, so a per-version link could 404 on the day it first appears.
+- "Updated" ranged from 5.7 hours to 17 days across eleven popular games. What moves the date is not
+  established and the spec says so.
+
+**What the tree overrode.** `IRobloxApi` has 15 fakes in 13 files, so the pulse gets its own interface.
+`IAppSettings` raises no event and there is no settings export, so the PRD's "exports with the
+settings" line is void and the switch pushes its value through the view model. `PeriodicTick` cannot be
+fired from a test, so the coordinator owns a `TimeProvider` timer and every timing rule lives in one
+pure function. There is no link rank and no ghost toggle.
+
+**Not answered here.** The Neb log search for the hold line: the share refused the read from this
+machine. It is one command and it is Este's, listed in the spec's open issues.
+
+**Deepening rounds: one, the architecture self-review the SKILL marks as judgment work,** run as a
+fresh agent on the session model with the three documents and no summary of mine. One blocker, nine
+should-fix, four minor, all folded in. It earned its cost:
+- **The blocker:** an account panel is open at startup (the main's, or a restored one), so "a collapsed
+  panel asks for nothing" did not keep the pulse out of the startup burst. My recon had reported
+  panels as collapsed by default; I re-read `MainViewModel.cs:5450-5452` before accepting the
+  correction, and the review was right. The pulse service now has its own gate and fails closed if the
+  gate is never set.
+- The update notice could sit false for thirty minutes if RoRoRo was minimised during the launch. The
+  review's fix was simpler than my design: re-read the two local versions against the endpoint answer
+  already held. No request, works while hidden, and it deleted two options and four extra reads.
+- A saved private server carries its own thumbnail, so the icon cache is never asked about its place
+  and its universe id would have stayed unknown forever. My "no new lookup" claim was wrong for that
+  case; the spec now names the one request it costs.
+- The "Ghost toggle rank" I named does not exist, and a `Button` style on a `ToggleButton` throws at
+  load. Same class of mistake as cycle #6's `SecondaryButtonStyle` on a toggle.
+- The drift pin test could not be written: `CheckAsync` has no seam and CI has no Roblox, so it would
+  have passed for the wrong reason. Now a fact about `Version.TryParse` plus a source fence.
+- Moving the drift banner into the line would have rewritten three pinned tests before Este's ruling,
+  and two of three rulings would discard the work. It now stays in its row until he rules.
+- Also folded in: result records with an outcome enum for both clients, two lines for the pulse in a
+  128 px tile, wiring that follows `UpdateAvailability` step for step, two live batch acceptances the
+  spec had no home for, a year on old "updated" dates, and the live-region claim dropped because WPF
+  raises nothing on a text change.
+
+**My own count was wrong once.** Recon reported 16 `IRobloxApi` fakes; the review counted 15; an
+uncapped grep says 15 in 13 files. Corrected in the spec and the decisions log.
+
+**Decisions logged** to the dashboard (five entries) and mirrored in `docs/decisions.md`.
+
+**Active shaping:** none this run. Este's four scope rulings were carried as constraints. The PRD's
+sixteen assumptions stand and the spec adds twenty-one (17 to 37). The ones most likely to move on his
+next pass: "visible" excludes minimised (17), the pulse as two lines in the tile (28), and the
+known-issues notice no longer stepping aside for the contested warning (31), which reverses a
+deliberate earlier choice.
+
+**What needs Este before `/build` goes past its first halt:** the drift banner's fate (priced per
+ruling in the spec's §7.8), whether the false-hold fix ships ahead of v1.41, and the Neb search.
+
+**Model note:** a Fable 5.2 session. `/build` runs from an Opus session with Sonnet workers, per the
+era map.
+
+**Handoff:** `/checklist`, against `docs/cycles/2026-11-26-roblox-feeds/spec.md`.
+
+**Rulings, same day (2026-11-26).** Este answered three of the five calls in one line: "1 leave, 2 ride
+with it, 5 skip." The drift banner is left exactly as it is, the false-hold fix rides with v1.41 and
+does not ship ahead, and no courtesy note goes to Status.io. All three matched the defaults the spec
+carried, so nothing in the design moved: the spec's §7.8 became a ruling plus a price list, build item 2
+lost its hotfix clause, the first build halt lost its rulings, and a §22 quotes his words. Calls 3 (the
+Neb log search) and 4 (whether the listing sentence touches what variant B varies) were not answered
+and stay open with him. Active shaping: he ruled, briefly, and changed nothing.
+
+## /checklist — Roblox at a glance (2026-11-26)
+
+Cart cycle #7, step 5. Written to `docs/cycles/2026-11-26-roblox-feeds/checklist.md`, beside the spec.
+Autonomous run under the fully-autonomous contract; no question put to Este. Sixteen items, two halts,
+two built-in gates (update day, the Store write), thirteen new assumptions (38 to 50) on top of the
+PRD's sixteen and the spec's twenty-one.
+
+**Sixteen again, and said so in the header.** One Core fix that can ship alone, two typed clients, a
+coordinator, a resolver, two drawn surfaces, a setting, a privacy change in seven sheets, and a release
+lane with acceptances only Roblox can schedule. Riders were folded rather than given an item: the task
+rewrites and closures into the ship item, the conditional theme-dialog fit into the languages item.
+
+**Three moves away from the spec's own build order.**
+- *Mocks first.* The spec put the mock gate at step 7, as a halt. The options need nothing from the
+  code and Este's pick blocks only XAML, so they are item 2 and sit waiting while the Core is built. A
+  pick that has not come by C1 holds items 11 and 12 and nothing else, and the build does not draw to
+  the defaults.
+- *Wired before drawn.* The spec had the switch at step 10, after both XAML items. But
+  `RunStartupChecksAsync` reads the setting before `Start()`, so the setting has to exist when the
+  wiring lands, and `SettingsReachabilityTests` wants a control the moment the setting exists. The plan
+  lands the wiring (item 8), then the switch with its control in one commit (item 9), both ahead of
+  C1. No exemption is ever written; the last two cycles each had one outlive its reason. The gain is
+  larger than the fence: with everything wired and nothing drawn, "nothing in the first 30 s, nothing
+  in the tray" and the truthful check are read from a real log before the first line of XAML.
+- *The pulse is split at the XAML seam.* The universe-id fill and the formatter (item 10) are not XAML
+  and land before C1; the Library and the panel (item 12) wait for the pick.
+
+**One spec baseline cannot be taken, found by reading the logger.** The spec's build item 1 asks for
+"the request log of a session left in the tray". `Logging/AppLogging.cs:46` overrides `System` to
+Warning, which drops `HttpClient`'s request lines, so no list of v1.40's calls exists in any log. The
+plan drops that baseline and says so in item 1: the rule is carried by each new lane's own Debug line
+and the fake-clock tests, and read live in item 8.
+
+**Carried forward from cycle #6, not rediscovered.** Strings land with the item that adds them, through
+a cumulative `scripts/add-v141-translations.py`; cycle #6's assumption 26 (one sweep) was overturned on
+its first key-adding item by `CultureKeyParityFenceTests`. `SetSuppressed` is deleted with the line's
+XAML, not with the resolver, because deleting it earlier would draw the contested banner and the
+known-issues notice together for the commits in between.
+
+**The calendar is in the plan.** 0.748 has been live since 11-16 and 0.749 had not appeared by 11-26,
+so the eight-week Monday-or-Tuesday run already broke this week and the next build could land any day.
+Two acceptances need a real waiting update. The tag waits for one after the line is built; nothing
+simulates "pending". If Roblox ships first, the log half is taken and the drawn half waits a build.
+
+**A rule the plan adds for the agent's own live runs.** A dev build on a test folder still shares the
+single-instance guard and can close a windowless Roblox client. Every live step checks for a running
+RoRoRo or Roblox client first and waits if one is up. It never closes one.
+
+**Two Verify lines corrected after writing.** The first draft said the reachability fence's file would
+not be in the diff; the fence discovers settings by reflection and has floors that may move, so the
+check became "the `Exemptions` table gains no entry". Checked against the test file, not assumed.
+
+**Not checked, and said so in the plan:** whether the dev process honours `HTTPS_PROXY` for the "every
+host unreachable" live run (assumption 48; the silence tests stand if it does not), and whether a
+byte-exact PNG would hold across both CI architectures (assumption 38 pins bounds instead).
+
+**Complement:** `superpowers:writing-plans` is installed and was not used. Repo memory says Cart drives
+the plan here; the capture-tool build's defects were nearly all plan-authored.
+
+**Decisions logged** to the dashboard (four entries: `ubKI5UHjN00pvZa2wFv2`, `Z8gBZU846Pmq840Opmd6`,
+`UWDZKIrQHH0Mejt7SjZ8`, `ZcBycwhp3zhyhgvF35N1`) and mirrored in `docs/decisions.md` as one entry.
+
+**Deepening rounds: zero,** by habit and because the spec carried the thinking. This was translation,
+sequencing and the three reshapings above.
+
+**Active shaping:** none this run. Este's rulings from /scope and /spec stand as constraints. The
+assumptions most likely to move on his next pass: 41 (the build stops at C1 rather than drawing to the
+defaults), 44 (the docs ride in the cycle PR rather than their own), and 46 (the tag waits for a real
+update).
+
+**Still open with Este, carried from the spec:** the Neb log search (by C1) and whether the listing
+sentence touches what variant B varies (before the Store write).
+
+**Model note:** a Fable 5.2 session. `/build` runs from an Opus session with Sonnet workers, per the
+era map.
+
+**Handoff:** `/build`, naming `docs/cycles/2026-11-26-roblox-feeds/checklist.md` (the top-level
+`docs/checklist.md` is the retired snapshot). Autonomous, halting at C1 (after item 10) and C2 (after
+item 12).

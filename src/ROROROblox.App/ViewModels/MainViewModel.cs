@@ -21,6 +21,8 @@ using ROROROblox.App.SquadLaunch;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
 using ROROROblox.Core.Discord;
+using ROROROblox.Core.Feeds;
+using ROROROblox.App.Notices;
 
 namespace ROROROblox.App.ViewModels;
 
@@ -314,7 +316,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // resolve this VM — the ctor runs on the UI thread, so wiring it here is race-free.
         _accountsMirror = new ObservableCollectionMirror<AccountSummary>(Accounts);
         // The one-account window (spec 3.8): the batch surfaces appear when a second account does.
-        Accounts.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasMultipleAccounts));
+        Accounts.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasMultipleAccounts));
+            RecomputeRobloxLine();
+        };
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
@@ -347,6 +353,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
         OpenKnownIssuesCommand = new RelayCommand(() => OpenShellPage(Shell.ShellPage.KnownRobloxIssues));
         DismissKnownIssueNoticeCommand = new RelayCommand(() => _knownIssuesNotice?.Dismiss());
+        OpenRobloxStatusCommand = new RelayCommand(() => _shellOpener.Open(RobloxLinks.StatusPage));
+        OpenRobloxReleaseNotesCommand = new RelayCommand(() => _shellOpener.Open(RobloxLinks.ReleaseNotes));
         OpenDiagnosticsFromCrashNoticeCommand = new RelayCommand(() =>
         {
             CrashNoticeText = string.Empty;
@@ -575,6 +583,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _ticker.Stop();
         TranslationSource.Instance.CultureChanged -= OnUiCultureChanged;
         if (_updateAvailability is not null) { _updateAvailability.Changed -= OnUpdateAvailabilityChanged; }
+        if (_robloxFeeds is not null) { _robloxFeeds.Changed -= OnRobloxFeedsChanged; }
     }
 
     /// <summary>
@@ -591,6 +600,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RefreshFpsCapWarning();
         IdleSummaryText = IdleSummary.Format(Accounts.Count(a => a.IdleWarn), _idleWarnThresholdMinutes);
         if (_isContested) { ContestedBannerText = MultiInstanceCopy.ContestedBanner; }
+        RecomputeRobloxLine();
         RefreshMemoryChips();
         foreach (var a in Accounts) { a.NotifyCultureChanged(); }
         OnPropertyChanged(string.Empty); // all bindings — re-pull every computed getter
@@ -863,6 +873,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     public ICommand DismissKnownIssueNoticeCommand { get; }
 
+    /// <summary>The outage notice's link. The address is a constant; nothing remote contributes to it.</summary>
+    public ICommand OpenRobloxStatusCommand { get; }
+
+    /// <summary>The update notice's link, shown for a newer client only.</summary>
+    public ICommand OpenRobloxReleaseNotesCommand { get; }
+
     /// <summary>The crash notice's action: opens Diagnostics, where Save support bundle lives.</summary>
     public ICommand OpenDiagnosticsFromCrashNoticeCommand { get; }
 
@@ -1111,6 +1127,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasCompactRows));
         OnPropertyChanged(nameof(MainAccount));
         OnPropertyChanged(nameof(CompactEmptyKind));
+        RecomputeRobloxLine();
         return true;
     }
 
@@ -1304,7 +1321,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public bool RobloxUpdating
     {
         get => _robloxUpdating;
-        private set => SetField(ref _robloxUpdating, value);
+        private set
+        {
+            if (SetField(ref _robloxUpdating, value))
+            {
+                RecomputeRobloxLine();
+            }
+        }
     }
 
     private bool _alwaysShowRecycle;
@@ -2198,6 +2221,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 case LaunchResult.Failed failed:
                     _log.LogWarning("Launch failed for account {AccountId}: {Kind} {Detail}", summary.Id, failed.Kind, failed.Detail);
                     summary.StatusText = CoreMessageCatalog.For(failed);
+                    if (failed.Kind is LaunchFailureKind.NoConnection or LaunchFailureKind.TimedOut or LaunchFailureKind.RobloxUnavailable)
+                    {
+                        // Roblox may be down: allow one status read ahead of the schedule. A flag only, never awaited.
+                        _robloxFeeds?.RequestEarlyStatusRead();
+                    }
+
                     return 0;
                 default:
                     return 0;
@@ -2750,7 +2779,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// answer), and we additionally swallow here so a probe surprise never stalls a batch — on any
     /// throw we fall back to <see cref="PreWarmDecision.LaunchAllNow"/> (today's behavior).
     /// </summary>
-    private async Task<PreWarmDecision> DecidePreWarmAsync()
+    internal async Task<PreWarmDecision> DecidePreWarmAsync()
     {
         try
         {
@@ -2769,8 +2798,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 return PreWarmGate.Decide(strapHandling: false, updatePending: false, updateChurn: true);
             }
 
-            var updatePending = await _updateProbe.IsUpdatePendingAsync().ConfigureAwait(true);
-            return PreWarmGate.Decide(strapHandling: false, updatePending, updateChurn: false);
+            // The gate asks for itself, with the probe's own timeout. The coordinator is told what the
+            // gate saw (a plain call, not awaited), never asked.
+            var state = await _updateProbe.GetUpdateStateAsync().ConfigureAwait(true);
+            _robloxFeeds?.ReportUpdateState(state);
+            return PreWarmGate.Decide(strapHandling: false, state.Kind == RobloxUpdateKind.Pending, updateChurn: false);
         }
         catch (Exception ex)
         {
@@ -5112,7 +5144,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _gameIcons, _favorites, _ui,
             // The Favourites / Private servers headers' "See all" link opens the Library page, the same call
             // as the header's Library button.
-            openLibrary: OpenGames);
+            openLibrary: OpenGames,
+            pulseReadsOpen: () => PulseReadsOpen);
+        // A row added after startup picks up the pulse and the window's visibility as they stand now.
+        panel.SetPulse(_gamePulse);
+        panel.SetMainWindowVisible(_mainWindowVisible);
         panel.UserToggled += (_, open) => _ = PersistPanelExpandedAsync(summary.Id, open);
         summary.AttachPanel(panel);
         summary.PropertyChanged += OnAccountSummaryPropertyChanged;
@@ -5728,7 +5764,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private string _contestedBannerText = string.Empty;
 
     /// <summary>Runtime banner text — non-empty only when Roblox holds the multi-instance lock
-    /// and RoRoRo doesn't. Empty collapses the strip (mirrors StatusBanner/IdleSummaryText).</summary>
+    /// and RoRoRo doesn't. The Roblox line reads it; the window no longer binds it.</summary>
     public string ContestedBannerText
     {
         get => _contestedBannerText;
@@ -5741,15 +5777,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         _isContested = contested;
         ContestedBannerText = contested ? MultiInstanceCopy.ContestedBanner : string.Empty;
-        _knownIssuesNotice?.SetSuppressed(contested);
+        RecomputeRobloxLine();
     }
 
     private ROROROblox.App.KnownIssues.KnownIssuesNoticeModel? _knownIssuesNotice;
 
     /// <summary>
     /// Known Roblox issues' notice and menu count (spec 2026-09-23). Set by the composition root, like
-    /// <see cref="ShellPageOpener"/>; null in tests that do not exercise it. Attaching one while the
-    /// contested warning shows starts it suppressed.
+    /// <see cref="ShellPageOpener"/>; null in tests that do not exercise it.
     /// </summary>
     internal ROROROblox.App.KnownIssues.KnownIssuesNoticeModel? KnownIssuesNotice
     {
@@ -5770,14 +5805,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (_knownIssuesNotice is not null)
             {
                 _knownIssuesNotice.PropertyChanged += OnKnownIssuesNoticeChanged;
-                _knownIssuesNotice.SetSuppressed(_isContested);
             }
 
             OnKnownIssuesNoticeChanged(this, new PropertyChangedEventArgs(string.Empty));
         }
     }
 
-    /// <summary>The notice row's text; empty collapses the row, like the other rows of the strip.</summary>
+    /// <summary>The known-issues notice's words; empty when there is nothing to show. The Roblox line reads it.</summary>
     public string KnownIssueNoticeText => _knownIssuesNotice?.NoticeText ?? string.Empty;
 
     public string KnownIssuesMenuHeader => _knownIssuesNotice?.MenuHeader ?? Loc.Get("MainWindow_KnownRobloxIssues");
@@ -5786,6 +5820,161 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(KnownIssueNoticeText));
         OnPropertyChanged(nameof(KnownIssuesMenuHeader));
+        RecomputeRobloxLine();
+    }
+
+    // === The Roblox line (v1.41) ===
+    //
+    // One resolver picks the one Roblox sentence from the contested warning, Roblox's status, the known
+    // issues, the drift banner and the update check. The window draws RobloxLine in the row 3 strip,
+    // kept current on every input that moves it.
+
+    private RobloxUpdateState _robloxUpdateState = RobloxUpdateState.Unknown;
+    private RobloxStatusReading _robloxStatus = RobloxStatusReading.None;
+
+    /// <summary>The line the window draws: the top notice, and the rest behind "+N more".</summary>
+    public RobloxLineViewModel RobloxLine { get; } = new();
+
+    /// <summary>
+    /// The feeds' two readings, from any thread. Whoever owns the feeds pushes here on every change, and
+    /// pushes <see cref="RobloxStatusReading.None"/> when the switch turns the status off.
+    /// </summary>
+    internal void SetRobloxFeedReadings(RobloxUpdateState update, RobloxStatusReading status)
+    {
+        ArgumentNullException.ThrowIfNull(update);
+        ArgumentNullException.ThrowIfNull(status);
+        _ui.Invoke(() =>
+        {
+            _robloxUpdateState = update;
+            _robloxStatus = status;
+            RecomputeRobloxLine();
+        });
+    }
+
+    private Feeds.RobloxFeeds? _robloxFeeds;
+    private ROROROblox.Core.Library.IGamePulseService? _gamePulse;
+    private bool _mainWindowVisible;
+    private DateTimeOffset? _pulseGate;
+    private volatile bool _robloxFeedsEnabled;
+
+    /// <summary>
+    /// True while the switch is on and the pulse's startup gate has passed. The only caller that asks the
+    /// icon cache for a universe id on an entry that already has an icon reads this. Fails closed: false
+    /// until startup has pushed the setting, and until the window has been shown and settled.
+    /// </summary>
+    internal bool PulseReadsOpen
+        => _robloxFeedsEnabled && _robloxFeeds?.ReadsAllowedFrom is { } from && DateTimeOffset.UtcNow >= from;
+
+    /// <summary>
+    /// Set once by the App at startup, like <see cref="UpdateAvailability"/>; null in tests that do not
+    /// exercise it. The coordinator raises Changed on any thread, so the handler pushes through
+    /// <see cref="SetRobloxFeedReadings"/>, which marshals. Nothing in a launch path awaits it.
+    /// </summary>
+    internal Feeds.RobloxFeeds? RobloxFeeds
+    {
+        get => _robloxFeeds;
+        set
+        {
+            if (ReferenceEquals(_robloxFeeds, value))
+            {
+                return;
+            }
+
+            if (_robloxFeeds is not null)
+            {
+                _robloxFeeds.Changed -= OnRobloxFeedsChanged;
+            }
+
+            _robloxFeeds = value;
+            if (_robloxFeeds is not null)
+            {
+                _robloxFeeds.Changed += OnRobloxFeedsChanged;
+                if (_mainWindowVisible)
+                {
+                    _robloxFeeds.SetWindowVisible(true);
+                }
+
+                SetRobloxFeedReadings(_robloxFeeds.Update, _robloxFeeds.Status);
+            }
+
+            SyncPulseGate();
+        }
+    }
+
+    /// <summary>Set once by the App at startup. Its read gate follows <see cref="RobloxFeeds"/>' first-visible instant.</summary>
+    internal ROROROblox.Core.Library.IGamePulseService? GamePulse
+    {
+        get => _gamePulse;
+        set
+        {
+            _gamePulse = value;
+            _pulseGate = null;
+            SyncPulseGate();
+            foreach (var account in AccountsSnapshot) account.Panel?.SetPulse(value);
+        }
+    }
+
+    /// <summary>
+    /// The off switch for the new reads. Turns the status lane and the game pulse off or on together. Off
+    /// clears the status reading and every pulse at once and raises both change events; on restarts the
+    /// status settle and lets the pulse ask at its next pass. The update check is not behind it.
+    /// </summary>
+    internal void SetRobloxFeedsEnabled(bool enabled)
+    {
+        _robloxFeedsEnabled = enabled;
+        _robloxFeeds?.SetStatusEnabled(enabled);
+        _gamePulse?.SetEnabled(enabled);
+        if (!enabled)
+        {
+            // The coordinator raises Changed on the way off; pushing None here as well keeps the line
+            // right when no coordinator is attached.
+            SetRobloxFeedReadings(_robloxFeeds?.Update ?? _robloxUpdateState, RobloxStatusReading.None);
+        }
+    }
+
+    private void OnRobloxFeedsChanged(object? sender, EventArgs e)
+    {
+        if (sender is Feeds.RobloxFeeds feeds)
+        {
+            SetRobloxFeedReadings(feeds.Update, feeds.Status);
+        }
+    }
+
+    /// <summary>
+    /// The main window is shown and not minimised. Pushed from the window on every visibility or state
+    /// change; the coordinator needs it to stay quiet in the tray, and it opens the pulse's startup gate.
+    /// </summary>
+    internal void SetMainWindowVisible(bool visible)
+    {
+        _mainWindowVisible = visible;
+        _robloxFeeds?.SetWindowVisible(visible);
+        SyncPulseGate();
+        foreach (var account in AccountsSnapshot) account.Panel?.SetMainWindowVisible(visible);
+    }
+
+    private void SyncPulseGate()
+    {
+        if (_gamePulse is null || _robloxFeeds?.ReadsAllowedFrom is not { } from || _pulseGate == from)
+        {
+            return;
+        }
+
+        _pulseGate = from;
+        _gamePulse.AllowReadsFrom(from);
+    }
+
+    /// <summary>UI thread. Runs on every input of the line: contested, known issues, hold banner, accounts, compact, feeds, culture.</summary>
+    private void RecomputeRobloxLine()
+    {
+        RobloxLine.Apply(RobloxNoticeResolver.Resolve(new RobloxLineInputs(
+            ContestedText: _contestedBannerText,
+            Status: _robloxStatus,
+            KnownIssueText: _knownIssuesNotice?.NoticeText ?? string.Empty,
+            DriftText: string.Empty,
+            Update: _robloxUpdateState,
+            HoldBannerShowing: _robloxUpdating,
+            HasMultipleAccounts: HasMultipleAccounts,
+            Compact: _isCompact)));
     }
 
     // === The header's update button (2026-11-17) ===

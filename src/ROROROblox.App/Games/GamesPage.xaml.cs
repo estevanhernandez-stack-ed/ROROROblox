@@ -38,13 +38,37 @@ internal partial class GamesPage : UserControl
         _picker.AccountPicked += OnAccountPicked;
         _vm.PropertyChanged += OnViewModelChanged;
         Loaded += OnLoaded;
-        Unloaded += (_, _) => _vm.Detach();
+        Unloaded += OnUnloaded;
     }
 
     internal LibraryViewModel ViewModel => _vm;
 
+    private Window? _window;
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_window is not null)
+        {
+            _window.StateChanged -= OnWindowStateChanged;
+            _window = null;
+        }
+
+        _vm.Detach();
+    }
+
+    /// <summary>Minimised declares no interest in anyone's pulse; restored declares the tracked set again.</summary>
+    private void OnWindowStateChanged(object? sender, EventArgs e)
+        => _vm.SetWindowMinimised(_window?.WindowState == WindowState.Minimized);
+
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
+        if (_window is null && Window.GetWindow(this) is { } window)
+        {
+            _window = window;
+            window.StateChanged += OnWindowStateChanged;
+        }
+
+        _vm.SetWindowMinimised(_window?.WindowState == WindowState.Minimized);
         LibraryBox.Focus();
         try
         {
@@ -91,14 +115,34 @@ internal partial class GamesPage : UserControl
 
     // ---------- tiles ----------
 
-    /// <summary>A tile or row was realised, which only happens for entries on screen: ask for its icon if it has none.</summary>
-    private void OnTileLoaded(object sender, RoutedEventArgs e)
+    // The pulse asks only for what is on screen, and the page says what that is with four events on each template
+    // root: Loaded and Unloaded (a container entering and leaving the tree), DataContextChanged (a recycled
+    // container handed another entry), and IsVisibleChanged (the other layout collapsing, the window hiding). The
+    // set is by root, so an entry shown by two roots for an instant stays on screen until both have gone.
+
+    private void NoteSlot(object sender)
     {
-        if (ItemOf(sender) is { } item)
+        if (sender is FrameworkElement { IsVisible: true } root && root.DataContext is LibraryItem item)
         {
-            _vm.NoteOnScreen(item);
+            _vm.NoteOnScreen(item, root);
+        }
+        else if (sender is FrameworkElement gone)
+        {
+            _vm.NoteOffScreen(gone);
         }
     }
+
+    /// <summary>A tile or row was realised, which only happens for entries on screen: ask for its icon if it has none, and count it in.</summary>
+    private void OnTileLoaded(object sender, RoutedEventArgs e) => NoteSlot(sender);
+
+    private void OnTileUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement root) _vm.NoteOffScreen(root);
+    }
+
+    private void OnTileDataContextChanged(object sender, DependencyPropertyChangedEventArgs e) => NoteSlot(sender);
+
+    private void OnTileVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) => NoteSlot(sender);
 
     private async void OnPlayClick(object sender, RoutedEventArgs e)
     {

@@ -50,8 +50,11 @@ public class TypeLadderFenceTests
     /// Declarations that reference a ladder step rather than a number. 304 of 320 as measured on
     /// 2026-08-21. A FLOOR: it may rise and must not fall, so a migrated site cannot quietly go
     /// back to a literal — which is the direction this whole row drifted in for years.
+    /// <para>300 to 302 with v1.41 item 11 (2026-11-26), up. Measured 480 to 482: the Roblox line's template carries a
+    /// text and six button slots plus the toggle, all on BodyFontSize, where the two rows it replaced carried a text and
+    /// two buttons each.</para>
     /// </summary>
-    private const int LadderReferenceFloor = 300;
+    private const int LadderReferenceFloor = 302;
 
     [Fact]
     public void NothingIsSmallerThanTheMetaStep()

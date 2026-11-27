@@ -488,6 +488,78 @@ public class LibraryViewModelTests : IDisposable
         Assert.DoesNotContain("→", Loc.Get("MainWindow_AddGamesFromToolsGames"));
     }
 
+    // ---- v1.41 item 10: the universe-only request ----
+
+    private async Task<(LibraryViewModel Vm, AskedIcons Icons)> PulseVm(Func<bool>? open)
+    {
+        var icons = new AskedIcons();
+        var vm = new LibraryViewModel(
+            new LibraryCatalog(_favorites, _servers, _stats, _history, icons),
+            _favorites, _servers, _api, _settings, _ => Task.FromResult<LaunchTarget?>(null),
+            () => _accounts, (_, _) => Task.CompletedTask, icons: icons, pulseReadsOpen: open);
+        await vm.LoadAsync();
+        return (vm, icons);
+    }
+
+    [Fact]
+    public async Task ASavedServer_WithAThumbnailAndNoUniverse_AsksTheIconCacheOnce_OnlyWhileThePulseMayRead()
+    {
+        await _servers.AddAsync(200, "FAKE-LINK-CODE", PrivateServerCodeKind.LinkCode, "Clan Server", "Blade Ball", "https://example.invalid/t.png");
+        var open = false;
+        var (vm, icons) = await PulseVm(() => open);
+        var item = vm.Items.Single();
+
+        vm.NoteOnScreen(item);
+        Assert.Empty(icons.Asked); // switch off, or the gate has not passed
+
+        open = true;
+        vm.NoteOnScreen(item);
+        Assert.Equal(new long[] { 200 }, icons.Asked.ToArray());
+    }
+
+    [Fact]
+    public async Task ASavedServer_WithAThumbnail_NeverAsks_WhenNoGateIsSupplied()
+    {
+        await _servers.AddAsync(200, "FAKE-LINK-CODE", PrivateServerCodeKind.LinkCode, "Clan Server", "Blade Ball", "https://example.invalid/t.png");
+        var (vm, icons) = await PulseVm(open: null);
+
+        vm.NoteOnScreen(vm.Items.Single());
+
+        Assert.Empty(icons.Asked);
+    }
+
+    [Fact]
+    public async Task AnEntryWithAUniverse_AndAnIcon_AsksNothing_EvenWhenThePulseMayRead()
+    {
+        await _favorites.AddAsync(100, 1000, "Pet Simulator", "https://example.invalid/t.png");
+        var (vm, icons) = await PulseVm(() => true);
+
+        vm.NoteOnScreen(vm.Items.Single());
+
+        Assert.Empty(icons.Asked);
+    }
+
+    [Fact]
+    public async Task AnEntryWithNoIcon_IsAskedAboutAsInV140_WhateverTheGateSays()
+    {
+        await _stats.ApplyAsync(new StatsEvent.LaunchRecorded(Guid.NewGuid(), 300, "Adopt Me", T0));
+        var (vm, icons) = await PulseVm(() => false);
+
+        vm.NoteOnScreen(vm.Items.Single());
+
+        Assert.Equal(new long[] { 300 }, icons.Asked.ToArray());
+    }
+
+    private sealed class AskedIcons : IGameIconCache
+    {
+        public readonly List<long> Asked = [];
+        public event EventHandler<GameIconResolvedEventArgs>? IconResolved { add { } remove { } }
+        public GameIconInfo? TryGet(long placeId) => null;
+        public bool Request(long placeId) { Asked.Add(placeId); return true; }
+        public Task<bool> ResolveAsync(long placeId, CancellationToken ct = default) => Task.FromResult(false);
+        public void AttachQueue(Func<long, bool> enqueue) { }
+    }
+
     // ---- doubles ----
 
     private sealed class NoIcons : IGameIconCache

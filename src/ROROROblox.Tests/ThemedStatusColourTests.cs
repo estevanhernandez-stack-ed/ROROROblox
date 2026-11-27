@@ -515,6 +515,10 @@ public class ThemedStatusColourTests
     // went clean while that entry stayed, so it now grants permission almost nothing uses. Left in
     // place rather than retired blind: one literal is a real literal and retiring the entry is a
     // separate measurement, recorded as a register row instead of done in passing here.
+    //
+    // UNCHANGED at 27 with v1.41 item 11 (2026-11-26), measured 27 before and after: the Roblox line draws its two
+    // tones through RowExpiredAccentBrush and WhiteBrush, and the literal the contested warning once carried
+    // went with the ContestedBanner row's rewrite a cycle ago.
     private const int AllowedXamlLiteralCeiling = 27;
 
     /// <summary>

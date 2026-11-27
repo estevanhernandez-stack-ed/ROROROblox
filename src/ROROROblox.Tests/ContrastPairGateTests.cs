@@ -179,6 +179,13 @@ public class ContrastPairGateTests
         // magenta-heat), so the two colouring styles fall back to White on an expired row (FactBadgeAccentTextStyle,
         // FactBadgePlusStyle) and White on RowExpiredBg is the pair measured here.
         (ThemeSlots.RowExpiredBg, ThemeSlots.White, "the facts-line text on an expired row, where the coloured badges fall back to white (v1.36 C2)"),
+        // v1.41 item 11 (2026-11-26): the Roblox line sits on the row 3 strip's RowBg and draws its Warning notices
+        // (contested, outage, drift) in RowExpiredAccent and its Info notices (known issue, update) in White. The
+        // contested warning has drawn the first pair since it shipped, and nobody measured it: the comment that
+        // recorded a ratio for it was taken against Bg, a different slot from the strip's fill. Both are inline
+        // Foreground bindings inside a DataTemplate setter, which neither scanner pairs with the strip's fill.
+        (ThemeSlots.RowBg, ThemeSlots.RowExpiredAccent, "the Roblox line's Warning notices on the row 3 strip (v1.41)"),
+        (ThemeSlots.RowBg, ThemeSlots.White, "the Roblox line's Info notices on the row 3 strip (v1.41)"),
     ];
 
     private sealed record Pair(string Fill, string Text, int Sites);

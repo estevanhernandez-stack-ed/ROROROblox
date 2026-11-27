@@ -44,7 +44,8 @@ public class MainViewModelTests
         AccountFactsService? factsService = null,
         AccountUserIdBackfillService? userIdBackfill = null,
         string? accountStorePath = null,
-        IGameIconCache? gameIcons = null)
+        IGameIconCache? gameIcons = null,
+        IRobloxUpdateProbe? updateProbe = null)
     {
         var path = accountStorePath ?? Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -71,7 +72,7 @@ public class MainViewModelTests
             themeService: new ThemeService(new FakeThemeStore(), new FakeAppSettings()),
             windowDecorator: windowDecorator,
             bloxstrapDetector: bloxstrapDetector ?? new FakeBloxstrapDetector(),
-            updateProbe: new FakeRobloxUpdateProbe(),
+            updateProbe: updateProbe ?? new FakeRobloxUpdateProbe(),
             accountTransport: new FakeAccountTransport(),
             activityMonitor: activityMonitor ?? new FakeActivityMonitor(),
             memoryWatchdog: memoryWatchdog ?? new FakeMemoryWatchdog(),
@@ -1922,6 +1923,8 @@ public class MainViewModelTests
         public Task<bool> GetCarefulSquadLaunchAsync() => Task.FromResult(false);
         public Task<bool> GetAlwaysShowRecycleAsync() => Task.FromResult(false);
         public Task SetAlwaysShowRecycleAsync(bool always) => throw new NotImplementedException();
+        public Task<bool> GetRobloxFeedsEnabledAsync() => Task.FromResult(true);
+        public Task SetRobloxFeedsEnabledAsync(bool enabled) => throw new NotImplementedException();
         public Task SetCarefulSquadLaunchAsync(bool careful) => throw new NotImplementedException();
         public Task<bool> GetStreamerModeAsync() => throw new NotImplementedException();
         public Task SetStreamerModeAsync(bool enabled) => throw new NotImplementedException();
@@ -2274,6 +2277,8 @@ public class MainViewModelTests
         public bool InstallerRunning;
         public bool IsInstallerRunning() => InstallerRunning;
         public Task<bool> IsUpdatePendingAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<RobloxUpdateState> GetUpdateStateAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public RobloxUpdateState CompareInstalledTo(Version latest) => throw new NotImplementedException();
         public bool IsUpdateChurnActive() => throw new NotImplementedException();
     }
 

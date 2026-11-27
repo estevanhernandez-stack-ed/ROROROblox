@@ -3756,6 +3756,9 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="Library_Playing" xml:space="preserve">
     <value>играют: {0}</value>
   </data>
+  <data name="Library_Pulse_Updated" xml:space="preserve">
+    <value>обновлено {0}</value>
+  </data>
   <data name="Library_PlaceId" xml:space="preserve">
     <value>ID места {0}</value>
   </data>
@@ -3812,5 +3815,80 @@ RoRoRo спрашивает про обводку кнопок только дл
   </data>
   <data name="MainWindow_UpdateStagedTooltipNoVersion" xml:space="preserve">
     <value>Новая версия загружена. Закройте RoRoRo и откройте его снова, чтобы завершить обновление. Нажмите, чтобы выйти сейчас.</value>
+  </data>
+  <data name="RobloxLine_Update_Many" xml:space="preserve">
+    <value>У Roblox есть обновление. Следующий запуск установит его, а «Запустить несколько» удержит остальные, пока оно не завершится.</value>
+  </data>
+  <data name="RobloxLine_Update_One" xml:space="preserve">
+    <value>У Roblox есть обновление. Следующий запуск установит его.</value>
+  </data>
+  <data name="RobloxLine_WhatChanged" xml:space="preserve">
+    <value>Что изменилось</value>
+  </data>
+  <data name="RobloxLine_Status_Outage" xml:space="preserve">
+    <value>Roblox сообщает о сбое: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Partial" xml:space="preserve">
+    <value>Roblox сообщает о частичном сбое: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Degraded" xml:space="preserve">
+    <value>Roblox сообщает о снижении производительности: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Security" xml:space="preserve">
+    <value>Roblox сообщает о проблеме с безопасностью: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Maintenance" xml:space="preserve">
+    <value>Roblox сообщает о проводимых технических работах: {0}</value>
+  </data>
+  <data name="RobloxLine_Status_Problem" xml:space="preserve">
+    <value>Roblox сообщает о проблеме: {0}</value>
+  </data>
+  <data name="RobloxLine_Row_Website" xml:space="preserve">
+    <value>Сайт</value>
+  </data>
+  <data name="RobloxLine_Row_Games" xml:space="preserve">
+    <value>Игры</value>
+  </data>
+  <data name="RobloxLine_Row_Avatar" xml:space="preserve">
+    <value>Аватары</value>
+  </data>
+  <data name="RobloxLine_Row_GameJoin" xml:space="preserve">
+    <value>Вход в игры</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_one" xml:space="preserve">
+    <value>{0} и ещё {1}</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_other" xml:space="preserve">
+    <value>{0} и ещё {1}</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_few" xml:space="preserve">
+    <value>{0} и ещё {1}</value>
+  </data>
+  <data name="RobloxLine_Status_AndMore_many" xml:space="preserve">
+    <value>{0} и ещё {1}</value>
+  </data>
+  <data name="RobloxLine_StatusLink" xml:space="preserve">
+    <value>Статус Roblox</value>
+  </data>
+  <data name="RobloxLine_More" xml:space="preserve">
+    <value>+{0} ещё</value>
+  </data>
+  <data name="RobloxLine_More_Name_one" xml:space="preserve">
+    <value>Ещё {0} уведомление Roblox</value>
+  </data>
+  <data name="RobloxLine_More_Name_other" xml:space="preserve">
+    <value>Ещё {0} уведомлений Roblox</value>
+  </data>
+  <data name="RobloxLine_More_Name_few" xml:space="preserve">
+    <value>Ещё {0} уведомления Roblox</value>
+  </data>
+  <data name="RobloxLine_More_Name_many" xml:space="preserve">
+    <value>Ещё {0} уведомлений Roblox</value>
+  </data>
+  <data name="SettingsPage_RobloxFeeds" xml:space="preserve">
+    <value>Показывать статус Roblox и активность в играх.</value>
+  </data>
+  <data name="SettingsPage_RobloxFeeds_Description" xml:space="preserve">
+    <value>Проверяет страницу статуса Roblox и считывает, сколько людей в твоих сохранённых играх. Проверка статуса идёт на Status.io — сторонний сервис, который размещает эту страницу для Roblox. Ничего о тебе или твоих аккаунтах не отправляется.</value>
   </data>
 </root>

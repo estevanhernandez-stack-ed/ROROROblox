@@ -742,6 +742,24 @@ public sealed class AppSettings : IAppSettings, IDisposable
     // one that says "Chime" is a working example of the format. The ordinal is never persisted —
     // see AlertSoundSetting, which refuses a numeric value precisely so the enum's declaration
     // order cannot become part of the file format.
+    public async Task<bool> GetRobloxFeedsEnabledAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).RobloxFeedsEnabled; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetRobloxFeedsEnabledAsync(bool enabled)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { RobloxFeedsEnabled = enabled }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     private sealed record SettingsBlob(
         int Version,
         bool LaunchMainOnStartup = false,
@@ -772,5 +790,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
         string AlertCadenceOverridesJson = "",
         string AlertSound = "Chime",
         string LibraryView = "grid",
-        string LibraryFilters = "");
+        string LibraryFilters = "",
+        bool RobloxFeedsEnabled = true);
 }

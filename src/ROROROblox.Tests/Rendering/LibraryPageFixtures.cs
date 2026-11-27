@@ -3,6 +3,7 @@ using System.Windows;
 using ROROROblox.App.Games;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Library;
 using ROROROblox.Core.StreamerMode;
 using ROROROblox.Core.Theming;
 
@@ -57,7 +58,9 @@ internal static class LibraryPageFixtures
         string filters = "",
         double width = 684,
         double height = 540,
-        bool streamerMode = false)
+        bool streamerMode = false,
+        bool show = false,
+        IGamePulseService? pulse = null)
     {
         var favourites = new MemFavorites();
         var servers = new MemServers();
@@ -71,14 +74,39 @@ internal static class LibraryPageFixtures
             catalog, favourites, servers, new NullApi(), settings,
             _ => Task.FromResult<LaunchTarget?>(null),
             () => accounts,
-            (_, _) => Task.CompletedTask);
+            (_, _) => Task.CompletedTask,
+            pulse: pulse);
 
         // Every await inside LoadAsync is on an already-completed task, so this returns synchronously.
         vm.LoadAsync().GetAwaiter().GetResult();
 
         var page = new GamesPage(vm, accounts);
-        var window = ThemedWindowRender.HostPage(page, width, height);
+        var window = show ? ShownWindow(page, width, height) : ThemedWindowRender.HostPage(page, width, height);
         return new Built(window, page, vm, accounts);
+    }
+
+    /// <summary>
+    /// A page in a window that is really shown, off screen: the only way <c>Loaded</c>, <c>Unloaded</c> and
+    /// <c>IsVisibleChanged</c> fire from WPF itself rather than from the harness. Brand resources are merged before
+    /// <c>Show</c>. Host thread only; close it when done.
+    /// </summary>
+    public static Window ShownWindow(System.Windows.Controls.UserControl page, double width, double height)
+    {
+        var window = new Window
+        {
+            Content = page,
+            Width = width,
+            Height = height,
+            Left = -32000,
+            Top = -32000,
+            WindowStyle = WindowStyle.None,
+            ShowInTaskbar = false,
+            ShowActivated = false,
+        };
+        window.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "BgBrush");
+        window.Resources.MergedDictionaries.Add(ThemedRender.Resources(Themes().Single(t => t.Id == "brand")));
+        window.Show();
+        return window;
     }
 
     /// <summary>
@@ -179,6 +207,49 @@ internal static class LibraryPageFixtures
                 stats[2004] = new GameStat("Fruit Blox", 2, TimeSpan.FromMinutes(40), Now.AddDays(-4));
                 stats[2005] = new GameStat("Mystery Manor", 1, TimeSpan.FromMinutes(12), Now.AddDays(-6));
                 break;
+        }
+    }
+
+    /// <summary>
+    /// A pulse service that answers from a table and records every interest it is told, for the render tests that
+    /// need the numbers (what is declared) rather than the words (what is drawn).
+    /// </summary>
+    internal sealed class FakePulse : IGamePulseService
+    {
+        public Dictionary<long, GamePulseView> Readings { get; } = [];
+        public Dictionary<object, long[]> Interest { get; } = new(ReferenceEqualityComparer.Instance);
+        public List<(object Owner, long[] Ids)> Log { get; } = [];
+        public event EventHandler<GamePulseChangedEventArgs>? Changed;
+        public GamePulseView? TryGet(long universeId) => Readings.TryGetValue(universeId, out var v) ? v : null;
+
+        public void SetInterest(object owner, IReadOnlyCollection<long> universeIds)
+        {
+            var ids = universeIds.Distinct().OrderBy(i => i).ToArray();
+            Log.Add((owner, ids));
+            if (ids.Length == 0) Interest.Remove(owner); else Interest[owner] = ids;
+        }
+
+        public void SetEnabled(bool enabled) { }
+        public void AllowReadsFrom(DateTimeOffset instant) { }
+        public void Raise(params long[] ids) => Changed?.Invoke(this, new GamePulseChangedEventArgs(ids));
+
+        /// <summary>Every universe id any owner currently declares.</summary>
+        public IReadOnlyList<long> Union => Interest.Values.SelectMany(i => i).Distinct().OrderBy(i => i).ToList();
+
+        /// <summary>Gives every universe id the Showcase and Hundred scenes use (place x 10) a reading; the three shapes the widest strings take.</summary>
+        public void ReadEverything(IEnumerable<long> places)
+        {
+            var now = DateTimeOffset.UtcNow;
+            foreach (var place in places)
+            {
+                var universe = place * 10;
+                Readings[universe] = (place % 3) switch
+                {
+                    0 => new GamePulseView(14_382_901, now.AddDays(-6)),
+                    1 => new GamePulseView(81_827, now.AddHours(-23)),
+                    _ => new GamePulseView(0, now.AddMonths(-20)),
+                };
+            }
         }
     }
 

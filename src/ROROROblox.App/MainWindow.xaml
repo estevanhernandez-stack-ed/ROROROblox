@@ -7,6 +7,7 @@
                  xmlns:vm="clr-namespace:ROROROblox.App.ViewModels"
                  xmlns:app="clr-namespace:ROROROblox.App"
                  xmlns:controls="clr-namespace:ROROROblox.App.Controls"
+                 xmlns:notices="clr-namespace:ROROROblox.App.Notices"
                  Title="{loc:Loc MainWindow_Rororo}"
         AutomationProperties.AutomationId="MainWindow"
                  Height="600" Width="900"
@@ -26,6 +27,124 @@
              See BindingProxy.cs for why the old PlacementTarget.DataContext.SomeCommand bindings
              silently resolved to null. -->
         <app:BindingProxy x:Key="VmProxy" Data="{Binding}" />
+
+        <!-- Compact mode picks grid row 1 and the default width picks row 0 (the Roblox line's notice below). -->
+        <app:BoolToIntConverter x:Key="CompactRowConverter" TrueValue="1" FalseValue="0" />
+
+        <!-- The Roblox line's one notice (v1.41, spec 7.3). Drawn for the top notice and for each item of the
+             inline "more" list. The buttons are DECLARED, each with its fixed rank and a Visibility bound to
+             a boolean on the notice: a rank cannot be switched by a trigger (ButtonRankFenceTests), which is
+             why this is six slots and not a list of actions. They are direct children of the same Grid as the
+             text, each in its own Auto column after it, so declaration order (reading and Tab order) is the
+             text first, then its buttons, then the "+N more" toggle, and a hidden slot is zero wide
+             (DismissOrderFenceTests wants the Dismiss under a text sibling).
+             Compact wrap rule (Este, 2026-11-26): at the 380 px width the buttons and the toggle drop to a
+             row under the sentence, which then takes the whole width. Nothing restyles a button: each one
+             binds its own Grid.Row to the window's IsCompact through CompactRowConverter, and the sentence
+             spans every column and keeps a 4 DIP gap above the row only when the row has something in it.
+             Default width: one row, the buttons to the right of the text, as before. Text is on the strip's RowBg: the warning accent for Warning,
+             White for Info. Both pairs are measured in all four themes (ContrastPairGateTests). The glyph is
+             on every notice so tone is never the only signal, and flatline, which flattens the accent to
+             grey, keeps the state through the glyph and the words. Commands live on the window's view model;
+             the template is also used by the "more" ItemsControl, whose items are notices, so they are
+             reached through the Window like the roster's commands are. -->
+        <DataTemplate x:Key="RobloxNoticeTemplate" DataType="{x:Type notices:RobloxNoticeViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0"
+                           FontSize="{DynamicResource BodyFontSize}"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center"><Run Text="▲ " /><Run Text="{Binding Text, Mode=OneWay}" />
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Tone}" Value="Warning">
+                                    <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Grid.ColumnSpan" Value="8" />
+                                </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}}" Value="True" />
+                                        <Condition Binding="{Binding HasActions}" Value="True" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Margin" Value="0,0,0,4" />
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <Button Grid.Column="1"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
+                        Style="{StaticResource CtaButtonStyle}"
+                        Content="{loc:Loc MainWindow_CloseRobloxForMe}"
+                        Command="{Binding DataContext.CloseRobloxForMeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Visibility="{Binding ShowContestedActions, Converter={StaticResource BoolToVisibilityConverter}}"
+                        Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
+                <Button Grid.Column="2"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{loc:Loc MainWindow_Retry}"
+                        Command="{Binding DataContext.RetryMutexCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Visibility="{Binding ShowContestedActions, Converter={StaticResource BoolToVisibilityConverter}}"
+                        Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
+                <Button Grid.Column="3"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{loc:Loc RobloxLine_StatusLink}"
+                        Command="{Binding DataContext.OpenRobloxStatusCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Visibility="{Binding ShowStatusLink, Converter={StaticResource BoolToVisibilityConverter}}"
+                        Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
+                <Button Grid.Column="4"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{loc:Loc MainWindow_SeeKnownIssues}"
+                        Command="{Binding DataContext.OpenKnownIssuesCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Visibility="{Binding ShowKnownIssueActions, Converter={StaticResource BoolToVisibilityConverter}}"
+                        Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
+                <Button Grid.Column="5"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
+                        Style="{StaticResource GhostButtonStyle}"
+                        Content="{loc:Loc MainWindow_Dismiss}"
+                        AutomationProperties.Name="{loc:Loc MainWindow_DismissKnownIssueNotice}"
+                        Command="{Binding DataContext.DismissKnownIssueNoticeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Visibility="{Binding ShowKnownIssueActions, Converter={StaticResource BoolToVisibilityConverter}}"
+                        Padding="10,4" Margin="4,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
+                <Button Grid.Column="6"
+                        Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{loc:Loc RobloxLine_WhatChanged}"
+                        Command="{Binding DataContext.OpenRobloxReleaseNotesCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Visibility="{Binding ShowWhatChanged, Converter={StaticResource BoolToVisibilityConverter}}"
+                        Padding="10,4" Margin="8,0,0,0" FontSize="{DynamicResource BodyFontSize}" />
+                <ToggleButton Grid.Column="7"
+                              Grid.Row="{Binding DataContext.IsCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactRowConverter}}"
+                              Style="{StaticResource PanelExpanderToggleButtonStyle}"
+                              Content="{Binding DataContext.RobloxLine.MoreLabel, RelativeSource={RelativeSource AncestorType=Window}}"
+                              AutomationProperties.Name="{Binding DataContext.RobloxLine.MoreSpokenName, RelativeSource={RelativeSource AncestorType=Window}}"
+                              IsChecked="{Binding DataContext.RobloxLine.IsExpanded, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
+                              Visibility="{Binding ShowMoreToggle, Converter={StaticResource BoolToVisibilityConverter}}"
+                              Padding="10,4" Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              FontSize="{DynamicResource BodyFontSize}"
+                              Cursor="Hand" />
+            </Grid>
+        </DataTemplate>
 
         <!-- Themed brushes are app-level (App.xaml). ThemeService.ApplySlot REPLACES each brush
              instance on theme change, so every themed reference in this file must be
@@ -2068,9 +2187,9 @@
             </StackPanel>
         </Border>
 
-        <!-- Status banner + idle summary strip + runtime contested-lock banner. Three
-             independently-collapsing children share one Border so each can show/hide on its
-             own without a Grid row renumber — mirrors how StatusBanner itself shows/hides via
+        <!-- Status banner + idle summary strip + the Roblox line (contested lock, status, known issues, update)
+             and the other notices. Independently-collapsing children share one Border so each can show/hide on
+             its own without a Grid row renumber — mirrors how StatusBanner itself shows/hides via
              StringToVisibilityConverter. -->
         <Border Grid.Row="3" Padding="24,8"
                 Background="{DynamicResource RowBgBrush}">
@@ -2083,9 +2202,8 @@
                                 <Condition Binding="{Binding StatusBanner}" Value="" />
                                 <Condition Binding="{Binding AccountsLoadFailedText}" Value="" />
                                 <Condition Binding="{Binding IdleSummaryText}" Value="" />
-                                <Condition Binding="{Binding ContestedBannerText}" Value="" />
+                                <Condition Binding="{Binding RobloxLine.HasNotice}" Value="False" />
                                 <Condition Binding="{Binding FpsCapWarningText}" Value="" />
-                                <Condition Binding="{Binding KnownIssueNoticeText}" Value="" />
                                 <Condition Binding="{Binding CrashNoticeText}" Value="" />
                                 <Condition Binding="{Binding RatingAskText}" Value="" />
                             </MultiDataTrigger.Conditions>
@@ -2116,28 +2234,39 @@
                            Margin="0,2,0,0"
                            Foreground="{DynamicResource MutedTextBrush}"
                            Visibility="{Binding IdleSummaryText, Converter={StaticResource StringToVisibilityConverter}}" />
-                <!-- Runtime contested-lock banner (tray-residence): shown when Roblox holds the
-                     multi-instance lock post-startup. Same recovery actions as the startup modal. -->
-                <StackPanel Orientation="Vertical" Margin="0,4,0,0"
-                            Visibility="{Binding ContestedBannerText, Converter={StaticResource StringToVisibilityConverter}}">
-                    <!-- The third warning surface on this window, and the last literal in this file.
-                         #F1B232 was brand's RowExpiredAccent value frozen in place, so under
-                         flatline it stayed amber on an achromatic field exactly as the Bloxstrap
-                         banner did. Bound rather than left, per item 1's ruling that warning
-                         surfaces share one themed vocabulary. This text sits on the PAGE field
-                         rather than a banner fill, so it was measured against Bg rather than
-                         RowExpiredBg: 8.85 brand, 7.23 midnight, 9.85 magenta-heat, 12.84 flatline,
-                         all clear of 4.5. Byte-identical in brand and magenta-heat. -->
-                    <TextBlock Text="{Binding ContestedBannerText}"
-                               FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap"
-                               Foreground="{DynamicResource RowExpiredAccentBrush}" />
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <Button Style="{StaticResource CtaButtonStyle}" Content="{loc:Loc MainWindow_CloseRobloxForMe}" Command="{Binding CloseRobloxForMeCommand}"
-                                Padding="10,4" Margin="0,0,8,0" FontSize="{DynamicResource BodyFontSize}" />
-                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="{loc:Loc MainWindow_Retry}" Command="{Binding RetryMutexCommand}"
-                                Padding="10,4" FontSize="{DynamicResource BodyFontSize}" />
-                    </StackPanel>
-                </StackPanel>
+                <!-- The Roblox line (v1.41, spec 7.3): one element in this strip for the contested-lock warning
+                     (Roblox holds the multi-instance lock after startup), Roblox's status, the known-issues
+                     notice, the drift banner's text and the update notice. The resolver picks the one that is
+                     drawn; the rest wait behind the "+N more" toggle, which opens them inline. Collapsed, the
+                     line is one notice tall whatever the count: the toggle is the last slot of the top notice's
+                     template, in its own Auto column, so it takes width from the text (default) or shares the
+                     button row under it (compact) and never adds a row. It is a ToggleButton on the
+                     account panels' expander rank (ruled B1, 2026-11-26): IsChecked two-way, no Click, a bound
+                     label and so an explicit spoken name. Nothing here is in a tooltip. Declaration order is
+                     reading and Tab order: the top notice's text, its buttons, the toggle, then (open) each
+                     notice behind it in turn. -->
+                <Grid Margin="0,4,0,0"
+                      Visibility="{Binding RobloxLine.HasNotice, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ContentControl Grid.Row="0"
+                                    Content="{Binding RobloxLine.Top}"
+                                    ContentTemplate="{StaticResource RobloxNoticeTemplate}"
+                                    IsTabStop="False" />
+                    <ItemsControl Grid.Row="1"
+                                  ItemsSource="{Binding RobloxLine.More}"
+                                  ItemTemplate="{StaticResource RobloxNoticeTemplate}"
+                                  IsTabStop="False"
+                                  Visibility="{Binding RobloxLine.IsExpanded, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Margin" Value="0,4,0,0" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                    </ItemsControl>
+                </Grid>
                 <!-- FPS-cap mismatch (2026-08-02). Roblox keeps one shared settings file per
                      install, so differing per-account caps force a settle window between
                      launches. Display only — it never blocks launching. Dismissible per
@@ -2177,39 +2306,6 @@
                             FontSize="{DynamicResource BodyFontSize}"
                             VerticalAlignment="Top"
                             Cursor="Hand" />
-                </Grid>
-                <!-- Known Roblox issues (spec 2026-09-23). Suppressed while the contested warning shows
-                     (KnownIssuesNoticeModel.SetSuppressed, fed from SetContested). A Grid for the same
-                     reason as the frame-rate row above: declaration order is reading order, so the
-                     message is read before its two actions. -->
-                <Grid Margin="0,4,0,0"
-                      Visibility="{Binding KnownIssueNoticeText, Converter={StaticResource StringToVisibilityConverter}}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0"
-                               Text="{Binding KnownIssueNoticeText}"
-                               FontSize="{DynamicResource BodyFontSize}"
-                               TextWrapping="Wrap"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource WhiteBrush}" />
-                    <Button Grid.Column="1"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Content="{loc:Loc MainWindow_SeeKnownIssues}"
-                            Command="{Binding OpenKnownIssuesCommand}"
-                            Padding="10,4"
-                            Margin="8,0,0,0"
-                            FontSize="{DynamicResource BodyFontSize}" />
-                    <Button Grid.Column="2"
-                            Style="{StaticResource GhostButtonStyle}"
-                            Content="{loc:Loc MainWindow_Dismiss}"
-                            AutomationProperties.Name="{loc:Loc MainWindow_DismissKnownIssueNotice}"
-                            Command="{Binding DismissKnownIssueNoticeCommand}"
-                            Padding="10,4"
-                            Margin="4,0,0,0"
-                            FontSize="{DynamicResource BodyFontSize}" />
                 </Grid>
                 <!-- The crash notice (2026-11-10). Shown on the start after a RECORDED crash (never after
                      a kill, a Store update or a power cut, which leave no record). With no telemetry, a

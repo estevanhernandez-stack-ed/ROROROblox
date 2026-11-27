@@ -29,6 +29,15 @@ internal static class DisplayDate
         return when.ToLocalTime().ToString(pattern, culture);
     }
 
+    /// <summary>"Mar 2023" in English: the culture's month-year order with the month abbreviated. Local time.</summary>
+    public static string MonthYear(DateTimeOffset when, CultureInfo? culture = null)
+    {
+        culture ??= Ui;
+        // YearMonthPattern is the full-month form ("MMMM yyyy", "MMMM 'de' yyyy"); one M fewer abbreviates it.
+        var pattern = culture.DateTimeFormat.YearMonthPattern.Replace("MMMM", "MMM", StringComparison.Ordinal);
+        return when.ToLocalTime().ToString(pattern, culture);
+    }
+
     /// <summary>"Monday, November 3" in English; weekday plus the culture's month-day order.</summary>
     public static string WeekdayMonthDay(DateTime localDate, CultureInfo? culture = null)
     {

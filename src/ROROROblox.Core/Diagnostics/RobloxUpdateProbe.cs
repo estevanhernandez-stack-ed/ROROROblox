@@ -5,8 +5,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using ROROROblox.Core.KnownIssues;
 
 namespace ROROROblox.Core.Diagnostics;
+
+/// <summary>How a local Roblox version string compares with the endpoint's, once both are parsed.</summary>
+internal enum VersionMatch { Unknown, Same, LocalOlder, LocalNewer }
 
 /// <summary>
 /// Default <see cref="IRobloxUpdateProbe"/> implementation — the v1.7.0 install-deferral
@@ -23,13 +27,12 @@ namespace ROROROblox.Core.Diagnostics;
 /// <see cref="HttpClient"/>). Every member is degrade-safe: on ANY failure it returns the
 /// "don't block the launch" answer (<c>false</c>).
 ///
-/// <para><b>Like-for-like comparison.</b> <see cref="RobloxCompatChecker.GetInstalledRobloxVersion"/>
-/// returns the <c>FileVersion</c> dotted-quad of the newest installed <c>RobloxPlayerBeta.exe</c>
-/// (e.g. <c>2.661.0.6610701</c>) — NOT the <c>version-*</c> GUID. The CDN response carries two
-/// fields: <c>version</c> (the matching file-version string) and <c>clientVersionUpload</c> (the
-/// GUID). We therefore compare the installed file version against the CDN's <c>version</c> field —
-/// like-for-like. The slate's mention of <c>clientVersionUpload</c> assumed the installed read
-/// returned the GUID; it doesn't, so <c>version</c> is the correct counterpart.</para>
+/// <para><b>Parsed comparison (since v1.41).</b> The local file version is compared against the
+/// CDN's <c>version</c> field (not <c>clientVersionUpload</c>, the GUID). Both sides go through
+/// <see cref="RobloxVersion.TryParseInstalled"/> first: the file version reads with commas and
+/// spaces (<c>0, 748, 0, 7481526</c>) while the endpoint answers dotted (<c>0.748.0.7481526</c>),
+/// so the string compare this class did through v1.40 reported an update that was never there.
+/// An unreadable string is unknown, never a difference.</para>
 /// </remarks>
 public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
 {
@@ -94,6 +97,9 @@ public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
     }
 
     public async Task<bool> IsUpdatePendingAsync(CancellationToken ct = default)
+        => (await GetUpdateStateAsync(ct).ConfigureAwait(false)).Kind == RobloxUpdateKind.Pending;
+
+    public async Task<RobloxUpdateState> GetUpdateStateAsync(CancellationToken ct = default)
     {
         // Two local reads. The handler's pin is what a launch will actually run; the newest install
         // is what used to be read here alone, and is kept because it still catches the case where
@@ -103,22 +109,33 @@ public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
 
         if (string.IsNullOrWhiteSpace(handler) && string.IsNullOrWhiteSpace(installed))
         {
-            // Roblox not installed (or nothing readable) — there's nothing to defer. Item 9 owns the
-            // "Roblox not installed" surface; the probe just declines to block.
-            return false;
+            // Roblox not installed (or nothing readable): nothing to defer, and no spent round-trip.
+            LogState(handler, installed, null, RobloxUpdateState.Unknown);
+            return RobloxUpdateState.Unknown;
         }
 
-        var latest = await FetchLatestVersionAsync(ct).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(latest))
+        var latestText = await FetchLatestVersionAsync(ct).ConfigureAwait(false);
+        RobloxUpdateState state;
+        if (!RobloxVersion.TryParseInstalled(latestText, out var latest))
         {
-            // No network / non-200 / parse failure / missing-or-empty version field. Degrade to
-            // "no update pending" so a CDN hiccup never stalls a launch (spec risks: CDN endpoint).
-            return false;
+            // No network / non-200 / parse failure / blank or unparseable version field. Degrade to
+            // Unknown so a CDN hiccup never stalls a launch.
+            state = RobloxUpdateState.Unknown;
+        }
+        else
+        {
+            state = Decide(handler, installed, latest);
         }
 
-        // Pending if EITHER local version disagrees with latest. An unreadable side contributes
-        // nothing rather than voting "no update" — the readable side still decides.
-        return DiffersFromLatest(handler, latest) || DiffersFromLatest(installed, latest);
+        LogState(handler, installed, latestText, state);
+        return state;
+    }
+
+    public RobloxUpdateState CompareInstalledTo(Version latest)
+    {
+        var handler = ReadVersionSafe(_handlerVersionProvider, "handler");
+        var installed = ReadVersionSafe(_installedVersionProvider, "newest-installed");
+        return Decide(handler, installed, latest);
     }
 
     public bool IsUpdateChurnActive()
@@ -137,14 +154,52 @@ public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
         }
     }
 
+    private static RobloxUpdateState Decide(string? handler, string? installed, Version latest)
+    {
+        var handlerMatch = Compare(handler, latest);
+        var installedMatch = Compare(installed, latest);
+
+        if (handlerMatch == VersionMatch.Unknown && installedMatch == VersionMatch.Unknown)
+        {
+            return RobloxUpdateState.Unknown;
+        }
+
+        if (handlerMatch is VersionMatch.Unknown or VersionMatch.Same
+            && installedMatch is VersionMatch.Unknown or VersionMatch.Same)
+        {
+            return new RobloxUpdateState(RobloxUpdateKind.Current, RobloxUpdateDirection.None, latest);
+        }
+
+        // Direction: the handler's read when it is readable and differs (it is what a launch runs),
+        // otherwise the newest install's.
+        var deciding = handlerMatch is VersionMatch.LocalOlder or VersionMatch.LocalNewer ? handlerMatch : installedMatch;
+        var direction = deciding == VersionMatch.LocalOlder ? RobloxUpdateDirection.Newer : RobloxUpdateDirection.Older;
+        return new RobloxUpdateState(RobloxUpdateKind.Pending, direction, latest);
+    }
+
     /// <summary>
-    /// Like-for-like string compare (file version vs the CDN's <c>version</c>). Case-insensitive and
-    /// trimmed to absorb cosmetic CDN formatting. A blank local version is "unknown", which is not a
-    /// disagreement — it must not vote either way.
+    /// Compares parsed versions. Both sides go through <see cref="RobloxVersion.TryParseInstalled"/>, so
+    /// <c>0, 748, 0, 7481526</c> and <c>0.748.0.7481526</c> are the same version. Blank or unparseable on
+    /// either side is <see cref="VersionMatch.Unknown"/>, which never votes.
     /// </summary>
-    private static bool DiffersFromLatest(string? local, string latest)
-        => !string.IsNullOrWhiteSpace(local)
-           && !string.Equals(local.Trim(), latest.Trim(), StringComparison.OrdinalIgnoreCase);
+    internal static VersionMatch Compare(string? local, string? latest)
+        => RobloxVersion.TryParseInstalled(local, out var l) && RobloxVersion.TryParseInstalled(latest, out var r)
+            ? Compare(l, r)
+            : VersionMatch.Unknown;
+
+    private static VersionMatch Compare(string? local, Version latest)
+        => RobloxVersion.TryParseInstalled(local, out var l) ? Compare(l, latest) : VersionMatch.Unknown;
+
+    private static VersionMatch Compare(Version local, Version latest)
+    {
+        var order = local.CompareTo(latest);
+        return order == 0 ? VersionMatch.Same : order < 0 ? VersionMatch.LocalOlder : VersionMatch.LocalNewer;
+    }
+
+    private void LogState(string? handler, string? installed, string? latest, RobloxUpdateState state)
+        => _log.LogDebug(
+            "client-version check: handler {Handler}, installed {Installed}, latest {Latest} -> {Kind} {Direction}",
+            handler, installed, latest, state.Kind, state.Direction);
 
     private string? ReadVersionSafe(Func<string?> provider, string label)
     {

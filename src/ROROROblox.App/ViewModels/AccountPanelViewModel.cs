@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Windows.Input;
 using ROROROblox.App.Localization;
 using ROROROblox.Core;
+using ROROROblox.Core.Library;
+using PulseWords = ROROROblox.App.Games.PulseText;
 
 namespace ROROROblox.App.ViewModels;
 
@@ -17,8 +19,10 @@ namespace ROROROblox.App.ViewModels;
 /// <param name="IsSaved">True when the place or server is in the Library (a favourite or a saved private server).</param>
 /// <param name="CanLaunch">False for a Recent private-server group with no saved server behind it: the history row has no access code, and launching its place would join the PUBLIC game.</param>
 /// <param name="PlaceName">For a saved private server, the game it lives in as the icon cache knows it (no fetch), or null. Shown beside the age.</param>
+/// <param name="Pulse">The game's player count and last update, from the one shared reading; null until an answer arrives (or after Roblox stops returning the game). Replaced in place when the reading changes.</param>
 public sealed record PanelEntry(
-    LibraryEntry Entry, DateTimeOffset? LastPlayedUtc, TimeSpan? TotalPlayed, bool IsSaved, bool CanLaunch = true, string? PlaceName = null)
+    LibraryEntry Entry, DateTimeOffset? LastPlayedUtc, TimeSpan? TotalPlayed, bool IsSaved, bool CanLaunch = true, string? PlaceName = null,
+    GamePulseView? Pulse = null)
     : INotifyPropertyChanged
 {
     /// <summary>
@@ -34,6 +38,7 @@ public sealed record PanelEntry(
         IsSaved = original.IsSaved;
         CanLaunch = original.CanLaunch;
         PlaceName = original.PlaceName;
+        Pulse = original.Pulse;
     }
 
     /// <summary>Raised only by <see cref="RaiseTimesChanged"/>: the data is immutable, but its wording drifts with the clock.</summary>
@@ -73,10 +78,17 @@ public sealed record PanelEntry(
     /// <summary>The inline Save affordance: an unsaved Recent entry that can be launched (so it has a public place to save).</summary>
     public bool ShowSave => !IsSaved && CanLaunch;
 
+    /// <summary>"81,827 playing". The only part of the pulse on the meta line: the panel column is narrow, and the date goes to the tooltip and the accessible name (Este, 2026-11-26, as the grid tile does). Empty without a count and for a private server.</summary>
+    public string PulseCountText => PulseWords.Count(Pulse, IsPrivate);
+
+    /// <summary>"updated 2 days ago", or empty without a date. Tooltip and accessible name only.</summary>
+    public string PulseUpdatedText => PulseWords.Updated(Pulse);
+
     /// <summary>
     /// The second line: how long ago THIS account last played it, then (Recent only) the time it spent
     /// there "in recent sessions" (the window is 100 history rows, not all time); a saved entry this
     /// account never launched says so. A private server leads with its game when the icon cache knows it.
+    /// The game's player count is one more part, last, joined the same way; the date is not on this line.
     /// </summary>
     public string MetaText
     {
@@ -87,15 +99,22 @@ public sealed record PanelEntry(
             parts.Add(LastPlayedUtc is { } at ? ROROROblox.App.ViewModels.AccountSummary.RelativeAgo(at) : Loc.Get("Shell_Panel_Meta_NotPlayed"));
             if (Entry.Kind == LibraryEntryKind.Recent && TotalPlayed is { } total && total > TimeSpan.Zero)
                 parts.Add(Loc.Format("Shell_Panel_Meta_InRecent", FormatDuration(total)));
+            if (PulseCountText is { Length: > 0 } count) parts.Add(count);
             return string.Join(" · ", parts);
         }
     }
 
-    /// <summary>Tooltip: the full name over the full meta line, for the day the column trims either with an ellipsis; a disabled entry adds why.</summary>
-    public string TooltipText => DisplayName + "\n" + MetaText + (CanLaunch ? string.Empty : "\n" + DisabledHint);
+    /// <summary>The meta line and then the game's last update: what the tooltip and the accessible name say, since the date is not drawn.</summary>
+    private string FullMetaText => PulseUpdatedText is { Length: > 0 } updated ? MetaText + " · " + updated : MetaText;
 
-    /// <summary>Accessible name of the entry's launch button: the full name and meta, never the trimmed text.</summary>
-    public string AccessibleName => Loc.Format("Shell_Panel_Entry_Name", DisplayName, MetaText);
+    /// <summary>Tooltip: the full name over the full meta line, then the date the game was updated; a disabled entry adds why.</summary>
+    public string TooltipText
+        => DisplayName + "\n" + MetaText
+           + (PulseUpdatedText is { Length: > 0 } updated ? "\n" + updated : string.Empty)
+           + (CanLaunch ? string.Empty : "\n" + DisabledHint);
+
+    /// <summary>Accessible name of the entry's launch button: the full name, meta, players and updated, never the trimmed text.</summary>
+    public string AccessibleName => Loc.Format("Shell_Panel_Entry_Name", DisplayName, FullMetaText);
 
     /// <summary>Accessible name of the inline Save button.</summary>
     public string SaveAccessibleName => Loc.Format("Shell_Panel_Save_Name", DisplayName);
@@ -157,7 +176,10 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
     private readonly IFavoriteGameStore? _favorites;
     private readonly IUiDispatcher? _ui;
     private readonly Action? _openLibrary;
+    private readonly Func<bool>? _pulseReadsOpen;
     private readonly HashSet<long> _savedHere = new();
+    private IGamePulseService? _pulse;
+    private bool _mainWindowVisible;
     private bool _isExpanded;
     private bool _iconsAttached;
     private int _refreshSeq;
@@ -174,8 +196,10 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         IGameIconCache? icons = null,
         IFavoriteGameStore? favorites = null,
         IUiDispatcher? ui = null,
-        Action? openLibrary = null)
+        Action? openLibrary = null,
+        Func<bool>? pulseReadsOpen = null)
     {
+        _pulseReadsOpen = pulseReadsOpen;
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         _history = history ?? throw new ArgumentNullException(nameof(history));
         _library = library ?? throw new ArgumentNullException(nameof(library));
@@ -293,6 +317,8 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
             {
                 DetachIcons();
             }
+
+            RefreshPulseInterest();
         }
     }
 
@@ -315,14 +341,17 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
             AttachIcons();
             _ = RefreshCoreAsync(requestIcons: false);
         }
+
+        RefreshPulseInterest();
     }
 
     /// <summary>Re-query history and the Library. Called on expand and after a session ends. Never throws.</summary>
     public Task RefreshAsync() => RefreshCoreAsync(requestIcons: true);
 
     /// <summary>
-    /// Ask the icon cache for the unsaved Recent places on screen that have no cached icon. Does
-    /// nothing while the panel is collapsed.
+    /// Ask the icon cache for the unsaved Recent places on screen that have no cached icon. While the
+    /// pulse may read (switch on, startup gate passed), an entry that has an icon and no universe id asks
+    /// too, so a saved private server learns its game. Does nothing while the panel is collapsed.
     /// </summary>
     public void RequestVisibleIcons()
     {
@@ -330,6 +359,12 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         foreach (var e in Recent)
         {
             if (!e.IsSaved && e.Entry.IconUrl is null) _icons.Request(e.Entry.PlaceId);
+        }
+
+        if (_pulseReadsOpen?.Invoke() != true) return;
+        foreach (var e in Recent.Concat(Favourites).Concat(PrivateServers))
+        {
+            if (e.Entry.UniverseId is null && e.Entry.IconUrl is not null) _icons.Request(e.Entry.PlaceId);
         }
     }
 
@@ -396,8 +431,87 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         foreach (var e in PrivateServers) e.RaiseTimesChanged();
     }
 
-    /// <summary>Drop the icon subscription. Called when the row leaves the roster (the cache is a long-lived singleton).</summary>
-    public void Detach() => DetachIcons();
+    /// <summary>Drop the icon and pulse subscriptions and declare no interest. Called when the row leaves the roster (the cache and the service are long-lived singletons).</summary>
+    public void Detach()
+    {
+        DetachIcons();
+        if (_pulse is not null)
+        {
+            _pulse.Changed -= OnPulseChanged;
+            _pulse.SetInterest(this, []);
+            _pulse = null;
+        }
+    }
+
+    // ------------------------------------------------------------------ pulse
+
+    /// <summary>
+    /// Hands the panel the game pulse (set once at wiring, again if the service arrives after the row). The panel
+    /// words its entries from the service's readings and replaces them in place when a reading changes.
+    /// </summary>
+    public void SetPulse(IGamePulseService? pulse)
+    {
+        if (ReferenceEquals(_pulse, pulse)) return;
+        if (_pulse is not null)
+        {
+            _pulse.Changed -= OnPulseChanged;
+            _pulse.SetInterest(this, []);
+        }
+
+        _pulse = pulse;
+        if (_pulse is null) return;
+        _pulse.Changed += OnPulseChanged;
+        ApplyPulse(Recent, null);
+        ApplyPulse(Favourites, null);
+        ApplyPulse(PrivateServers, null);
+        RefreshPulseInterest();
+    }
+
+    /// <summary>
+    /// The main window is shown and not minimised (pushed by the main view model on every change). A panel declares
+    /// interest only while it is expanded AND the window is visible; hidden or minimised declares none.
+    /// </summary>
+    public void SetMainWindowVisible(bool visible)
+    {
+        if (_mainWindowVisible == visible) return;
+        _mainWindowVisible = visible;
+        RefreshPulseInterest();
+    }
+
+    /// <summary>The entries' universe ids while the panel is open and on screen, an empty set otherwise. A collapsed panel asks for nothing.</summary>
+    private void RefreshPulseInterest()
+    {
+        if (_pulse is null) return;
+        IReadOnlyCollection<long> ids = _isExpanded && _mainWindowVisible
+            ? Recent.Concat(Favourites).Concat(PrivateServers)
+                    .Select(e => e.Entry.UniverseId).Where(id => id is > 0).Select(id => id!.Value).Distinct().ToList()
+            : [];
+        _pulse.SetInterest(this, ids);
+    }
+
+    private GamePulseView? PulseOf(LibraryEntry entry)
+        => _pulse is not null && entry.UniverseId is > 0 and var id ? _pulse.TryGet(id) : null;
+
+    private void OnPulseChanged(object? sender, GamePulseChangedEventArgs e)
+        => Marshal(() =>
+        {
+            ApplyPulse(Recent, e.UniverseIds);
+            ApplyPulse(Favourites, e.UniverseIds);
+            ApplyPulse(PrivateServers, e.UniverseIds);
+        });
+
+    /// <summary>Replaces, in place, each entry whose reading differs from the one it carries. <paramref name="only"/> null means every entry.</summary>
+    private void ApplyPulse(ObservableCollection<PanelEntry> list, IReadOnlyCollection<long>? only)
+    {
+        for (var i = 0; i < list.Count; i++)
+        {
+            var entry = list[i];
+            if (entry.Entry.UniverseId is not { } universeId || universeId <= 0) continue;
+            if (only is not null && !only.Contains(universeId)) continue;
+            var reading = PulseOf(entry.Entry);
+            if (!Nullable.Equals(reading, entry.Pulse)) list[i] = entry with { Pulse = reading };
+        }
+    }
 
     // ------------------------------------------------------------------ query
 
@@ -448,11 +562,12 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
             var latest = g.First();
             var placeId = latest.PlaceId!.Value;
             var saved = SavedFor(latest);
-            var entry = saved ?? Synthesize(latest, placeId);
+            var entry = saved ?? Synthesize(latest, placeId, favs);
             var unsavedPrivate = saved is null && latest.IsPrivateServer; // Favourites cannot hold a private server
             recent.Add(new PanelEntry(entry, latest.LaunchedAtUtc, TotalOf(g),
                 IsSaved: saved is not null || (!unsavedPrivate && _savedHere.Contains(placeId)), CanLaunch: !unsavedPrivate,
-                PlaceName: saved?.Kind == LibraryEntryKind.PrivateServer ? GameNameOf(g, saved) : null));
+                PlaceName: saved?.Kind == LibraryEntryKind.PrivateServer ? GameNameOf(g, saved) : null,
+                Pulse: PulseOf(entry)));
         }
 
         // Favourites and private servers keep the Library's own order (newest played by anyone first) and show
@@ -460,14 +575,14 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         var favourites = favs.Take(FavouritesCap).Select(f =>
         {
             var rows = mine.Where(r => r.PlaceId == f.PlaceId && r.PrivateServerId is null).ToList();
-            return new PanelEntry(f, rows.Count > 0 ? rows[0].LaunchedAtUtc : null, TotalOf(rows), IsSaved: true);
+            return new PanelEntry(f, rows.Count > 0 ? rows[0].LaunchedAtUtc : null, TotalOf(rows), IsSaved: true, Pulse: PulseOf(f));
         }).ToList();
 
         var serverEntries = servers.Take(PrivateServersCap).Select(s =>
         {
             var rows = mine.Where(r => r.PrivateServerId == s.PrivateServerId).ToList();
             return new PanelEntry(s, rows.Count > 0 ? rows[0].LaunchedAtUtc : null, TotalOf(rows), IsSaved: true,
-                PlaceName: GameNameOf(rows, s) ?? _icons?.TryGet(s.PlaceId)?.Name);
+                PlaceName: GameNameOf(rows, s) ?? _icons?.TryGet(s.PlaceId)?.Name, Pulse: PulseOf(s));
         }).ToList();
 
         // Last played (§2.1): the newest row with a place or a private server; the Library's rename wins.
@@ -488,15 +603,19 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         => rows.Select(r => r.GameName)
                .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n) && !string.Equals(n, server.RenderName, StringComparison.OrdinalIgnoreCase));
 
-    private LibraryEntry Synthesize(LaunchSession latest, long placeId)
+    private LibraryEntry Synthesize(LaunchSession latest, long placeId, IReadOnlyList<LibraryEntry> favs)
     {
         var cached = _icons?.TryGet(placeId);
+        // The same fill order as LibraryCatalog: a saved game of this place, then the icon cache, else none.
+        var universeId = favs.FirstOrDefault(f => f.PlaceId == placeId && f.UniverseId is > 0)?.UniverseId
+                         ?? (cached is { UniverseId: > 0 } ? cached.UniverseId : (long?)null);
         var name = !string.IsNullOrWhiteSpace(latest.GameName)
             ? latest.GameName!
             : cached?.Name ?? placeId.ToString(CultureInfo.InvariantCulture);
         return new LibraryEntry(
             LibraryEntryKind.Recent, placeId, latest.PrivateServerId, name, LocalName: null,
-            cached?.IconUrl, IsDefault: false, latest.LaunchedAtUtc, TotalPlayed: null, new LaunchTarget.Place(placeId));
+            cached?.IconUrl, IsDefault: false, latest.LaunchedAtUtc, TotalPlayed: null, new LaunchTarget.Place(placeId),
+            universeId);
     }
 
     private static TimeSpan? TotalOf(IEnumerable<LaunchSession> rows)
@@ -517,6 +636,7 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
         FavouritesTotal = m.FavouritesTotal;
         PrivateServersTotal = m.ServersTotal;
         LastPlayed = m.LastPlayed;
+        RefreshPulseInterest();
     }
 
     private static void Replace(ObservableCollection<PanelEntry> target, List<PanelEntry> items)
@@ -550,7 +670,27 @@ public sealed class AccountPanelViewModel : INotifyPropertyChanged
                 if (p.IsSaved || p.Entry.PlaceId != e.PlaceId || p.Entry.IconUrl is not null) continue;
                 Recent[i] = p with { Entry = p.Entry with { IconUrl = e.Info.IconUrl } };
             }
+
+            // An entry that had no universe id learns it here (a saved private server, or a Recent place no saved game shares).
+            var learned = LearnUniverse(Recent, e) | LearnUniverse(Favourites, e) | LearnUniverse(PrivateServers, e);
+            if (learned) RefreshPulseInterest();
         });
+
+    private bool LearnUniverse(ObservableCollection<PanelEntry> list, GameIconResolvedEventArgs e)
+    {
+        var learned = false;
+        if (e.Info.UniverseId <= 0) return false;
+        for (var i = 0; i < list.Count; i++)
+        {
+            var p = list[i];
+            if (p.Entry.PlaceId != e.PlaceId || p.Entry.UniverseId is not null) continue;
+            var entry = p.Entry with { UniverseId = e.Info.UniverseId };
+            list[i] = p with { Entry = entry, Pulse = PulseOf(entry) };
+            learned = true;
+        }
+
+        return learned;
+    }
 
     private void Marshal(Action action)
     {

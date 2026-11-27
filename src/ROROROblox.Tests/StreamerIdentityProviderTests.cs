@@ -307,6 +307,8 @@ public class StreamerIdentityProviderTests
         public Task<bool> GetCarefulSquadLaunchAsync() => throw new NotImplementedException();
         public Task<bool> GetAlwaysShowRecycleAsync() => throw new NotImplementedException();
         public Task SetAlwaysShowRecycleAsync(bool always) => throw new NotImplementedException();
+        public Task<bool> GetRobloxFeedsEnabledAsync() => Task.FromResult(true);
+        public Task SetRobloxFeedsEnabledAsync(bool enabled) => throw new NotImplementedException();
         public Task SetCarefulSquadLaunchAsync(bool c) => throw new NotImplementedException();
         public Task<bool> GetMemoryWatchdogEnabledAsync() => throw new NotImplementedException();
         public Task SetMemoryWatchdogEnabledAsync(bool e) => throw new NotImplementedException();

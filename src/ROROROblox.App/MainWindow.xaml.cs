@@ -50,6 +50,10 @@ internal partial class MainWindow : FluentWindow
         }
         Loaded += OnLoaded;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        // The Roblox feeds read only while the window is on screen: shown and not minimised. Window.IsVisible
+        // cannot be read from the coordinator's timer thread, so it is pushed here on every change.
+        IsVisibleChanged += (_, _) => PushVisibility();
+        StateChanged += (_, _) => PushVisibility();
 
         // The keyboard vocabulary (F-112), built from the one shared table so the bindings here,
         // the menu hints, and the About page's list cannot drift apart. Editing controls keep
@@ -76,6 +80,14 @@ internal partial class MainWindow : FluentWindow
         }))
         {
             InputBindings.Add(binding);
+        }
+    }
+
+    private void PushVisibility()
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            vm.SetMainWindowVisible(IsVisible && WindowState != WindowState.Minimized);
         }
     }
 

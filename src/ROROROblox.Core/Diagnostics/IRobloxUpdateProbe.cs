@@ -37,6 +37,21 @@ public interface IRobloxUpdateProbe
     Task<bool> IsUpdatePendingAsync(CancellationToken ct = default);
 
     /// <summary>
+    /// The same check as <see cref="IsUpdatePendingAsync"/>, with the answer kept: versions are compared
+    /// parsed (so <c>0, 748, 0, 7481526</c> equals <c>0.748.0.7481526</c>), an unreadable string is
+    /// <see cref="RobloxUpdateKind.Unknown"/> and never a difference, and a pending update says whether
+    /// the endpoint is ahead of the install (<see cref="RobloxUpdateDirection.Newer"/>) or behind it.
+    /// Never throws.
+    /// </summary>
+    Task<RobloxUpdateState> GetUpdateStateAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Compares the installed client against an endpoint answer the caller already holds. Local reads
+    /// only, no request, never throws.
+    /// </summary>
+    RobloxUpdateState CompareInstalledTo(Version latest);
+
+    /// <summary>
     /// <c>true</c> when more than one Roblox version was installed in the last few minutes — updates
     /// are landing on top of each other. A reason to hold a batch on its own, independent of any
     /// version comparison, and it costs no network at all.

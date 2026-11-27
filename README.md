@@ -113,7 +113,7 @@ Run Windows Update first either way: a Windows 10 that's behind can't start mode
 - **A DPAPI-encrypted account vault** tied to your Windows user, with passphrase-protected export when you want to move it.
 - **A plugin system** with per-capability consent and out-of-process isolation.
 - **A signed compat feed.** A signed `roblox-compat.json` on the latest release carries the current singleton name, so a Roblox-side rename is a config push, not a rebuild.
-- **No telemetry, and nothing to set up by hand.** No DevTools, no registry edits. RoRoRo talks to Roblox, to GitHub for updates and its signed feeds, and to the alert services you connect yourself.
+- **No telemetry, and nothing to set up by hand.** No DevTools, no registry edits. RoRoRo talks to Roblox, to GitHub for updates and its signed feeds, to Status.io (a third party that hosts Roblox's public status page, asked with no cookie and nothing about you, and off with one switch in Settings), and to the alert services you connect yourself.
 
 ## How to use
 
@@ -160,7 +160,7 @@ What we **do** capture, after Roblox confirms a successful login, is the `.ROBLO
 
 We never log the cookie value. We never send the cookie to anyone other than Roblox. It is decrypted in memory only while RoRoRo acts as that account: starting a launch, or reading that account's own facts (Robux, Plus, friends online) from Roblox. On disk it stays encrypted.
 
-**No cookie is ever written to disk in plaintext, and RoRoRo sends a cookie to Roblox and nowhere else.** The one other way a cookie leaves this PC is the passphrase-protected export, and only when you run it. Everything else RoRoRo talks to (GitHub for updates and its signed feeds, and the alert services you connect yourself) is listed host by host in the [privacy policy](docs/PRIVACY.md).
+**No cookie is ever written to disk in plaintext, and RoRoRo sends a cookie to Roblox and nowhere else.** The one other way a cookie leaves this PC is the passphrase-protected export, and only when you run it. Everything else RoRoRo talks to (GitHub for updates and its signed feeds, Status.io for Roblox's public status page, and the alert services you connect yourself) is listed host by host in the [privacy policy](docs/PRIVACY.md).
 
 ## Tech stack
 

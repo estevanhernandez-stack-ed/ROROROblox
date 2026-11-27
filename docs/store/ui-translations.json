@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "c8f6ae3",
-  "generatedUtc": "2026-11-17T19:24:01+00:00",
+  "sourceCommit": "10d62ca",
+  "generatedUtc": "2026-11-27T12:45:01+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -14932,6 +14932,18 @@
       }
     },
     {
+      "field": "Library_Pulse_Updated",
+      "en": "updated {0}",
+      "translations": {
+        "fr": "mis à jour {0}",
+        "de": "aktualisiert {0}",
+        "ru": "обновлено {0}",
+        "pt-br": "atualizado {0}",
+        "pl": "zaktualizowano {0}",
+        "es": "actualizado {0}"
+      }
+    },
+    {
       "field": "Library_PlaceId",
       "en": "Place ID {0}",
       "translations": {
@@ -15157,6 +15169,306 @@
         "pt-br": "A nova versão foi baixada. Saia do RoRoRo e abra-o de novo para concluir a atualização. Clique para sair agora.",
         "pl": "Nowa wersja jest pobrana. Zakończ RoRoRo i otwórz go ponownie, aby dokończyć aktualizację. Kliknij, aby zakończyć teraz.",
         "es": "La nueva versión está descargada. Sal de RoRoRo y vuelve a abrirlo para terminar la actualización. Haz clic para salir ahora."
+      }
+    },
+    {
+      "field": "RobloxLine_Update_Many",
+      "en": "Roblox has an update. The next launch installs it, and Launch multiple holds the others until it is done.",
+      "translations": {
+        "fr": "Roblox a une mise à jour. Le prochain lancement l'installera, et « Lancer plusieurs » retient les autres jusqu'à la fin.",
+        "de": "Roblox hat ein Update. Der nächste Start installiert es, und „Mehrere starten“ hält die übrigen zurück, bis es fertig ist.",
+        "ru": "У Roblox есть обновление. Следующий запуск установит его, а «Запустить несколько» удержит остальные, пока оно не завершится.",
+        "pt-br": "Há uma atualização do Roblox. O próximo início vai instalá-la, e “Iniciar vários” segura os outros até terminar.",
+        "pl": "Roblox ma aktualizację. Następne uruchomienie ją zainstaluje, a „Uruchom wiele” wstrzyma pozostałe do jej zakończenia.",
+        "es": "Roblox tiene una actualización. El próximo inicio la instalará, y “Iniciar varias” retiene las demás hasta que termine."
+      }
+    },
+    {
+      "field": "RobloxLine_Update_One",
+      "en": "Roblox has an update. The next launch installs it.",
+      "translations": {
+        "fr": "Roblox a une mise à jour. Le prochain lancement l'installera.",
+        "de": "Roblox hat ein Update. Der nächste Start installiert es.",
+        "ru": "У Roblox есть обновление. Следующий запуск установит его.",
+        "pt-br": "Há uma atualização do Roblox. O próximo início vai instalá-la.",
+        "pl": "Roblox ma aktualizację. Następne uruchomienie ją zainstaluje.",
+        "es": "Roblox tiene una actualización. El próximo inicio la instalará."
+      }
+    },
+    {
+      "field": "RobloxLine_WhatChanged",
+      "en": "What changed",
+      "translations": {
+        "fr": "Ce qui a changé",
+        "de": "Was sich geändert hat",
+        "ru": "Что изменилось",
+        "pt-br": "O que mudou",
+        "pl": "Co się zmieniło",
+        "es": "Qué ha cambiado"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_Outage",
+      "en": "Roblox reports an outage: {0}",
+      "translations": {
+        "fr": "Roblox signale une panne : {0}",
+        "de": "Roblox meldet eine Störung: {0}",
+        "ru": "Roblox сообщает о сбое: {0}",
+        "pt-br": "Roblox informa uma queda: {0}",
+        "pl": "Roblox zgłasza awarię: {0}",
+        "es": "Roblox informa de una caída: {0}"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_Partial",
+      "en": "Roblox reports a partial outage: {0}",
+      "translations": {
+        "fr": "Roblox signale une panne partielle : {0}",
+        "de": "Roblox meldet eine teilweise Störung: {0}",
+        "ru": "Roblox сообщает о частичном сбое: {0}",
+        "pt-br": "Roblox informa uma queda parcial: {0}",
+        "pl": "Roblox zgłasza częściową awarię: {0}",
+        "es": "Roblox informa de una caída parcial: {0}"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_Degraded",
+      "en": "Roblox reports degraded performance: {0}",
+      "translations": {
+        "fr": "Roblox signale des performances dégradées : {0}",
+        "de": "Roblox meldet eingeschränkte Leistung: {0}",
+        "ru": "Roblox сообщает о снижении производительности: {0}",
+        "pt-br": "Roblox informa desempenho degradado: {0}",
+        "pl": "Roblox zgłasza obniżoną wydajność: {0}",
+        "es": "Roblox informa de un rendimiento degradado: {0}"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_Security",
+      "en": "Roblox reports a security issue: {0}",
+      "translations": {
+        "fr": "Roblox signale un problème de sécurité : {0}",
+        "de": "Roblox meldet ein Sicherheitsproblem: {0}",
+        "ru": "Roblox сообщает о проблеме с безопасностью: {0}",
+        "pt-br": "Roblox informa um problema de segurança: {0}",
+        "pl": "Roblox zgłasza problem z bezpieczeństwem: {0}",
+        "es": "Roblox informa de un problema de seguridad: {0}"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_Maintenance",
+      "en": "Roblox reports maintenance under way: {0}",
+      "translations": {
+        "fr": "Roblox signale une maintenance en cours : {0}",
+        "de": "Roblox meldet laufende Wartungsarbeiten: {0}",
+        "ru": "Roblox сообщает о проводимых технических работах: {0}",
+        "pt-br": "Roblox informa manutenção em andamento: {0}",
+        "pl": "Roblox zgłasza trwające prace serwisowe: {0}",
+        "es": "Roblox informa de un mantenimiento en curso: {0}"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_Problem",
+      "en": "Roblox reports a problem: {0}",
+      "translations": {
+        "fr": "Roblox signale un problème : {0}",
+        "de": "Roblox meldet ein Problem: {0}",
+        "ru": "Roblox сообщает о проблеме: {0}",
+        "pt-br": "Roblox informa um problema: {0}",
+        "pl": "Roblox zgłasza problem: {0}",
+        "es": "Roblox informa de un problema: {0}"
+      }
+    },
+    {
+      "field": "RobloxLine_Row_Website",
+      "en": "Website",
+      "translations": {
+        "fr": "Site web",
+        "de": "Website",
+        "ru": "Сайт",
+        "pt-br": "Site",
+        "pl": "Strona",
+        "es": "Sitio web"
+      }
+    },
+    {
+      "field": "RobloxLine_Row_Games",
+      "en": "Games",
+      "translations": {
+        "fr": "Jeux",
+        "de": "Spiele",
+        "ru": "Игры",
+        "pt-br": "Jogos",
+        "pl": "Gry",
+        "es": "Juegos"
+      }
+    },
+    {
+      "field": "RobloxLine_Row_Avatar",
+      "en": "Avatars",
+      "translations": {
+        "fr": "Avatars",
+        "de": "Avatare",
+        "ru": "Аватары",
+        "pt-br": "Avatares",
+        "pl": "Awatary",
+        "es": "Avatares"
+      }
+    },
+    {
+      "field": "RobloxLine_Row_GameJoin",
+      "en": "Joining games",
+      "translations": {
+        "fr": "Rejoindre des jeux",
+        "de": "Spielbeitritt",
+        "ru": "Вход в игры",
+        "pt-br": "Entrada em jogos",
+        "pl": "Dołączanie do gier",
+        "es": "Unirse a juegos"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_AndMore_one",
+      "en": "{0} and {1} more",
+      "translations": {
+        "fr": "{0} et {1} autre",
+        "de": "{0} und {1} weitere",
+        "ru": "{0} и ещё {1}",
+        "pt-br": "{0} e mais {1}",
+        "pl": "{0} i jeszcze {1}",
+        "es": "{0} y {1} más"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_AndMore_other",
+      "en": "{0} and {1} more",
+      "translations": {
+        "fr": "{0} et {1} autres",
+        "de": "{0} und {1} weitere",
+        "ru": "{0} и ещё {1}",
+        "pt-br": "{0} e mais {1}",
+        "pl": "{0} i jeszcze {1}",
+        "es": "{0} y {1} más"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_AndMore_few",
+      "en": "{0} and {1} more",
+      "translations": {
+        "fr": "{0} et {1} autres",
+        "de": "{0} und {1} weitere",
+        "ru": "{0} и ещё {1}",
+        "pt-br": "{0} e mais {1}",
+        "pl": "{0} i jeszcze {1}",
+        "es": "{0} y {1} más"
+      }
+    },
+    {
+      "field": "RobloxLine_Status_AndMore_many",
+      "en": "{0} and {1} more",
+      "translations": {
+        "fr": "{0} et {1} autres",
+        "de": "{0} und {1} weitere",
+        "ru": "{0} и ещё {1}",
+        "pt-br": "{0} e mais {1}",
+        "pl": "{0} i jeszcze {1}",
+        "es": "{0} y {1} más"
+      }
+    },
+    {
+      "field": "RobloxLine_StatusLink",
+      "en": "Roblox status",
+      "translations": {
+        "fr": "État de Roblox",
+        "de": "Roblox-Status",
+        "ru": "Статус Roblox",
+        "pt-br": "Status do Roblox",
+        "pl": "Status Roblox",
+        "es": "Estado de Roblox"
+      }
+    },
+    {
+      "field": "RobloxLine_More",
+      "en": "+{0} more",
+      "translations": {
+        "fr": "+{0} autres",
+        "de": "+{0} weitere",
+        "ru": "+{0} ещё",
+        "pt-br": "+{0} mais",
+        "pl": "+{0} więcej",
+        "es": "+{0} más"
+      }
+    },
+    {
+      "field": "RobloxLine_More_Name_one",
+      "en": "{0} more Roblox notice",
+      "translations": {
+        "fr": "{0} autre avis Roblox",
+        "de": "{0} weitere Roblox-Meldung",
+        "ru": "Ещё {0} уведомление Roblox",
+        "pt-br": "Mais {0} aviso do Roblox",
+        "pl": "Jeszcze {0} powiadomienie Roblox",
+        "es": "{0} aviso más de Roblox"
+      }
+    },
+    {
+      "field": "RobloxLine_More_Name_other",
+      "en": "{0} more Roblox notices",
+      "translations": {
+        "fr": "{0} autres avis Roblox",
+        "de": "{0} weitere Roblox-Meldungen",
+        "ru": "Ещё {0} уведомлений Roblox",
+        "pt-br": "Mais {0} avisos do Roblox",
+        "pl": "Jeszcze {0} powiadomień Roblox",
+        "es": "{0} avisos más de Roblox"
+      }
+    },
+    {
+      "field": "RobloxLine_More_Name_few",
+      "en": "{0} more Roblox notices",
+      "translations": {
+        "fr": "{0} autres avis Roblox",
+        "de": "{0} weitere Roblox-Meldungen",
+        "ru": "Ещё {0} уведомления Roblox",
+        "pt-br": "Mais {0} avisos do Roblox",
+        "pl": "Jeszcze {0} powiadomienia Roblox",
+        "es": "{0} avisos más de Roblox"
+      }
+    },
+    {
+      "field": "RobloxLine_More_Name_many",
+      "en": "{0} more Roblox notices",
+      "translations": {
+        "fr": "{0} autres avis Roblox",
+        "de": "{0} weitere Roblox-Meldungen",
+        "ru": "Ещё {0} уведомлений Roblox",
+        "pt-br": "Mais {0} avisos do Roblox",
+        "pl": "Jeszcze {0} powiadomień Roblox",
+        "es": "{0} avisos más de Roblox"
+      }
+    },
+    {
+      "field": "SettingsPage_RobloxFeeds",
+      "en": "Show Roblox's status and game activity.",
+      "translations": {
+        "fr": "Afficher l'état de Roblox et l'activité des jeux.",
+        "de": "Roblox-Status und Spielaktivität anzeigen.",
+        "ru": "Показывать статус Roblox и активность в играх.",
+        "pt-br": "Mostrar o status do Roblox e a atividade dos jogos.",
+        "pl": "Pokazuj status Roblox i aktywność w grach.",
+        "es": "Mostrar el estado de Roblox y la actividad de los juegos."
+      }
+    },
+    {
+      "field": "SettingsPage_RobloxFeeds_Description",
+      "en": "Checks Roblox's status page and reads how many people are in your saved games. The status check goes to Status.io, a third party that hosts the page for Roblox. Nothing about you or your accounts is sent.",
+      "translations": {
+        "fr": "Consulte la page d'état de Roblox et lit combien de personnes sont dans tes jeux enregistrés. La vérification de l'état passe par Status.io, un tiers qui héberge la page pour Roblox. Rien sur toi ni sur tes comptes n'est envoyé.",
+        "de": "Prüft die Statusseite von Roblox und liest, wie viele Leute in deinen gespeicherten Spielen sind. Die Statusprüfung geht an Status.io, einen Drittanbieter, der die Seite für Roblox hostet. Es werden keine Informationen über dich oder deine Konten gesendet.",
+        "ru": "Проверяет страницу статуса Roblox и считывает, сколько людей в твоих сохранённых играх. Проверка статуса идёт на Status.io — сторонний сервис, который размещает эту страницу для Roblox. Ничего о тебе или твоих аккаунтах не отправляется.",
+        "pt-br": "Consulta a página de status do Roblox e lê quantas pessoas estão nos seus jogos salvos. A consulta de status vai para o Status.io, um terceiro que hospeda a página para o Roblox. Nada sobre você ou suas contas é enviado.",
+        "pl": "Sprawdza stronę statusu Roblox i odczytuje, ile osób jest w twoich zapisanych grach. Sprawdzenie statusu trafia do Status.io, podmiotu trzeciego, który hostuje tę stronę dla Roblox. Nic o tobie ani o twoich kontach nie jest wysyłane.",
+        "es": "Consulta la página de estado de Roblox y lee cuánta gente hay en tus juegos guardados. La consulta del estado va a Status.io, un tercero que aloja la página para Roblox. No se envía nada sobre ti ni sobre tus cuentas."
       }
     }
   ]

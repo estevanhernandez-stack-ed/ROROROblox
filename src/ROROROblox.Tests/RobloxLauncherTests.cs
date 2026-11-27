@@ -805,6 +805,8 @@ public class RobloxLauncherTests
         public Task<bool> GetCarefulSquadLaunchAsync() => Task.FromResult(CarefulSquadLaunch);
         public Task<bool> GetAlwaysShowRecycleAsync() => Task.FromResult(false);
         public Task SetAlwaysShowRecycleAsync(bool always) => throw new NotImplementedException();
+        public Task<bool> GetRobloxFeedsEnabledAsync() => Task.FromResult(true);
+        public Task SetRobloxFeedsEnabledAsync(bool enabled) => throw new NotImplementedException();
         public Task SetCarefulSquadLaunchAsync(bool careful) { CarefulSquadLaunch = careful; return Task.CompletedTask; }
         public bool StreamerMode { get; set; }
         public Task<bool> GetStreamerModeAsync() => Task.FromResult(StreamerMode);
