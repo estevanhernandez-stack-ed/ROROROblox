@@ -8,6 +8,32 @@
 
 **Cycle:** opened 2026-11-26 on main at v1.40.0.0 · **Target:** v1.41.0.0 · **Inputs:** `scope.md`, `prd.md` beside this file · **Anchor:** *Know before you launch.* (still an assumption)
 
+> **Banner, 2026-11-27: where the build departed from this spec.** The body below is left as written; these
+> lines win over it.
+>
+> 1. **"Launch all" is "Launch multiple".** The many-account update sentence names the button by its real label,
+>    `MainWindow_LaunchMultiple`, in every language, and says "the others" for "your other accounts":
+>    "Roblox has an update. The next launch installs it, and Launch multiple holds the others until it is done."
+> 2. **The switch label ends with a period:** "Show Roblox's status and game activity." (§21 item 32.)
+> 3. **At 380 px the line's buttons and the "+N more" toggle drop to a row under the sentence** (Este,
+>    2026-11-26 afternoon, after measuring: the real sentences wrapped to three to five lines beside the
+>    buttons). This reverses "no compact wrap rule" from the C1 reading, and the toggle now lives inside the
+>    notice template. Every status and update sentence fits two lines at 380 in all seven languages.
+> 4. **The pulse, per surface** (C1 pick C3, then the afternoon ruling): the grid tile shows the count only; the
+>    list row carries "N playing · updated N ago" as a second line spanning the columns; the account panel shows
+>    the count only, with the date in its tooltip and accessible name. §21 item 28 is overturned.
+> 5. **The startup metric** (§16, checklist item 1) is the start banner to `UpdateChecker`'s `Velopack reports
+>    not-installed` line, the one synchronous line after `mainWindow.Show()`. Measured at C2: 1304 ms (v1.40)
+>    against 1308 ms (v1.41).
+> 6. **The tray-time request baseline cannot be taken** (`AppLogging.cs:46` drops `HttpClient`'s request lines);
+>    each lane's own Debug line and the fake-clock tests carry it (checklist assumption 39).
+> 7. **The Build a theme dialog rider rode** (task kw9psaaah): its row is two, measured to fit in seven languages
+>    at 640 and 540.
+> 8. **Known gap at merge:** the account panel's "Not played by this account · N playing" still trims in en, de,
+>    es and pt-BR, and "0 playing" in de; the full text is in the tooltip.
+>
+> Measurements: `docs/store/smoke-2026-11-26-roblox-feeds.md`. Rulings: `mocks/README.md`.
+
 Three readings, one line, one text line per game. Two of the readings already exist in the app and one of them lies. So the cycle is: fix the version comparison (Core, one function), add two small typed clients (status, pulse) that carry no cookie and keep no text, add one coordinator that decides when anything is asked, and add one pure resolver that decides which Roblox sentence is drawn. Everything on screen is a view over those four. No launch path gains a dependency on any of them, and that is enforced by construction: the launch code never awaits the coordinator, the status client or the pulse service.
 
 ## 0. Where the tree and the probes corrected the PRD
@@ -888,21 +914,21 @@ Owners named. None blocks `/checklist`.
 The PRD's sixteen stand. These continue the numbering; each is one sentence to overturn.
 
 17. "Visible" means shown and not minimised, for the main window and for the Library's window.
-18. The "more" count is a panel-expander toggle that opens an inline list, not a tooltip.
+18. The "more" count is a panel-expander toggle that opens an inline list, not a tooltip. *(Ruled B1 at C1, 2026-11-26.)*
 19. The two new links are Secondary buttons; no link rank is added.
-20. Contested, outage and drift use the warning colour; known issue and update use white; all five carry the glyph.
-21. In compact the update notice drops the batch clause.
+20. Contested, outage and drift use the warning colour; known issue and update use white; all five carry the glyph. *(Ruled A1 at C1, 2026-11-26.)*
+21. In compact the update notice drops the batch clause. *(Held: `RobloxNoticeResolver.cs:70`; ruled F "as drawn" at C1.)*
 22. The two-line bound applies to the status and update sentences only, at both widths.
 23. "What changed" always opens the release-notes index.
 24. After a 403 or 429 the status read waits 60 minutes; no jitter is added.
 25. A failed update read hides the notice until the next good read.
 26. Levels rank outage, security event, partial outage, degraded, unrecognised, maintenance.
 27. Two watched pairs of one row count as one row.
-28. In the grid tile the pulse is two lines (count, then updated) and the tile grows by two; the list row and the panel show it joined on one.
+28. In the grid tile the pulse is two lines (count, then updated) and the tile grows by two; the list row and the panel show it joined on one. *(Overturned 2026-11-26: C3 at C1, the tile shows the count only; the afternoon ruling made the panel count-only too. Banner item 4.)*
 29. The pulse refreshes every five minutes while its surface stays open.
 30. A "From Roblox" search result keeps its own count and gets no pulse.
-31. The known-issues notice is no longer suppressed under a contested name; it is counted in "more".
-32. The switch is labelled "Show Roblox's status and game activity" and sits with the other general switches.
+31. The known-issues notice is no longer suppressed under a contested name; it is counted in "more". *(Held: `SetSuppressed` deleted in item 11.)*
+32. The switch is labelled "Show Roblox's status and game activity" and sits with the other general switches. *(Held, with a closing period. Banner item 2.)*
 33. After a client attaches, the notice clears from a local re-read against the endpoint answer already held; no request is made, and an attach while nothing is pending reads nothing.
 34. (Ruled, no longer an assumption: the drift banner is left as it is.)
 35. No live region is added to the line; reading order comes from the tab order.

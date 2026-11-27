@@ -1392,3 +1392,121 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **What would revisit it:** the owner ruling in session to ship without one of the three update-day runs; the clan's logs showing the false hold on every batch, which argues for shipping the fix without waiting; a support case that needs a real per-session request log; the translation verifier gaining inline ingest, which would let each item verify its own keys.
 
 **Evidence:** `docs/cycles/2026-11-26-roblox-feeds/checklist.md`; `src/ROROROblox.App/Logging/AppLogging.cs:46`; `docs/cycles/2026-11-01-account-library/checklist.md` (assumption 26, overturned 2026-11-01); `docs/cycles/2026-11-26-roblox-feeds/probes/README.md` (0.748 live since 2026-11-16, still live 2026-11-26). Dashboard decisions `ubKI5UHjN00pvZa2wFv2`, `Z8gBZU846Pmq840Opmd6`, `UWDZKIrQHH0Mejt7SjZ8`, `ZcBycwhp3zhyhgvF35N1`.
+
+### 2026-11-26 — v1.41 build starts from an Opus session with one Sonnet worker per item, and live steps wait for a quiet machine
+
+**Context:** The build began with the cycle docs committed on `docs/roblox-feeds-scope` (`4fae67e`) and `cycle/v1.41-roblox-feeds` cut from that head.
+
+**Decision:** One Sonnet worker per checklist item under a shared brief (`docs/cycles/2026-11-26-roblox-feeds/worker-brief.md`). Items 1 and 2 run in parallel, since item 2 writes only mocks. Checklist assumption 44 (docs and code reach main in one PR) applies as written, because Este did not overrule it.
+
+**Consequences:** A Store RoRoRo v1.40 and a Roblox client were running on Dunder, so every live step (item 1's startup timings, item 8's live read) waits under the never-close-anything gate. Workers record that in the smoke doc instead of ending processes. The build halts at C1 for the A to F picks.
+
+**Evidence:** `docs/cycles/2026-11-26-roblox-feeds/worker-brief.md`; `4fae67e`. Dashboard decision `BufhGedF6ofjzxPAkdyI`.
+
+### 2026-11-26 — v1.41 C1 picks: A1, B1 and C3, with the tile showing the player count only
+
+**Context:** C1 halted the build for the six mock decisions in `mocks/c1-mocks.html`, rendered in four themes plus flatline. Este's answer: "A1, B1, C3, everything else looks good".
+
+**Decision:** A1: a contested notice, an outage and drift take the warning colour; a known issue and an update stay white. B1: the "+N more" toggle is a panel expander. C3: the grid tile shows the player count only, and the updated date goes to the tooltip and the list. D, E and F stand as drawn, and so do two layout notes outside the six: the contested notice at 380 px keeps its actions right of the text, and the list row carries the pulse as a second line under the name.
+
+**Consequences:** C3 departs from the plan default C1 (assumption 28). The tile stays one meta line taller instead of two, 261 px estimated against 276. The 380 px contested layout wraps to about four lines.
+
+**What would revisit it:** the C2 eyes-on finding the 380 px contested layout cramped.
+
+**Evidence:** `docs/cycles/2026-11-26-roblox-feeds/mocks/README.md` (rulings recorded there). Dashboard decision `97zAJjT4buXOFpb1IwLX`.
+
+### 2026-11-26 — v1.41 item 3: the update probe compares parsed versions, and an unreadable side is Unknown
+
+**Context:** Confirmed live on Dunder: the installed file version reads `0, 748, 0, 7481526` while the client-version endpoint answers `0.748.0.7481526`. The v1.40 string compare called that an update, so the batch gate could hold "Roblox is updating" with no update. The red test was seen on the old code (Expected False, Actual True).
+
+**Decision:** `RobloxUpdateProbe` parses both sides through `RobloxVersion.TryParseInstalled` before comparing. It adds `GetUpdateStateAsync` and `CompareInstalledTo`, returning Current, Pending (Newer or Older) or Unknown, and `IsUpdatePendingAsync` reduces to `Kind == Pending`. An unreadable side is Unknown, never a difference. `RobloxCompatChecker` stays untouched, pinned by `RobloxCompatDriftPinTests`.
+
+**Consequences:** After the fix the real probe on this machine answers Current. Item 8 hands the gate's update state to the coordinator. The Neb log search at C1 decides whether the release note says the false hold "was showing" or "could show".
+
+**Evidence:** `666f4e2`; `src/ROROROblox.Core/Diagnostics/RobloxUpdateProbe.cs`, `RobloxUpdateState.cs`; `src/ROROROblox.Tests/RobloxCompatDriftPinTests.cs`. Dashboard decision `8p6J5Lj8YeMbnEnbtz82`.
+
+### 2026-11-26 — v1.41 item 7: the update sentence names "Launch multiple", and holds "the others"
+
+**Context:** The worker found two disagreements between the spec and the tree, and the orchestrator accepted both. The main window's batch button is `MainWindow_LaunchMultiple` = "Launch multiple"; "Launch all" exists only as Squad Launch's button (`Shell_Squad_LaunchAll`). Both go through `DispatchBatchAsync` and the same pre-warm gate. The spec's sentence said "holds your other accounts", which its own forbidden-words acceptance (no "account" in a line sentence) bans.
+
+**Decision:** The sentence reads "Roblox has an update. The next launch installs it, and Launch multiple holds the others until it is done." It names the button on the screen where the notice shows. Seventeen `RobloxLine_*` keys landed in seven languages through `scripts/add-v141-translations.py`, which fails if the button label drifts from the catalog.
+
+**Consequences:** Item 14's verifier review checks the six languages. Item 16 corrects the spec's §7.4 table to match.
+
+**What would revisit it:** Este wanting Squad Launch's label instead (one constant in the script plus the English resx).
+
+**Evidence:** `9ffce5d` (cherry-picked onto the cycle branch); `scripts/add-v141-translations.py`. Dashboard decision `2ib4gvu9NCqCKtag1rsp`.
+
+### 2026-11-26 — v1.41 item 13: PRIVACY names Status.io, and the local translation verifier is unusable
+
+**Context:** Item 13 merged (`57f591f`). `docs/PRIVACY.md` gains an `api.status.io` row: Status.io, a third party, not Roblox, GitHub or Microsoft; nothing about the person is sent; on by default, and the Settings switch turns it off. The listing privacy paragraph gains one sentence in seven sheets, and the reviewer letter and What's new 1.41 are written.
+
+**Decision:** The listing verifier review is deferred to item 14. The false-hold wording says "could show" pending the Neb log search. The audit also found a pre-existing false listing claim ("Roblox-side calls during launch"; presence runs continuously while RoRoRo runs). It is left unedited and listed as an open item in the submission packet.
+
+**Consequences:** The local translation verifier MCP stopped "complete" with 0 of N pairs judged on every call (per-language and bothShapes), and the cloud verifier cannot read an unpushed local file. Item 14 pushes the branch and runs the verifier from the pushed URL, or files the failure on translation-verification. Whether to fix the "during launch" sentence this release is Este's call.
+
+**Evidence:** `57f591f`; `docs/PRIVACY.md`. Dashboard decision `vW6PB0OGye27DjZy0tTL`.
+
+### 2026-11-26 — v1.41 rulings after items 11 and 12: the panel shows the count only, and compact mode wraps the Roblox line
+
+**Context:** Este ruled after items 11 and 12 were built. Measurement overturned two mock-time assumptions: the panel column has 110 to 197 DIP for natural widths of 190 to 390, so the joined line trimmed on every entry in all seven languages; the list name column is 112 DIP against a 195 DIP English line; and at 365 DIP content width the line with buttons and toggle side by side wrapped status sentences to 3 lines in English and 4 to 5 in de, pl, fr, es, pt-BR and ru. The mock's stand-in sentences were shorter, which is why 380 px looked fine at C1.
+
+**Decision:** (1) The account panel shows the pulse as count only ("2 hr ago · 81,827 playing"), the updated date moves to the tooltip, same as C3 for the tile. (2) The Library list row keeps the pulse as a second line spanning the columns under the name, as built. (3) In compact mode (380 px) the Roblox line drops its buttons and the "+N more" toggle to a row under the sentence, reversing the earlier "as drawn, no compact wrap rule".
+
+**Consequences:** A follow-up worker builds the compact wrap rule, deleting the `LineOver2At380` ratchet once every sentence fits two lines, and the count-only panel. Item 11 merged as `ee17196`, item 12 as `34cd4b5` (wrap-test and panel-fixture conflicts resolved by hand), full suite green.
+
+**Evidence:** `ee17196`, `34cd4b5`. Dashboard decision `JHdLZ2MXZiMzuzLSlGy8`.
+
+### 2026-11-26 — v1.41 reaches C2: every sentence fits two lines at 380 px, and the compact button row is right-aligned
+
+**Context:** Items 1 to 13 are built on `cycle/v1.41-roblox-feeds` (`c686db1` compact wrap rule, `d3e9dd4` count-only panel). At 380 px every status and update sentence fits two lines in all seven cultures (up to 5 in de and pl before), and the `LineOver2At380` ratchet is deleted.
+
+**Decision:** The "+N more" toggle moved from the strip into the notice template as the top notice's last slot, so it shares the compact button row. Accepted tradeoff: that row is right-aligned, not left-aligned like v1.40's stacked contested banner, because a star text column cannot left-align buttons in a shared grid without restructuring.
+
+**Consequences:** Open: the panel still trims "Not played by this account · N playing" in en, de, es and pt-BR, and "0 playing" in de; the full text is in the tooltip and the accessible name. The live acceptances (startup A/B, item 8 log read, C2 rows a to e) were blocked: a Store RoRoRo and three Roblox clients were running at 16:37.
+
+**Evidence:** `c686db1`, `d3e9dd4`. Dashboard decision `ZB46vweW4InXWD8rrtqE`.
+
+### 2026-11-27 — v1.41 C2 startup measurement: the feeds cost 4 ms, timed to the Velopack line
+
+**Context:** Item 1 named "the first line after `mainWindow.Show()`", but every line in that spot is asynchronous except `UpdateChecker`'s Velopack line, which ends `RunStartupChecksAsync`'s local chain after the feeds' `Start()`.
+
+**Decision:** Startup is timed from the banner to the "Velopack reports not-installed" line. Five alternating starts per build on fresh `RORORO_DATA_DIR` folders, one warm-up discarded: v1.40 (`4fae67e`) 1304 ms, v1.41 (`6719619`) 1308 ms, so the feeds cost 4 ms (medians). With `HTTPS_PROXY` on a closed port: 2942 vs 2948 ms, both slowed equally by v1.40's own compat fetch.
+
+**Consequences:** The first feed read came 30.07 s after the window (32.1 s under the dead proxy), Debug lines only, nothing drawn. The Library pulse matched Roblox's games API: 60,194 vs 60,134, 15 s apart, date equal.
+
+**What would revisit it:** a later startup line becoming synchronous after Show().
+
+**Evidence:** `docs/store/smoke-2026-11-26-roblox-feeds.md`. Dashboard decision `UerRa0QWUHLiQBTTFOUp`.
+
+### 2026-11-27 — Build a theme dialog: the button row splits in two, the only layout that fits every language
+
+**Context:** A rider (task `kw9psaaah`). A new fit test, `ThemeBuilderButtonRowFitTests`, found the bug worse than reported: the single right-aligned five-button row ran off the left edge in every language at the default 640, English included (8 DIP of "Open themes folder"). At the 540 minimum, French needs 489 DIP for the three utility buttons alone against 484 available. Docking Cancel and Save beside a wrapping group still clipped French by 3 DIP once margins were counted.
+
+**Decision:** Two rows. Open folder, Share and Import go on a left-aligned `WrapPanel`; Cancel and Save and apply sit right-aligned beneath.
+
+**Consequences:** Store screenshot 8 is untouched (the variant B experiment runs to 2027-02-20) and still shows the old row; the ledger notes it. Commit waits for the C2 live run to free `bin\Release` and for the full Release suite.
+
+**What would revisit it:** a translation growing past 484 DIP for a single button.
+
+**Evidence:** `src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml`; `src/ROROROblox.Tests/Rendering/ThemeBuilderButtonRowFitTests.cs`; commit `7d222f4`. Dashboard decision `RuCXMo9jaE52d4Sw7sDb`.
+
+### 2026-11-27 — v1.41 C2 live acceptances pass on Dunder, and the local translation verifier fails again
+
+**Context:** All five of the agent's live acceptances and item 8's live read ran on Dunder, 22:43 to 23:38.
+
+**Decision:** (a) 35 minutes visible: no update notice, status read every 10 min, Ok, client version Current. (b) Live status read Ok, nothing drawn. (c) Pulse 60,194 against Roblox's API 60,134. (d) Startup 1304 vs 1308 ms. (e) Every host refused: feeds silent, same start time as v1.40. Item 8: 12 minutes in the tray added 0 lines; showing the window resumed status at once and update on its 30-minute mark. Zero ERR/FTL across all logs. Item 14: lint 0, 1288 keys in all seven resx, regeneration produced no diff, string rules pass in all seven languages.
+
+**Consequences:** The local verifier judged 0 of 156 pairs twice, so item 14's verdict waits for the cloud verifier after the push. C2 still holds the PR on Este's eyes-on verdict.
+
+**Evidence:** `docs/store/smoke-2026-11-26-roblox-feeds.md`; `docs/cycles/2026-11-26-roblox-feeds/checklist.md`; commits `7d222f4`, `10d62ca`. Dashboard decision `hDncGrQMuqTpU5snVxYh`.
+
+### 2026-11-27 — v1.41 C2 cleared and PR #304 opened; the cloud verifier replaces the local one
+
+**Context:** Este cleared C2: "sheet looks good". The branch was pushed and PR #304 opened. The local verifier had judged 0 pairs twice; the cloud verifier, reading the pushed branch's raw URL one language at a time, judged 156 of 156.
+
+**Decision:** Six rule-3 false positives overruled: all six `RobloxLine_Update_Many` flags assume an English UI, but RoRoRo's UI is localized, so the sentence must quote the button's translated label. One Russian case fix applied: the description had a dative apposition after "на" and now uses the accusative. Gotcha: `PulseSurfacesTests` went red at midnight because `PulseText`'s relative wording reads `AccountSummary`'s clock, not the rig's `FakeTimeProvider`; the rig now pins `ClockOverride`. CI would have caught it on the first day after authoring.
+
+**Consequences:** `ci.yml` must go green on x64 and arm64, including guards. Item 15 waits for Roblox's next client, and item 16 covers the docs, the security pass and the ship. The PR is not merged until Este says so.
+
+**Evidence:** `src/ROROROblox.Tests/Library/PulseSurfacesTests.cs`; `docs/store/translations/ui-ru.json`; `src/ROROROblox.App/Properties/Strings.ru.resx`; commits `da75709`, `7dcae17`. Dashboard decision `hOC2F92sPMJtntUQgnqy`.

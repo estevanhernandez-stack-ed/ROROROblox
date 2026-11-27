@@ -580,7 +580,8 @@ open and the ledger says so. Store screenshot 8 is left alone either way.
       each language. The row name follows a colon in every language.
 - [x] The lint stage exits 0.
 - [x] The theme dialog's fit test is green in seven languages, or the cut is recorded on the task.
-- [ ] The PR's checks are green on both architectures, including the `guards` job.
+- [x] The PR's checks are green on both architectures, including the `guards` job. *(PR #304,
+      2026-11-27: x64 4m30s, arm64 5m34s, guards, GitGuardian.)*
 
 **Verify:** `python scripts/translate-cycle.py --stages lint` → exit 0.
 `dotnet test src/ROROROblox.Tests/ -c Release --no-build --filter "FullyQualifiedName~CultureKeyParityFenceTests|FullyQualifiedName~LocKeyParityFenceTests|FullyQualifiedName~LabelWrapMeasurementTests"`
@@ -745,6 +746,8 @@ The PRD's sixteen and the spec's twenty-one stand. This checklist adds:
     its place.
 47. A live run waits when a RoRoRo or a Roblox client is running; it never closes one.
 48. "Every host unreachable" is run live with a dead per-process proxy, if the process honours it.
-49. The theme dialog rider is tried once, inside item 14, and cut if it does not fit.
+    *(Held: it honours `HTTPS_PROXY`; run at C2, 2026-11-26.)*
+49. The theme dialog rider is tried once, inside item 14, and cut if it does not fit. *(Held: it fit,
+    7d222f4.)*
 50. The build runs from an Opus session with Sonnet workers; this plan was written on Fable 5.2 and
     makes no claim about where a worker will struggle.

@@ -283,5 +283,5 @@ Each one sentence to overturn. Filled from the scope, the profile, the tree and 
 12. Pulse: not re-read within 5 minutes; a count older than 15 minutes is removed; the date is kept.
 13. A private-server entry shows last updated and no player count.
 14. One switch covers status and pulse, default on, effective without a restart.
-15. The line shows in compact mode the way the contested banner does.
+15. The line shows in compact mode the way the contested banner does. *(Overturned 2026-11-26: at 380 px the line's buttons and toggle drop under the sentence, by Este's ruling after measurement; see the spec's top banner, item 3.)*
 16. Rendered options come before XAML for the line and the pulse, per the match-the-mock rule.
