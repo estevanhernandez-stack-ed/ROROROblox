@@ -36,6 +36,9 @@
    I did not edit it: it is published text in seven sheets and the owner approves paragraph edits.
    Proposed English, if you want it fixed in the same pass: "Nothing about you leaves your machine except
    the Roblox-side calls while RoRoRo runs". The six sheets would follow.
+   **Resolved 2026-11-27 on Este's word ("fix it").** The clause now reads "the Roblox-side calls
+   RoRoRo makes for you", which names no timing at all, in all seven sheets with dated notes. The
+   delta was re-exported; verifier result is recorded under open item 3.
 5. **Re-measure the reviewer letter's section 3 on the release branch.** Its numbers are from `acfb0af`
    (section 7 has the commands).
 6. **Check the switch's label.** The letter and `PRIVACY.md` quote `Show Roblox's status and game
@@ -138,7 +141,7 @@ live in this session.
 |---|---|---|
 | "Your Roblox password is never seen by RoRoRo ... embedded in a Microsoft Edge WebView2 frame" | `App/CookieCapture/CookieCaptureWindow.xaml.cs:12` | PASS |
 | "No telemetry. No analytics." | `ROROROblox.App.csproj` `PackageReference` list: no analytics or crash-reporting SDK; no analytics host in any added or existing source (a search for the common vendors finds only the word "amplitude" in a memory-watchdog comment and `PrivateServer` identifiers) | PASS |
-| "Nothing about you leaves your machine except the Roblox-side calls during launch" | `Core/Diagnostics/PresenceService.cs` and the Roblox-calls row in `PRIVACY.md` | **FAIL, pre-existing**: the calls are continuous, not "during launch". Open item 4 |
+| "Nothing about you leaves your machine except the Roblox-side calls during launch" | `Core/Diagnostics/PresenceService.cs` and the Roblox-calls row in `PRIVACY.md` | **FAIL, pre-existing; fixed 2026-11-27**: now "the Roblox-side calls RoRoRo makes for you". Open item 4 |
 | "alerts to your own Discord webhook or ... Pushover or ntfy" | `App/Discord/DiscordWebhookSender.cs`, `App/Notify/PushoverSender.cs`, `NtfySender.cs` | PASS |
 | "downloads its own signed files from its GitHub releases ... and sends nothing about you" | `Core/KnownIssues/KnownIssuesFeed.cs:44`, `Core/RobloxCompatSignature.cs` | PASS |
 | "On a Store install, ... asks the Microsoft Store, through Windows, whether an update is waiting" | `App/Updates/StoreContextUpdateProbe.cs:8` (`GetAppAndOptionalStorePackageUpdatesAsync`) | PASS |
