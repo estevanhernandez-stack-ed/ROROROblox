@@ -204,3 +204,37 @@ Run 2026-11-26 22:5x on `6719619` plus the theme-builder rider.
   themes folder, Share and Import on a left-aligned `WrapPanel`, Cancel and Save and apply right-aligned beneath. All
   70 button placements (5 buttons, 7 languages, 2 widths) sit inside the declared width less the root's margins.
   Store screenshot 8 is left alone (the listing experiment runs to 2027-02-20) and still shows the old row.
+
+## Item 16: the security pass (2026-11-27)
+
+Taken on `cycle/v1.41-roblox-feeds` before the merge, 35 commits over `main`.
+
+| Check | Result |
+|---|---|
+| `git log -p main..cycle/v1.41-roblox-feeds` for the cookie prefix the guards scan for | 0 hits; 0 for a `ROBLOSECURITY=` value |
+| The same history for user-profile paths | 0 hits |
+| Key, cert or data files added (`.pfx`, `.cer`, `.dat`, `.bak`, `.tmp`) | none |
+| `probes/`, `mocks/`, `Fixtures/RobloxStatus/` for identity | public status pages only (Roblox's, two other companies' named in `PROVENANCE.md`); the only addresses are OSUOSL's public support mailbox, quoted in its own public maintenance notice; no account, no cookie, no person. The mocks are rendered PNGs and one HTML page of fake rows |
+| `dotnet list ROROROblox.slnx package --vulnerable --include-transitive` | no vulnerable packages in any of the eight projects |
+| `PackageReference` / `PackageVersion` diff against `main` | none added, none changed |
+| `dpapi-cookie-blast-radius` over the `src/` diff | no finding at any severity: the new log lines carry outcomes, counts and HTTP codes; no cookie or account id reaches a request, a log or an exception; `RobloxLauncher.cs` is untouched; the launch path only calls `RequestEarlyStatusRead()` and `ReportUpdateState()`; every anonymous client has its own handler |
+| The anonymous clients from the real graph | `AnonymousClients_PrimaryHandler_HasUseCookiesFalseAndNoRedirects` reads `IRobloxStatusApi`, `IGamePulseApi` and now `IRobloxUpdateProbe` from `ConfigureServices` |
+
+**The input-validation re-read.** The cycle's untrusted input is two remote answers, plus the update probe's,
+which is older.
+
+- **Status (`RobloxStatusApi`).** The address is a constant. The body cap is 512 KB, checked on a declared
+  `Content-Length` and again while streaming, so an oversized body is never buffered whole. A cell is kept only
+  with two 24-hex ids and an integer code. The DTOs have no text property, and the log line carries the outcome
+  and HTTP code. 403 and 429 read as Refused. Held.
+- **Pulse (`GamePulseApi`).** The address is a constant base with invariant-formatted integer ids, at most 50,
+  and an id the request did not ask for is dropped. The count range is 0 to 100,000,000 and the date range is
+  2006-01-01 to a day ahead; a value outside either is dropped for that game alone. The DTO reads `id`,
+  `playing` and `updated` only. **Found and fixed: the body had no cap.** It was read whole with
+  `ReadAsByteArrayAsync` after `ResponseHeadersRead`. It now goes through the same streamed reader as status
+  (`Core/Feeds/FeedBody`) with a 1 MB cap, against a live five-game answer of 7,075 bytes (about 70 KB for a
+  full batch). `OversizedBody_WithNoDeclaredLength_IsShape` was red with the old read put back and green after.
+- **Update probe (`RobloxUpdateProbe`).** Older (v1.7). It used the default handler, with a cookie container
+  and followed redirects. It carries no account, so nothing leaked, but it was the one Roblox client unlike
+  the rest. It now takes the anonymous handler. The CDN answered 200 directly with no `Set-Cookie` on
+  2026-11-27, and a 3xx lands in the probe's existing non-success path (no update).

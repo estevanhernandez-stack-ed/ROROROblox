@@ -672,8 +672,10 @@ clan post is drafted for Este's click, since the false-hold fix is the clan's.
 - [ ] `dotnet build ROROROblox.slnx -c Release` → 0 errors. The full suite passes with 1 skip by
       design. `ci.yml` is green on x64 and arm64 on `main`.
 - [ ] Every fence constant that moved this cycle moved in the commit that moved it.
-- [ ] The secrets search returns nothing; the vulnerability listing is clean or decided; the
+- [x] The secrets search returns nothing; the vulnerability listing is clean or decided; the
       blast-radius run has no open finding; the input-validation re-read is written down.
+      (2026-11-27, `docs/store/smoke-2026-11-26-roblox-feeds.md` > Item 16. The re-read found the
+      pulse body uncapped, now 1 MB streamed; the update probe took the anonymous handler.)
 - [ ] README, `architecture.md`, `features.md`, `feature-ledger.md`, `PRIVACY.md`, `decisions.md` and
       `CLAUDE.md` describe the tree on `main`, spot-checked claim by claim.
 - [ ] The four tasks and #300 say what is true: rewritten, closed on named evidence, or left open with
