@@ -337,7 +337,7 @@ item 9 adds the setting, on the branch only. The window binds nothing new.
       reaches the coordinator. With `Pending` it holds as in v1.7.
 - [x] The early read is requested for the three connection kinds only, and nothing is awaited.
 - [x] `StopPeriodicRefresh()` unsubscribes from `Changed`; no test leaks a timer.
-- [ ] **Live, the agent's, on a test data folder:** no `roblox-status read` line in the first 30 s
+- [x] **Live, the agent's, on a test data folder:** no `roblox-status read` line in the first 30 s
       after the window shows, then exactly one, `Ok`; one `client-version check` line ending `Current`;
       twelve minutes hidden in the tray add no line from either lane; showing the window resumes them.
       The lines are in the smoke doc. If a RoRoRo or a Roblox client is running, this run waits for C1.
@@ -572,13 +572,14 @@ open and the ledger says so. Store screenshot 8 is left alone either way.
 **Then the PR:** `cycle/v1.41-roblox-feeds` → `main`, `ci.yml` green on x64 and native arm64.
 
 **Acceptance:**
-- [ ] All seven resx hold the same key count; the parity fences are green in both directions; no
+- [x] All seven resx hold the same key count; the parity fences are green in both directions; no
       culture resx was edited by hand.
 - [ ] The verifier run is in the smoke doc with a verdict per language and each overrule named.
-- [ ] "Roblox" is English everywhere. "Launch all" in the update sentence matches the button's label in
+      *(2026-11-26: the local verifier judged 0 of 156 pairs; moves to the cloud verifier after the push.)*
+- [x] "Roblox" is English everywhere. "Launch all" in the update sentence matches the button's label in
       each language. The row name follows a colon in every language.
-- [ ] The lint stage exits 0.
-- [ ] The theme dialog's fit test is green in seven languages, or the cut is recorded on the task.
+- [x] The lint stage exits 0.
+- [x] The theme dialog's fit test is green in seven languages, or the cut is recorded on the task.
 - [ ] The PR's checks are green on both architectures, including the `guards` job.
 
 **Verify:** `python scripts/translate-cycle.py --stages lint` → exit 0.

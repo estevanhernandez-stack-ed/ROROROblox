@@ -13,8 +13,8 @@ guard would surface the running window, and a start can close a windowless tray 
 
 | Run | Start banner to first line after `mainWindow.Show()` (`App.xaml.cs:864`) |
 |---|---|
-| 1 to 5 | not measured |
-| Median | not measured |
+| 1 to 5 | not measured here; taken at C2: 1349, 1375, 1293, 1304, 1296 ms (see "C2: the live runs", row d) |
+| Median | 1304 ms (C2, start banner to the `Velopack reports not-installed` line) |
 
 The timings move to C2's A/B, where the before and after builds are started under the same conditions on a test
 folder (`RORORO_DATA_DIR` set to an absolute temp path). Folder shape to use there: a fresh empty folder, so the
@@ -70,3 +70,118 @@ has to show, read from `$env:RORORO_DATA_DIR\logs\*.log` against the start banne
 
 Until then the same rules are carried by the fake-clock tests (`RobloxFeedsTests`, `RobloxFeedsWiringTests`) and the
 construction of both services from the real composition root (`RobloxFeedsWiringTests.ProductionDi_...`).
+
+## C2: the live runs (2026-11-26, 22:43 to 23:4x CST)
+
+Machine: Dunder. Este closed the Store RoRoRo and the Roblox clients at 22:42; `Get-Process ROROROblox.App,
+RobloxPlayerBeta` answered nothing before every start, and no RoRoRo or Roblox process other than the dev builds
+named here ran during the runs. Builds: **before** = `4fae67e` (v1.40 code) built Release in a detached worktree;
+**after** = `6719619` (the cycle head) built Release in the repo. Every start used `RORORO_DATA_DIR` on a fresh,
+empty absolute folder under `%TEMP%\claude\` (the live run's folder also held a copy of the real `favorites.json`,
+one saved game, Pet Simulator 99, universe 3317771874; no `accounts.dat`, no account). Each dev process was
+stopped by pid after its read.
+
+**The startup metric.** Item 1 named "the first line written after `mainWindow.Show()`". Every line in that spot is
+asynchronous except one: `UpdateChecker`'s `Velopack reports not-installed` at the end of `RunStartupChecksAsync`'s
+local chain (`App.xaml.cs:929`, `:981`), which on the cycle build runs after the feeds' settings read and
+`Start()`. The time is the start banner to that line. One warm-up start per build was made first and discarded.
+
+### (d) Startup against item 1's median (fills item 1's table)
+
+| Run | before (v1.40) ms | after (v1.41) ms |
+|---|---|---|
+| 1 | 1349 | 1379 |
+| 2 | 1375 | 1275 |
+| 3 | 1293 | 1316 |
+| 4 | 1304 | 1308 |
+| 5 | 1296 | 1286 |
+| **Median** | **1304** | **1308** |
+
+Starts alternated before/after. The 4 ms difference is inside each build's own 80 to 100 ms spread. Zero ERR/FTL
+lines in any of the ten logs. **Met.**
+
+### (e) Every host unreachable
+
+`HTTPS_PROXY` and `HTTP_PROXY` set to `http://127.0.0.1:9` (checked closed first: `ConnectionRefused`). The
+process honours it: the log's failures read `actively refused it. (127.0.0.1:9)` through `EstablishProxyTunnelAsync`.
+
+| Run | before ms | after ms |
+|---|---|---|
+| 1 | 2942 | 2942 |
+| 2 | 2945 | 2948 |
+| 3 | 2928 | 2965 |
+| **Median** | **2942** | **2948** |
+
+Both builds slow by the same ~1.6 s (v1.40's own `roblox-compat.json` fetch timing out before the gate); the
+cycle adds nothing to it. A 75 s run of the after build with the same proxy: the first feed read came 32.1 s after
+the Velopack line, `roblox-status read: "Network" (HTTP none)` and `client-version check: ... latest null ->
+"Unknown" "None"`, both at Debug; zero ERR/FTL lines; the window's UI Automation tree held no text from the line
+(capture checked by eye: the first-run welcome over an empty roster, nothing in row 3). **Met.**
+
+### Item 8 and (b): the settle and the live status read
+
+Started 22:49:41.7, banner 22:49:42.070, Velopack line 22:49:43.888.
+
+| Row | Expected | Read |
+|---|---|---|
+| first 30 s after the window shows | no `roblox-status read` line | none at T+20 s; the first is at 22:50:13.962, **30.07 s** after the Velopack line |
+| after the settle | one `roblox-status read: Ok`, one `client-version check` ending `Current` | `roblox-status read: "Ok" (HTTP 200)` once; `client-version check: handler 0, 748, 0, 7481526, installed 0, 748, 0, 7481526, latest 0.748.0.7481526 -> "Current" "None"` once |
+| (b) nothing shown while operational | no line | the main window's UI Automation tree at T+50 s held no Roblox-line text |
+
+### (c) The pulse, live
+
+The Library opened through UI Automation at 22:50:32.6; `game-pulse read: "Ok" (HTTP 200, 1 ids)` at
+22:50:33.249. At 22:50:47.7 the list row read `🎲 Pet Simulator 99! 👑 · 60,194 playing · updated 4 hr ago`; at
+22:50:48.1 Roblox's own `games.roblox.com/v1/games?universeIds=3317771874` (the source of the game page's Active
+count) answered `playing=60134`, `updated=2026-11-27 00:36:33 UTC` (18:36 CST, 4 h 14 min earlier). The count
+is 0.1% apart across 15 s on a live number; the date matches. **Met.**
+
+### Item 8: twelve minutes in the tray, then shown again
+
+Same process (pid 81264). The main window was hidden with a **sent** `WM_CLOSE` at 22:50:48.6 (X hides to the tray;
+a posted close would have quit the app). Feed lines in the log before hiding: 5.
+
+| Row | Expected | Read |
+|---|---|---|
+| twelve minutes hidden | no line from either lane | at 23:02:53.6 still 5 feed lines, 0 added; the log's last line of any kind was the 22:50:33.249 pulse read; app alive |
+| window shown again | both lanes resume | a second launch with the same `RORORO_DATA_DIR` exited 0 at 23:02:57 and the single-instance guard surfaced the window; `roblox-status read: "Ok"` at 23:02:54.190 (status was overdue: 12 min against its 10 min interval); the update lane read at 23:20:13.967, exactly 30 min after its last read at 22:50:13, its interval |
+
+**Met.** (A first script crashed at 22:50:48 after sending the close, on a handle lookup of the now-hidden window;
+the app was untouched, and a continuation script picked up the same process and the same timeline.)
+
+### (a) Absent when current: thirty-five minutes visible
+
+Visible from 23:02:57 to 23:37:58. Checked every five minutes through UI Automation: 0 Roblox-line names at each of
+the seven checks, window found, app alive. The log over the stretch: `roblox-status read: "Ok" (HTTP 200)` at
+23:02:54, 23:13:14, 23:23:14 and 23:33:14 (every 10 min on the 30 s tick); one `client-version check: ... latest
+0.748.0.7481526 -> "Current" "None"` at 23:20:14. Zero ERR/FTL lines in the whole 48-minute log. Process stopped by
+pid at 23:37:59. **Met.**
+
+## Item 14: seven languages
+
+Run 2026-11-26 22:5x on `6719619` plus the theme-builder rider.
+
+- **Lint:** `python scripts/translate-cycle.py --stages lint` exit 0; six cultures, 1288 keys each, product nouns and
+  format tokens preserved, 0 cross-language parity candidates.
+- **Key counts:** `Strings.resx` and the six culture files hold 1288 `<data>` entries each.
+- **No hand edits:** `python scripts/gen-culture-resx.py` re-run for de, es, fr, pl, pt-BR and ru; `git status` on
+  `src/ROROROblox.App/Properties/` showed no change, so every culture resx is exactly what its `ui-<culture>.json`
+  generates.
+- **The three rules, read from the generated resx** (a script over the 26 keys the cycle added, all seven
+  languages): "Roblox" stays English in every status and update sentence and the setting label; the many-account
+  update sentence carries the `MainWindow_LaunchMultiple` button's own label in each language («Mehrere starten»,
+  «Iniciar varias», « Lancer plusieurs », and so on; the spec's "Launch all" is this button, see the banner owed in
+  item 16); the row name follows a colon in all six status sentences (French with its non-breaking space). All
+  seven languages pass.
+- **The verifier: not run, the tool failed.** `docs/store/ui-translations-1.41-delta.json` (the export sliced to
+  the 26 new keys, 156 pairs) ingested cleanly into the local translation verifier, then
+  `run_translation_review` judged 0 pairs and stopped "by complete", for all six languages and again for German
+  alone; the tool's own detail says a retry will not progress. Same failure as the attempt earlier in the cycle.
+  The review moves to the cloud verifier, which reads from a URL, once the branch is pushed.
+- **The theme-dialog rider (task `kw9psaaah`): fits, built.** `ThemeBuilderButtonRowFitTests` measured the old
+  single right-aligned row first: a button ran past the left edge in **every** language at the default 640 DIP,
+  English included ("Open themes folder" at -8.1 DIP; French -185.2, German -170.5, Russian two buttons out), and at
+  the 540 minimum French needs 489 DIP for the three utility buttons alone against 484. The row is now two: Open
+  themes folder, Share and Import on a left-aligned `WrapPanel`, Cancel and Save and apply right-aligned beneath. All
+  70 button placements (5 buttons, 7 languages, 2 widths) sit inside the declared width less the root's margins.
+  Store screenshot 8 is left alone (the listing experiment runs to 2027-02-20) and still shows the old row.
