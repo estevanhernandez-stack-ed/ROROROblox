@@ -1510,3 +1510,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** `ci.yml` must go green on x64 and arm64, including guards. Item 15 waits for Roblox's next client, and item 16 covers the docs, the security pass and the ship. The PR is not merged until Este says so.
 
 **Evidence:** `src/ROROROblox.Tests/Library/PulseSurfacesTests.cs`; `docs/store/translations/ui-ru.json`; `src/ROROROblox.App/Properties/Strings.ru.resx`; commits `da75709`, `7dcae17`. Dashboard decision `hOC2F92sPMJtntUQgnqy`.
+
+### 2026-11-27 — v1.41 security pass: the pulse body capped, the update probe on the anonymous handler
+
+**Context:** Item 16's security pass. The branch history was clean of the cookie prefix, cookie values and user-profile paths. The probes, mocks and fixtures are public or made up. No package is vulnerable and none changed. The blast-radius agent found nothing. The input-validation re-read found two gaps. `GamePulseApi` read its body whole (`ReadAsByteArrayAsync` after `ResponseHeadersRead`). `RobloxUpdateProbe` (v1.7) still used .NET's default handler, with a cookie container and redirects followed.
+
+**Decision:** The pulse body is read through `Core/Feeds/FeedBody`, the streamed reader the status client already had, now shared, capped at 1 MB. A live five-game answer was 7,075 bytes, so a full 50-id batch is about 70 KB. Over the cap is `Shape`. The update probe takes `UseCookies=false` and `AllowAutoRedirect=false` (Este: "match the update probe handler"). The CDN answers 200 directly with no `Set-Cookie`, and a 3xx falls into the probe's existing no-update path.
+
+**Consequences:** `AnonymousClients_PrimaryHandler_HasUseCookiesFalseAndNoRedirects` and the User-Agent theory carry the probe. `OversizedBody_WithNoDeclaredLength_IsShape` fails with the old read put back. The probe's tiny body is still uncapped, bounded only by its 8 s timeout, and is left as is.
+
+**Evidence:** `docs/store/smoke-2026-11-26-roblox-feeds.md` > Item 16; commits `55b2606`, `1a3febb`. Dashboard decision `MJd8jv4pUs2reG98KjZT`.
