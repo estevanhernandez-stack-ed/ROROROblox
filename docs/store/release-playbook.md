@@ -77,6 +77,14 @@ input-synthesis grep and the new-URL grep. Partner Center only — `submit_write
 
 **Then audit the listing surfaces against what shipped** (standing rule per Este, 2026-09-05): with the fresh release notes beside you, re-read `listing-copy.md`'s **short description**, **long description**, and **product features** blocks — and the **hub page** (`docs/index.md`, the GitHub Pages front door), whose "What you get" list drifts the same way. A shipped feature that earns a listing claim gets a feature entry (cap 20, ≤200 chars each); a change that makes an existing public claim incomplete gets the description edited — the motivating case is v1.25, where the long description's privacy paragraph said nothing leaves your machine except Roblox calls and your webhook until phone alerts made that incomplete. Record the outcome either way in the submission packet's listing section: what changed, or "listing audited, unchanged."
 
+**Then hand the hosted privacy page its text** (#300, added 2026-11-27). RoRoRo has two privacy policies. `docs/PRIVACY.md` renders at `https://estevanhernandez-stack-ed.github.io/ROROROblox/privacy/`, which is **the URL the Store listing points at** (`listing-copy.md`), and it updates itself when `main` does. The RoRoRo section of the 626 Labs-wide page, `https://626labs.dev/privacy.html#privacy-rororo` (hub repo `626Labs-LLC/626Labs-LLC.github.io`, `privacy.html`, under `<h3 id="privacy-rororo">`), does not, and by 1.40 it was four releases behind.
+
+1. **Decide whether the release needs one.** It does if `git diff <prev-tag>..HEAD -- docs/PRIVACY.md` is not empty, or if the release notes name a new file, network call or third party. Otherwise record "hosted privacy page: unchanged" in the submission packet and stop.
+2. **Write `docs/store/hub-privacy-<version>.md`:** the exact HTML to insert or replace, in the hosted page's wording, paragraph by paragraph (What is collected, Where data lives, What touches the network, Third parties, Removal), with `docs/PRIVACY.md` named as the source. Read the live section first so the handoff starts from what is actually published.
+3. **Include a deploy check** the hub can run after merge: `curl -s <page> | grep -o '<phrase only the new text has>' | wc -l` and the count to expect. Not `grep -c`, which counts lines, and the paragraph is one line.
+4. **File it as a hub issue** titled `privacy: RoRoRo <version>, <what changed>`, linking the handoff file.
+5. **Order.** The Store reviewer reads the repo page, which goes live with the merge, so the hub handoff does not gate Phase 7. File it in the same session anyway; catching up four releases at once is the failure this step exists for. First run: `hub-privacy-1.41.0.0.md`.
+
 ---
 
 ## Phase 3 — Build the Store MSIX
