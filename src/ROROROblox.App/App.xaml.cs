@@ -936,6 +936,25 @@ public partial class App : Application
             return;
         }
 
+        // The Roblox feeds coordinator: creates its timer and reads nothing. The first read is no sooner
+        // than 30 s after the window is first shown, whenever this ran. First in this method (moved
+        // 2026-11-27): the pulse's gate opens 30 s after Show() on its own, and the pulse service starts
+        // enabled, so the switch's off value has to land before anything here can stall (the WebView2 sweep
+        // below is disk work of unbounded size). If the switch cannot be read, the pulse is turned off.
+        try
+        {
+            // The switch is read before Start(), so a session begun with it off never asks.
+            var feedsOn = await _services.GetRequiredService<IAppSettings>().GetRobloxFeedsEnabledAsync();
+            _services.GetRequiredService<MainViewModel>().SetRobloxFeedsEnabled(feedsOn);
+            _services.GetRequiredService<RobloxFeeds>().Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "The Roblox feeds could not start; no update or status line this session.");
+            try { _services.GetRequiredService<MainViewModel>().SetRobloxFeedsEnabled(false); }
+            catch (Exception inner) { _log?.LogDebug(inner, "The Roblox feeds could not be turned off either."); }
+        }
+
         try
         {
             // Crash-orphan cleanup: a capture interrupted by a crash leaves a fully logged-in
@@ -960,20 +979,6 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "Update availability could not start; no update button this session.");
-        }
-
-        // The Roblox feeds coordinator: creates its timer and reads nothing. The first read is no sooner
-        // than 30 s after the window is first shown, whenever this ran.
-        try
-        {
-            // The switch is read before Start(), so a session begun with it off never asks.
-            var feedsOn = await _services.GetRequiredService<IAppSettings>().GetRobloxFeedsEnabledAsync();
-            _services.GetRequiredService<MainViewModel>().SetRobloxFeedsEnabled(feedsOn);
-            _services.GetRequiredService<RobloxFeeds>().Start();
-        }
-        catch (Exception ex)
-        {
-            _log?.LogDebug(ex, "The Roblox feeds could not start; no update or status line this session.");
         }
 
         try
