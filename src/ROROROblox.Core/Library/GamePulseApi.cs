@@ -18,6 +18,12 @@ public sealed class GamePulseApi : IGamePulseApi
 
     public const int MaxPlaying = 100_000_000;
 
+    /// <summary>
+    /// 1 MB. A live five-game answer measured 7,075 bytes on 2026-11-27 (about 1.4 KB a game, most of it
+    /// the description we never read), so a full 50-id batch is near 70 KB.
+    /// </summary>
+    public const int MaxBodyBytes = 1024 * 1024;
+
     private static readonly DateTimeOffset EarliestUpdated = new(2006, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(15);
@@ -80,8 +86,8 @@ public sealed class GamePulseApi : IGamePulseApi
             }
             else
             {
-                var body = await response.Content.ReadAsByteArrayAsync(cts.Token).ConfigureAwait(false);
-                answer = Parse(body, universeIds, DateTimeOffset.UtcNow);
+                var body = await FeedBody.ReadLimitedAsync(response, MaxBodyBytes, cts.Token).ConfigureAwait(false);
+                answer = body is null ? null : Parse(body, universeIds, DateTimeOffset.UtcNow);
                 outcome = answer is null ? FeedOutcome.Shape : FeedOutcome.Ok;
             }
         }

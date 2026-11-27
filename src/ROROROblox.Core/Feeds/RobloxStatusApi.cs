@@ -63,7 +63,7 @@ public sealed class RobloxStatusApi : IRobloxStatusApi
             }
             else
             {
-                var body = await ReadLimitedAsync(response, cts.Token).ConfigureAwait(false);
+                var body = await FeedBody.ReadLimitedAsync(response, MaxBodyBytes, cts.Token).ConfigureAwait(false);
                 snapshot = body is null ? null : Parse(body);
                 outcome = snapshot is null ? FeedOutcome.Shape : FeedOutcome.Ok;
             }
@@ -79,31 +79,6 @@ public sealed class RobloxStatusApi : IRobloxStatusApi
 
         _log.LogDebug("roblox-status read: {Outcome} (HTTP {Code})", outcome, httpCode?.ToString() ?? "none");
         return new RobloxStatusRead(outcome, outcome == FeedOutcome.Ok ? snapshot : null);
-    }
-
-    /// <summary>The body, or null when it is larger than the cap. Streams, so an oversized body is never buffered whole.</summary>
-    private static async Task<byte[]?> ReadLimitedAsync(HttpResponseMessage response, CancellationToken ct)
-    {
-        if (response.Content.Headers.ContentLength is long declared && declared > MaxBodyBytes)
-        {
-            return null;
-        }
-
-        await using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-        using var buffer = new MemoryStream();
-        var chunk = new byte[16 * 1024];
-        int read;
-        while ((read = await stream.ReadAsync(chunk, ct).ConfigureAwait(false)) > 0)
-        {
-            if (buffer.Length + read > MaxBodyBytes)
-            {
-                return null;
-            }
-
-            buffer.Write(chunk, 0, read);
-        }
-
-        return buffer.ToArray();
     }
 
     /// <summary>Null when the body is not the expected shape. A cell is kept only with two 24-hex ids and a code.</summary>

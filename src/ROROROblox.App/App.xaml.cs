@@ -1260,11 +1260,19 @@ public partial class App : Application
         // clientsettingscdn.roblox.com carries the ROROROblox UA (never a browser spoof). The probe
         // resolves its other two seams itself (live installer process scan + GetInstalledRobloxVersion).
         // Same IHttpClientFactory pattern as RobloxApi; both members degrade-safe to "no update".
+        // Anonymous, so the feed clients' handler since v1.41 (2026-11-27): no cookie container and no
+        // redirects. The CDN answers 200 directly and sets no cookie; a 3xx now lands in the probe's
+        // existing non-success path (no update) instead of being followed somewhere else.
         services.AddHttpClient<IRobloxUpdateProbe, RobloxUpdateProbe>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
             var version = Distribution.AppVersion.Display(new Distribution.Win32DistributionMode());
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            UseCookies = false,
+            AllowAutoRedirect = false,
         });
 
         services.AddSingleton<IClientAppSettingsWriter, ClientAppSettingsWriter>();

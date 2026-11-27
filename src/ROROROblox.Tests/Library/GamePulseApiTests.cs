@@ -38,6 +38,57 @@ public class GamePulseApiTests
 
     private static long[] Ids(int n) => Enumerable.Range(1, n).Select(i => (long)i).ToArray();
 
+    /// <summary>A body with no Content-Length, so only the streamed count can stop it.</summary>
+    private sealed class UnsizedContent(byte[] bytes) : HttpContent
+    {
+        protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context) =>
+            stream.WriteAsync(bytes, 0, bytes.Length);
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = 0;
+            return false;
+        }
+    }
+
+    private const string OneGame = """{"data":[{"id":1,"playing":5}]}""";
+
+    [Fact]
+    public async Task OversizedBody_WithADeclaredLength_IsShape()
+    {
+        var (api, _) = Make(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(new byte[GamePulseApi.MaxBodyBytes + 1]) });
+
+        var read = await api.ReadAsync([1]);
+
+        Assert.Equal(FeedOutcome.Shape, read.Outcome);
+        Assert.Null(read.Answer);
+    }
+
+    /// <summary>Valid JSON padded past the cap: before 2026-11-27 this was read whole and answered Ok.</summary>
+    [Fact]
+    public async Task OversizedBody_WithNoDeclaredLength_IsShape()
+    {
+        var padded = Encoding.UTF8.GetBytes(OneGame + new string(' ', GamePulseApi.MaxBodyBytes));
+        var (api, _) = Make(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new UnsizedContent(padded) });
+
+        var read = await api.ReadAsync([1]);
+
+        Assert.Equal(FeedOutcome.Shape, read.Outcome);
+        Assert.Null(read.Answer);
+    }
+
+    [Fact]
+    public async Task ABodyExactlyAtTheCap_IsRead()
+    {
+        var padded = Encoding.UTF8.GetBytes(OneGame + new string(' ', GamePulseApi.MaxBodyBytes - OneGame.Length));
+        Assert.Equal(GamePulseApi.MaxBodyBytes, padded.Length);
+        var (api, _) = Make(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new UnsizedContent(padded) });
+
+        var read = await api.ReadAsync([1]);
+
+        Assert.Equal(FeedOutcome.Ok, read.Outcome);
+    }
+
     [Fact]
     public async Task FiftyIds_AreOneRequest()
     {

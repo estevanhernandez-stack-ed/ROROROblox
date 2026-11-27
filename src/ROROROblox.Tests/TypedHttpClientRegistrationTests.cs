@@ -122,6 +122,7 @@ public class TypedHttpClientRegistrationTests
     [Theory]
     [InlineData(typeof(ROROROblox.Core.Feeds.IRobloxStatusApi))]
     [InlineData(typeof(ROROROblox.Core.Library.IGamePulseApi))]
+    [InlineData(typeof(IRobloxUpdateProbe))]
     public void AnonymousClients_PrimaryHandler_HasUseCookiesFalseAndNoRedirects(Type clientInterface)
     {
         var services = new ServiceCollection();
@@ -144,6 +145,7 @@ public class TypedHttpClientRegistrationTests
     [InlineData(typeof(IAccountFactsApi))]
     [InlineData(typeof(ROROROblox.Core.Feeds.IRobloxStatusApi))]
     [InlineData(typeof(ROROROblox.Core.Library.IGamePulseApi))]
+    [InlineData(typeof(IRobloxUpdateProbe))]
     public void CookieCarryingClients_SendTheRororoUserAgent(Type clientInterface)
     {
         var services = new ServiceCollection();
