@@ -104,7 +104,7 @@ Wissen, was Roblox gerade macht, bevor du startest
   starten“ hält deine übrigen Konten zurück, bis es fertig ist.
   Der Hinweis verschwindet von selbst, sobald das Update drin ist.
 • Neu: Meldet Roblox ein Problem mit seiner Website, Spielen,
-  Avataren oder dem Spielbeitritt, sagt es eine Zeile und
+  Avataren oder dem Spielbeitritt, weist eine Zeile darauf hin und
   verlinkt auf Roblox' Statusseite. Ist alles in Ordnung, zeigt
   sich nichts.
 • Neu: Deine gespeicherten Spiele zeigen, wie viele gerade

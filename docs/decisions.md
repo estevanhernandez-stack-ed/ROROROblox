@@ -1530,3 +1530,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** #300 closes with the merge of #304. Gotcha: the dashboard needs the full `task-<timestamp>-<suffix>` id. The short suffix returns "not found", which is why `kw9psaaah` looked missing.
 
 **Evidence:** `docs/store/release-playbook.md`; `docs/store/hub-privacy-1.41.0.0.md`; commit `7a55ad3`; 626Labs-LLC.github.io#327. Dashboard decision `bTJRF2w5U59PI1sISYCM`.
+
+### 2026-11-27 — The 1.41 listing: "during launch" dropped, the sheets' What's new synced
+
+**Context:** Before the Store submission. Este was asked whether the new long-description sentence touches what variant B varies: no, because the experiment varies screenshots only, and text lands on both arms. The same privacy paragraph said nothing about you leaves the machine "except the Roblox-side calls during launch", loose since v1.36 and looser in 1.41 (the client-version check runs while the window is open). Packet open item 4 had flagged it.
+
+**Decision:** Este: "fix it". The clause reads "the Roblox-side calls RoRoRo makes for you", which names no timing, in all seven sheets. The cloud verifier, run one language at a time, then found that the six sheets still carried v1.40's What's new: the 1.41 translations had been written only into `whats-new-1.41.0.0.md`, and the console and export read the sheets. All six sheets were synced. German's long description had a memory-watchdog line that read as the client switching off; fixed. Rule-3 flags ("UI names stay English") were overruled where the label matches the shipped resx, and acted on where it did not (Spanish "Ajustes" became "Configuración").
+
+**Consequences:** The playbook's What's new step now says the sheets are the source and the copy happens in the same commit. Left alone: the Spanish UI itself is split (three theme-status strings say "Ajustes" while the page title says "Configuración"), and the Spanish features list says "Ajustes". Neither is part of 1.41.
+
+**Evidence:** commits `9f8f67d`, `44e9769` and the commit after them; `docs/store/submission-packet-1.41.0.0.md` items 3 and 4; `docs/store/release-playbook.md`. Dashboard decisions `9TmxCHKlofEnkE1Kv6kL`, `BmlbSaXP7XR6BBd4xOAC`.

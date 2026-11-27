@@ -29,6 +29,15 @@
    orchestrator needs to run it** (the delta ingests cleanly: no cap violations). The six
    translations of the privacy sentence and of the What's new blocks are hand-written and unreviewed
    until then.
+   **Run 2026-11-27, cloud verifier, one language per call, on the pushed raw URL** (commits `9f8f67d`
+   then `44e9769`). The first run found the six sheets still carried v1.40's What's new: blocker in
+   every language, fixed by copying each block from `whats-new-1.41.0.0.md` into its sheet. German's
+   long description had one real error ("bevor er ausgeht" read as the client switching off), fixed.
+   Second run: **all six long descriptions approve; Russian What's new approves.** The other five
+   What's new blockers are rule 3 ("UI names stay English"), overruled: every quoted label matches that
+   culture's shipped resx string. One flag was real in substance: Spanish said "Ajustes" where the page
+   title is "Configuración"; fixed in both Spanish 1.41 sentences. Two naturalness nits applied
+   (German "weist eine Zeile darauf hin", Spanish heading "Entérate de qué hace Roblox").
 4. **A sentence already on the listing is not true, and was not true before this release.** The long
    description's privacy paragraph says "Nothing about you leaves your machine except the Roblox-side
    calls during launch". `docs/PRIVACY.md` and the tree say the Roblox calls run continuously while

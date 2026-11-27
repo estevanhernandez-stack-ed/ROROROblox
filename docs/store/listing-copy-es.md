@@ -53,7 +53,7 @@ Lo que obtienes:
 • Habla tu idioma. Toda la app —cada menú, ajuste, información sobre herramientas y ventana, y los mensajes que RoRoRo escribe mientras la usas— está traducida al francés, alemán, ruso, portugués (Brasil), polaco y español, según el idioma de tu Windows o tu elección en Configuración. El cambio es inmediato, y la lista solo ofrece idiomas totalmente traducidos, así que nunca acabas en una pantalla a medias en inglés.
 
 Privacidad y seguridad:
-RoRoRo nunca ve tu contraseña de Roblox. El inicio de sesión ocurre por completo en la página del propio Roblox, incrustada en un marco Microsoft Edge WebView2: el mismo HTML, la misma conexión HTTPS que haría tu navegador. RoRoRo captura solo la cookie de sesión que Roblox establece tras iniciar sesión, y la cifra antes de escribirla en disco. Los datos de la cuenta (Robux, Plus, amigos en línea) se leen de Roblox con la propia sesión de esa cuenta y se guardan solo en el mismo baúl cifrado. Sin telemetría. Sin analítica. Nada sobre ti sale de tu máquina salvo las llamadas a Roblox que RoRoRo hace por ti —las mismas que hace Roblox.com desde tu navegador— y, solo si tú los configuras, las alertas a tu webhook de Discord o al servicio de push que elegiste (Pushover o ntfy). RoRoRo también descarga sus propios archivos firmados desde sus versiones publicadas en GitHub —las actualizaciones, los ajustes de compatibilidad con Roblox y la lista de problemas conocidos de Roblox— y no envía nada sobre ti para obtenerlos. En una instalación de la Store, RoRoRo también pregunta a la Microsoft Store, a través de Windows, si hay una actualización, y no envía nada por su cuenta. RoRoRo también consulta la página de estado pública de Roblox, que un tercero (Status.io) aloja para Roblox, no envía nada sobre ti para ello y tiene un interruptor en Ajustes para desactivar esa consulta.
+RoRoRo nunca ve tu contraseña de Roblox. El inicio de sesión ocurre por completo en la página del propio Roblox, incrustada en un marco Microsoft Edge WebView2: el mismo HTML, la misma conexión HTTPS que haría tu navegador. RoRoRo captura solo la cookie de sesión que Roblox establece tras iniciar sesión, y la cifra antes de escribirla en disco. Los datos de la cuenta (Robux, Plus, amigos en línea) se leen de Roblox con la propia sesión de esa cuenta y se guardan solo en el mismo baúl cifrado. Sin telemetría. Sin analítica. Nada sobre ti sale de tu máquina salvo las llamadas a Roblox que RoRoRo hace por ti —las mismas que hace Roblox.com desde tu navegador— y, solo si tú los configuras, las alertas a tu webhook de Discord o al servicio de push que elegiste (Pushover o ntfy). RoRoRo también descarga sus propios archivos firmados desde sus versiones publicadas en GitHub —las actualizaciones, los ajustes de compatibilidad con Roblox y la lista de problemas conocidos de Roblox— y no envía nada sobre ti para obtenerlos. En una instalación de la Store, RoRoRo también pregunta a la Microsoft Store, a través de Windows, si hay una actualización, y no envía nada por su cuenta. RoRoRo también consulta la página de estado pública de Roblox, que un tercero (Status.io) aloja para Roblox, no envía nada sobre ti para ello y tiene un interruptor en Configuración para desactivar esa consulta.
 
 Importante: aviso de marcas y afiliación.
 "Roblox" y el logotipo de Roblox son marcas de Roblox Corporation. RoRoRo es una herramienta independiente de terceros, no afiliada, avalada ni patrocinada por Roblox Corporation. El término de marca registrada se usa únicamente para describir compatibilidad con la plataforma Roblox. RoRoRo lanza el cliente oficial de Roblox sin modificarlo: sin inyección, sin hooks, sin alterar el proceso de Roblox; solo retiene un mutex con nombre de Windows antes del lanzamiento, para que las siguientes instancias del cliente vean la comprobación de singleton como ya ocupada.
@@ -97,7 +97,7 @@ Volver a unirse si se desconecta: un alt expulsado o atascado fuera del juego se
 ```
 v1.41.0.0
 
-Sabe qué hace Roblox antes de iniciar
+Entérate de qué hace Roblox antes de iniciar
 
 • Nuevo: RoRoRo te avisa cuando Roblox tiene una actualización
   esperando, antes de iniciar. El próximo inicio la instalará, y
@@ -114,7 +114,7 @@ Sabe qué hace Roblox antes de iniciar
   estuviera al día.
 • Para leer la página de estado de Roblox, RoRoRo consulta a
   Status.io, un tercero que la aloja, y no envía nada sobre ti.
-  Un interruptor en Ajustes apaga la línea de estado y los
+  Un interruptor en Configuración apaga la línea de estado y los
   recuentos de jugadores.
 
 Sal de RoRoRo antes de actualizar desde la Store: haz clic
