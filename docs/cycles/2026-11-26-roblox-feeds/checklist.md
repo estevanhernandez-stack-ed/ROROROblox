@@ -678,8 +678,10 @@ clan post is drafted for Este's click, since the false-hold fix is the clan's.
       pulse body uncapped, now 1 MB streamed; the update probe took the anonymous handler.)
 - [ ] README, `architecture.md`, `features.md`, `feature-ledger.md`, `PRIVACY.md`, `decisions.md` and
       `CLAUDE.md` describe the tree on `main`, spot-checked claim by claim.
-- [ ] The four tasks and #300 say what is true: rewritten, closed on named evidence, or left open with
-      the reason.
+- [x] The four tasks and #300 say what is true: rewritten, closed on named evidence, or left open with
+      the reason. (2026-11-27: `0h7s65ljx` and `bxranna8z` Done; `8pm4lzbdv` rewritten with what
+      remains; `kw9psaaah` retitled to the deferred screenshot recapture; #300 closes with the merge, its
+      playbook step written and the first handoff filed as hub issue #327.)
 - [ ] GitHub release `v1.41.0.0` is Latest and not a draft, with `roblox-compat.json`, `.sig` and
       `plugins-catalog.json` attached by `release.yml`. The Store submission is certified and
       published, or the exact reason it is not is in the packet.

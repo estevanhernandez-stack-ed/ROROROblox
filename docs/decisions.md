@@ -1520,3 +1520,13 @@ Mine, not Este's, and open to a veto: the first measurement of the new text pair
 **Consequences:** `AnonymousClients_PrimaryHandler_HasUseCookiesFalseAndNoRedirects` and the User-Agent theory carry the probe. `OversizedBody_WithNoDeclaredLength_IsShape` fails with the old read put back. The probe's tiny body is still uncapped, bounded only by its 8 s timeout, and is left as is.
 
 **Evidence:** `docs/store/smoke-2026-11-26-roblox-feeds.md` > Item 16; commits `55b2606`, `1a3febb`. Dashboard decision `MJd8jv4pUs2reG98KjZT`.
+
+### 2026-11-27 — The hosted privacy handoff joins the playbook; the Store reads the repo page
+
+**Context:** #300: the 626labs.dev hosted privacy section fell four releases behind because no release step carried changes to it. 1.41 changes `docs/PRIVACY.md` by adding Status.io, the game-activity reads, and the client-version check on a timer.
+
+**Decision:** Phase 2 of the release playbook gains a handoff step, modelled on Sanduhr's: decide from the `PRIVACY.md` diff, write `docs/store/hub-privacy-<version>.md` from the live hosted section, include a `grep -o … | wc -l` deploy check, and file a hub issue. The Store listing's privacy URL is the repo's own GitHub Pages page (`listing-copy.md`; verified live 2026-11-27, rendering `main`), so the hub handoff does not gate a Store submission. The 1.41 handoff is filed as hub issue #327. The item 16 riders: `0h7s65ljx` and `bxranna8z` closed on evidence, `8pm4lzbdv` rewritten with what remains (driver, refuse-while-stale, the two launcher questions), `kw9psaaah` retitled to the screenshot recapture deferred to 2027-02-20.
+
+**Consequences:** #300 closes with the merge of #304. Gotcha: the dashboard needs the full `task-<timestamp>-<suffix>` id. The short suffix returns "not found", which is why `kw9psaaah` looked missing.
+
+**Evidence:** `docs/store/release-playbook.md`; `docs/store/hub-privacy-1.41.0.0.md`; commit `7a55ad3`; 626Labs-LLC.github.io#327. Dashboard decision `bTJRF2w5U59PI1sISYCM`.
