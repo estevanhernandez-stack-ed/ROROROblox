@@ -58,7 +58,7 @@
 ## 1. Version
 
 **1.41.0.0**, a MINOR bump from 1.40.0.0 by the playbook's table: new user-visible notice line, new
-default-on network host. Not confirmed by the owner yet. Three places must agree before the tag: the
+default-on network host. Confirmed 2026-11-27 (Este: "merge please and then the two store builds"). Three places must agree before the tag: the
 csproj `<Version>`, `Package.appxmanifest` (both stamped by `finalize-store-build.ps1`) and the tag.
 
 ## 2. Listing
@@ -292,6 +292,19 @@ Done when the hosted page carries the status row, the client-version and games w
   Run the same pipeline after those items land and change any number that moved. The `games.roblox.com`
   address was already in the tree before this cycle (`Core/RobloxApi.cs:23`); it counts as "added"
   only because the pulse client carries its own copy.
+- **Re-measured 2026-11-27 on `release/v1.41.0.0`** (main `b719edd` plus the version stamp), against
+  `v1.40.0.0`: manifest diff is the Version attribute only; `*.proto` and `*NativeMethods.txt` diffs
+  empty; native-call names in added shipped lines: 0; added addresses: the same four; registry lines: 0.
+  Shipped source now 47 files, +3,586 / -197 (items 9 to 16 landed). The letter quotes no line counts,
+  so only its measurement date moved. The switch label matches `SettingsPage_RobloxFeeds`.
+- **Store packages, built 2026-11-27** with `finalize-store-build.ps1 -Version 1.41.0.0` (Store
+  identity `626LabsLLC.RoRoRoBlox`, publisher `CN=177BCE59-0966-4975-9962-10E36652141F`,
+  `PublisherDisplayName` 626Labs LLC, read back from each package's AppxManifest):
+  - `dist/RORORO-Store-x64-1.41.0.0.msix`, 112,561,232 bytes,
+    SHA-256 `b625b5deee98f28eb074f2445dd60a340cccd5ff9f3789e0525842ac1b70fd06`
+  - `dist/RORORO-Store-arm64-1.41.0.0.msix`, 106,063,394 bytes,
+    SHA-256 `7a1f3d9dae4e78d3f827722302b8e4e5e8ad2184e0e30215aad1338da015b8fa`
+  No sideload package built. Nothing submitted.
 - **Not run:** any live check of the status read against Roblox's real page during an incident (none
   has occurred; the capture script records one when it does); any live Store-listing read.
 

@@ -15,6 +15,8 @@
 >    `games.roblox.com`, `status.roblox.com`; added lines touching the registry: 0. Re-run the
 >    commands in `submission-packet-1.41.0.0.md` section 7 on the release branch and change the
 >    date and any number that moved.
+>    **Re-run 2026-11-27 on `release/v1.41.0.0` (main `b719edd` + the stamp): every result above
+>    holds; the manifest diff is the Version attribute only. Date in the letter moved to 2026-11-27.**
 > 2. **The switch's label** is quoted as `Show Roblox's status and game activity` (spec assumption 32).
 >    Item 9 owns the string (`SettingsPage_RobloxFeeds*`); match it.
 > 3. **No live run is claimed.** Section 4 says what a reviewer can see and claims no live run. If the
@@ -93,7 +95,7 @@ No launch of any kind waits on any of these reads.
 
 3. NOTHING ELSE MOVED
 
-Measured against the v1.40.0.0 tag on 2026-11-26, not assumed:
+Measured against the v1.40.0.0 tag on 2026-11-27, not assumed:
 
   - Package.appxmanifest: no change but the Version attribute. No new
     capability.

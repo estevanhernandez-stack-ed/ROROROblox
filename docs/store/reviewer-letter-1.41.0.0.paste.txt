@@ -56,7 +56,7 @@ No launch of any kind waits on any of these reads.
 
 3. NOTHING ELSE MOVED
 
-Measured against the v1.40.0.0 tag on 2026-11-26, not assumed:
+Measured against the v1.40.0.0 tag on 2026-11-27, not assumed:
 
   - Package.appxmanifest: no change but the Version attribute. No new
     capability.
