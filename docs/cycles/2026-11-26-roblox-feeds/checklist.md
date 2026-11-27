@@ -574,8 +574,8 @@ open and the ledger says so. Store screenshot 8 is left alone either way.
 **Acceptance:**
 - [x] All seven resx hold the same key count; the parity fences are green in both directions; no
       culture resx was edited by hand.
-- [ ] The verifier run is in the smoke doc with a verdict per language and each overrule named.
-      *(2026-11-26: the local verifier judged 0 of 156 pairs; moves to the cloud verifier after the push.)*
+- [x] The verifier run is in the smoke doc with a verdict per language and each overrule named.
+      *(2026-11-27: the cloud verifier, 156 of 156 judged; six rule-3 overrules named, one Russian fix.)*
 - [x] "Roblox" is English everywhere. "Launch all" in the update sentence matches the button's label in
       each language. The row name follows a colon in every language.
 - [x] The lint stage exits 0.

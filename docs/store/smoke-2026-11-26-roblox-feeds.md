@@ -173,11 +173,30 @@ Run 2026-11-26 22:5x on `6719619` plus the theme-builder rider.
   «Iniciar varias», « Lancer plusieurs », and so on; the spec's "Launch all" is this button, see the banner owed in
   item 16); the row name follows a colon in all six status sentences (French with its non-breaking space). All
   seven languages pass.
-- **The verifier: not run, the tool failed.** `docs/store/ui-translations-1.41-delta.json` (the export sliced to
-  the 26 new keys, 156 pairs) ingested cleanly into the local translation verifier, then
-  `run_translation_review` judged 0 pairs and stopped "by complete", for all six languages and again for German
-  alone; the tool's own detail says a retry will not progress. Same failure as the attempt earlier in the cycle.
-  The review moves to the cloud verifier, which reads from a URL, once the branch is pushed.
+- **The verifier.** The local verifier failed (2026-11-26): `docs/store/ui-translations-1.41-delta.json` (the
+  export sliced to the 26 new keys, 156 pairs) ingested, then `run_translation_review` judged 0 pairs, for all six
+  languages and again for German alone. Run instead on 2026-11-27 through the cloud verifier, from the pushed
+  branch's raw URL, one language per call: **156 of 156 pairs judged** (dataset commit `6719619`). 149 approve, 7
+  revise:
+
+  | Language | Verdict | Revise | Disposition |
+  |---|---|---|---|
+  | de | 25 approve | `RobloxLine_Update_Many` | **overruled** (rule 3 false positive, below) |
+  | es | 25 approve | `RobloxLine_Update_Many` | **overruled** |
+  | fr | 25 approve | `RobloxLine_Update_Many` | **overruled** |
+  | pl | 25 approve | `RobloxLine_Update_Many` | **overruled** |
+  | pt-BR | 25 approve | `RobloxLine_Update_Many` | **overruled** |
+  | ru | 24 approve | `RobloxLine_Update_Many`; `SettingsPage_RobloxFeeds_Description` (minor) | first **overruled**; second **fixed** |
+
+  *The overrule, by name:* rule 3 keeps in-app UI labels in English "because the interface is in English". RoRoRo's
+  interface is localized in all seven languages, and the many-account update sentence quotes the `Launch multiple`
+  button by the label that language's user actually sees («Mehrere starten», « Lancer plusieurs », …). Putting
+  the English label there would name a button that is not on their screen. This is the known rule-3 false positive
+  on quoted UI labels the checklist names.
+
+  *The fix:* Russian «идёт на Status.io, стороннему сервису, который…» had the apposition in the dative after на
+  (accusative); now «идёт на Status.io — сторонний сервис, который…», the verifier's suggestion, in
+  `docs/store/translations/ui-ru.json` and `scripts/add-v141-translations.py`, then `gen-culture-resx.py ru`.
 - **The theme-dialog rider (task `kw9psaaah`): fits, built.** `ThemeBuilderButtonRowFitTests` measured the old
   single right-aligned row first: a button ran past the left edge in **every** language at the default 640 DIP,
   English included ("Open themes folder" at -8.1 DIP; French -185.2, German -170.5, Russian two buttons out), and at
